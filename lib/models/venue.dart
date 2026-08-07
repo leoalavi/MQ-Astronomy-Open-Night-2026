@@ -1,0 +1,130 @@
+import 'package:flutter/foundation.dart';
+
+import 'package:aon2026/models/data_confidence.dart';
+
+/// A place on campus that the app can show on the map and route to.
+///
+/// This is a deliberately **cut-down rewrite** of MQ Journey's `Building`
+/// entity (448 lines). That class carries faculty groups, student-services
+/// drill-down groups, campus-hub groups, indoor level counts and a 40-token
+/// search index — all of which exist to serve MQ Journey's year-round
+/// student-services browse experience and mean nothing for a six-hour public
+/// event. We keep only the fields this product actually renders.
+///
+/// Retained from `Building` (they earned their place):
+/// * `entrance*` coordinates distinct from centroid — routing to a building
+///   centroid drops people on the wrong side of a building at night.
+/// * `aliases` — attendees search "Mason Theatre", not "14SCO".
+@immutable
+class Venue {
+  const Venue({
+    required this.id,
+    required this.name,
+    required this.category,
+    this.shortName,
+    this.building,
+    this.address,
+    this.latitude,
+    this.longitude,
+    this.entranceLatitude,
+    this.entranceLongitude,
+    this.coordinateConfidence = DataConfidence.placeholder,
+    this.mapReference,
+    this.aliases = const [],
+    this.accessibilityNotes,
+    this.notes,
+  });
+
+  final String id;
+
+  /// Full official name, as printed in the event materials. Used in headings
+  /// and detail views where there is room for it.
+  final String name;
+
+  /// Compact label for filter chips and other tight spaces.
+  ///
+  /// Chips clip rather than wrap, and several official names ("Macquarie
+  /// University Astronomical Observatory") are far too long for a 375pt phone.
+  /// Falls back to [name] when unset — see [chipLabel].
+  final String? shortName;
+
+  final VenueCategory category;
+
+  /// Official building name, where the venue sits inside a larger building.
+  /// e.g. Mason Theatre's building is "14 Sir Christopher Ondaatje Avenue".
+  final String? building;
+
+  final String? address;
+
+  final double? latitude;
+  final double? longitude;
+
+  /// Preferred pedestrian entrance, when it differs from the centroid.
+  final double? entranceLatitude;
+  final double? entranceLongitude;
+
+  /// Provenance of [latitude]/[longitude]. See [DataConfidence].
+  final DataConfidence coordinateConfidence;
+
+  /// The letter used on the official printed map legend (A–I), where the
+  /// venue has one. Lets the app speak the same language as the paper map
+  /// people are holding.
+  final String? mapReference;
+
+  final List<String> aliases;
+  final String? accessibilityNotes;
+
+  /// Free-text operational note shown on the venue sheet.
+  final String? notes;
+
+  /// The label to use anywhere horizontal space is constrained.
+  String get chipLabel => shortName ?? name;
+
+  bool get hasCoordinates => latitude != null && longitude != null;
+
+  /// Best coordinate to route *to*. Prefers the entrance.
+  double? get routingLatitude => entranceLatitude ?? latitude;
+  double? get routingLongitude => entranceLongitude ?? longitude;
+
+  /// Case-insensitive match across name, building, address and aliases.
+  /// Simpler than MQ Journey's 0–120 ranked scorer, which that app needs
+  /// because it searches 170 buildings; we search ~20 venues.
+  bool matches(String query) {
+    final q = query.trim().toLowerCase();
+    if (q.isEmpty) return true;
+    return name.toLowerCase().contains(q) ||
+        (building?.toLowerCase().contains(q) ?? false) ||
+        (address?.toLowerCase().contains(q) ?? false) ||
+        (mapReference?.toLowerCase() == q) ||
+        aliases.any((a) => a.toLowerCase().contains(q));
+  }
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is Venue && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() => 'Venue($id, $name)';
+}
+
+/// What kind of place this is — drives marker colour and the map filter chips.
+enum VenueCategory {
+  eventVenue('Event venue'),
+  informationPoint('Information point'),
+  registration('Registration'),
+  toilets('Toilets'),
+  firstAid('First aid'),
+  foodAndDrink('Food and drink'),
+  parking('Parking'),
+  metro('Metro station'),
+  shuttleStop('Shuttle stop'),
+  busStop('Bus stop'),
+  other('Other');
+
+  const VenueCategory(this.label);
+
+  final String label;
+}

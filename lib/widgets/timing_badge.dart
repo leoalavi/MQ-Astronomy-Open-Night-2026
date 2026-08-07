@@ -1,0 +1,71 @@
+import 'package:flutter/material.dart';
+
+import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/services/whats_on_service.dart';
+
+/// A small status pill: "Happening now", "Starting soon", "Later tonight".
+///
+/// Each state carries an icon as well as a colour. Relying on green-vs-amber
+/// alone would fail for the ~8% of male attendees with a red-green colour
+/// deficiency, and the badge is the primary signal on this screen.
+class TimingBadge extends StatelessWidget {
+  const TimingBadge({required this.timing, this.trailingText, super.key});
+
+  final EventTiming timing;
+
+  /// Optional countdown appended after the label, e.g. "in 12 min".
+  final String? trailingText;
+
+  @override
+  Widget build(BuildContext context) {
+    final (color, icon) = switch (timing) {
+      EventTiming.happeningNow => (AonColors.live, Icons.circle),
+      EventTiming.startingSoon => (AonColors.soon, Icons.schedule_rounded),
+      EventTiming.upcoming => (
+          AonColors.contentTertiary,
+          Icons.more_time_rounded
+        ),
+      EventTiming.finished => (
+          AonColors.contentTertiary,
+          Icons.check_circle_outline_rounded
+        ),
+    };
+
+    final label = trailingText == null
+        ? timing.label
+        : '${timing.label} · $trailingText';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AonSpacing.space3,
+        vertical: AonSpacing.space1 + 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
+        border: Border.all(color: color.withValues(alpha: 0.45)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            // The "now" dot is a filled circle and reads as a live indicator
+            // at a much smaller size than the other glyphs.
+            size: timing == EventTiming.happeningNow ? 9 : AonSpacing.iconSm,
+            color: color,
+          ),
+          const SizedBox(width: AonSpacing.space2),
+          Text(
+            label,
+            style: Theme.of(context)
+                .textTheme
+                .labelSmall
+                ?.copyWith(color: color),
+          ),
+        ],
+      ),
+    );
+  }
+}

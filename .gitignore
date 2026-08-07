@@ -1,0 +1,76 @@
+# ── Claude Code local project memory ──────────────────────
+CLAUDE.md
+
+# ── Miscellaneous ─────────────────────────────────────────
+*.class
+*.log
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+.swiftpm/
+migrate_working_dir/
+
+# ── IntelliJ / Android Studio ─────────────────────────────
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# ── Flutter / Dart / Pub ──────────────────────────────────
+**/doc/api/
+**/ios/Flutter/.last_build_id
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+
+# ── Symbolication / obfuscation ───────────────────────────
+app.*.symbols
+app.*.map.json
+
+# ── Android build artefacts ───────────────────────────────
+/android/app/debug
+/android/app/profile
+/android/app/release
+
+# ── macOS build artefacts ─────────────────────────────────
+macos/build/
+
+# ══════════════════════════════════════════════════════════
+# SECRETS — never commit
+#
+# This project deliberately has NO API keys (see docs/architecture.md):
+# flutter_map needs none, and there is no backend. These rules exist so
+# that stays true even if someone later adds an integration.
+# ══════════════════════════════════════════════════════════
+.env
+.env.*
+!.env.example
+
+# Firebase / Google service configs
+google-services.json
+GoogleService-Info.plist
+firebase_options.dart
+
+# Signing material
+*.jks
+*.keystore
+*.key
+*.pem
+*.p12
+*.mobileprovision
+android/key.properties
+android/secrets.properties
+ios/Flutter/Secrets.xcconfig
+
+# ── Local tooling ─────────────────────────────────────────
+.vscode/
+.codex/
+.antigravitycli/
+logs/

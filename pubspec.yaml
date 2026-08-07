@@ -1,0 +1,41 @@
+name: aon2026
+description: >-
+  Astronomy Open Night 2026 — event discovery and night-time campus wayfinding
+  companion for Macquarie University's Astronomy Open Night (19 September 2026).
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.11.0
+  flutter: '3.44.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management — mirrors the MQ Journey stack so the team keeps one
+  # mental model across both products.
+  flutter_riverpod: ^3.3.2
+
+  # Declarative routing (deep-linkable screens, typed route names).
+  go_router: ^17.3.0
+
+  # Map rendering. flutter_map is deliberately chosen over Google Maps:
+  # it needs NO API key, which keeps this repository free of secrets.
+  flutter_map: ^8.3.0
+  latlong2: ^0.9.1
+
+  # Date/time formatting for the programme and "What's On Now" logic.
+  intl: ^0.20.2
+
+  cupertino_icons: ^1.0.8
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/images/

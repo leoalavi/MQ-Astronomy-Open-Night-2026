@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/glass_surface.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/clock.dart';
@@ -220,28 +221,49 @@ class _Hero extends StatelessWidget {
                       ?.copyWith(color: AonColors.amber),
                 ),
                 const SizedBox(height: AonSpacing.space3),
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.event_rounded,
-                      size: AonSpacing.iconSm,
-                      color: AonColors.contentSecondary,
-                    ),
-                    const SizedBox(width: AonSpacing.space2),
-                    // Expanded so the long date+time string wraps on a narrow
-                    // phone instead of overflowing off the right edge.
-                    Expanded(
-                      child: Text(
-                        '${TimeFormat.longDate(EventInfo.startsAt)}  ·  '
-                        '${TimeFormat.range(
-                          EventInfo.startsAt,
-                          EventInfo.endsAt,
-                        )}',
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: AonColors.contentSecondary),
+                // A glass "date pill" floating over the galaxy photo — the hero's
+                // single glass element (Phase 2). control tier = the translucent
+                // rendering rung; the pill is not interactive.
+                LayoutBuilder(
+                  builder: (context, constraints) => GlassSurface(
+                    variant: GlassVariant.control,
+                    borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
+                    child: ConstrainedBox(
+                      // maxWidth = the available hero text-column width, so the
+                      // pill never exceeds the hero's horizontal content bounds.
+                      constraints: BoxConstraints(maxWidth: constraints.maxWidth),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AonSpacing.space3,
+                          vertical: AonSpacing.space2,
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.event_rounded,
+                              size: AonSpacing.iconSm,
+                              color: AonColors.contentSecondary,
+                            ),
+                            const SizedBox(width: AonSpacing.space2),
+                            // Flexible so the long date+time string wraps on a
+                            // narrow phone instead of overflowing off the edge.
+                            Flexible(
+                              child: Text(
+                                '${TimeFormat.longDate(EventInfo.startsAt)}  ·  '
+                                '${TimeFormat.range(
+                                  EventInfo.startsAt,
+                                  EventInfo.endsAt,
+                                )}',
+                                style: theme.textTheme.bodySmall
+                                    ?.copyWith(color: AonColors.contentSecondary),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  ],
+                  ),
                 ),
               ],
             ),

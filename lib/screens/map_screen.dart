@@ -14,7 +14,9 @@ import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/dark_tile_layer.dart';
+import 'package:aon2026/widgets/map_category_filter_bar.dart';
 import 'package:aon2026/widgets/map_config.dart';
+import 'package:aon2026/widgets/map_control_island.dart';
 
 /// Campus map showing event venues, facilities, parking and transport.
 ///
@@ -87,23 +89,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ];
 
     return Scaffold(
+      // Content-page AppBar stays opaque (governance rule 4). Recentre moved to
+      // the floating glass control island over the tiles (Phase 2).
       appBar: AppBar(
         title: const Text('Map'),
-        actions: [
-          IconButton(
-            tooltip: 'Recentre',
-            icon: const Icon(Icons.my_location_rounded),
-            onPressed: () => _controller.move(
-              MapConfig.campusCentre,
-              MapConfig.initialZoom,
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
-          _CategoryFilterBar(
-            visible: _visible,
+          MapCategoryFilterBar(
+            selected: _visible,
             onToggle: (category) => setState(() {
               _visible.contains(category)
                   ? _visible.remove(category)
@@ -136,6 +130,37 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   left: AonSpacing.space2,
                   bottom: AonNavMetrics.clearance(context) - AonSpacing.space4,
                   child: const _MapAttribution(),
+                ),
+                // Floating glass control island over the live tiles — the Phase 2
+                // refraction payoff. Right edge, upper map area: clear of the
+                // bottom-right FAB and the filter row above.
+                Positioned(
+                  top: AonSpacing.space4,
+                  right: AonSpacing.space4,
+                  child: MapControlIsland(
+                    onZoomIn: () => _controller.move(
+                      _controller.camera.center,
+                      clampZoom(
+                        _controller.camera.zoom,
+                        1,
+                        min: MapConfig.minZoom,
+                        max: MapConfig.maxZoom,
+                      ),
+                    ),
+                    onZoomOut: () => _controller.move(
+                      _controller.camera.center,
+                      clampZoom(
+                        _controller.camera.zoom,
+                        -1,
+                        min: MapConfig.minZoom,
+                        max: MapConfig.maxZoom,
+                      ),
+                    ),
+                    onRecenter: () => _controller.move(
+                      MapConfig.campusCentre,
+                      MapConfig.initialZoom,
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -237,42 +262,6 @@ class _MarkerPin extends StatelessWidget {
                 )
               : Icon(icon, size: AonSpacing.iconMd, color: color),
         ),
-      ),
-    );
-  }
-}
-
-class _CategoryFilterBar extends StatelessWidget {
-  const _CategoryFilterBar({required this.visible, required this.onToggle});
-
-  final Set<VenueCategory> visible;
-  final ValueChanged<VenueCategory> onToggle;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AonSpacing.space4),
-        children: [
-          for (final category in VenueCategory.values)
-            if (category != VenueCategory.other) ...[
-              FilterChip(
-                label: Text(category.label),
-                selected: visible.contains(category),
-                onSelected: (_) => onToggle(category),
-                avatar: Icon(
-                  VenueStyle.iconFor(category),
-                  size: AonSpacing.iconSm,
-                  color: visible.contains(category)
-                      ? AonColors.onAccent
-                      : VenueStyle.colorFor(category),
-                ),
-              ),
-              const SizedBox(width: AonSpacing.space2),
-            ],
-        ],
       ),
     );
   }

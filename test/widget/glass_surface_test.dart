@@ -3,8 +3,18 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_glass.dart';
+import 'package:aon2026/widgets/glass_shader.dart';
 
 void main() {
+  group('GlassShaderCache', () {
+    test('ensureLoaded never throws and is not ready without Impeller', () async {
+      // The test harness has no Impeller, so the shader never loads; the load
+      // must complete non-fatally and report not-ready (→ frost fallback).
+      await GlassShaderCache.ensureLoaded();
+      expect(GlassShaderCache.ready, isFalse);
+    });
+  });
+
   group('AonGlass tokens', () {
     test('dark tint is the aon2026 night surface, content stays legible', () {
       expect(AonGlass.tint(true), AonColors.night800);

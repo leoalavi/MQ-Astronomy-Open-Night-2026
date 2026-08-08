@@ -1,0 +1,27 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_glass.dart';
+
+void main() {
+  group('AonGlass tokens', () {
+    test('dark tint is the aon2026 night surface, content stays legible', () {
+      expect(AonGlass.tint(true), AonColors.night800);
+      expect(AonGlass.opacityContent, greaterThanOrEqualTo(0.94));
+      expect(AonGlass.opacityHighContrast, greaterThanOrEqualTo(0.94));
+    });
+
+    test('regular (shader body) opacity is translucent enough to refract', () {
+      expect(AonGlass.opacityRegular(true), lessThan(0.6));
+      expect(AonGlass.opacityRegular(true), greaterThan(0.3));
+    });
+
+    test('shader tokens carried from the reference', () {
+      expect(AonGlass.refractiveIndex, 1.6);
+      expect(AonGlass.rimWidth, 42);
+      expect(AonGlass.fresnel, 0.8);
+      expect(AonGlass.refractIntensity, 0.85);
+    });
+  });
+}

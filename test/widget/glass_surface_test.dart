@@ -4,8 +4,74 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_glass.dart';
 import 'package:aon2026/widgets/glass_shader.dart';
+import 'package:aon2026/widgets/glass_surface.dart';
+
+Widget host({
+  required Widget child,
+  bool highContrast = false,
+  bool disableAnimations = false,
+}) {
+  return MaterialApp(
+    theme: ThemeData(brightness: Brightness.dark),
+    home: MediaQuery(
+      data: MediaQueryData(
+        highContrast: highContrast,
+        disableAnimations: disableAnimations,
+      ),
+      child: Scaffold(body: Center(child: child)),
+    ),
+  );
+}
 
 void main() {
+  group('resolveGlassRenderMode', () {
+    test('content is always solid', () {
+      expect(
+        resolveGlassRenderMode(variant: GlassVariant.content, highContrast: false, disableAnimations: false, shaderSupported: true),
+        GlassRenderMode.solid);
+    });
+    test('high contrast forces solid', () {
+      expect(
+        resolveGlassRenderMode(variant: GlassVariant.control, highContrast: true, disableAnimations: false, shaderSupported: true),
+        GlassRenderMode.solid);
+    });
+    test('reduce motion drops to frost', () {
+      expect(
+        resolveGlassRenderMode(variant: GlassVariant.control, highContrast: false, disableAnimations: true, shaderSupported: true),
+        GlassRenderMode.frost);
+    });
+    test('no shader support drops to frost', () {
+      expect(
+        resolveGlassRenderMode(variant: GlassVariant.bar, highContrast: false, disableAnimations: false, shaderSupported: false),
+        GlassRenderMode.frost);
+    });
+    test('supported + no a11y flags -> shader', () {
+      expect(
+        resolveGlassRenderMode(variant: GlassVariant.control, highContrast: false, disableAnimations: false, shaderSupported: true),
+        GlassRenderMode.shader);
+    });
+    test('allowShader:false forces frost even when supported', () {
+      expect(
+        resolveGlassRenderMode(variant: GlassVariant.control, highContrast: false, disableAnimations: false, shaderSupported: true, allowShader: false),
+        GlassRenderMode.frost);
+    });
+  });
+
+  group('GlassSurface tiers (Impeller off in tests -> frost, never shader)', () {
+    testWidgets('content tier is solid - no BackdropFilter', (tester) async {
+      await tester.pumpWidget(host(child: const GlassSurface(variant: GlassVariant.content, child: SizedBox(width: 100, height: 40))));
+      expect(find.byType(BackdropFilter), findsNothing);
+    });
+    testWidgets('control tier renders a frost BackdropFilter', (tester) async {
+      await tester.pumpWidget(host(child: const GlassSurface(variant: GlassVariant.control, child: SizedBox(width: 100, height: 40))));
+      expect(find.byType(BackdropFilter), findsOneWidget);
+    });
+    testWidgets('high contrast forces solid (no BackdropFilter)', (tester) async {
+      await tester.pumpWidget(host(highContrast: true, child: const GlassSurface(variant: GlassVariant.control, child: SizedBox(width: 100, height: 40))));
+      expect(find.byType(BackdropFilter), findsNothing);
+    });
+  });
+
   group('GlassShaderCache', () {
     test('ensureLoaded never throws and is not ready without Impeller', () async {
       // The test harness has no Impeller, so the shader never loads; the load

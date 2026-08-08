@@ -44,51 +44,58 @@ class HomeScreen extends ConsumerWidget {
                 // ── Quick links ──
                 Text('Get started', style: theme.textTheme.headlineSmall),
                 const SizedBox(height: AonSpacing.space3),
-                GridView(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  // Fixed row height plus a max column width, rather than a
-                  // fixed column count and aspect ratio. An aspect ratio
-                  // makes the tiles grow taller as the window widens, which
-                  // looks absurd on a tablet or on Flutter web; this keeps
-                  // them phone-sized and just adds columns instead.
-                  gridDelegate:
-                      const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 260,
-                    mainAxisExtent: 138,
-                    mainAxisSpacing: AonSpacing.space3,
-                    crossAxisSpacing: AonSpacing.space3,
-                  ),
-                  children: [
-                    QuickLinkTile(
-                      icon: Icons.list_alt_rounded,
-                      label: 'Program',
-                      description: 'Everything on tonight',
-                      accent: AonColors.stellar,
-                      onTap: () => context.go(Routes.program),
-                    ),
-                    QuickLinkTile(
-                      icon: Icons.schedule_rounded,
-                      label: 'What’s On Now',
-                      description: 'Happening and starting soon',
-                      accent: AonColors.live,
-                      onTap: () => context.go(Routes.whatsOn),
-                    ),
-                    QuickLinkTile(
-                      icon: Icons.map_rounded,
-                      label: 'Map',
-                      description: 'Venues, toilets, first aid',
-                      accent: AonColors.amber,
-                      onTap: () => context.go(Routes.map),
-                    ),
-                    QuickLinkTile(
-                      icon: Icons.local_parking_rounded,
-                      label: 'Parking & walking',
-                      description: 'Get from your car to the event',
-                      accent: AonColors.mapParking,
-                      onTap: () => context.push(Routes.wayfinding),
-                    ),
-                  ],
+                // A max column width, then add columns — the same intent as a
+                // grid, but the tile height follows its content. A fixed cell
+                // height clipped the two-line descriptions on a narrow phone
+                // and at large accessibility text sizes; letting the row grow
+                // is the accessible fix.
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    const spacing = AonSpacing.space3;
+                    final columns =
+                        (constraints.maxWidth / 260).ceil().clamp(1, 4);
+                    final tileWidth =
+                        (constraints.maxWidth - spacing * (columns - 1)) /
+                            columns;
+                    final tiles = <Widget>[
+                      QuickLinkTile(
+                        icon: Icons.list_alt_rounded,
+                        label: 'Program',
+                        description: 'Everything on tonight',
+                        accent: AonColors.stellar,
+                        onTap: () => context.go(Routes.program),
+                      ),
+                      QuickLinkTile(
+                        icon: Icons.schedule_rounded,
+                        label: 'What’s On Now',
+                        description: 'Happening and starting soon',
+                        accent: AonColors.live,
+                        onTap: () => context.go(Routes.whatsOn),
+                      ),
+                      QuickLinkTile(
+                        icon: Icons.map_rounded,
+                        label: 'Map',
+                        description: 'Venues, toilets, first aid',
+                        accent: AonColors.amber,
+                        onTap: () => context.go(Routes.map),
+                      ),
+                      QuickLinkTile(
+                        icon: Icons.local_parking_rounded,
+                        label: 'Parking & walking',
+                        description: 'Get from your car to the event',
+                        accent: AonColors.mapParking,
+                        onTap: () => context.push(Routes.wayfinding),
+                      ),
+                    ];
+                    return Wrap(
+                      spacing: spacing,
+                      runSpacing: spacing,
+                      children: [
+                        for (final tile in tiles)
+                          SizedBox(width: tileWidth, child: tile),
+                      ],
+                    );
+                  },
                 ),
 
                 const SizedBox(height: AonSpacing.space6),
@@ -143,32 +150,43 @@ class _Hero extends StatelessWidget {
     final theme = Theme.of(context);
     final topInset = MediaQuery.paddingOf(context).top;
 
-    return SizedBox(
-      height: 340 + topInset,
+    // A minimum height, not a fixed one: at a large accessibility text size
+    // the title and date grow past 340px, and a fixed box clipped them. The
+    // image and scrim fill via Positioned.fill; the text column (bottom-left
+    // aligned) drives the height and lets the hero grow instead of overflow.
+    return ConstrainedBox(
+      constraints: BoxConstraints(minHeight: 340 + topInset),
       child: Stack(
-        fit: StackFit.expand,
+        alignment: Alignment.bottomLeft,
         children: [
-          Image.asset(
-            'assets/images/hero_deep_triangulum_galaxy.jpg',
-            fit: BoxFit.cover,
-            // If the asset is ever missing, fall back to flat night rather
-            // than throwing a red error box over the app's first screen.
-            errorBuilder: (_, _, _) =>
-                const ColoredBox(color: AonColors.night900),
+          Positioned.fill(
+            child: Image.asset(
+              'assets/images/hero_deep_triangulum_galaxy.jpg',
+              fit: BoxFit.cover,
+              // Decorative: the title sits on top and the credit is given in
+              // the attribution card, so screen readers skip the raw asset.
+              excludeFromSemantics: true,
+              // If the asset is ever missing, fall back to flat night rather
+              // than throwing a red error box over the app's first screen.
+              errorBuilder: (_, _, _) =>
+                  const ColoredBox(color: AonColors.night900),
+            ),
           ),
           // Two-stop scrim. The image is bright in places; without this the
           // title would fail contrast over the galaxy core.
-          const DecoratedBox(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [
-                  Color(0x6605070F),
-                  Color(0xCC05070F),
-                  AonColors.night950,
-                ],
-                stops: [0.0, 0.55, 1.0],
+          const Positioned.fill(
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Color(0x6605070F),
+                    Color(0xCC05070F),
+                    AonColors.night950,
+                  ],
+                  stops: [0.0, 0.55, 1.0],
+                ),
               ),
             ),
           ),
@@ -180,8 +198,8 @@ class _Hero extends StatelessWidget {
               AonSpacing.space5,
             ),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Text(
                   EventInfo.host.toUpperCase(),
@@ -209,14 +227,18 @@ class _Hero extends StatelessWidget {
                       color: AonColors.contentSecondary,
                     ),
                     const SizedBox(width: AonSpacing.space2),
-                    Text(
-                      '${TimeFormat.longDate(EventInfo.startsAt)}  ·  '
-                      '${TimeFormat.range(
-                        EventInfo.startsAt,
-                        EventInfo.endsAt,
-                      )}',
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: AonColors.contentSecondary),
+                    // Expanded so the long date+time string wraps on a narrow
+                    // phone instead of overflowing off the right edge.
+                    Expanded(
+                      child: Text(
+                        '${TimeFormat.longDate(EventInfo.startsAt)}  ·  '
+                        '${TimeFormat.range(
+                          EventInfo.startsAt,
+                          EventInfo.endsAt,
+                        )}',
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: AonColors.contentSecondary),
+                      ),
                     ),
                   ],
                 ),

@@ -53,20 +53,35 @@ class EventCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Category + status row ──
-              Row(
+              //
+              // A Wrap, not a Row: the status badge ("Happening now · in 40
+              // min") can be as wide as the whole card, so on a narrow phone it
+              // drops onto its own line below the category instead of crushing
+              // the label to one character per line.
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: AonSpacing.space2,
+                runSpacing: AonSpacing.space2,
                 children: [
-                  Icon(
-                    VenueStyle.iconForEventCategory(event.category),
-                    size: AonSpacing.iconSm,
-                    color: accent,
-                  ),
-                  const SizedBox(width: AonSpacing.space2),
-                  Expanded(
-                    child: Text(
-                      event.category.label,
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: accent),
-                    ),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        VenueStyle.iconForEventCategory(event.category),
+                        size: AonSpacing.iconSm,
+                        color: accent,
+                      ),
+                      const SizedBox(width: AonSpacing.space2),
+                      Flexible(
+                        child: Text(
+                          event.category.label,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.labelSmall
+                              ?.copyWith(color: accent),
+                        ),
+                      ),
+                    ],
                   ),
                   if (timing != null)
                     TimingBadge(

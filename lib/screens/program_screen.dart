@@ -47,14 +47,16 @@ class ProgramScreen extends ConsumerWidget {
             ),
             child: Row(
               children: [
-                Text(
-                  filter.isEmpty
-                      ? '$allTotal items in the program'
-                      : '$total of $allTotal shown',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodySmall
-                      ?.copyWith(color: AonColors.contentTertiary),
+                Expanded(
+                  child: Text(
+                    filter.isEmpty
+                        ? '$allTotal items in the program'
+                        : '$total of $allTotal shown',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AonColors.contentTertiary),
+                  ),
                 ),
               ],
             ),
@@ -115,6 +117,7 @@ class _SearchField extends ConsumerStatefulWidget {
 
 class _SearchFieldState extends ConsumerState<_SearchField> {
   late final TextEditingController _controller;
+  bool _showClear = false;
 
   @override
   void initState() {
@@ -122,10 +125,22 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
     _controller = TextEditingController(
       text: ref.read(eventFilterProvider).query,
     );
+    _showClear = _controller.text.isNotEmpty;
+    // Rebuild only when the field flips between empty and non-empty, so the
+    // clear button appears and disappears in step with what the user types.
+    // Nothing else here watches the field, so without this the clear button
+    // would show stale state until an unrelated rebuild happened to occur.
+    _controller.addListener(_syncClearButton);
+  }
+
+  void _syncClearButton() {
+    final show = _controller.text.isNotEmpty;
+    if (show != _showClear) setState(() => _showClear = show);
   }
 
   @override
   void dispose() {
+    _controller.removeListener(_syncClearButton);
     _controller.dispose();
     super.dispose();
   }
@@ -155,15 +170,16 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
         decoration: InputDecoration(
           hintText: 'Search talks, activities, presenters',
           prefixIcon: const Icon(Icons.search_rounded),
-          suffixIcon: _controller.text.isEmpty
-              ? null
-              : IconButton(
+          suffixIcon: _showClear
+              ? IconButton(
                   icon: const Icon(Icons.close_rounded),
+                  tooltip: 'Clear search',
                   onPressed: () {
                     _controller.clear();
                     ref.read(eventFilterProvider.notifier).setQuery('');
                   },
-                ),
+                )
+              : null,
         ),
       ),
     );

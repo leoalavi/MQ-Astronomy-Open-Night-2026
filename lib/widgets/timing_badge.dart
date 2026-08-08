@@ -57,12 +57,21 @@ class TimingBadge extends StatelessWidget {
             color: color,
           ),
           const SizedBox(width: AonSpacing.space2),
-          Text(
-            label,
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: color),
+          // Flexible so the pill ellipsizes its countdown rather than
+          // overflowing when it shares a tight row with a long title. Callers
+          // must give the badge a bounded width (a Flexible/Wrap/SizedBox
+          // parent); every current call site does.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: color),
+            ),
           ),
         ],
       ),

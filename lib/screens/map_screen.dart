@@ -78,6 +78,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             child: _MarkerPin(
               icon: Icons.local_parking_rounded,
               color: AonColors.mapParking,
+              semanticLabel: '${p.name}. Parking.',
               onTap: () => _showParkingSheet(p.id),
             ),
           ),
@@ -159,6 +160,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         icon: VenueStyle.iconFor(v.category),
         color: VenueStyle.colorFor(v.category),
         label: v.mapReference,
+        semanticLabel: '${v.name}. ${v.category.label}.',
         onTap: () => _showVenueSheet(v.id),
       ),
     );
@@ -185,6 +187,7 @@ class _MarkerPin extends StatelessWidget {
     required this.icon,
     required this.color,
     required this.onTap,
+    required this.semanticLabel,
     this.label,
   });
 
@@ -192,32 +195,42 @@ class _MarkerPin extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
+  /// Spoken description for screen readers. The map itself is a raster image,
+  /// so without this each pin is an unlabelled tap target to VoiceOver/TalkBack.
+  final String semanticLabel;
+
   /// Printed-map legend letter, shown instead of the icon when present.
   final String? label;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: AonColors.night950,
-          shape: BoxShape.circle,
-          border: Border.all(color: color, width: 2.5),
-          boxShadow: const [
-            BoxShadow(color: Color(0x8805070F), blurRadius: 6),
-          ],
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      // The letter/icon inside is decorative once the pin is labelled.
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AonColors.night950,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 2.5),
+            boxShadow: const [
+              BoxShadow(color: Color(0x8805070F), blurRadius: 6),
+            ],
+          ),
+          alignment: Alignment.center,
+          child: label != null
+              ? Text(
+                  label!,
+                  style: Theme.of(context)
+                      .textTheme
+                      .labelMedium
+                      ?.copyWith(color: color),
+                )
+              : Icon(icon, size: AonSpacing.iconMd, color: color),
         ),
-        alignment: Alignment.center,
-        child: label != null
-            ? Text(
-                label!,
-                style: Theme.of(context)
-                    .textTheme
-                    .labelMedium
-                    ?.copyWith(color: color),
-              )
-            : Icon(icon, size: AonSpacing.iconMd, color: color),
       ),
     );
   }

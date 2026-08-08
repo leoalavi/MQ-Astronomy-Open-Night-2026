@@ -61,20 +61,26 @@ class EventDetailScreen extends ConsumerWidget {
         children: [
           // ── Status ──
           if (timed.timing != EventTiming.finished)
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TimingBadge(
-                timing: timed.timing,
-                trailingText: switch (timed.timing) {
-                  EventTiming.happeningNow => TimeFormat.remaining(
-                      now,
-                      timed.session!.end,
-                    ).replaceFirst('ends ', ''),
-                  EventTiming.startingSoon =>
-                    TimeFormat.until(now, timed.session!.start),
-                  _ => null,
-                },
-              ),
+            // Row + Flexible gives the badge a bounded width (so it left-aligns
+            // and ellipsizes rather than overflowing) without an unbounded
+            // Align around it.
+            Row(
+              children: [
+                Flexible(
+                  child: TimingBadge(
+                    timing: timed.timing,
+                    trailingText: switch (timed.timing) {
+                      EventTiming.happeningNow => TimeFormat.remaining(
+                          now,
+                          timed.session!.end,
+                        ).replaceFirst('ends ', ''),
+                      EventTiming.startingSoon =>
+                        TimeFormat.until(now, timed.session!.start),
+                      _ => null,
+                    },
+                  ),
+                ),
+              ],
             ),
 
           const SizedBox(height: AonSpacing.space4),
@@ -125,7 +131,9 @@ class EventDetailScreen extends ConsumerWidget {
                       ),
                     ),
                     if (session.containsTime(now))
-                      const TimingBadge(timing: EventTiming.happeningNow),
+                      const Flexible(
+                        child: TimingBadge(timing: EventTiming.happeningNow),
+                      ),
                   ],
                 ),
                 if (session.note != null) ...[

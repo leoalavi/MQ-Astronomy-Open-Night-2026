@@ -293,6 +293,25 @@ R2) — it is verified on-device. Tests cover the island's logic, not the live `
   totals rather than asserting a hard-coded number. The home widget tests keep passing (the hero gains a
   glass wrapper but the same text/semantics remain findable).
 
+## 8a. Verification results (recorded 2026-08-09, iPhone 17 Pro simulator / Impeller-Metal)
+
+| Item | Result | Evidence |
+|---|---|---|
+| `flutter analyze` | **PASS** | No issues found |
+| Tests | **PASS** | 186 pass (171 baseline + 15 new); no regression |
+| iOS build | **PASS** | `Runner.app` for device + simulator built |
+| Android build | **PASS** | `app-debug.apk` built |
+| iOS runtime | **PASS** | app launches; tab nav works |
+| Live camera wiring | **PASS** | zoom-in tapped → map zoomed (Central Courtyard). Zoom-out/recenter share identical wiring + `clampZoom` (unit-tested); not each tapped |
+| Shader over live map tiles | **PASS** | dark OSM tiles visibly refract through the control island + nav island rims (lensing, not flat blur) |
+| Shader over hero photo | **PASS** | glass date pill renders over the galaxy; refraction path active on Impeller |
+| Hero legibility | **PASS** | date text legible over the (scrim-darkened) galaxy in the shader render |
+| Frost fallback | **PASS (policy)** | `resolveGlassRenderMode` fallback ladder unit-tested; runtime forced-frost not separately toggled |
+| Governance audit | **PASS** | one glass layer per region, no glass-on-glass; app bar opaque, FAB + selected chips + attribution + pins solid |
+| Layout clearances | **PASS** | island (top-right) clears FAB (bottom-right), filter row (above), attribution (bottom-left) — visually confirmed |
+| Android runtime | **NOT AVAILABLE** | no emulator booted this session |
+| Performance profiling | **NOT AVAILABLE** | no profile-mode trace run this session |
+
 ## 8. Acceptance gate (Phase 2 is complete only when ALL hold)
 
 **Functional/UX:** map controls work (recenter returns to `campusCentre`/`initialZoom`; zoom in/out clamp

@@ -69,10 +69,18 @@ Verbatim from recon (`MQ_Journey/lib/shared/widgets/mq_tactile_button.dart`,
    … : 1.0`). Not `Duration.zero` — omission (Phase 1 D5).
 2. **Button semantics (MQ has none).** MqTactileButton is a bare `GestureDetector` with no semantic role —
    fine when its child is a labelled button, but it **replaces `InkWell`** on aon2026's tiles, which today
-   get their button role from that `InkWell`. `AonTactileButton` wraps `Semantics(button: true, onTap:
-   onTap, label: semanticLabel)` so replacing `InkWell` does not regress accessibility.
+   get their button role from that `InkWell`. `AonTactileButton` wraps `MergeSemantics` +
+   `Semantics(button: true, onTap: onTap)` (the child's own text is the label) so replacing `InkWell` does
+   not regress accessibility.
 3. **Cut the vestigial `borderRadius`.** MQ stores it unused; aon2026 drops it (Phase-2 gauntlet lesson —
    no dead params). The button is surface-agnostic; radius comes from the child.
+
+**Adoption-site contract (G4 — aon2026's contract, not just MQ's):** all three Phase-3 consumers currently
+have **non-null, always-actionable** callbacks and **no disabled presentation** — `QuickLinkTile.onTap` and
+`EventCard.onTap` are `required VoidCallback`s (`quick_link_tile.dart:24`, `event_card.dart:29`), and
+`_LiveStrip`'s action is an inline `context.go(Routes.whatsOn)` (`home_screen.dart:291`). So `onTap`
+non-nullable + no disabled state removes nothing that exists today; it is not merely "MQ has no disabled
+state."
 
 ## 4. Concrete files
 
@@ -111,35 +119,49 @@ for later phases (honestly flagged in §7 — a 6-const vocabulary is standard d
 kind of unused *widget* the Phase-2 gauntlet cut).
 
 ### 5.2 `AonTactileButton`
-Surface-agnostic squish wrapper. Public API:
+Surface-agnostic squish wrapper. Public API (no `semanticLabel` — G1; the child's own text is the label):
 ```dart
 AonTactileButton({
   Key? key,
   required Widget child,        // the caller's visual surface (Material/Container/etc.)
   required VoidCallback onTap,   // fired on tap-up
-  bool hapticsEnabled = true,    // light haptic on tap-down
-  String? semanticLabel,         // optional; the button role is always applied
+  bool hapticsEnabled = true,    // light haptic on tap-down (MQ reference-signature parity — see below)
 })
 ```
+**`hapticsEnabled` is kept as deliberate reference parity (G2), not settings speculation.** MQ's real
+`MqTactileButton` API carries exactly this param (`hapticsEnabled = true` → `MqHaptics.light(...)`), and
+aon2026's `AonHaptics.light(bool isEnabled)` **already requires the bool** — so the param preserves the
+reference signature *and* feeds an existing API. All Phase-3 consumers pass the default `true` (as the
+Phase-1 tab bar does); no future-settings claim is made.
+
+Frozen widget structure (G3 — one coherent button node; the button itself owns the merge, so every
+consumer gets it for free):
+```
+MergeSemantics
+└── Semantics(button: true, onTap: onTap)
+    └── GestureDetector(behavior: HitTestBehavior.opaque)
+        └── <press-feedback layer>   // AnimatedScale (normal) OR instant Opacity (reduced motion)
+            └── child
+```
 Mechanics (verbatim from MQ except the corrections):
-- `Semantics(button: true, onTap: onTap, label: semanticLabel, child: GestureDetector(...))` — wraps the
-  gesture layer so the whole surface reads as one button node.
-- `GestureDetector(behavior: HitTestBehavior.opaque)`:
+- `GestureDetector`:
   - `onTapDown` → `setState(pressed = true)`; `AonHaptics.light(hapticsEnabled)`.
   - `onTapUp` → `setState(pressed = false)`; `onTap()`.
   - `onTapCancel` → `setState(pressed = false)` (no haptic, no `onTap`).
   - every handler guards `if (!mounted) return;`.
-- `AnimatedScale(scale: (pressed && !reduceMotion) ? 0.96 : 1.0, duration: AonAnimations.fast, curve:
-  AonAnimations.easeInOut, child: child)`, where `reduceMotion = MediaQuery.disableAnimationsOf(context)`.
-  Under reduced motion the scale never leaves `1.0` — the squish is **omitted**, not zero-duration'd.
+- `reduceMotion = MediaQuery.disableAnimationsOf(context)`.
+- **Press feedback — always visible, motion only when allowed (Answer-1 / P1):**
+  - **Normal:** `AnimatedScale(scale: pressed ? 0.96 : 1.0, duration: AonAnimations.fast, curve:
+    AonAnimations.easeInOut)` — the whole surface squishes.
+  - **Reduced motion:** the squish is **omitted** (scale stays `1.0`) but an **instant, non-animated**
+    pressed state replaces it — `Opacity(opacity: pressed ? 0.6 : 1.0)` (a plain `Opacity`, **not**
+    `AnimatedOpacity`, so it is a static state toggle, not motion). This closes the gap where dropping
+    `InkWell` (no ripple) + omitting the squish (no scale) would otherwise leave a reduced-motion user with
+    **no visual pressed feedback at all**. Visual feedback must never depend on the user perceiving the
+    haptic. No tween, no `Duration.zero`, no motion — a static opacity toggle honours Phase-1 D5.
 - No `AnimationController` (plain implicit `AnimatedScale`, matching MQ). No drop shadow (MQ removed it). No
-  disabled state (`onTap` is non-nullable, always fires) — matching MQ.
-
-**Semantics coherence (Phase-2 O3 lesson — avoid double-read):** `semanticLabel` is **optional** and used
-only for icon-only children. The tiles already carry their own text, so they pass **no** `semanticLabel`
-(the child text is the label, exactly as the `InkWell` they replace) and wrap the child in `MergeSemantics`
-so the role + all the tile's text collapse into **one** button node. Passing a `semanticLabel` *and*
-keeping the child text would read the label twice — do not do both.
+  disabled state (`onTap` is non-nullable, always fires) — matching MQ **and** aon2026's current contract
+  (§3: all three adoption sites are always-actionable; no disabled presentation is being removed).
 
 ### 5.3 Adoption pattern (the three tiles)
 Each tile today is `Material(color, radius, clip) > InkWell(onTap) > <content>`. The port becomes:
@@ -160,8 +182,8 @@ AonTactileButton(
   trade (lose ripple, gain squish + haptic), not an oversight. Nesting `AonTactileButton`'s
   `GestureDetector` *inside* the retained `InkWell` is rejected: two tap recognizers in one arena is exactly
   the conflict MQ avoids by giving its tiles no `InkWell`.
-- **Per-tile specifics** (none pass `semanticLabel`; each wraps its content in `MergeSemantics` so the
-  tile's own text is the button's label — §5.2):
+- **Per-tile specifics** (the `MergeSemantics` + button role live **inside** `AonTactileButton` (§5.2), so
+  the tiles just pass their existing content as `child`; the child text becomes the button's label):
   - `QuickLinkTile` — `Material(night900, radiusMd, clip)`; `onTap` → `AonTactileButton`. VoiceOver reads
     "<label>, <description>, button" from the existing title + description text.
   - `EventCard` — `Card`-themed surface; `onTap` → `AonTactileButton`. Label from the existing title/meta.
@@ -169,12 +191,22 @@ AonTactileButton(
     existing "N activities happening right now" text.
 
 ## 6. Accessibility
-- **Reduced motion:** the squish is omitted under `MediaQuery.disableAnimationsOf` (§5.2). Haptic + `onTap`
-  still fire — only the decorative scale is dropped.
-- **Semantics:** every adopted tile keeps a single `button`-role node with its label + tap action (§5.2).
+- **Reduced motion — feedback preserved, not removed (Answer-1):** the animated squish is omitted under
+  `MediaQuery.disableAnimationsOf`, **and** an instant (non-animated) `Opacity` pressed state replaces it
+  (§5.2), so the button still shows it is being pressed. Haptic + `onTap` also fire. The rule: reduced
+  motion drops the *motion*, never the *feedback*.
+- **Semantics:** every adopted tile is a single `button`-role node with its label + tap action, produced by
+  the button's own `MergeSemantics`+`Semantics` (§5.2). **Touch vs assistive activation (G7):** *touch*
+  activation produces the pressed feedback (squish/opacity) + haptic via the pointer down/up sequence;
+  *assistive* activation (VoiceOver/TalkBack) invokes the `onTap` action directly and correctly — it does
+  not require the pointer-driven press animation, and the screen reader supplies its own activation cue.
 - **Targets:** the tiles are already ≥56/104px; the port does not shrink them.
-- **Haptics preference:** `hapticsEnabled` defaults `true` (no settings screen, as with the Phase-1 tab
-  bar); retained so a preference can gate it later.
+- **High contrast (G10 — verified, not assumed):** removing `InkWell` removes its Material state layer, so
+  the port must **verify** that the existing high-contrast appearance/content stays usable and that **no
+  new colour-dependent state** is introduced (the reduced-motion opacity toggle is opacity, not colour).
+  Included in the visual regression check (§8). Large text is structurally untouched.
+- **Haptics preference:** `hapticsEnabled` defaults `true` and is present for MQ reference-signature parity
+  (§5.2), not on the promise of a future settings screen.
 
 ## 7. Testing plan
 
@@ -182,18 +214,28 @@ AonTactileButton(
   - renders its child; `onTapUp` fires `onTap`; `onTapCancel` does **not** fire `onTap`.
   - **press scale:** after `onTapDown` (no settle) the `AnimatedScale.scale` target is `0.96`; after
     `onTapUp` it returns to `1.0`.
+  - **cancel returns to rest (G9 — no stuck-squished card):** `onTapDown` → scale `0.96`; `onTapCancel` →
+    scale `1.0`; and `onTap` invocation count is still `0`.
   - the `AnimatedScale` uses `duration == AonAnimations.fast` and `curve == AonAnimations.easeInOut` (proves
     the token is consumed).
-  - **reduced motion:** with `MediaQuery(disableAnimations: true)`, after `onTapDown` the scale stays
-    `1.0` (squish omitted) **and** `onTap` still fires on up.
-  - **haptic:** capture `SystemChannels.platform` method calls via a mock handler; `onTapDown` with
-    `hapticsEnabled: true` emits `HapticFeedback.vibrate`/`lightImpact`; with `hapticsEnabled: false` it
-    does not.
-  - **semantics:** one node with `button: true`, the given `semanticLabel`, and a tap action.
-- **Adoption tests** (either in the button test file or per-tile): mounting `QuickLinkTile` / `EventCard` /
-  `_LiveStrip` (via its screen), tapping fires the tile's `onTap`, and the tile exposes one `button`
-  semantics node with its label. (`_LiveStrip` is private → exercise it by pumping `HomeScreen` and tapping,
-  or assert the pattern via `QuickLinkTile`/`EventCard` which are public.)
+  - **reduced motion (Answer-1):** with `MediaQuery(disableAnimations: true)`, after `onTapDown` (a) the
+    scale stays `1.0` (squish omitted) **and** (b) the instant `Opacity` pressed state is present (opacity
+    `0.6` on press, back to `1.0` on up/cancel — a plain `Opacity`, asserted to have **no** enclosing
+    `AnimatedOpacity`) **and** (c) `onTap` still fires on up.
+  - **haptic — exact call (G8):** capture `SystemChannels.platform` method calls via a mock handler;
+    `onTapDown` with `hapticsEnabled: true` emits **exactly** `MethodCall('HapticFeedback.vibrate',
+    'HapticFeedbackType.lightImpact')` — assert the argument is `lightImpact` (not `selectionClick`/
+    `mediumImpact`/`heavyImpact`, which would satisfy a vague "some haptic" test while breaking parity);
+    with `hapticsEnabled: false`, **no** such call is emitted.
+  - **semantics (G3):** exactly **one** node with `button: true` and a tap action; asserted via node
+    count, not "a button exists somewhere".
+- **Adoption tests — per consumer (G3, all three; their descendant semantics differ):**
+  - `QuickLinkTile` (public) — mount it; tapping fires its `onTap`; **exactly one** merged `button` node
+    carrying its title text.
+  - `EventCard` (public, `ConsumerWidget` — mount in a `ProviderScope`) — same: one merged `button` node
+    with the event title; tap fires `onTap`.
+  - `_LiveStrip` (private) — pump `HomeScreen`, find the strip, tap it → navigates; assert one `button`
+    node with its "…happening right now" text. (Do not assume `QuickLinkTile`'s tree stands in for it.)
 - **Regression:** `responsive_layout_test` (mounts Home + Program, which contain all three tiles) stays
   green; the full suite stays green against the captured pre-Phase-3 baseline.
 
@@ -202,17 +244,23 @@ haptics can't be seen in a screenshot. The squish **is** runtime-observable (a m
 
 ## 8. Acceptance gate (Phase 3 is complete only when ALL hold)
 
-**Functional/UX:** the three tile types press with a whole-card squish and a light haptic; tapping still
-navigates exactly as before; Material buttons unchanged (ripple intact); no tile shrinks below its target.
+**Functional/UX:** on **touch** activation the three tile types press with a whole-card squish + a light
+haptic and fire on release; **assistive** activation invokes the action correctly without requiring the
+pointer press animation (G7). Tapping still navigates exactly as before; Material buttons unchanged (ripple
+intact); no tile shrinks below its target.
 
-**A11y:** reduced-motion omits the squish (haptic + onTap intact); each adopted tile reads as one `button`
-node with its label; high-contrast/large-text unaffected (no glass involved).
+**A11y:** reduced motion drops the *motion* but keeps *feedback* — squish omitted, instant `Opacity`
+pressed state + haptic + onTap intact (Answer-1); each adopted tile is one `button` node with its label
+(G3); existing **high-contrast appearance/content remains usable and no new colour-dependent state is
+introduced** (verified, not assumed — G10); large text structurally untouched.
 
 **Verification & evidence** — record each as `PASS` / `FAIL` / `NOT AVAILABLE`:
 - `flutter analyze` clean; tests pass (report before/after totals vs the captured baseline).
 - Android **build**; iOS **build**; iOS **runtime** (tiles squish on press; nav still works).
 - **Squish** — visually confirmed on-device (a tile scaled-down mid-press).
-- **Haptic** — verified by the test's platform-channel capture (NOT visually verifiable; say so).
+- **Reduced-motion pressed state** — visually confirmed: squish gone, instant opacity press present.
+- **High-contrast visual regression (G10)** — the adopted tiles still render usably; no lost state layer.
+- **Haptic** — verified by the test's exact platform-channel capture (NOT visually verifiable; say so).
 - Android **runtime** / performance — record `NOT AVAILABLE` if the environment can't run them.
 
 Then: **visual/behaviour parity vs MQ_Journey** (whole-card squish + light-haptic-on-down) and a **hostile
@@ -224,18 +272,24 @@ audit** for gesture conflicts, lost semantics, or reduced-motion regressions int
 |---|---|---|
 | Reference fidelity | 9 | squish mechanics (0.96 @ `fast` easeInOut, light-haptic-on-down, surface-agnostic) + token values ported verbatim |
 | Internal consistency | 9 | reduced-motion uses the exact codebase idiom; no `adaptive`/`Duration.zero` contradiction; content-glass no-op named not smuggled |
-| Honesty / falsifiability | 9 | the "MQ ignores reduced motion" bug is named; the haptic coverage bound is stated; unused motion tokens flagged |
-| aon2026 ergonomic fit | 8 | reduced-motion omission + button semantics are real a11y repairs over MQ; targets preserved |
-| Ambition / invention | 4 | it is a **port** of two tiny pieces; the three corrections are repair, not a new species — a native press flourish (e.g. a night-tuned haptic pattern) would raise it |
-| Implementation-readiness | 9 | files, API, mechanics, adoption pattern, and tests all named; no dead params/helpers; gesture-conflict path reasoned |
+| Honesty / falsifiability | 9 | the "MQ ignores reduced motion" bug is named; the haptic coverage bound + exact-call assertion stated; unused motion tokens flagged (kept — declarative, not machinery) |
+| aon2026 ergonomic fit | 9 | reduced motion keeps *feedback* (instant opacity) not just haptic; button semantics + verified high-contrast are real a11y repairs over MQ; `semanticLabel` cut, `hapticsEnabled` justified as parity |
+| Ambition / invention | 4 | it is a **port** of two tiny pieces; the corrections are repair, not a new species — a native press flourish would raise it (held out of scope, §10) |
+| Implementation-readiness | 9 | files, API, frozen widget structure, adoption pattern, and per-consumer tests all named; no dead params/helpers; press scale + reduced-motion feedback frozen (not on-device tweaks) |
 
 **Honest verdict:** a faithful, small port whose value is (a) spreading MQ's tactile DNA to ~6 tile
 surfaces and (b) three accessibility/quality corrections MQ never made. It is not an invention and does not
 pretend to be; the one place ambition could rise (an aon2026-native press flourish) is named and held out.
 
-## 10. Open decisions for the final parity review
-- Press scale: `0.96` (MQ-verbatim) vs a slightly deeper `0.94` for a more pronounced night-glove press —
-  tuned on-device.
-- Whether the live strip's chevron should also nudge on press (a small native flourish) — flagged, not in
-  this phase.
-- Whether to later gate `hapticsEnabled` on a real preference once a settings surface exists.
+## 10. Frozen decisions & future ideas
+
+**Frozen for Phase 3 (no longer open — G5/G6):**
+- **Press scale = `0.96`** (MQ-verbatim). This is a foundational number the tests assert and the parity
+  claim rests on — it is **not** an on-device tweak. If usability later shows it too subtle, deepening it is
+  a separate, deliberate aon2026 divergence, decided then, not by the implementation agent.
+- **Reduced-motion pressed state = instant `Opacity 0.6`** (Answer-1), non-animated.
+
+**Future ideas (explicitly OUT of Phase 3 — not open decisions, no scope snacks):**
+- A live-strip chevron nudge-on-press, or any other native press flourish — a new interaction invention,
+  belongs to a later "aon2026-native touch" pass, not this faithful port.
+- Gating `hapticsEnabled` on a real preference — only if/when a settings surface is actually built.

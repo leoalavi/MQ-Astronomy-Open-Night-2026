@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/providers.dart';
@@ -27,11 +28,11 @@ class HomeScreen extends ConsumerWidget {
         slivers: [
           SliverToBoxAdapter(child: _Hero(now: now)),
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(
+            padding: EdgeInsets.fromLTRB(
               AonSpacing.space4,
               AonSpacing.space5,
               AonSpacing.space4,
-              AonSpacing.space10,
+              AonNavMetrics.clearance(context),
             ),
             sliver: SliverList.list(
               children: [

@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
@@ -131,22 +132,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     MarkerLayer(markers: markers),
                   ],
                 ),
-                const Positioned(
+                Positioned(
                   left: AonSpacing.space2,
-                  bottom: AonSpacing.space2,
-                  child: _MapAttribution(),
+                  bottom: AonNavMetrics.clearance(context) - AonSpacing.space4,
+                  child: const _MapAttribution(),
                 ),
               ],
             ),
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push(Routes.wayfinding),
-        backgroundColor: AonColors.amber,
-        foregroundColor: AonColors.onAccent,
-        icon: const Icon(Icons.directions_walk_rounded),
-        label: const Text('Directions'),
+      floatingActionButton: Padding(
+        padding: EdgeInsets.only(
+          bottom: AonNavMetrics.clearance(context) - AonSpacing.space3,
+        ),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push(Routes.wayfinding),
+          backgroundColor: AonColors.amber,
+          foregroundColor: AonColors.onAccent,
+          icon: const Icon(Icons.directions_walk_rounded),
+          label: const Text('Directions'),
+        ),
       ),
     );
   }

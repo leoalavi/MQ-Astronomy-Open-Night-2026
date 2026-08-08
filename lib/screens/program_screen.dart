@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/services/event_filter.dart';
 import 'package:aon2026/services/providers.dart';
@@ -74,11 +75,11 @@ class ProgramScreen extends ConsumerWidget {
                         ref.read(eventFilterProvider.notifier).clear(),
                   )
                 : ListView(
-                    padding: const EdgeInsets.fromLTRB(
+                    padding: EdgeInsets.fromLTRB(
                       AonSpacing.space4,
                       0,
                       AonSpacing.space4,
-                      AonSpacing.space10,
+                      AonNavMetrics.clearance(context),
                     ),
                     children: [
                       for (final entry in grouped.entries) ...[

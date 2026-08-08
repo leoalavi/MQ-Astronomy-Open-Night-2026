@@ -36,7 +36,7 @@ class MapCategoryFilterBar extends StatelessWidget {
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: AonSpacing.space4),
         itemCount: categories.length,
-        separatorBuilder: (_, __) => const SizedBox(width: AonSpacing.space2),
+        separatorBuilder: (_, _) => const SizedBox(width: AonSpacing.space2),
         itemBuilder: (context, i) {
           final category = categories[i];
           return _MapCategoryChip(

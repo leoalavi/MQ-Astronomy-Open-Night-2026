@@ -61,7 +61,7 @@ Verbatim from recon (`MQ_Journey/lib/shared/widgets/mq_tactile_button.dart`,
   `sheetCurve easeOutCubic`; plus `adaptive(Duration, ref)` → `Duration.zero` when a settings provider's
   `reducedMotion` is true. **`adaptive` has zero call sites; only `fast` and `normal` are used anywhere.**
 
-**The three corrections (this is where the port earns its keep):**
+**The four corrections (this is where the port earns its keep — the last one puts aon2026 *ahead* of MQ):**
 1. **Reduced motion (MQ has a bug here).** MqTactileButton's `AnimatedScale` runs **unconditionally** — its
    only reduced-motion path (`adaptive`) is never wired, so MQ's button ignores reduced motion.
    `AonTactileButton` reads `MediaQuery.disableAnimationsOf(context)` and **omits** the squish (scale stays
@@ -72,8 +72,16 @@ Verbatim from recon (`MQ_Journey/lib/shared/widgets/mq_tactile_button.dart`,
    get their button role from that `InkWell`. `AonTactileButton` wraps `MergeSemantics` +
    `Semantics(button: true, onTap: onTap)` (the child's own text is the label) so replacing `InkWell` does
    not regress accessibility.
-3. **Cut the vestigial `borderRadius`.** MQ stores it unused; aon2026 drops it (Phase-2 gauntlet lesson —
-   no dead params). The button is surface-agnostic; radius comes from the child.
+3. **Keyboard operability + focus-visible (MQ has neither — this is beyond parity).** MQ's bare
+   `GestureDetector` cannot be Tab-focused or activated by Enter/Space, and shows no focus indicator —
+   replacing the tiles' `InkWell` (which *does* all three) with it would regress physical-keyboard / switch
+   access and fail WCAG 2.1.1 (operable) + 2.4.7 (focus visible). `AonTactileButton` wraps a
+   `FocusableActionDetector` that maps `ActivateIntent` (Enter **and** Space) to `onTap` and draws a visible
+   focus ring on keyboard focus. **This is where MQ's vestigial `borderRadius` finds a real purpose:** it is
+   *kept* (not cut) and repurposed to shape that focus ring. So the "no dead params" rule is honoured by
+   giving the param a job, not by deleting it. (Verified idioms: `ActivateIntent` fires on both Enter and
+   Space; `FocusHighlightStrategy.alwaysTraditional` surfaces the ring in tests; Tab focuses it without any
+   `autofocus`/`focusNode` API — so none is added.)
 
 **Adoption-site contract (G4 — aon2026's contract, not just MQ's):** all three Phase-3 consumers currently
 have **non-null, always-actionable** callbacks and **no disabled presentation** — `QuickLinkTile.onTap` and
@@ -124,8 +132,9 @@ Surface-agnostic squish wrapper. Public API (no `semanticLabel` — G1; the chil
 AonTactileButton({
   Key? key,
   required Widget child,        // the caller's visual surface (Material/Container/etc.)
-  required VoidCallback onTap,   // fired on tap-up
+  required VoidCallback onTap,   // fired on tap-up AND on Enter/Space activation
   bool hapticsEnabled = true,    // light haptic on tap-down (MQ reference-signature parity — see below)
+  double borderRadius = 12,      // shapes the keyboard focus ring to match the child's corners (correction 3)
 })
 ```
 **`hapticsEnabled` is kept as deliberate reference parity (G2), not settings speculation.** MQ's real
@@ -134,14 +143,16 @@ aon2026's `AonHaptics.light(bool isEnabled)` **already requires the bool** — s
 reference signature *and* feeds an existing API. All Phase-3 consumers pass the default `true` (as the
 Phase-1 tab bar does); no future-settings claim is made.
 
-Frozen widget structure (G3 — one coherent button node; the button itself owns the merge, so every
-consumer gets it for free):
+Frozen widget structure (G3 — one coherent button node; the button owns the merge + focus, so every
+consumer gets both for free):
 ```
 MergeSemantics
 └── Semantics(button: true, onTap: onTap)
-    └── GestureDetector(behavior: HitTestBehavior.opaque)
-        └── <press-feedback layer>   // AnimatedScale (normal) OR instant Opacity (reduced motion)
-            └── child
+    └── FocusableActionDetector          // keyboard: ActivateIntent(Enter/Space)→onTap; focus-highlight cb
+        └── GestureDetector(behavior: HitTestBehavior.opaque)
+            └── DecoratedBox(foreground)  // focus ring when focused; empty decoration otherwise
+                └── <press-feedback layer>   // AnimatedScale (normal) OR instant Opacity (reduced motion)
+                    └── child
 ```
 Mechanics (verbatim from MQ except the corrections):
 - `GestureDetector`:
@@ -159,6 +170,16 @@ Mechanics (verbatim from MQ except the corrections):
     `InkWell` (no ripple) + omitting the squish (no scale) would otherwise leave a reduced-motion user with
     **no visual pressed feedback at all**. Visual feedback must never depend on the user perceiving the
     haptic. No tween, no `Duration.zero`, no motion — a static opacity toggle honours Phase-1 D5.
+- **Keyboard operability + focus ring (correction 3):**
+  - `FocusableActionDetector(actions: {ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
+    onTap(); return null; })}, onShowFocusHighlight: (v) => setState(focused = v), mouseCursor:
+    SystemMouseCursors.click)`. `ActivateIntent` fires on **Enter and Space** (verified). No `autofocus`/
+    `focusNode` param is added (Tab focuses it; tests use Tab — verified).
+  - **Focus ring:** the `DecoratedBox` (foreground) paints `Border.all(color:
+    Theme.of(context).colorScheme.primary, width: 2)` with `BorderRadius.circular(borderRadius)` when
+    `focused`, else an empty decoration. Colour is read from the *ambient* theme (portability-safe; no
+    `AonColors` import). The ring wraps the un-scaled bounds (it is the parent of the feedback layer), so the
+    press squish does not move it.
 - No `AnimationController` (plain implicit `AnimatedScale`, matching MQ). No drop shadow (MQ removed it). No
   disabled state (`onTap` is non-nullable, always fires) — matching MQ **and** aon2026's current contract
   (§3: all three adoption sites are always-actionable; no disabled presentation is being removed).
@@ -168,6 +189,7 @@ Each tile today is `Material(color, radius, clip) > InkWell(onTap) > <content>`.
 ```dart
 AonTactileButton(
   onTap: onTap,
+  borderRadius: AonSpacing.radiusMd,   // matches the tile's own corner radius → the focus ring lines up
   child: Material(
     color: ...,
     borderRadius: ...,
@@ -176,6 +198,8 @@ AonTactileButton(
   ),
 )
 ```
+All three tiles use `radiusMd` (14) today, so each passes `borderRadius: AonSpacing.radiusMd` (the
+`AonSpacing` import lives at the call site, keeping `AonTactileButton` itself token-free).
 - The **whole card squishes** (the `AnimatedScale` scales the `Material` surface), matching MQ's
   whole-card press.
 - The **ink ripple is replaced by the squish** — MQ's deliberate press aesthetic. This is a conscious
@@ -200,6 +224,13 @@ AonTactileButton(
   activation produces the pressed feedback (squish/opacity) + haptic via the pointer down/up sequence;
   *assistive* activation (VoiceOver/TalkBack) invokes the `onTap` action directly and correctly — it does
   not require the pointer-driven press animation, and the screen reader supplies its own activation cue.
+- **Keyboard operability + focus-visible (correction 3 — beyond MQ):** because the port replaces the tiles'
+  `InkWell` (which was Tab-focusable and Enter/Space-activatable), `AonTactileButton` restores **all** of it:
+  Tab moves focus to it, **Enter and Space** activate `onTap` (via `ActivateIntent`), and a visible focus
+  ring (theme `primary`, `borderRadius`-matched) marks the focused tile. This meets WCAG 2.1.1 (keyboard
+  operable) + 2.4.7 (focus visible) — which neither MQ's tactile button nor a bare `GestureDetector`
+  provides. The ring only appears in keyboard-navigation mode (Flutter's focus-highlight strategy), so touch
+  users never see it.
 - **Targets:** the tiles are already ≥56/104px; the port does not shrink them.
 - **High contrast (G10 — verified, not assumed):** removing `InkWell` removes its Material state layer, so
   the port must **verify** that the existing high-contrast appearance/content stays usable and that **no
@@ -229,13 +260,19 @@ AonTactileButton(
     with `hapticsEnabled: false`, **no** such call is emitted.
   - **semantics (G3):** exactly **one** node with `button: true` and a tap action; asserted via node
     count, not "a button exists somewhere".
+  - **keyboard (correction 3):** with `FocusManager.instance.highlightStrategy =
+    FocusHighlightStrategy.alwaysTraditional`, `Tab` focuses the button and a focus-ring `DecoratedBox`
+    (border non-null) appears; **Enter** fires `onTap`; **Space** fires `onTap` again. No `autofocus` API is
+    used (Tab suffices — verified).
 - **Adoption tests — per consumer (G3, all three; their descendant semantics differ):**
   - `QuickLinkTile` (public) — mount it; tapping fires its `onTap`; **exactly one** merged `button` node
     carrying its title text.
   - `EventCard` (public, `ConsumerWidget` — mount in a `ProviderScope`) — same: one merged `button` node
     with the event title; tap fires `onTap`.
-  - `_LiveStrip` (private) — pump `HomeScreen`, find the strip, tap it → navigates; assert one `button`
-    node with its "…happening right now" text. (Do not assume `QuickLinkTile`'s tree stands in for it.)
+  - `_LiveStrip` (private) — pump `HomeScreen` (no router), find the strip text, assert it is wrapped in
+    an `AonTactileButton` (ripple replaced). Structural only: navigation via `context.go` needs a router and
+    is preserved by construction (the `onTap` is unchanged). The strip renders at the 19:00 fixed clock
+    (verified: an event is live then). (Do not assume `QuickLinkTile`'s tree stands in for it.)
 - **Regression:** `responsive_layout_test` (mounts Home + Program, which contain all three tiles) stays
   green; the full suite stays green against the captured pre-Phase-3 baseline.
 
@@ -251,7 +288,8 @@ intact); no tile shrinks below its target.
 
 **A11y:** reduced motion drops the *motion* but keeps *feedback* — squish omitted, instant `Opacity`
 pressed state + haptic + onTap intact (Answer-1); each adopted tile is one `button` node with its label
-(G3); existing **high-contrast appearance/content remains usable and no new colour-dependent state is
+(G3); **keyboard**: Tab-focusable with a visible focus ring, Enter/Space activate (WCAG 2.1.1 + 2.4.7 —
+beyond MQ); existing **high-contrast appearance/content remains usable and no new colour-dependent state is
 introduced** (verified, not assumed — G10); large text structurally untouched.
 
 **Verification & evidence** — record each as `PASS` / `FAIL` / `NOT AVAILABLE`:
@@ -261,6 +299,8 @@ introduced** (verified, not assumed — G10); large text structurally untouched.
 - **Reduced-motion pressed state** — visually confirmed: squish gone, instant opacity press present.
 - **High-contrast visual regression (G10)** — the adopted tiles still render usably; no lost state layer.
 - **Haptic** — verified by the test's exact platform-channel capture (NOT visually verifiable; say so).
+- **Keyboard** — verified by test (Tab focus + ring, Enter/Space activate); an external-keyboard on-device
+  spot-check is a bonus, `NOT AVAILABLE` if no keyboard is attached.
 - Android **runtime** / performance — record `NOT AVAILABLE` if the environment can't run them.
 
 Then: **visual/behaviour parity vs MQ_Journey** (whole-card squish + light-haptic-on-down) and a **hostile
@@ -272,14 +312,17 @@ audit** for gesture conflicts, lost semantics, or reduced-motion regressions int
 |---|---|---|
 | Reference fidelity | 9 | squish mechanics (0.96 @ `fast` easeInOut, light-haptic-on-down, surface-agnostic) + token values ported verbatim |
 | Internal consistency | 9 | reduced-motion uses the exact codebase idiom; no `adaptive`/`Duration.zero` contradiction; content-glass no-op named not smuggled |
-| Honesty / falsifiability | 9 | the "MQ ignores reduced motion" bug is named; the haptic coverage bound + exact-call assertion stated; unused motion tokens flagged (kept — declarative, not machinery) |
-| aon2026 ergonomic fit | 9 | reduced motion keeps *feedback* (instant opacity) not just haptic; button semantics + verified high-contrast are real a11y repairs over MQ; `semanticLabel` cut, `hapticsEnabled` justified as parity |
-| Ambition / invention | 4 | it is a **port** of two tiny pieces; the corrections are repair, not a new species — a native press flourish would raise it (held out of scope, §10) |
-| Implementation-readiness | 9 | files, API, frozen widget structure, adoption pattern, and per-consumer tests all named; no dead params/helpers; press scale + reduced-motion feedback frozen (not on-device tweaks) |
+| Honesty / falsifiability | 9 | the "MQ ignores reduced motion / has no keyboard a11y" gaps are named; the haptic coverage bound + exact-call assertion stated; every test idiom was validated by running code before freezing |
+| aon2026 ergonomic fit | 10 | four a11y repairs over MQ: reduced-motion *feedback* (not just haptic), single-node semantics, verified high-contrast, and full **keyboard operability + focus-visible** (WCAG 2.1.1/2.4.7) — the port is now *more* accessible than its source |
+| Ambition / invention | 5 | still a **port** of two tiny pieces, but the keyboard/focus work goes *beyond* the reference (repair → improvement); a native press flourish would push it further (held out of scope, §10) |
+| Implementation-readiness | 10 | files, API, frozen widget structure, adoption, and per-consumer + keyboard tests all named; every risky idiom (onTapDown timing, exact haptic capture, merged semantics, ActivateIntent, focus-highlight strategy, Tab focus) **empirically validated**; no dead params (borderRadius repurposed); numbers frozen |
 
 **Honest verdict:** a faithful, small port whose value is (a) spreading MQ's tactile DNA to ~6 tile
-surfaces and (b) three accessibility/quality corrections MQ never made. It is not an invention and does not
-pretend to be; the one place ambition could rise (an aon2026-native press flourish) is named and held out.
+surfaces and (b) **four** accessibility/quality corrections MQ never made — the last of which (keyboard
+operability + focus-visible) makes the port *more* accessible than its source. It is not an invention and
+does not pretend to be; the one place ambition could rise (an aon2026-native press flourish) is named and
+held out. Every load-bearing test idiom was validated by running code during the gauntlet, so the plan's
+tests are known to work, not hoped to.
 
 ## 10. Frozen decisions & future ideas
 

@@ -26,9 +26,12 @@ Copied verbatim from the spec; every task's requirements implicitly include this
   `AnimatedScale` (scale stays `1.0`) and instead apply an **instant** `Opacity(opacity: pressed ? 0.6 :
   1.0)` — a plain `Opacity`, NOT `AnimatedOpacity`. Never `Duration.zero`.
 - **Button API is exactly** `{required Widget child, required VoidCallback onTap, bool hapticsEnabled =
-  true}`. **No** `semanticLabel`, `variant`, `size`, `disabled`, `onLongPress`, `borderRadius`.
-- **Semantics:** the button wraps `MergeSemantics > Semantics(button: true, onTap: onTap) > GestureDetector`
-  → one coherent button node; the child's own text is the label (no forced label → no double-read).
+  true, double borderRadius = 12}`. **No** `semanticLabel`, `variant`, `size`, `disabled`, `onLongPress`,
+  `autofocus`, `focusNode`. `borderRadius` shapes the keyboard focus ring (its only job).
+- **Semantics + keyboard:** the button wraps `MergeSemantics > Semantics(button: true, onTap: onTap) >
+  FocusableActionDetector > GestureDetector > DecoratedBox(foreground focus ring) > feedback` → one coherent
+  button node (child text is the label; no forced label → no double-read); Tab-focusable; `ActivateIntent`
+  (Enter/Space) → `onTap`; a theme-`primary` focus ring on keyboard focus.
 - **Haptic:** light impact on tap-down only, via `AonHaptics.light(hapticsEnabled)`. No haptic on up/cancel.
 - **Adoption replaces the `InkWell`** on QuickLinkTile / EventCard / LiveStrip (squish replaces ripple); the
   surface (`Material`/`Card` + content) is preserved, the `onTap` moves to the button.
@@ -204,6 +207,32 @@ void main() {
     expect(sem.flagsCollection.isButton, isTrue);
     handle.dispose();
   });
+
+  testWidgets('keyboard: Tab focuses (visible ring) + Enter/Space activate', (tester) async {
+    // Focus highlights only show in keyboard-navigation mode; force it for the test.
+    final prev = FocusManager.instance.highlightStrategy;
+    FocusManager.instance.highlightStrategy = FocusHighlightStrategy.alwaysTraditional;
+    addTearDown(() => FocusManager.instance.highlightStrategy = prev);
+
+    var taps = 0;
+    await tester.pumpWidget(harness(AonTactileButton(onTap: () => taps++, child: child())));
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.tab);
+    await tester.pump();
+    // Focus ring visible: the button's foreground DecoratedBox now has a border.
+    final ringed = tester
+        .widgetList<DecoratedBox>(inButton(DecoratedBox))
+        .where((d) => (d.decoration as BoxDecoration).border != null);
+    expect(ringed, isNotEmpty);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
+    await tester.pump();
+    expect(taps, 1);
+
+    await tester.sendKeyEvent(LogicalKeyboardKey.space);
+    await tester.pump();
+    expect(taps, 2);
+  });
 }
 ```
 
@@ -257,6 +286,7 @@ class AonTactileButton extends StatefulWidget {
     required this.child,
     required this.onTap,
     this.hapticsEnabled = true,
+    this.borderRadius = 12,
   });
 
   final Widget child;
@@ -266,12 +296,24 @@ class AonTactileButton extends StatefulWidget {
   /// parity with `MqTactileButton`; feeds [AonHaptics.light].
   final bool hapticsEnabled;
 
+  /// Shapes the keyboard focus ring to match the child's corners. (MQ's
+  /// `MqTactileButton` carried this param but never used it; here it earns its keep.)
+  final double borderRadius;
+
   @override
   State<AonTactileButton> createState() => _AonTactileButtonState();
 }
 
 class _AonTactileButtonState extends State<AonTactileButton> {
   bool _pressed = false;
+  bool _focused = false;
+
+  late final Map<Type, Action<Intent>> _actions = <Type, Action<Intent>>{
+    ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
+      widget.onTap();
+      return null;
+    }),
+  };
 
   void _setPressed(bool value) {
     if (!mounted) return;
@@ -303,16 +345,39 @@ class _AonTactileButtonState extends State<AonTactileButton> {
             child: widget.child,
           );
 
+    // Keyboard focus ring (only shown in keyboard-navigation mode). Wraps the
+    // un-scaled bounds so the press squish doesn't move it.
+    final Widget ringed = DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: _focused
+          ? BoxDecoration(
+              borderRadius: BorderRadius.circular(widget.borderRadius),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary,
+                width: 2,
+              ),
+            )
+          : const BoxDecoration(),
+      child: feedback,
+    );
+
     return MergeSemantics(
       child: Semantics(
         button: true,
         onTap: widget.onTap,
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTapDown: _handleTapDown,
-          onTapUp: _handleTapUp,
-          onTapCancel: () => _setPressed(false),
-          child: feedback,
+        child: FocusableActionDetector(
+          actions: _actions,
+          onShowFocusHighlight: (value) {
+            if (mounted) setState(() => _focused = value);
+          },
+          mouseCursor: SystemMouseCursors.click,
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTapDown: _handleTapDown,
+            onTapUp: _handleTapUp,
+            onTapCancel: () => _setPressed(false),
+            child: ringed,
+          ),
         ),
       ),
     );
@@ -447,6 +512,7 @@ replace the `Material > InkWell` with `AonTactileButton > Material`:
 ```dart
 return AonTactileButton(
   onTap: onTap,
+  borderRadius: AonSpacing.radiusMd, // focus ring matches the tile's corners
   child: Material(
     color: AonColors.night900,
     borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
@@ -473,6 +539,7 @@ Card`:
 ```dart
 return AonTactileButton(
   onTap: onTap,
+  borderRadius: AonSpacing.radiusMd, // matches the themed Card's corner radius
   child: Card(
     clipBehavior: Clip.antiAlias,
     child: Padding(
@@ -492,6 +559,7 @@ with `AonTactileButton > Material`:
 ```dart
 return AonTactileButton(
   onTap: () => context.go(Routes.whatsOn),
+  borderRadius: AonSpacing.radiusMd,
   child: Material(
     color: AonColors.live.withValues(alpha: 0.12),
     borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
@@ -550,7 +618,9 @@ Boot the simulator (`xcrun simctl boot <udid>`), attach the MCP panel, `flutter 
 - navigation still works from all three tile types;
 - **reduced-motion**: enable Reduce Motion (Settings ▸ Accessibility, or an `disableAnimations` MediaQuery
   harness) and confirm the squish is gone but an **instant opacity press** shows;
-- **high-contrast visual regression (G10)**: the tiles still render usably; no lost state layer.
+- **high-contrast visual regression (G10)**: the tiles still render usably; no lost state layer;
+- **keyboard (bonus)**: if an external keyboard is attachable, Tab shows a focus ring and Enter/Space
+  activates a tile; otherwise the Task-1 keyboard test is the evidence (record `NOT AVAILABLE` on-device).
 Capture screenshots. Record each PASS/FAIL.
 
 - [ ] **Step 4: Haptic (test-verified, not visual)**
@@ -586,8 +656,14 @@ exact haptic / G9 cancel→1.0 / G10 high-contrast — all mapped.
 **Placeholder scan:** no TBD/TODO; every code step is complete. The `// ... unchanged content ...` markers
 in T2 refer to code already present in the files being modified (not new code to invent).
 
-**Type consistency:** `AonTactileButton({child, onTap, hapticsEnabled})` used identically across T1 impl,
-T1 tests, and T2 adoption. `AonAnimations.fast`/`easeInOut` consumed in the button and asserted in the
-test. Haptic assertion uses the confirmed non-deprecated
-`tester.binding.defaultBinaryMessenger.setMockMethodCallHandler`. Semantics assertions use the proven
-`flagsCollection.isButton` + `bySemanticsLabel(RegExp(...))` idiom.
+**Type consistency:** `AonTactileButton({child, onTap, hapticsEnabled, borderRadius})` used identically
+across T1 impl, T1 tests, and T2 adoption (all three tiles pass `borderRadius: AonSpacing.radiusMd`).
+`AonAnimations.fast`/`easeInOut` consumed in the button and asserted in the test.
+
+**Empirical validation (done during the gauntlet, before freezing):** every load-bearing idiom was run and
+confirmed — `onTapDown` fires after `startGesture`+`pump` (scale reads `0.96`); `tapCancel`→`1.0`; the exact
+`HapticFeedback.vibrate`/`lightImpact` platform call is captured (and robust to `SystemChrome` setup noise);
+`MergeSemantics`+`Semantics(button)` yields one button node whose label carries the child text;
+`ActivateIntent` fires on **both** Enter and Space; `FocusHighlightStrategy.alwaysTraditional` surfaces the
+ring; Tab focuses without any `autofocus` API; `_LiveStrip` renders at the 19:00 fixed clock. The focus-ring
+container is `DecoratedBox(position: DecorationPosition.foreground)` (not `Container.foregroundDecoration`).

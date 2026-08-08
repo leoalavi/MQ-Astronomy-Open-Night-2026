@@ -28,13 +28,21 @@ recombination, not invention, and does not pretend otherwise.
 
 **The governance finding that shapes this phase (load-bearing):** MQ_Journey enforces four rules that
 make a naive "glass everything" reading *wrong*:
-1. **One glass control layer per region — no glass-on-glass.**
+1. **No nested or overlapping glass layers.** A grouped/segmented control uses **one** glass parent
+   (never a glass child inside a glass parent); **independent** sibling controls may each use glass when
+   that matches the reference pattern. (This is why the map control island is one glass surface with three
+   plain buttons — §5.2 — while the category chips are independently glassed, exactly as MQ does them,
+   `map_page.dart:1231` — §5.3. The forbidden thing is glass-*on*-glass, not two glass siblings.)
 2. **Text-bearing sheets/panels = `content` tier (near-opaque, no refraction).** Sheets stay solid.
 3. **Primary actions stay solid brand colour, deliberately not glass** (MQ's recenter FAB and
    *selected* chips are solid; glass carries only secondary/inactive state).
-4. **Content-heavy pages keep the standard opaque AppBar** — *"glass is a navigation/control-layer
-   material, not a texture for everything"* (`glass_app_bar.dart:8-10`). Glass app bars exist only for
-   pages whose body is live media. **aon2026 has no such page.**
+4. **Content pages keep the standard opaque AppBar** — *"glass is a navigation/control-layer material,
+   not a texture for everything"* (`glass_app_bar.dart:8-10`). MQ reserves glass app bars for **immersive
+   media surfaces** that use `extendBodyBehindAppBar: true` (camera / 360° panorama / AR). The aon2026 Map
+   is live visual content, but it is **not** that immersive pattern: its opaque AppBar stays the
+   navigation/content boundary while glass is confined to controls *over* the map. So the Map AppBar stays
+   opaque by design — not because "the map isn't live," but because it isn't adopting the immersive-media
+   app-bar pattern.
 
 Phase 2 therefore has a small, sharp adoption set and an explicit, reasoned **non**-adoption set. Doing
 less on the app bars / FAB / sheets is not laziness — it is what parity with the reference *requires*.
@@ -88,19 +96,26 @@ self-contained widget composing `GlassSurface(control)` + a `Column` of plain `I
 - `test/widget/map_control_island_test.dart` — renders one `GlassSurface` + three buttons; each button
   fires its injected callback; reduced-motion → frost rung; unit tests for `clampZoom` at/inside/outside
   both bounds. **No `FlutterMap` mounted** (R2).
-- `test/widget/map_glass_surfaces_test.dart` — filter-chip glass: unselected subtree contains
-  `GlassSurface(control)`; selected subtree is solid amber (no `GlassSurface`); toggle fires `onToggle`;
-  toggle semantics (button + selected + label) intact. Chips tested as a standalone widget (no live map).
-- `test/widget/hero_glass_test.dart` — hero date pill renders + stays legible in frost/solid rungs.
+- `lib/widgets/map_category_filter_bar.dart` — **`MapCategoryFilterBar`** (public), extracted from the
+  private `_CategoryFilterBar` so it is test-mountable **without** the live map (P1-#1). Map-specific
+  presentation, **not** a new glass primitive; injected `categories` / `selected` / `onToggle`. Owns the
+  glass chip rendering; `MapScreen` keeps the filter *state*. A private `_MapCategoryChip` may live inside
+  this file (the test mounts the public bar and inspects chip subtrees).
+- `test/widget/map_glass_surfaces_test.dart` — mounts the public `MapCategoryFilterBar` (no live map):
+  an unselected chip subtree contains `GlassSurface(control)`; a selected chip subtree is solid amber (no
+  `GlassSurface`); tapping fires `onToggle`; one coherent `Semantics(button, selected, label)` node per
+  chip (no duplicate label read — P2-#7); chip hit target ≥ `AonSpacing.minTapTarget` (56) at 1.0 and 2.0
+  (P2-#6).
+- `test/widget/hero_glass_test.dart` — hero date pill renders (structure/rung/text/wrap/overflow only;
+  visual legibility is a runtime check, §8/P2-#10).
 
 **Modify**
 - `lib/screens/map_screen.dart` —
   - remove the app-bar **Recentre** `IconButton` (relocated into the island); Map AppBar becomes
     title-only, still opaque `night950` (governance rule 4).
-  - add `MapControlIsland` as a `Positioned` child of the map `Stack` on the **right edge, upper/centre**
-    of the map area (away from the bottom-right Directions FAB — no coordinate-space stacking, R2/O2);
+  - add `MapControlIsland` as a `Positioned` child of the map `Stack` per the placement rule in §5.2;
     wire its callbacks to `_controller.move(...)` using `clampZoom` for the zoom bounds (§5.2).
-  - rewrite `_CategoryFilterBar` chips: unselected → `control` glass; selected → solid amber (§5.3).
+  - replace the private `_CategoryFilterBar` with the extracted `MapCategoryFilterBar` (state stays here).
   - `_MapAttribution`, `_MarkerPin`, the Directions FAB: **unchanged** (non-adoptions, §6).
 - `lib/screens/home_screen.dart` — wrap the `_Hero` date/time `Row` (lines 223-245) in a
   `GlassSurface(control)` pill over the galaxy photo (§5.4); title/eyebrow/scrim unchanged.
@@ -138,15 +153,29 @@ app (real tiles behind the glass; `flutter_map` renders tiles as ordinary Flutte
 - **Camera wiring (in `map_screen.dart`, not the island):** the screen wires the callbacks to the live
   `MapController`, using the pure `clampZoom` helper so the *logic* is testable in isolation:
   - recenter: `move(MapConfig.campusCentre, MapConfig.initialZoom)` (identical to today's app-bar action).
-  - zoom-in: `move(camera.center, clampZoom(camera.zoom, +1, min: minZoom, max: maxZoom))`.
-  - zoom-out: `move(camera.center, clampZoom(camera.zoom, −1, min: minZoom, max: maxZoom))`.
+  - zoom-in: `move(camera.center, clampZoom(camera.zoom, +1, min: MapConfig.minZoom, max: MapConfig.maxZoom))`.
+  - zoom-out: `move(camera.center, clampZoom(camera.zoom, −1, min: MapConfig.minZoom, max: MapConfig.maxZoom))`.
+  - `MapConfig.minZoom` / `maxZoom` are the **single source of truth** for the bounds — the wiring and the
+    tests reference the constants, never the literals `14`/`19` (P2-#5).
   - flutter_map **8.3.1** API confirmed: `MapController.camera` → `MapCamera{center, zoom}`; `move(LatLng,
     double)` (`camera.dart:34,37`, `map_controller.dart:131`). Reading `camera` is valid post-build inside
     a tap handler.
-- **Placement:** `Positioned` on the **right edge, upper/centre** of the map `Stack` (e.g. `right: space4`,
-  `top: space4` or vertically centred) — deliberately **away from** the bottom-right Directions FAB, so the
-  two never share a coordinate-space computation and never overlap (R2/O2). Exact offset tuned on-device;
-  the on-device pass verifies non-overlap with the FAB and attribution.
+- **Zoom-at-bounds behaviour — FROZEN now, not an on-device call (P1-#3):** the zoom buttons stay
+  **always enabled** and `clampZoom` makes them **safe no-ops at the bounds**. This is intentional Phase-2
+  behaviour and it is what keeps `MapControlIsland` **stateless** (pure callbacks, no camera observation).
+  A reactive *disabled* state (`canZoomIn`/`canZoomOut` synced to the live camera on every pinch) would
+  change the widget API, require `MapEventCallback` observation, disabled styling, and different
+  semantics/tests — that whole fork is **deferred** (recorded in §10), not discovered mid-implementation.
+- **Placement rule (frozen, not "top or centre":** a *rule*, so the plan derives exact pixels from the
+  real widget geometry — P2-#9):
+  - right edge of the map `Stack`, `right: AonSpacing.space4` from the edge;
+  - vertically in the **upper** map area (top-aligned, `top: AonSpacing.space4` from the map-area top),
+    which is already **below** the category-filter row (that row is a separate `Column` sibling *above*
+    the map `Stack`, `map_screen.dart:103-113` — so this is adjacency, not overlap, P2-#8) and well
+    **above** the bottom-right Directions FAB's exclusion zone;
+  - **minimum `AonSpacing.space4` separation** from every neighbour (filter row, FAB, attribution) and
+    from the system/safe-area edges.
+  Exact coordinates are derived in the plan; the on-device pass verifies the four clearances in §8.
 - **Testability bound (R2 — stated, not hidden):** because the map is widget-test-hostile (its live
   `DarkTileLayer` fetches network tiles with no `errorBuilder`; no existing test mounts `FlutterMap`), the
   automated tests cover the **island rendering + callback dispatch + `clampZoom` math**. That the wired
@@ -156,18 +185,27 @@ app (real tiles behind the glass; `flutter_map` renders tiles as ordinary Flutte
   (56) — icon buttons get explicit `constraints`/`padding` to hold the floor at every text scale (MQ's
   `_GlassIconButton` uses ~54; aon2026's 56 floor is the honest adaptation).
 
-### 5.3 Map filter chips (faithful `_CategoryChip` port)
-Rewrite `_CategoryFilterBar`'s Material `FilterChip`s to MQ's rule (`map_page.dart:1231`): **glass
-carries only the inactive state.**
+### 5.3 Map filter chips (faithful `_CategoryChip` port, in the extracted component)
+The chips live in the extracted **`MapCategoryFilterBar`** (§4/P1-#1), rewriting the Material
+`FilterChip`s to MQ's rule (`map_page.dart:1231`): **glass carries only the inactive state.** Each chip is
+an **independent glass control** (governance rule 1 permits glass siblings — MQ glasses each chip
+separately; the forbidden thing is glass nested in glass, which the chips never do).
 - **Unselected** → `GlassSurface(variant: control, borderRadius: radiusFull, borderColor:
   <category colour @ low alpha>)` wrapping a transparent `Material`/`InkWell` with the category-coloured
   icon + label.
 - **Selected** → **solid amber** fill (`AonColors.amber`), `onAccent` icon + label — a plain
   `DecoratedBox`/`Material`, no glass (governance rule 3: selected = solid brand).
-- **Semantics must not regress (O3):** Material `FilterChip` announces its selected state automatically;
-  a custom glass/`InkWell` chip does **not**. Each chip is therefore wrapped explicitly in
-  `Semantics(button: true, selected: isSelected, label: category.label)` (as MQ's `_CategoryChip` does),
-  and a test asserts the selected flag + label — this is a hard requirement, not a nicety.
+- **Hit geometry — owning it now that `FilterChip` is gone (P2-#6):** Material `FilterChip` gave a
+  compliant target for free; a custom chip must re-earn it. Each chip enforces `minHeight ≥
+  AonSpacing.minTapTarget` (56), adequate horizontal hit padding, and a hit area covering the **whole
+  visible chip**. Tested at 1.0 and 2.0 text scale.
+- **Semantics — one coherent node, no duplication (P2-#7, was O3):** Material `FilterChip` announces
+  selected state automatically; a custom chip does not, *and* a naive `Semantics(label:)` wrapped around a
+  subtree that still contains the label `Text` can make VoiceOver/TalkBack read the label twice. Each chip
+  is therefore a **single merged semantics node** — `Semantics(button: true, selected: isSelected, label:
+  category.label)` with the inner visual `Text` under `ExcludeSemantics` (or an equivalent `MergeSemantics`
+  structure). The test asserts the **semantics tree** (one node, correct `selected` + `label`, no
+  duplicate), not merely that "some node has `selected: true`".
 - Toggle behaviour, `onToggle`, and the `iconSm` avatar are preserved. The bar sits above the map (not
   over tiles), so the unselected chips' refraction is subtle — that is fine and still faithful (MQ chips
   are `control` glass regardless of backdrop richness; the tier is chosen by *role*, not by how much
@@ -179,11 +217,18 @@ Wrap the hero's existing date/time content (`home_screen.dart:223-245`) in a
 floating over the galaxy image (and its scrim). The eyebrow, event name, year, and the two-stop scrim are
 **unchanged** — the title stays bare scrim text (already contrast-checked), and the pill is the region's
 single glass element (rule 1).
-- **Sizing (O1 — "pill" ≠ full-width `Expanded`):** a hugging pill (`mainAxisSize.min`) cannot contain an
-  unbounded `Expanded`. The pill is a `Row(mainAxisSize.min)` of the `event_rounded` icon + the date/time
-  `Text` wrapped in `Flexible`, the whole `Row` inside a `ConstrainedBox(maxWidth: <hero text-column
-  width>)`. Short strings hug; the long "long date · time-range" string wraps to ≥2 lines inside the pill
-  instead of overflowing. Overflow-safe at 320 × 2.0 (guarded by the hero responsive case).
+- **`control` is a rendering tier, not an interactivity claim (conceptual):** `GlassVariant.control` names
+  the design system's **translucent glass rung**; it does **not** imply the child is interactive. The hero
+  pill is non-interactive event metadata that uses the translucent tier — that is correct and intended,
+  and it carries no button/tap semantics.
+- **Sizing (O1 — "pill" ≠ full-width `Expanded`; rule, not placeholder — P3-#13):** a hugging pill
+  (`mainAxisSize.min`) cannot contain an unbounded `Expanded`. The pill is a `Row(mainAxisSize.min)` of the
+  `event_rounded` icon + the date/time `Text` wrapped in `Flexible`, the whole `Row` inside a
+  `ConstrainedBox` whose **`maxWidth` = the available hero text-column width** (derived from the hero
+  padding + incoming constraints during implementation — the pill never exceeds the hero's horizontal
+  content bounds; no fixed magic width). Short strings hug; the long "long date · time-range" string wraps
+  to ≥2 lines inside the pill instead of overflowing. Overflow-safe at 320 × 2.0 (guarded by the hero
+  responsive case).
 - **Legibility (governance rule 2 applied honestly):** the pill is `control` tier (translucent, 0.45
   tint) so the galaxy refracts through it — but the date text sits over the existing `0xCC05070F` scrim
   band *and* the tinted glass, so `contentSecondary bodySmall` stays legible. Verified on-device; if the
@@ -194,10 +239,11 @@ single glass element (rule 1).
   and **solid** under high contrast (both fully legible; text never depends on refraction).
 
 ### 5.5 Reuse of the Phase 1 ladder (no policy changes)
-Every new surface is a `GlassSurface(control)` and inherits the shipped, unit-tested
-`resolveGlassRenderMode` policy: shader where Impeller supports it → frost → solid, with high-contrast →
-solid and reduced-motion → frost. Phase 2 writes **zero** new rendering/policy code; it only chooses
-variants and injects aon2026 colours. This is the whole point of Phase 1's generic primitive.
+Every new **glass** surface uses the existing `GlassSurface(control)` primitive (P3-#12 — the *selected*
+chips are deliberately solid, not glass) and inherits the shipped, unit-tested `resolveGlassRenderMode`
+policy: shader where Impeller supports it → frost → solid, with high-contrast → solid and reduced-motion →
+frost. Phase 2 writes **zero** new rendering/policy code; it only chooses variants and injects aon2026
+colours. This is the whole point of Phase 1's generic primitive.
 
 ## 6. Non-adoptions (explicit, each with its governance reason)
 
@@ -225,50 +271,73 @@ R2) — it is verified on-device. Tests cover the island's logic, not the live `
 - **`map_control_island_test.dart`** — renders **one** `GlassSurface` (not three) with three buttons;
   recenter/zoom-in/zoom-out each invoke their injected callback; reduced-motion → the surface is frost
   (policy), buttons still fire; icon-button targets ≥ 56 at 1.0 and 2.0. Plus pure `clampZoom` unit tests:
-  in-range `+1`/`−1` change the value; `+1` at `max` stays `max`; `−1` at `min` stays `min`. **No
+  in-range `+1`/`−1` change the value; `+1` at `MapConfig.maxZoom` stays `maxZoom`; `−1` at
+  `MapConfig.minZoom` stays `minZoom` (bounds via the constants, not `14`/`19` — P2-#5). **No
   `FlutterMap` is mounted** — the camera *math* is proven by `clampZoom`, the *wiring* by the callbacks.
-- **`map_glass_surfaces_test.dart`** — filter chip only (no live map): unselected subtree contains a
-  `GlassSurface(control)`; selected subtree is solid amber (no `GlassSurface`); tapping fires `onToggle`;
-  `Semantics(button, selected, label)` intact (O3).
-- **`hero_glass_test.dart`** — the date/time text is wrapped by a `GlassSurface` over the hero; text is
-  present and findable; high-contrast → solid rung, reduced-motion → frost rung (both legible); no
-  overflow at 320×2.0.
+- **`map_glass_surfaces_test.dart`** — mounts the public `MapCategoryFilterBar` (P1-#1; no live map):
+  an unselected chip subtree contains a `GlassSurface(control)`; a selected chip subtree is solid amber (no
+  `GlassSurface`); tapping fires `onToggle`. **Hit target (P2-#6):** each chip's rendered height ≥
+  `AonSpacing.minTapTarget` (56) and the whole chip is tappable, at 1.0 and 2.0. **Semantics tree
+  (P2-#7):** assert **one** merged node per chip with `button: true` + correct `selected` + `label`, and
+  that the inner label is **not** independently read (no duplicate) — inspect the semantics tree, not just
+  "some node has `selected: true`".
+- **`hero_glass_test.dart`** — **structure/rung/wrap only** (P2-#10): the date/time text is wrapped by a
+  `GlassSurface` over the hero and is findable; high-contrast → solid rung, reduced-motion → frost rung; no
+  overflow at 320×2.0. This does **not** prove visual legibility — `find.text()` passing is not a contrast
+  check; actual readability over the galaxy is a runtime-visual item in §8.
 - **Responsive** — **home hero** at 320/414 × {1.0, 1.3, 1.6, 2.0}: no overflow; hero pill + last hero
   line fit. Map surfaces are covered at the component level above (the live `MapScreen` is not mounted,
-  R3); integrated map non-overlap (island / FAB / attribution) is an on-device check (§8).
-- **Regression** — all existing tests (171) stay green; the home widget tests keep passing (the hero
-  gains a glass wrapper but the same text/semantics remain findable).
+  R3); integrated map non-overlap (island / filter row / FAB / attribution) is an on-device check (§8).
+- **Regression (baseline, not a frozen count — P3-#14):** capture the pre-Phase-2 `flutter test` result
+  (pass/fail + total) **before** editing; every pre-existing test must stay green; report the before/after
+  totals rather than asserting a hard-coded number. The home widget tests keep passing (the hero gains a
+  glass wrapper but the same text/semantics remain findable).
 
 ## 8. Acceptance gate (Phase 2 is complete only when ALL hold)
 
-**Functional/UX:** map controls work (recenter returns to campus centre + initial zoom; zoom in/out
-clamp at 14/19); the Map AppBar is title-only and opaque; filter chips toggle with correct
+**Functional/UX:** map controls work (recenter returns to `campusCentre`/`initialZoom`; zoom in/out clamp
+to `MapConfig.minZoom`/`maxZoom` — currently 14/19 — and stay enabled no-ops at the bounds per the frozen
+§5.2 decision); the Map AppBar is title-only and opaque; filter chips toggle with correct
 selected(solid amber)/unselected(glass) states; the hero date pill renders over the photo; every existing
 route/sheet/behaviour is unchanged.
 
 **Rendering/fallback:** the new `control` surfaces take the shader path where Impeller supports it; frost
 where not; solid under high-contrast; frost under reduced motion. Startup + map + home never regress.
 
-**Governance audit (the parity that matters here):** exactly **one** glass control layer per region
-(map control island; hero pill) — **no glass-on-glass**; the non-adoptions in §6 are all still solid;
+**Governance audit (the parity that matters here):** **no nested/overlapping glass** anywhere — the map
+control island is one glass parent with plain buttons; the category chips are independent glass siblings
+(permitted, rule 1); the hero pill is one glass element. The non-adoptions in §6 are all still solid;
 selected chips + FAB + app bars are solid; legibility over every glass surface holds in all three rungs.
 
-**A11y/responsive:** reduced-motion + high-contrast paths legible; per-control semantics + ≥56 targets;
-the island + chips + hero pass the synthetic `TextScaler` sweep through 2.0 as **components** (the live
-`MapScreen` is not test-mountable, R3); the integrated app is 1.6 (root clamp still in place); safe areas
-+ nav-island clearance respected; on-device, the control island never overlaps the FAB or attribution.
+**A11y/responsive:** reduced-motion + high-contrast paths legible; per-control single-node semantics +
+≥56 targets (island buttons **and** chips); the island + chips + hero pass the synthetic `TextScaler`
+sweep through 2.0 as **components** (the live `MapScreen` is not test-mountable, R3); the integrated app is
+1.6 (root clamp still in place); safe areas + nav-island clearance respected; on-device, the control
+island clears **all four** neighbours — category-filter row, Directions FAB, attribution, and the
+system/safe-area edges (P2-#8), each with ≥ `AonSpacing.space4`.
 
 **Verification & evidence** — record **each** as `PASS` / `FAIL` / `NOT AVAILABLE` (never inherited):
 - `flutter analyze` clean (or documented pre-existing exceptions).
 - Tests pass.
 - Android **build**; Android **runtime** (map controls + hero work).
 - iOS **build**; iOS **runtime**.
-- **Live camera wiring** — on-device, the island buttons actually recenter/zoom the map and clamp at
-  14/19 (the coverage bound from §7(b): this is verified here, not by a mounted-map unit test).
-- **Shader render over live map tiles** — verified on an Impeller runtime by screenshot (the payoff:
-  control island visibly refracting tiles), **distinct from a compile**.
-- **Shader render over the hero photo** — verified by screenshot.
+- **Live camera wiring** — on-device, the island buttons actually recenter/zoom the map and clamp to
+  `MapConfig.minZoom`/`maxZoom` (the coverage bound from §7(b): verified here, not by a mounted-map test).
+- **Shader path over live map tiles — two-part evidence (P2-#11):** (1) runtime reports
+  `GlassShaderCache.ready == true` (support + cache loaded), **and** (2) visual proof the *refraction* path
+  renders — **pan the map under the stationary island** in a short runtime inspection so the tiles distort
+  through the glass (motion distinguishes refraction from a flat frost blur far better than a still). No
+  permanent diagnostics ship.
+- **Shader path over the hero photo — two-part evidence (P2-#11):** (1) `GlassShaderCache.ready == true`,
+  **and** (2) visual proof by comparing the shader render against a forced-frost render of the same pill
+  (a static still of frost vs refraction can look deceptively alike, so the comparison — not a lone
+  screenshot — is the evidence).
 - **Frost fallback** — verified where the shader is unavailable.
+- **Hero pill legibility (runtime visual, P2-#10)** — the date text is actually readable over the
+  **brightest** (galaxy core) *and* **darkest** parts of the hero photo, in each of shader / frost / solid.
+  This is the legibility evidence — the automated `hero_glass_test` proves structure/rung only, not
+  contrast. If the default `control` translucency fails over the core, apply the darker `color:` tint
+  fallback (§5.4) and re-verify.
 - **Performance sanity pass measured in aon2026** — scrolling/panning behind the glass over live tiles,
   rapid zoom taps, shader warm-up on the map (this is the map-over-glass interaction Phase 1 §9
   explicitly deferred to here). If profiling can't be run in this environment, record `NOT AVAILABLE`.
@@ -281,23 +350,31 @@ hostile audit** for glass-on-glass, legibility, or governance breaches introduce
 | Axis | Now | What moves it up (named artifact) |
 |---|---|---|
 | Reference fidelity | 9 | control-tier map controls + inactive-only chip glass + glass-over-imagery all ported line-by-line; non-adoptions match MQ governance |
-| Internal consistency | 9 | §3 corrects the `GlassPane` deferral against reality; one ladder, no new policy |
-| Honesty / falsifiability | 9 | §7 states **two** coverage bounds (shader + live-camera); §6 reasoned non-adoptions; §8 per-item evidence; the map's test-hostility is named, not hidden |
-| aon2026 ergonomic fit | 8 | zoom controls for gloved/one-handed night use; ≥56 targets; legibility guarded in all rungs |
+| Internal consistency | 9 | §3 corrects the `GlassPane` deferral; rule 1 reworded to "no nested/overlapping glass" so the glass chips no longer contradict it (P1-#2); rule 4 rationale fixed (live map ≠ no-live-media, P1-#4); one ladder, no new policy |
+| Honesty / falsifiability | 9 | §7/§8 state **three** honest bounds (shader path, live-camera, and "structure-test ≠ legibility"); shader evidence is two-part, not a lone still (P2-#11); the map's test-hostility is named, not hidden |
+| aon2026 ergonomic fit | 8 | zoom controls for gloved/one-handed night use; ≥56 targets on island **and** chips (P2-#6); single-node chip semantics (P2-#7); legibility guarded in all rungs + proven at runtime (P2-#10) |
 | Ambition / invention | 4 | it is a **port**; the two honest adaptations (map control island, hero pill) are recombination, not a new species — a genuinely new astronomy-native map interaction would raise it |
-| Implementation-readiness | 9 | files, variants, `clampZoom` math, injected-callback seam, placement, and tests all named; gauntlet removed the unjustified widget (R1) and the un-runnable map tests (R2/R3); no speculative machinery (layers dropped on evidence) |
+| Implementation-readiness | 9 | the standalone-chip seam is now real — `_CategoryFilterBar` is extracted to the public `MapCategoryFilterBar` (P1-#1); zoom-at-bounds frozen so no mid-task API fork (P1-#3); placement is a rule, bounds via `MapConfig` constants; files/variants/`clampZoom`/tests all named; no speculative machinery |
 
 **Honest verdict:** a governance-faithful port that finally delivers the refraction payoff over live
 tiles and the hero photo, with a sharply reasoned non-adoption set that *is* the parity work. It is not
 an invention and the scorecard says so; the one place ambition could rise (a new astronomy-native map
 interaction) is named and deliberately held out of this phase.
 
-## 10. Open decisions for the final parity review
-- Exact control-island offset on the right edge vs the Directions FAB (tuned on-device for non-overlap).
-- Whether zoom-in/out buttons should **disable** at the zoom bounds (14/19) for polish, or stay tappable
-  no-ops (current design: tappable no-ops via `clampZoom`) — a minor UX call, decided on-device.
+## 10. Open decisions & deferrals
+
+**Frozen in this spec (no longer open — moved here for the record):**
+- **Zoom-at-bounds = enabled, safe no-op** (§5.2, P1-#3). The reactive *disabled* state
+  (`canZoomIn`/`canZoomOut` synced to live-camera events, disabled styling, event observation) is a
+  **deferred** future item — a later polish phase, **not** a mid-implementation fork.
+- **Island placement is a rule** (§5.2, P2-#9), not a per-run choice: right edge, upper map area, ≥
+  `AonSpacing.space4` from every neighbour. Only the exact derived pixels are tuned on-device.
+
+**Genuinely open (tuned on-device during the parity pass):**
 - Hero pill tint: default `control` translucency vs a darker `color:` override if the galaxy core defeats
-  legibility (§5.4) — decided on-device.
+  legibility (§5.4).
 - Unselected filter-chip border colour/alpha (category colour vs neutral hairline) — tuned for night.
-- Whether the OSM attribution should later become a subtle frost (currently solid, non-adopted §6) — a
-  flagged option, not in this phase.
+
+(The earlier "OSM attribution could later become frost" item is **removed** — P3-#15 — it contradicted
+§6's own reasoning that attribution stays solid because it is a legal label, not a control. If governance
+ever changes, that is a fresh decision then, not a standing open question now.)

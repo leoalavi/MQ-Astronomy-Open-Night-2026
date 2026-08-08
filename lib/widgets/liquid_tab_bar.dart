@@ -262,6 +262,12 @@ class _LiquidTabBarState extends State<LiquidTabBar>
                         child: Text(
                           item.label,
                           textAlign: TextAlign.center,
+                          // One line only: on a narrow slot at a large text
+                          // scale the label would otherwise wrap to two lines
+                          // and overflow the bar height (measure-first, §5.6).
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             color: widget.selectedColor ?? widget.color,
                             fontSize: 13,

@@ -5,13 +5,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/data/event_info.dart';
+import 'package:aon2026/widgets/glass_shader.dart';
 
-void main() {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Lock to portrait. The app is used one-handed while walking; a rotation
   // mid-stride is never intentional here.
-  SystemChrome.setPreferredOrientations([
+  await SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
@@ -23,6 +24,11 @@ void main() {
       statusBarBrightness: Brightness.dark,
     ),
   );
+
+  // Preload the glass refraction shader (Impeller only). Non-fatal by
+  // construction: on unsupported targets or a load failure the surfaces fall
+  // back to frost/solid — this must never block app startup.
+  await GlassShaderCache.ensureLoaded();
 
   runApp(const ProviderScope(child: AonApp()));
 }

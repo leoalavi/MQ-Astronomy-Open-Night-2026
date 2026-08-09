@@ -288,6 +288,26 @@ All three tiles use `radiusMd` (14) today, so each passes `borderRadius: AonSpac
 **Coverage note:** the haptic is verified by the platform-channel capture (test), not by the runtime —
 haptics can't be seen in a screenshot. The squish **is** runtime-observable (a mid-press scale-down).
 
+## 8a. Verification results (recorded 2026-08-09, iPhone 17 Pro simulator / Impeller)
+
+| Item | Result | Evidence |
+|---|---|---|
+| `flutter analyze` | **PASS** | No issues found |
+| Tests | **PASS** | 195 pass (186 baseline + 9 new); no regression |
+| iOS build | **PASS** | device + simulator `Runner.app` built |
+| Android build | **PASS** | `app-debug.apk` built |
+| iOS runtime | **PASS** | app launches; tab nav works |
+| QuickLinkTile tactile onTap | **PASS** | tapped Program tile → Program screen (on-device) |
+| EventCard tactile onTap | **PASS** | tapped "Capture the cosmos" → event detail (on-device) |
+| Material buttons unchanged | **PASS** | "Show on map"/"Walk there" still solid, ripple intact (on-device) |
+| Press squish 0.96 / cancel→1.0 | **PASS (test)** | `AnimatedScale.scale` target asserted; transient not captured in a still |
+| Reduced-motion outline (not opacity) | **PASS (test)** | border on press, no `AnimatedScale`/`Opacity` |
+| Keyboard: Tab focus + ring, Enter/Space activate | **PASS (test)** | WCAG 2.1.1/2.4.7 |
+| Exactly one light haptic, on down only | **PASS (test)** | platform-channel count `== 1` (NOT visually verifiable) |
+| Semantics: one node + label + tap action + performAction fires onTap | **PASS (test)** | tree-walk + `SemanticsAction.tap` |
+| Hostile audit (gesture/semantics/stuck-press/regression) | **PASS** | no code changed → re-gate no-op |
+| Android runtime / performance profiling | **NOT AVAILABLE** | no emulator / trace this session |
+
 ## 8. Acceptance gate (Phase 3 is complete only when ALL hold)
 
 **Functional/UX:** on **touch** activation the three tile types press with a whole-card squish + a light

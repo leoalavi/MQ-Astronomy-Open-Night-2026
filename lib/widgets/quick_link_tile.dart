@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/aon_tactile_button.dart';
 
 /// A large home-screen shortcut.
 ///
@@ -28,12 +29,13 @@ class QuickLinkTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: AonColors.night900,
-      borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
+    return AonTactileButton(
+      onTap: onTap,
+      borderRadius: AonSpacing.radiusMd, // focus ring / pressed outline match the tile corners
+      child: Material(
+        color: AonColors.night900,
+        borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+        clipBehavior: Clip.antiAlias,
         child: Container(
           constraints: const BoxConstraints(minHeight: 104),
           padding: const EdgeInsets.all(AonSpacing.space4),

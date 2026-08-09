@@ -9,6 +9,7 @@ import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
+import 'package:aon2026/widgets/aon_tactile_button.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
 
 /// The programme's list row.
@@ -43,10 +44,11 @@ class EventCard extends ConsumerWidget {
     final hasPlaceholderTime = event.sessions
         .any((s) => s.timeConfidence == DataConfidence.placeholder);
 
-    return Card(
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: onTap,
+    return AonTactileButton(
+      onTap: onTap,
+      borderRadius: AonSpacing.radiusMd, // matches the themed Card's corner radius
+      child: Card(
+        clipBehavior: Clip.antiAlias,
         child: Padding(
           padding: const EdgeInsets.all(AonSpacing.space4),
           child: Column(

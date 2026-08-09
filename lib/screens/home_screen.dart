@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/aon_tactile_button.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
@@ -283,12 +284,13 @@ class _LiveStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Material(
-      color: AonColors.live.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => context.go(Routes.whatsOn),
+    return AonTactileButton(
+      onTap: () => context.go(Routes.whatsOn),
+      borderRadius: AonSpacing.radiusMd,
+      child: Material(
+        color: AonColors.live.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+        clipBehavior: Clip.antiAlias,
         child: Container(
           padding: const EdgeInsets.all(AonSpacing.space4),
           decoration: BoxDecoration(

@@ -134,8 +134,8 @@ AonTactileButton({
   required Widget child,        // the caller's visual surface (Material/Container/etc.)
   required VoidCallback onTap,   // fired on tap-up AND on Enter/Space activation
   bool hapticsEnabled = true,    // light haptic on tap-down (MQ reference-signature parity — see below)
-  double borderRadius = 12,      // shapes the keyboard focus ring to match the child's corners (correction 3)
-})
+  required double borderRadius,  // shapes the focus ring + reduced-motion press outline (G10) — required,
+})                               //   because a surface-agnostic wrapper must be TOLD its child's shape
 ```
 **`hapticsEnabled` is kept as deliberate reference parity (G2), not settings speculation.** MQ's real
 `MqTactileButton` API carries exactly this param (`hapticsEnabled = true` → `MqHaptics.light(...)`), and
@@ -147,39 +147,43 @@ Frozen widget structure (G3 — one coherent button node; the button owns the me
 consumer gets both for free):
 ```
 MergeSemantics
-└── Semantics(button: true, onTap: onTap)
+└── Semantics(button: true, onTap: onTap)          // the sole accessibility action authority
     └── FocusableActionDetector          // keyboard: ActivateIntent(Enter/Space)→onTap; focus-highlight cb
-        └── GestureDetector(behavior: HitTestBehavior.opaque)
-            └── DecoratedBox(foreground)  // focus ring when focused; empty decoration otherwise
-                └── <press-feedback layer>   // AnimatedScale (normal) OR instant Opacity (reduced motion)
+        └── GestureDetector(behavior: opaque, excludeFromSemantics: true)  // pointer only — no dup sem node
+            └── DecoratedBox(foreground)  // outline: focus ring OR reduced-motion press outline; else empty
+                └── <squish layer>        // AnimatedScale (normal); child unchanged under reduced motion
                     └── child
 ```
 Mechanics (verbatim from MQ except the corrections):
-- `GestureDetector`:
+- `GestureDetector(behavior: HitTestBehavior.opaque, excludeFromSemantics: true)` — pointer only; the outer
+  `Semantics(button, onTap)` is the **sole** accessibility action, so the gesture layer must not also emit a
+  semantic action (G9 — prevents a duplicate node now and after future framework changes):
   - `onTapDown` → `setState(pressed = true)`; `AonHaptics.light(hapticsEnabled)`.
   - `onTapUp` → `setState(pressed = false)`; `onTap()`.
   - `onTapCancel` → `setState(pressed = false)` (no haptic, no `onTap`).
   - every handler guards `if (!mounted) return;`.
 - `reduceMotion = MediaQuery.disableAnimationsOf(context)`.
-- **Press feedback — always visible, motion only when allowed (Answer-1 / P1):**
+- **Press feedback — always visible, motion only when allowed, contrast-safe (Answer-1 / P1 / G-review-2):**
   - **Normal:** `AnimatedScale(scale: pressed ? 0.96 : 1.0, duration: AonAnimations.fast, curve:
     AonAnimations.easeInOut)` — the whole surface squishes.
-  - **Reduced motion:** the squish is **omitted** (scale stays `1.0`) but an **instant, non-animated**
-    pressed state replaces it — `Opacity(opacity: pressed ? 0.6 : 1.0)` (a plain `Opacity`, **not**
-    `AnimatedOpacity`, so it is a static state toggle, not motion). This closes the gap where dropping
-    `InkWell` (no ripple) + omitting the squish (no scale) would otherwise leave a reduced-motion user with
-    **no visual pressed feedback at all**. Visual feedback must never depend on the user perceiving the
-    haptic. No tween, no `Duration.zero`, no motion — a static opacity toggle honours Phase-1 D5.
-- **Keyboard operability + focus ring (correction 3):**
+  - **Reduced motion:** the squish is **omitted** (the child is passed through unscaled) and the pressed
+    state is shown as an **instant outline** on the foreground `DecoratedBox` (below) — **not** a whole-child
+    opacity fade. Fading the entire card to 60% would sap contrast for exactly the user who set an
+    accessibility preference, and stack badly with high-contrast mode; an added outline changes state without
+    dimming any text/icon/border. No tween, no `Duration.zero`, no motion — a static outline toggle honours
+    Phase-1 D5. (Verified: under reduced motion the press produces a border and **no** `AnimatedScale`/
+    `Opacity` in the subtree.)
+- **Keyboard operability + the shared outline (correction 3 + G-review-2):**
   - `FocusableActionDetector(actions: {ActivateIntent: CallbackAction<ActivateIntent>(onInvoke: (_) {
     onTap(); return null; })}, onShowFocusHighlight: (v) => setState(focused = v), mouseCursor:
     SystemMouseCursors.click)`. `ActivateIntent` fires on **Enter and Space** (verified). No `autofocus`/
     `focusNode` param is added (Tab focuses it; tests use Tab — verified).
-  - **Focus ring:** the `DecoratedBox` (foreground) paints `Border.all(color:
+  - **The foreground `DecoratedBox` carries both instant states:** it paints `Border.all(color:
     Theme.of(context).colorScheme.primary, width: 2)` with `BorderRadius.circular(borderRadius)` when
-    `focused`, else an empty decoration. Colour is read from the *ambient* theme (portability-safe; no
-    `AonColors` import). The ring wraps the un-scaled bounds (it is the parent of the feedback layer), so the
-    press squish does not move it.
+    **`focused` OR (`reduceMotion && pressed`)**, else an empty decoration. One outline mechanism serves the
+    keyboard focus ring *and* the reduced-motion pressed state — which is precisely why `borderRadius` is a
+    real, required param. Colour is read from the *ambient* theme (portability-safe; no `AonColors` import).
+    It wraps the un-scaled bounds, so the normal-mode squish does not move it.
 - No `AnimationController` (plain implicit `AnimatedScale`, matching MQ). No drop shadow (MQ removed it). No
   disabled state (`onTap` is non-nullable, always fires) — matching MQ **and** aon2026's current contract
   (§3: all three adoption sites are always-actionable; no disabled presentation is being removed).
@@ -215,10 +219,12 @@ All three tiles use `radiusMd` (14) today, so each passes `borderRadius: AonSpac
     existing "N activities happening right now" text.
 
 ## 6. Accessibility
-- **Reduced motion — feedback preserved, not removed (Answer-1):** the animated squish is omitted under
-  `MediaQuery.disableAnimationsOf`, **and** an instant (non-animated) `Opacity` pressed state replaces it
-  (§5.2), so the button still shows it is being pressed. Haptic + `onTap` also fire. The rule: reduced
-  motion drops the *motion*, never the *feedback*.
+- **Reduced motion — feedback preserved, and contrast-safe (Answer-1 + review-2):** the animated squish is
+  omitted under `MediaQuery.disableAnimationsOf`, **and** an instant (non-animated) **pressed outline**
+  replaces it (§5.2) — an *added border*, not a whole-card opacity fade, so it never weakens the contrast of
+  the title/description/icons (which a 40% fade would, worst of all combined with high-contrast mode).
+  Haptic + `onTap` also fire. The rule: reduced motion drops the *motion*, never the *feedback*, and never
+  at the cost of legibility.
 - **Semantics:** every adopted tile is a single `button`-role node with its label + tap action, produced by
   the button's own `MergeSemantics`+`Semantics` (§5.2). **Touch vs assistive activation (G7):** *touch*
   activation produces the pressed feedback (squish/opacity) + haptic via the pointer down/up sequence;
@@ -249,30 +255,33 @@ All three tiles use `radiusMd` (14) today, so each passes `borderRadius: AonSpac
     scale `1.0`; and `onTap` invocation count is still `0`.
   - the `AnimatedScale` uses `duration == AonAnimations.fast` and `curve == AonAnimations.easeInOut` (proves
     the token is consumed).
-  - **reduced motion (Answer-1):** with `MediaQuery(disableAnimations: true)`, after `onTapDown` (a) the
-    scale stays `1.0` (squish omitted) **and** (b) the instant `Opacity` pressed state is present (opacity
-    `0.6` on press, back to `1.0` on up/cancel — a plain `Opacity`, asserted to have **no** enclosing
-    `AnimatedOpacity`) **and** (c) `onTap` still fires on up.
-  - **haptic — exact call (G8):** capture `SystemChannels.platform` method calls via a mock handler;
-    `onTapDown` with `hapticsEnabled: true` emits **exactly** `MethodCall('HapticFeedback.vibrate',
-    'HapticFeedbackType.lightImpact')` — assert the argument is `lightImpact` (not `selectionClick`/
-    `mediumImpact`/`heavyImpact`, which would satisfy a vague "some haptic" test while breaking parity);
-    with `hapticsEnabled: false`, **no** such call is emitted.
-  - **semantics (G3):** exactly **one** node with `button: true` and a tap action; asserted via node
-    count, not "a button exists somewhere".
+  - **reduced motion — outline, not opacity (Answer-1 + review-2):** with `MediaQuery(disableAnimations:
+    true)`, after `onTapDown` (a) there is **no** `AnimatedScale` and **no** `Opacity` in the button subtree,
+    (b) the foreground `DecoratedBox` shows a **border** on press (gone again on up/cancel), and (c) `onTap`
+    still fires on up. (Verified reachable.)
+  - **haptic — exactly one, on down only (G8 + review-8):** capture `SystemChannels.platform` calls; after
+    `onTapDown` with `hapticsEnabled: true` there is **exactly one** `HapticFeedback.vibrate` whose argument
+    is `HapticFeedbackType.lightImpact` (count `== 1`, not `.any` — a double-fire must fail); after `onTapUp`
+    still exactly one; after `onTapCancel` no additional; with `hapticsEnabled: false`, **zero**. (Filter by
+    method name so the `SystemChrome` setup calls the handler also sees don't interfere — verified.)
+  - **semantics — proves the whole contract (G3 + review-4):** walk the semantics tree; assert **exactly one**
+    `isButton` node; that node's `label` **contains** the child text; it `hasAction(SemanticsAction.tap)`;
+    and `semanticsOwner.performAction(node.id, SemanticsAction.tap)` **invokes `onTap` exactly once**. (All
+    four verified against the real structure incl. `excludeFromSemantics` on the gesture.)
   - **keyboard (correction 3):** with `FocusManager.instance.highlightStrategy =
-    FocusHighlightStrategy.alwaysTraditional`, `Tab` focuses the button and a focus-ring `DecoratedBox`
-    (border non-null) appears; **Enter** fires `onTap`; **Space** fires `onTap` again. No `autofocus` API is
-    used (Tab suffices — verified).
-- **Adoption tests — per consumer (G3, all three; their descendant semantics differ):**
-  - `QuickLinkTile` (public) — mount it; tapping fires its `onTap`; **exactly one** merged `button` node
-    carrying its title text.
-  - `EventCard` (public, `ConsumerWidget` — mount in a `ProviderScope`) — same: one merged `button` node
-    with the event title; tap fires `onTap`.
-  - `_LiveStrip` (private) — pump `HomeScreen` (no router), find the strip text, assert it is wrapped in
-    an `AonTactileButton` (ripple replaced). Structural only: navigation via `context.go` needs a router and
-    is preserved by construction (the `onTap` is unchanged). The strip renders at the 19:00 fixed clock
-    (verified: an event is live then). (Do not assume `QuickLinkTile`'s tree stands in for it.)
+    FocusHighlightStrategy.alwaysTraditional`, `Tab` focuses the button and the foreground `DecoratedBox`
+    gets a border; **Enter** fires `onTap`; **Space** fires `onTap` again. No `autofocus` API used (Tab
+    suffices — verified).
+- **Adoption tests — per consumer, real merged semantics (G3 + review-7; their subtrees differ):**
+  - `QuickLinkTile` (public) — mount it; tapping fires `onTap`; **exactly one** `isButton` node whose label
+    **contains** the tile title; no `InkWell` in its subtree.
+  - `EventCard` (public, `ConsumerWidget` — mount in a `ProviderScope`) — same, on the *complex* card:
+    exactly one `isButton` node whose label **contains** `event.title`, with a tap action; tap fires `onTap`;
+    no `InkWell`.
+  - `_LiveStrip` (private) — real behaviour test through the screen boundary (review-3): mount `HomeScreen`
+    with the **actual router** (`buildRouter()`) + the 19:00 fixed clock (strip renders then — verified);
+    assert the strip text is wrapped in **exactly one** `AonTactileButton` with **no `InkWell`** inside;
+    **tap it → `pumpAndSettle` → the What's On screen is shown** (navigation works, not just structure).
 - **Regression:** `responsive_layout_test` (mounts Home + Program, which contain all three tiles) stays
   green; the full suite stays green against the captured pre-Phase-3 baseline.
 
@@ -286,17 +295,21 @@ haptic and fire on release; **assistive** activation invokes the action correctl
 pointer press animation (G7). Tapping still navigates exactly as before; Material buttons unchanged (ripple
 intact); no tile shrinks below its target.
 
-**A11y:** reduced motion drops the *motion* but keeps *feedback* — squish omitted, instant `Opacity`
-pressed state + haptic + onTap intact (Answer-1); each adopted tile is one `button` node with its label
-(G3); **keyboard**: Tab-focusable with a visible focus ring, Enter/Space activate (WCAG 2.1.1 + 2.4.7 —
-beyond MQ); existing **high-contrast appearance/content remains usable and no new colour-dependent state is
-introduced** (verified, not assumed — G10); large text structurally untouched.
+**A11y:** reduced motion drops the *motion* but keeps *feedback* — squish omitted, instant **pressed
+outline** (not an opacity fade) + haptic + onTap intact (Answer-1 + review-2); each adopted tile is exactly
+one `button` node whose label carries its text, with a working semantic tap action (G3/review-4); the
+gesture layer is `excludeFromSemantics` so there is no duplicate node (review-9); **keyboard**:
+Tab-focusable with a visible focus ring, Enter/Space activate (WCAG 2.1.1 + 2.4.7 — beyond MQ); existing
+**high-contrast appearance/content remains usable and no new colour-dependent state is introduced**
+(verified, not assumed — G10; the reduced-motion outline adds a border, dims nothing); large text
+structurally untouched.
 
 **Verification & evidence** — record each as `PASS` / `FAIL` / `NOT AVAILABLE`:
 - `flutter analyze` clean; tests pass (report before/after totals vs the captured baseline).
 - Android **build**; iOS **build**; iOS **runtime** (tiles squish on press; nav still works).
 - **Squish** — visually confirmed on-device (a tile scaled-down mid-press).
-- **Reduced-motion pressed state** — visually confirmed: squish gone, instant opacity press present.
+- **Reduced-motion pressed state** — visually confirmed: squish gone, instant pressed **outline** present,
+  no text/icon dimming.
 - **High-contrast visual regression (G10)** — the adopted tiles still render usably; no lost state layer.
 - **Haptic** — verified by the test's exact platform-channel capture (NOT visually verifiable; say so).
 - **Keyboard** — verified by test (Tab focus + ring, Enter/Space activate); an external-keyboard on-device
@@ -305,6 +318,11 @@ introduced** (verified, not assumed — G10); large text structurally untouched.
 
 Then: **visual/behaviour parity vs MQ_Journey** (whole-card squish + light-haptic-on-down) and a **hostile
 audit** for gesture conflicts, lost semantics, or reduced-motion regressions introduced by the port.
+
+**Re-gate after the audit (review-11 — no victory lap before the last patch is verified):** if the parity
+review or hostile audit changes any code, the earlier green analyze/tests/build/runtime are **stale**. The
+close-out order is fixed: runtime/parity → hostile audit → apply fixes → `flutter analyze` → `flutter test`
+→ re-run any affected platform/runtime check → `git diff` review → only then finish the branch.
 
 ## 9. Honest scorecard (re-scored at freeze)
 
@@ -321,8 +339,9 @@ audit** for gesture conflicts, lost semantics, or reduced-motion regressions int
 surfaces and (b) **four** accessibility/quality corrections MQ never made — the last of which (keyboard
 operability + focus-visible) makes the port *more* accessible than its source. It is not an invention and
 does not pretend to be; the one place ambition could rise (an aon2026-native press flourish) is named and
-held out. Every load-bearing test idiom was validated by running code during the gauntlet, so the plan's
-tests are known to work, not hoped to.
+held out. Every load-bearing test idiom was exercised in a **throwaway scratch harness** during the gauntlet
+(API/behaviour feasibility only — this is *not* Phase-3 implementation evidence; all checks are re-run
+against the repository code after implementation, same standard as build/shader evidence).
 
 ## 10. Frozen decisions & future ideas
 
@@ -330,7 +349,8 @@ tests are known to work, not hoped to.
 - **Press scale = `0.96`** (MQ-verbatim). This is a foundational number the tests assert and the parity
   claim rests on — it is **not** an on-device tweak. If usability later shows it too subtle, deepening it is
   a separate, deliberate aon2026 divergence, decided then, not by the implementation agent.
-- **Reduced-motion pressed state = instant `Opacity 0.6`** (Answer-1), non-animated.
+- **Reduced-motion pressed state = instant pressed *outline*** on the foreground `DecoratedBox` (Answer-1 +
+  review-2), non-animated and contrast-safe — **not** an opacity fade.
 
 **Future ideas (explicitly OUT of Phase 3 — not open decisions, no scope snacks):**
 - A live-strip chevron nudge-on-press, or any other native press flourish — a new interaction invention,

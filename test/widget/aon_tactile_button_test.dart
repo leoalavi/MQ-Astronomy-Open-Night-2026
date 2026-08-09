@@ -158,15 +158,15 @@ void main() {
     var taps = 0;
     await tester.pumpWidget(harness(tb(onTap: () => taps++, child: const Text('Go to program'))));
 
-    final owner = tester.binding.pipelineOwner.semanticsOwner!;
-    final root = owner.rootSemanticsNode!;
+    final root =
+        tester.semantics.find(find.byType(AonTactileButton)).owner!.rootSemanticsNode!;
     expect(buttonCount(root), 1);
     final node = firstButton(root)!;
     final data = node.getSemanticsData();
     expect(data.label, contains('Go to program'));
     expect(data.hasAction(SemanticsAction.tap), isTrue);
 
-    owner.performAction(node.id, SemanticsAction.tap);
+    node.owner!.performAction(node.id, SemanticsAction.tap);
     await tester.pump();
     expect(taps, 1);
     handle.dispose();

@@ -1,8 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/data/events_data.dart';
 import 'package:aon2026/data/parking_data.dart';
+import 'package:aon2026/data/passport_facts_data.dart';
 import 'package:aon2026/data/routes_data.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
 import 'package:aon2026/data/venues_data.dart';
@@ -244,6 +247,50 @@ void main() {
     test('venueIds and codes are each unique', () {
       expect(stations.map((s) => s.venueId).toSet().length, 9);
       expect(stations.map((s) => s.code.toUpperCase()).toSet().length, 9);
+    });
+  });
+
+  group('passport facts', () {
+    const facts = PassportFactsData.all;
+
+    test('exactly 9 facts, unique venueIds', () {
+      expect(facts.length, 9);
+      expect(facts.map((f) => f.venueId).toSet().length, 9);
+    });
+
+    test('fact venueIds == station venueIds == event-venue ids', () {
+      final eventVenueIds = VenuesData.eventVenues.map((v) => v.id).toSet();
+      expect(PassportFactsData.venueIds, StampStationsData.stationVenueIds);
+      expect(PassportFactsData.venueIds, eventVenueIds);
+    });
+
+    test('titles, activity labels and fact bodies are non-empty', () {
+      for (final f in facts) {
+        expect(f.title.trim(), isNotEmpty, reason: f.venueId);
+        expect(f.activityLabel.trim(), isNotEmpty, reason: f.venueId);
+        expect(f.fact.trim(), isNotEmpty, reason: f.venueId);
+      }
+    });
+
+    test('every sourceRef used is registered; every derived fact has one', () {
+      for (final f in facts) {
+        if (f.sourceRef != null) {
+          expect(PassportFactsData.sourceRegistry, contains(f.sourceRef),
+              reason: '${f.venueId} uses unregistered sourceRef ${f.sourceRef}');
+        }
+        if (f.confidence == DataConfidence.derived) {
+          expect(f.sourceRef, isNotNull,
+              reason: '${f.venueId} derived w/o source');
+        }
+      }
+    });
+
+    test('the Markdown registry documents every registered source (C1)', () {
+      final md = File('docs/passport-fact-sources.md').readAsStringSync();
+      for (final ref in PassportFactsData.sourceRegistry) {
+        expect(md, contains(ref),
+            reason: '$ref not documented in docs/passport-fact-sources.md');
+      }
     });
   });
 }

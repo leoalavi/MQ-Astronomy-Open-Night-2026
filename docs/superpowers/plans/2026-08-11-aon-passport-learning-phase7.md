@@ -410,9 +410,9 @@ PassportFact _fact(DataConfidence c) => PassportFact(
       title: 'A telescope is also a time machine',
       fact: 'Light takes time to travel.', confidence: c);
 
-Widget _host(Widget child, {double scale = 1.0}) => MaterialApp(
-      home: Scaffold(body: SingleChildScrollView(child: child)),
-    );
+// No scroll view here — the sheet must scroll itself (design §8.3), so the
+// 2.0 test exercises the real internal scrolling, not the host's.
+Widget _host(Widget child) => MaterialApp(home: Scaffold(body: child));
 
 void main() {
   testWidgets('reliable fact shows title + body, no draft note', (t) async {
@@ -445,7 +445,7 @@ void main() {
     expect(find.byType(ConfidenceNote), findsOneWidget);
   });
 
-  testWidgets('no overflow at 320x568 / 2.0', (t) async {
+  testWidgets('direct: no overflow at 320x568 / 2.0 (self-scrolls)', (t) async {
     t.view.physicalSize = const Size(320, 568);
     t.view.devicePixelRatio = 1.0;
     t.platformDispatcher.textScaleFactorTestValue = 2.0;
@@ -457,6 +457,35 @@ void main() {
         reason: FactRevealReason.collected,
         isRelease: true)));
     await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+  });
+
+  // §8.3 requires BOTH a direct widget test AND a real-modal integration test.
+  testWidgets('real modal: showPassportFactSheet no overflow at 320x568 / 2.0',
+      (t) async {
+    t.view.physicalSize = const Size(320, 568);
+    t.view.devicePixelRatio = 1.0;
+    t.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    await t.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: Builder(
+          builder: (context) => Center(
+            child: ElevatedButton(
+              onPressed: () => showPassportFactSheet(
+                context, 'central-courtyard',
+                reason: FactRevealReason.revisit),
+              child: const Text('open'),
+            ),
+          ),
+        ),
+      ),
+    ));
+    await t.tap(find.text('open'));
+    await t.pumpAndSettle();
+    expect(find.byType(PassportFactSheet), findsOneWidget);
     expect(t.takeException(), isNull);
   });
 }
@@ -522,7 +551,10 @@ class PassportFactSheet extends StatelessWidget {
     final body = showFallback ? factFallbackMessage : fact.fact;
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
-    return Padding(
+    // Scrollable content, matching the app's other sheets (whats_on:312,
+    // map:423) — a long fact at text scale 2.0 must scroll, not overflow.
+    return SingleChildScrollView(
+      child: Padding(
       padding: EdgeInsets.fromLTRB(
         AonSpacing.space5,
         AonSpacing.space5,
@@ -567,6 +599,7 @@ class PassportFactSheet extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
@@ -626,12 +659,15 @@ import 'package:aon2026/data/stamp_stations_data.dart';
 int _hapticCalls = 0;
 void _installHapticSpy() {
   _hapticCalls = 0;
-  TestWidgetsFlutterBinding.ensureInitialized();
-  TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
-      .setMockMethodCallHandler(SystemChannels.platform, (call) async {
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+  messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
     if (call.method == 'HapticFeedback.vibrate') _hapticCalls++;
     return null;
   });
+  // Clear between tests so the null-returning handler can't leak.
+  addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.platform, null));
 }
 
 Widget _app(Widget screen, {Set<String> snapshot = const {}}) => ProviderScope(
@@ -774,13 +810,15 @@ Widget _host(Set<String> collected, {void Function(String)? onTap}) =>
 
 void main() {
   testWidgets('a collected cell is a button and calls back on tap', (t) async {
+    final handle = t.ensureSemantics(); // repo pattern (map_category_filter_bar_test:77)
+    addTearDown(handle.dispose);
     String? tapped;
     await t.pumpWidget(_host({'macquarie-theatre'}, onTap: (id) => tapped = id));
     final cell = find.bySemanticsLabel(RegExp(r', stamp collected$'));
     expect(cell, findsOneWidget);
-    // Its semantics expose a button role + hint.
-    final node = t.getSemantics(cell);
-    expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
+    // Button role via the repo's 3.44 API (aon_tactile_button_test:165).
+    expect(t.getSemantics(cell).getSemanticsData().flagsCollection.isButton,
+        isTrue);
     await t.tap(cell);
     await t.pumpAndSettle();
     expect(tapped, 'macquarie-theatre');
@@ -788,10 +826,14 @@ void main() {
 
   testWidgets('an uncollected cell has no button role and does nothing',
       (t) async {
+    final handle = t.ensureSemantics();
+    addTearDown(handle.dispose);
     String? tapped;
     await t.pumpWidget(_host(<String>{}, onTap: (id) => tapped = id));
     final cell = find.bySemanticsLabel(RegExp(r', not yet collected$')).first;
-    expect(t.getSemantics(cell).hasFlag(SemanticsFlag.isButton), isFalse);
+    expect(
+        t.getSemantics(cell).getSemanticsData().flagsCollection.isButton,
+        isFalse);
     await t.tap(cell);
     await t.pumpAndSettle();
     expect(tapped, isNull);
@@ -839,7 +881,31 @@ class _Cell extends StatelessWidget {
     final venue = VenuesData.byId(venueId);
     final name = venue?.shortName ?? venue?.name ?? venueId;
 
-    final visual = Container(/* unchanged decoration + Column(icon,name) */);
+    // The Phase 6 cell visual, unchanged (decoration + icon + name).
+    final visual = Container(
+      padding: const EdgeInsets.all(AonSpacing.space3),
+      decoration: BoxDecoration(
+        color: collected
+            ? AonColors.amber.withValues(alpha: 0.12)
+            : AonColors.night900,
+        borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+        border: Border.all(
+          color: collected ? AonColors.amber : AonColors.night700,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            collected ? Icons.check_circle_rounded : Icons.circle_outlined,
+            color: collected ? AonColors.amber : AonColors.contentTertiary,
+            size: AonSpacing.iconMd,
+          ),
+          const SizedBox(height: AonSpacing.space2),
+          Text(name, style: theme.textTheme.titleSmall),
+        ],
+      ),
+    );
 
     if (collected) {
       return Semantics(

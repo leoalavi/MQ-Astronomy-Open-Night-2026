@@ -1,10 +1,13 @@
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/data/events_data.dart';
 import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/routes_data.dart';
 import 'package:aon2026/data/venues_data.dart';
+import 'package:aon2026/data/panorama_data.dart';
 import 'package:aon2026/models/event.dart';
+import 'package:aon2026/models/indoor_manifest.dart';
 import 'package:aon2026/models/parking_area.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/models/walking_route.dart';
@@ -211,4 +214,22 @@ final selectedRouteProvider = Provider<WalkingRoute?>((ref) {
     if (r.fromId == from && r.toId == to) return r;
   }
   return null;
+});
+
+
+/// Which venues have a 360 tour (synchronous — no manifest I/O; the picker
+/// reads this, not every JSON file).
+final venuesWithPanoramaProvider = Provider<Set<String>>(
+  (ref) => PanoramaData.tours.map((t) => t.venueId).toSet(),
+);
+
+/// Loads + caches a venue's indoor manifest. The asset path comes from an EXACT
+/// panorama_data lookup — never interpolated from [venueId]; an unknown id
+/// yields null (no arbitrary asset read).
+final indoorManifestProvider =
+    FutureProvider.family<IndoorManifest?, String>((ref, venueId) async {
+  final tour = PanoramaData.tourFor(venueId);
+  if (tour == null) return null;
+  final raw = await rootBundle.loadString(tour.manifestAsset);
+  return IndoorManifest.fromJson(raw);
 });

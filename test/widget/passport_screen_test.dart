@@ -40,4 +40,37 @@ void main() {
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
   });
+
+  void bigViewport(WidgetTester t) {
+    t.view.physicalSize = const Size(320, 568);
+    t.view.devicePixelRatio = 1.0;
+    t.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+  }
+
+  testWidgets('disabled copy renders at 320x568 / 2.0', (t) async {
+    bigViewport(t);
+    await t.pumpWidget(ProviderScope(
+      overrides: [
+        passportSnapshotProvider.overrideWithValue(<String>{}),
+        passportCollectionEnabledProvider.overrideWithValue(false),
+      ],
+      child: const MaterialApp(home: PassportScreen()),
+    ));
+    await t.pumpAndSettle();
+    expect(
+        find.text('Astronomy Passport opens on event night'), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('near-complete nudge at 320x568 / 2.0', (t) async {
+    bigViewport(t);
+    final eight = StampStationsData.all.take(8).map((s) => s.venueId).toSet();
+    await t.pumpWidget(_host(eight));
+    await t.pumpAndSettle();
+    expect(find.text('Just 1 more to go!'), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
 }

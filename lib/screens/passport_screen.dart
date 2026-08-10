@@ -10,6 +10,24 @@ import 'package:aon2026/services/stamp_service.dart';
 import 'package:aon2026/widgets/passport_fact_sheet.dart';
 import 'package:aon2026/widgets/passport_grid.dart';
 
+/// The passport progress line, disabled-state-aware (design §14).
+///
+/// Completion outranks the disabled gate: a persisted, already-complete passport
+/// must not be relabelled "opens on event night" just because a release build
+/// currently disables NEW collection. The gate blocks new collection, it does
+/// not rewrite history.
+String passportProgressLine({
+  required bool collectionEnabled,
+  required int count,
+  required int total,
+}) {
+  if (count >= total) return '$total / $total stamps'; // completed — always
+  if (!collectionEnabled) return 'Astronomy Passport opens on event night';
+  if (count == 0) return 'Scan or enter a venue code to start';
+  if (count == total - 1) return 'Just 1 more to go!';
+  return '$count / $total stamps';
+}
+
 /// The Astronomy Passport: progress, the 9-cell grid, and the capture entry.
 class PassportScreen extends ConsumerWidget {
   const PassportScreen({super.key});
@@ -40,6 +58,7 @@ class PassportScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final state = ref.watch(passportProvider);
+    final enabled = ref.watch(passportCollectionEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -58,7 +77,11 @@ class PassportScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(AonSpacing.space4),
         children: [
           Text(
-            '${state.count} / ${PassportPolicy.stationCount} stamps',
+            passportProgressLine(
+              collectionEnabled: enabled,
+              count: state.count,
+              total: PassportPolicy.stationCount,
+            ),
             style: theme.textTheme.headlineSmall,
           ),
           const SizedBox(height: AonSpacing.space3),

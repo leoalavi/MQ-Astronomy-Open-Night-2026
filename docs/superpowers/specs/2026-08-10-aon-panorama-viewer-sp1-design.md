@@ -283,3 +283,38 @@ under `assets/web/` (incl. Pannellum `LICENSE`) + `assets/data/indoor/`; a
 `docs/` image-provenance note; tests (incl. the URL-policy, path-guard,
 scene-validation, and server-failure tests). Modify: `screens/map_screen.dart`,
 `app/router/app_router.dart`, `services/providers.dart`, `pubspec.yaml`.
+
+## 14. Runtime verification results (2026-08-10)
+
+Executed inline; all 10 tasks landed on `feature/panorama-viewer-sp1`.
+
+**Automated:** `flutter analyze` clean; `flutter test` **266 passed** (baseline
+239 → +27 SP1 tests). Every security invariant is a direct test: URL policy,
+JS encoding (hostile input), inbound-scene validation, HTML CSP/isolation,
+path-safety via the public manifest boundary, exact venueId lookup, deep-link
+safety, reduced-motion config, and the 2.0/short-viewport + a11y coverage.
+
+**Native blocker caught + resolved:** the early smoke build (Task 0) hit a
+`flutter_inappwebview` ↔ AGP 9.0.1 incompatibility (9.x removed
+`getDefaultProguardFile('proguard-android.txt')`). Resolved by downgrading AGP
+to 8.11.1 (stable mainstream; matches MQ_Journey) — confirmed with the user.
+
+**Platform builds:** iOS simulator `flutter build ios --simulator --debug` =
+**PASS**; Android `flutter build apk --debug` = **PASS**. Android *runtime* =
+**NOT AVAILABLE** (no emulator); perf traces = **NOT AVAILABLE**.
+
+**On-device (iOS 17 Pro simulator), screenshotted:**
+- Map tab → glass **Map/360° toggle** renders and switches modes.
+- **360° mode → building picker**: Macquarie Theatre tappable with the
+  **"Demo 360° — sample imagery, not this venue"** flag; every other venue
+  "Coming soon" (locked). No auto-select.
+- **Tour opens**: the Pannellum 360° panorama renders full-screen; the frosted
+  **glass title island** ("← Macquarie Theatre") and **glass scene rail**
+  ("Sample scene 1/2" — neutralised labels) stay legible over the WebView
+  platform view (`allowShader:false`); the **"Next scene" hotspot** renders.
+- **Scene switching + sync**: tapping "Sample scene 2" in the rail changes the
+  panorama AND highlights scene 2 (rail↔viewer sync works live).
+- **Back** returns to the picker — no loop.
+
+No temporary debug probe was added to source; the working tree needed no
+post-runtime cleanup.

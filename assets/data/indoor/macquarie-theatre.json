@@ -1,0 +1,24 @@
+{
+  "nodes": [
+    {
+      "id": "entrance",
+      "image": "indoor/macquarie-theatre_entrance.jpg",
+      "description": "Sample scene 1",
+      "neighbours": [
+        { "targetId": "theatre", "heading": -20, "label": "Next scene" }
+      ],
+      "previewHeading": -20,
+      "previewPitch": 0
+    },
+    {
+      "id": "theatre",
+      "image": "indoor/macquarie-theatre_theatre.jpg",
+      "description": "Sample scene 2",
+      "neighbours": [
+        { "targetId": "entrance", "heading": -170, "label": "Back" }
+      ],
+      "previewHeading": 10,
+      "previewPitch": 0
+    }
+  ]
+}

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -7,6 +9,8 @@ import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/stamp_io.dart';
 import 'package:aon2026/services/passport_providers.dart';
+import 'package:aon2026/utils/haptics.dart';
+import 'package:aon2026/widgets/passport_fact_sheet.dart';
 import 'package:aon2026/widgets/passport_scanner_view.dart';
 
 enum _Mode { choosing, manual, scanning }
@@ -46,7 +50,18 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
           'The passport isn\'t live yet — see staff at an information point.',
       };
     });
-    if (outcome.justCompleted) context.push(Routes.passportReward);
+
+    // Learning layer: only a real new stamp. Never touches scanner lifecycle.
+    if (outcome.result is StampCollected) {
+      unawaited(AonHaptics.light(true)); // one haptic per real collect (§13)
+      if (outcome.justCompleted) {
+        context.push(Routes.passportReward); // 9th: reward wins, no sheet (§11.2)
+      } else {
+        final venueId = (outcome.result as StampCollected).venueId;
+        unawaited(showPassportFactSheet(context, venueId,
+            reason: FactRevealReason.collected)); // 1–8 (§11.1)
+      }
+    }
   }
 
   void _submitManual() => handleInput(StampInput.manual(_controller.text));

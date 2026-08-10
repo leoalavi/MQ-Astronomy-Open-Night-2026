@@ -13,6 +13,9 @@ Widget _host({bool enabled = true}) => ProviderScope(
     );
 
 Future<void> _enter(WidgetTester t, String code) async {
+  // The manual field lives behind the "Enter a code" peer choice.
+  await t.tap(find.text('Enter a code'));
+  await t.pumpAndSettle();
   await t.enterText(find.byKey(const Key('passport-manual-field')), code);
   await t.tap(find.byKey(const Key('passport-manual-submit')));
   await t.pumpAndSettle();

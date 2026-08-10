@@ -32,6 +32,7 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   shared_preferences: ^2.5.5
   confetti: ^0.8.0
+  mobile_scanner: ^7.4.0
 
 dev_dependencies:
   flutter_test:

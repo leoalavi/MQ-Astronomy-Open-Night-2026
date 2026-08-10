@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/app/theme/aon_animations.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/data/passport_facts_data.dart';
 import 'package:aon2026/data/venues_data.dart';
@@ -85,7 +85,7 @@ class PassportFactSheet extends StatelessWidget {
             Text(
               fact.activityLabel.toUpperCase(),
               style: theme.textTheme.labelSmall
-                  ?.copyWith(color: AonColors.contentTertiary),
+                  ?.copyWith(color: context.aon.contentTertiary),
             ),
             const SizedBox(height: AonSpacing.space3),
             Text(title, style: theme.textTheme.headlineSmall),
@@ -121,8 +121,8 @@ class _StampPop extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const icon = Icon(Icons.check_circle_rounded,
-        color: AonColors.amber, size: 44);
+    final icon = Icon(Icons.check_circle_rounded,
+        color: context.aon.accent, size: 44);
     if (reduceMotion) return icon; // no scale/translate under reduced motion
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0.6, end: 1.0),

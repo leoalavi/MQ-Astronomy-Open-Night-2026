@@ -66,6 +66,17 @@ class InfoScreen extends ConsumerWidget {
             ),
           ),
 
+          // ── Astronomy Passport ──
+          const SizedBox(height: AonSpacing.space4),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => context.push(Routes.passport),
+              icon: const Icon(Icons.workspace_premium_rounded),
+              label: const Text('Astronomy Passport'),
+            ),
+          ),
+
           // ── First aid ──
           const SectionHeader(
             title: 'First aid',

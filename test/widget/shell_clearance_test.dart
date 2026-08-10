@@ -20,9 +20,17 @@ void main() {
 
     // Jump to the TRUE maximum scroll extent (a fling can under-scroll and
     // false-pass). This pins the content bottom to the viewport bottom.
+    //
+    // Home's bottom lives in a lazily-built sliver, so maxScrollExtent grows as
+    // those children are realised on scroll-in — a single jump can under-shoot.
+    // Loop until the reported max stops changing so we land on the real bottom.
     final state = tester.state<ScrollableState>(find.byType(Scrollable).first);
-    state.position.jumpTo(state.position.maxScrollExtent);
-    await tester.pumpAndSettle();
+    var previousMax = -1.0;
+    while (state.position.maxScrollExtent != previousMax) {
+      previousMax = state.position.maxScrollExtent;
+      state.position.jumpTo(state.position.maxScrollExtent);
+      await tester.pumpAndSettle();
+    }
 
     // The CRICOS line is the LAST text in Home's attribution card (its true
     // bottom edge), so it is the right occlusion anchor.

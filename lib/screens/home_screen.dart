@@ -12,6 +12,7 @@ import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/widgets/passport_home_card.dart';
 import 'package:aon2026/widgets/quick_link_tile.dart';
 
 /// Landing screen: branding, when and where, and the four things people
@@ -100,6 +101,9 @@ class HomeScreen extends ConsumerWidget {
                     );
                   },
                 ),
+
+                const SizedBox(height: AonSpacing.space5),
+                const PassportHomeCard(),
 
                 const SizedBox(height: AonSpacing.space6),
 

@@ -23,6 +23,12 @@ abstract final class Routes {
   static const String eventDetail = '/event/:id';
   static const String wayfinding = '/wayfinding';
 
+  /// Astronomy Passport (Phase 6). Builders are registered in the tasks that
+  /// create each screen, so no builder imports a screen before it exists.
+  static const String passport = '/passport';
+  static const String passportScan = '/passport/scan';
+  static const String passportReward = '/passport/reward';
+
   static String eventDetailFor(String id) => '/event/$id';
 
   /// Wayfinding, pre-seeded with a destination.

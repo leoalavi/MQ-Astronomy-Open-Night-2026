@@ -35,8 +35,13 @@ throws during a widget-test layout, so `tester.takeException()` is the guard.
 
 The probes were throwaway; their surviving form is the Phase-5 regression
 suite (§5). The measured *screen* result is why this phase is *verify-and-lift*,
-not *fix-all-the-overflows*: content screens are `ListView`-scrollable, so they
-absorb vertical growth at any height. The **sheets** are the exception.
+not *fix-all-the-overflows*: **the six content screens are currently clean at
+all tested widths and heights, including the 320×568 short viewport**, and their
+`ListView`-scrollable bodies substantially reduce vertical-overflow risk. That
+is a measurement at specific dimensions, not a proof for every possible height —
+and it does not immunise against horizontal overflow, fixed-header overflow, or
+overlay collisions, which the regression matrix (§5) guards against explicitly.
+The **sheets** are the exception that did reproduce.
 
 **Self-gauntlet correction — viewport height matters.** My first screen probes
 used generous heights (640 / 780 / 896); at those heights `_ParkingSheet`'s tap
@@ -81,64 +86,123 @@ real change lands via TDD (§5).
 `Expanded`/`Flexible`** around the name. Current data names are short ("West 5",
 "South 2"), so this does **not** overflow horizontally at 2.0 today — but a
 vertical `SingleChildScrollView` would not catch it if it did. While fixing this
-sheet, wrap the name `Text` in `Expanded` (one line, harmless for short names).
-Labeled defensive: it hardens a latent structural fragility the gauntlet found,
-not a currently-reproducing overflow.
+sheet, wrap the name `Text` in `Expanded` so it **wraps within the remaining row
+width** (`Expanded` constrains the available horizontal space; it does not by
+itself force a single line — and for large-text accessibility, wrapping is the
+preferred behaviour here, so no `maxLines`/`ellipsis` is imposed). Labeled
+defensive: it hardens a latent structural fragility the gauntlet found, not a
+currently-reproducing overflow.
 
-## 4. The clamp lift
+## 4. The clamp lift — made testable
 
-`lib/main.dart:65` — `maxScaleFactor: 1.6` → `maxScaleFactor: 2.0`. The
-adjacent comment is rewritten to state the new guarantee: every surface is
-verified overflow-free to 2.0; the cap is held at 2.0 deliberately, so the OS
-cannot request a scale the app has not been hardened and regression-tested
-against. `minScaleFactor: 1.0` is unchanged.
+Today the policy is inlined in `AonApp.build`'s `builder:`
+(`lib/main.dart:63`): `MediaQuery.textScalerOf(context).clamp(minScaleFactor:
+1.0, maxScaleFactor: 1.6)`. A synthetic-`TextScaler(2.0)` component test cannot
+see this constant at all — so the clamp is the one thing Phase 5 changes that
+nothing tests. That is the steering wheel going untested.
+
+**Extract the policy so it can be asserted directly.** Introduce a named
+constant and a pure function (in `main.dart`, or a small `lib/app/text_scale.dart`):
+
+```dart
+const double kMaxTextScale = 2.0; // Phase 5 accessibility ceiling
+TextScaler resolveAppTextScaler(TextScaler os) =>
+    os.clamp(minScaleFactor: 1.0, maxScaleFactor: kMaxTextScale);
+```
+
+The builder calls `resolveAppTextScaler(MediaQuery.textScalerOf(context))`
+instead of the inline clamp. The constant is the single source of truth for the
+ceiling; the comment states the guarantee (verified overflow-free to 2.0; capped
+at 2.0 deliberately). `minScaleFactor: 1.0` is part of the policy and is tested
+as such (§5.4). If anyone later reverts `kMaxTextScale` to 1.6, the ceiling test
+fails — the regression the old inline clamp could never have.
 
 ## 5. Testing plan — make 2.0 permanent
 
-The suite gains three things, all TDD (write failing → fix → green). **Viewport
-choice is load-bearing** (§2): the sheet tests use a short viewport so the
-overflow actually reproduces.
+The suite gains the following, all TDD (write failing → fix → green).
+**Viewport choice is load-bearing** (§2): tests that must catch vertical
+overflow use a short viewport so it actually reproduces.
 
-1. **Extend `responsive_layout_test.dart` — add the 2.0 row.** Matrix becomes
-   the existing widths `{320, 414}` × scales `{1.0, 1.6, 2.0}` (just the 2.0
-   row; **no 360w column** — 320w is strictly the more constraining width for
-   horizontal overflow, so 360 would be test-bloat without a distinct failure
-   mode). Same `takeException()` guard. This locks the 6 content screens.
-2. **Sheet-at-2.0 tests (new file `text_scale_sheets_test.dart`).**
-   - `_TimeSimulatorSheet`: open via the What's On AppBar science icon at 2.0,
-     **320×640**, assert no exception (the exact probe that caught the bug).
-   - `_ParkingSheet`: open by tapping a parking marker on `MapScreen` at 2.0,
-     **320×568** (the height where it reproduces — a tall viewport hides it).
-     *Feasibility confirmed:* `MapScreen` pumps in a widget test and a parking
-     marker is tappable at this size. *Robustness caveat:* marker hit-testing
-     is viewport-sensitive (it missed at 320×640); the test pins 320×568 and
-     uses `warnIfMissed: false`. If this proves flaky in practice, the fallback
-     is to extract the sheet body to a public widget testable directly — noted,
-     not pre-emptively done.
-   - `_VenueSheet`: assert it contains a `Scrollable` (regression guard against
-     someone "simplifying" it back to a non-scrollable `Column`).
+1. **Extend `responsive_layout_test.dart` — widths, the 2.0 scale, and a short
+   height.** Matrix becomes widths `{320, 360, 414}` × scales `{1.0, 1.6, 2.0}`,
+   **plus a dedicated `320×568` (short) case at 2.0 for all six content
+   screens.** Two corrections from review: (a) **360w is kept** — the app has
+   width-responsive `LayoutBuilder` branches (e.g. `home_screen.dart:59`, grid
+   columns `= (maxWidth/260).ceil().clamp(1,4)`; the hero and `LiquidTabBar`),
+   so width is *not* monotonic and 320 does not provably subsume 360. (Those
+   branches all yield 2 columns across 320–414, so none *crosses* in-band, but
+   the branch exists — keeping 360 costs little and removes the assumption.)
+   (b) The **320×568 short case is retained permanently** for the screens, not
+   only the sheets — the phase's own lesson (height is load-bearing) must not be
+   preserved for two sheets while a future fixed-height screen regression sneaks
+   back in under tall-only tests. Guard: `tester.takeException()`.
+2. **Sheet-at-2.0 tests (new file `text_scale_sheets_test.dart`).** Each sheet
+   test **proves the sheet actually opened before judging layout**, so a missed
+   interaction can never false-pass as "no overflow":
+   - `_TimeSimulatorSheet` @ **320×640**, 2.0: open via the What's On AppBar
+     science icon; assert a sheet-unique artefact is present (e.g. the "Preview
+     event night" title / the "Back to real time" button) → assert no exception
+     → assert a `Scrollable` is present.
+   - `_ParkingSheet` @ **320×568**, 2.0: tap a parking marker on `MapScreen`;
+     **assert `ConfidenceNote` (a `_ParkingSheet`-unique widget) is visible**
+     → then assert no exception → assert a `Scrollable` is present. The
+     sheet-opened assertion is mandatory and precedes the layout check, so a
+     missed marker tap fails the test rather than silently passing. *Feasibility
+     confirmed:* `MapScreen` pumps and a parking marker is tappable at 320×568.
+     *Robustness:* if marker hit-testing proves flaky, the fallback is to
+     extract the sheet body to a public widget and test it directly — preferred
+     over maintaining a probabilistic test. `warnIfMissed:false` is used only
+     because the mandatory sheet-opened assertion already makes a real miss fail.
+   - `_VenueSheet` @ **320×568**, 2.0: open via a venue marker tap; assert the
+     sheet opened → **assert no exception (a real layout test, not merely a
+     structural check)** → assert its `Scrollable` is present. "Contains a
+     `Scrollable`" alone does not prove the subtree is overflow-free, so the
+     global "every surface at 2.0" promise requires the actual layout assertion.
 3. **Extend `shell_responsive_test.dart` — navigate tabs at 2.0 (not a new
    file).** `shell_responsive_test` **already** pumps `buildRouter()` at 2.0 for
    the *initial* (Home) route; because `StatefulShellRoute.indexedStack` builds
    branches lazily, **Map/Program/Now/Info are never built there.** Add one case
-   that, at 2.0, taps through each tab and asserts no exception after each —
-   closing the fact that **`MapScreen` currently has zero coverage.** This is
-   the genuine delta; it does not re-prove Home-at-2.0.
+   that, at 2.0 on **both a tall (320×640) and a short (320×568)** viewport, taps
+   through each tab and asserts no exception after each — closing the fact that
+   **`MapScreen` currently has zero coverage.** This is the genuine delta; it
+   does not re-prove Home-at-2.0.
+4. **App-root clamp policy test (new, in `text_scale_sheets_test.dart` or a
+   focused `text_scale_policy_test.dart`).** Assert the *production* policy via
+   `resolveAppTextScaler` (§4), independent of any injected component scaler:
+   - requested `1.0` → `1.0` (floor holds)
+   - requested `1.6` → `1.6` (mid passes through)
+   - requested `2.0` → `2.0` (ceiling reached, not clipped)
+   - requested `3.0` → `2.0` (**documented 2.0 ceiling enforced**)
+   - requested `0.5` → `1.0` (floor enforced)
+
+   Compared via `scaler.scale(100)` to avoid `TextScaler` identity pitfalls.
+   This is the regression that fails if the ceiling is ever reverted to 1.6 —
+   the test §6 previously (wrongly) celebrated not having.
 
 ## 6. Verification / acceptance gate
 
 Phase 5 is complete only when ALL hold:
 
 - `flutter analyze` clean.
-- `flutter test` green, including the extended matrix and the new tests.
-- The clamp reads `maxScaleFactor: 2.0` with the guarantee documented.
-  *Lift is safe (verified):* no test asserts `maxScaleFactor`/`1.6` or depends
-  on clamped scaling, and `shell_responsive_test` + `hero_glass_test` already
-  exercise 2.0 directly — so raising the cap cannot silently break the suite.
-- **On-device iOS pass at 2.0** (iOS simulator, `Settings > Larger Text` or an
-  injected 2.0 scale): every screen + both fixed sheets legible and unclipped.
-  This is best-effort verification, honestly reported — ellipsis truncation
-  does **not** throw, so automated tests cannot see it; a human eye can.
+- `flutter test` green, including the extended matrix and the new tests —
+  **including the app-root clamp policy test (§5.4)** that asserts the production
+  ceiling is 2.0. (Before this phase no test asserted the clamp; after it, one
+  must — so a later revert to 1.6 breaks the suite.)
+- The policy reads `kMaxTextScale = 2.0` with the guarantee documented (§4).
+- **Platform build gate** — recorded as `PASS / FAIL / NOT AVAILABLE`:
+  - `flutter build ios --simulator` (or `--no-codesign`) — expected PASS.
+  - `flutter build apk --debug` — expected PASS if the Android toolchain is
+    present, else `NOT AVAILABLE`. (Build availability ≠ emulator availability;
+    Android *runtime* stays `NOT AVAILABLE` per §7, but a build may still run.)
+- **On-device iOS pass at 2.0** (iOS simulator): every screen + both fixed
+  sheets legible and unclipped. The scale must be an **effective** 2.0, not just
+  an assumed one: during the run, record the resolved
+  `MediaQuery.textScalerOf(context)` at a descendant of the app root (a
+  temporary debug probe, removed before final commit) so the evidence is
+  *platform request → production app resolves effective 2.0 → screen verified*,
+  not "the accessibility slider is approximately 2.0." Best-effort and honestly
+  reported — ellipsis truncation does **not** throw, so automated tests cannot
+  see it; a human eye can.
 
 ## 7. Honest bounds & deferrals
 
@@ -150,40 +214,57 @@ Phase 5 is complete only when ALL hold:
   automated suite cannot catch it; the on-device pass (§6) is the mitigation.
   Any truncation that loses *critical* information found on-device is fixed in
   this phase; cosmetic truncation is acceptable degradation.
-- **Unbounded scaling is deliberately NOT done.** The OS can request scales
-  above 2.0 (iOS accessibility sizes, Android font scale × display size). The
-  app hardens to and caps at 2.0. Lifting past 2.0 is out of scope and, for a
-  one-handed walking companion, degrades usefulness past the point of value.
-- **No new a11y features.** Semantics, contrast, and ≥56px targets were built
-  per-phase. This gauntlet *verifies* a11y survives at 2.0; it does not extend
-  it.
+- **Scaling above 2.0 is an acknowledged accessibility limitation of this
+  release.** The OS can request scales above 2.0 (iOS accessibility sizes,
+  Android font scale × display size). This release bounds at 2.0 because the app
+  has not yet been hardened or regression-tested above that bound — *not* because
+  larger text lacks value (a user who sets >2.0 has stated exactly what creates
+  value for them). Raising the ceiling past 2.0 is deferred to **future
+  accessibility work**, not dismissed.
+- **No new semantics, contrast, focus, target-size, or assistive-input
+  features.** (Lifting supported scaling 1.6 → 2.0 *is itself* an accessibility
+  improvement — this bullet scopes out the *other* a11y dimensions, which were
+  built per-phase; the gauntlet verifies they survive at 2.0, it does not extend
+  them.)
 
 ## 8. Scope
 
-**In:** the two sheet fixes (§3); the clamp lift (§4); the three test additions
-(§5); the on-device 2.0 pass (§6).
+**In:** the two sheet fixes + the `_ParkingSheet` name-Row `Expanded` (§3); the
+clamp lift, extracted to a testable policy (§4); the test additions (§5.1–5.4:
+screen matrix + short viewport, three sheet layout tests, tab-nav coverage, and
+the clamp policy test); the platform build gate + effective-scale on-device pass
+(§6).
 
-**Out:** perf profiling; Android runtime; new screens/widgets; unbounded
-scaling; any a11y feature work; any visual/design change to a screen that is
-already overflow-free at 2.0.
+**Out:** perf profiling; Android *runtime*; new screens/widgets; scaling above
+2.0 (deferred to future a11y work, §7); other a11y dimensions (semantics,
+contrast, focus, target size); any visual/design change to a surface already
+overflow-free at 2.0.
 
 ## 9. Scorecard (0–10, re-scored at closeout)
 
 | Axis | Score | What raises it (named artifact) |
 |---|---|---|
-| Accessibility reach | 6 → target 9 | Clamp at 2.0 with every surface verified; the +3 is the on-device truncation pass catching what tests can't |
-| Regression durability | 5 → target 9 | The 2.0 matrix + short-viewport sheet tests + tab-nav Map coverage; Map going from 0 → covered is most of the lift |
-| Honesty of guarantee | 7 → target 10 | Bounded 2.0 claim, receipts in §2 (incl. the self-gauntlet height correction), NOT-AVAILABLE items named in §7 |
-| Change surface / risk | 8 → target 9 | Two `SingleChildScrollView` wraps + one `Expanded` + one constant + tests; no screen redesign |
+| Accessibility reach | 6 → target 8 | Clamp at 2.0 with every surface verified + on-device truncation pass. Capped at target **8, not 9**: >2.0 is a known, user-facing limitation deferred to future a11y work (§7) — a 9 would imply near-complete support the spec deliberately does not claim |
+| Regression durability | 5 → target 9 | The 2.0 matrix + permanent 320×568 short-viewport screen case + three sheet layout tests + tab-nav Map coverage + the app-root clamp policy test; Map 0 → covered and the clamp becoming testable are most of the lift |
+| Honesty of guarantee | 7 → target 10 | Bounded 2.0 claim, receipts in §2 (incl. the self-gauntlet height correction), effective-scale on-device evidence (§6), NOT-AVAILABLE/limitation items named in §7 |
+| Change surface / risk | 8 → target 9 | Two `SingleChildScrollView` wraps + one `Expanded` + a policy extraction (constant + pure fn) + tests; no screen redesign |
 
 ## 10. Files
 
-- Modify: `lib/main.dart:65` (clamp `1.6 → 2.0`) + comment.
+- Modify: `lib/main.dart` — replace the inline clamp with `resolveAppTextScaler`
+  + `kMaxTextScale = 2.0` (§4) and update the comment. (Helper may live in a new
+  `lib/app/text_scale.dart` if cleaner for import from tests.)
 - Modify: `lib/screens/whats_on_screen.dart` (`_TimeSimulatorSheet` scroll wrap).
 - Modify: `lib/screens/map_screen.dart` (`_ParkingSheet` scroll wrap **and**
   `Expanded` on the name `Text` — §3 secondary finding).
-- Modify: `test/widget/responsive_layout_test.dart` (add the `2.0` scale row).
-- Modify: `test/widget/shell_responsive_test.dart` (add tab-navigation-at-2.0,
-  covering Map).
-- Create: `test/widget/text_scale_sheets_test.dart` (`_TimeSimulatorSheet` @
-  320×640, `_ParkingSheet` @ 320×568, `_VenueSheet` scrollable-guard).
+- Modify: `test/widget/responsive_layout_test.dart` (widths `{320,360,414}` ×
+  scales `{1.0,1.6,2.0}` **and** a permanent `320×568` @ 2.0 case for all six
+  screens).
+- Modify: `test/widget/shell_responsive_test.dart` (tab-navigation @ 2.0 on tall
+  **and** 320×568, covering Map).
+- Create: `test/widget/text_scale_sheets_test.dart` — sheet layout tests with a
+  mandatory sheet-opened assertion: `_TimeSimulatorSheet` @ 320×640,
+  `_ParkingSheet` @ 320×568, `_VenueSheet` @ 320×568 (all: opened → no exception
+  → `Scrollable` present); plus the **app-root clamp policy test** (§5.4)
+  asserting the 2.0 ceiling and 1.0 floor via `resolveAppTextScaler`. (Split the
+  policy test into `text_scale_policy_test.dart` if the file grows unwieldy.)

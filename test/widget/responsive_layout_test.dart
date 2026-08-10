@@ -13,11 +13,13 @@ import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/screens/whats_on_screen.dart';
 import 'package:aon2026/services/clock.dart';
 
-/// Renders every primary screen on the smallest supported phone (320pt) and a
-/// standard phone (414pt), at the default text size and at the app's maximum
-/// clamped text scale (1.6x). A [RenderFlex] overflow throws during layout in
-/// a test, so `takeException()` returning non-null fails the case — this is the
-/// guard that the layouts stay unbroken for large-text and small-screen users.
+/// Renders every primary screen across phone widths (320/360/414) at the
+/// default text size and at the app's maximum clamped text scale (2.0x), plus a
+/// dedicated short-viewport (320×568) case at 2.0. A [RenderFlex] overflow
+/// throws during layout in a test, so `takeException()` returning non-null fails
+/// the case — this is the guard that the layouts stay unbroken for large-text
+/// and small-screen users. Height is load-bearing: fixed-height content overflows
+/// on a short phone, which tall viewports hide.
 void main() {
   Widget harness(Widget screen, double scale) {
     return ProviderScope(
@@ -46,8 +48,12 @@ void main() {
     'EventDetail': EventDetailScreen(eventId: EventsData.all.first.id),
   };
 
-  for (final size in [const Size(320, 640), const Size(414, 896)]) {
-    for (final scale in [1.0, 1.6]) {
+  for (final size in [
+    const Size(320, 640),
+    const Size(360, 780),
+    const Size(414, 896),
+  ]) {
+    for (final scale in [1.0, 1.6, 2.0]) {
       screens.forEach((name, screen) {
         testWidgets('$name @ ${size.width.toInt()}x scale$scale',
             (tester) async {
@@ -63,4 +69,20 @@ void main() {
       });
     }
   }
+
+  // Height is load-bearing: a realistic short phone (~iPhone SE) at 2.0 is where
+  // fixed-height content overflows. Screens are ListView-scrollable and stay
+  // clean here — this locks that in so a future fixed-height regression is caught.
+  screens.forEach((name, screen) {
+    testWidgets('$name @ 320x568 (short) scale2.0', (tester) async {
+      tester.view.physicalSize = const Size(320, 568);
+      tester.view.devicePixelRatio = 1.0;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(harness(screen, 2.0));
+      await tester.pump();
+      expect(tester.takeException(), isNull);
+    });
+  });
 }

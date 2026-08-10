@@ -205,7 +205,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 - Modify: `test/widget/text_scale_sheets_test.dart` (add Parking + Venue tests + a shared modal harness)
 
 **Interfaces:**
-- Produces: `ParkingSheet({required String parkingId})`, `VenueSheet({required String venueId})` — public, `@visibleForTesting`.
+- Produces: `ParkingSheet({Key? key, required String parkingId})`, `VenueSheet({Key? key, required String venueId})` — public, `@visibleForTesting`. **Public widgets must declare a `key` param** (`use_key_in_widget_constructors` lint fails the analyze gate otherwise — private widgets are exempt, public ones are not), so add `super.key`.
 
 - [ ] **Step 1: Write the failing tests (will not compile yet)**
 
@@ -297,18 +297,21 @@ Expected: compile error — `ParkingSheet` / `VenueSheet` not defined.
 
 In `lib/screens/map_screen.dart`:
 1. Ensure the foundation import is present (it comes via `package:flutter/material.dart`, already imported — `@visibleForTesting` is available).
-2. Rename the classes and constructors, and annotate:
+2. Rename the classes and constructors, annotate, and **add `super.key`** (public
+   widgets require a `key` param — verified: without it, `flutter analyze`
+   reports 2 `use_key_in_widget_constructors` infos and the gate fails; with it,
+   "No issues found"):
 
 ```dart
 @visibleForTesting
 class VenueSheet extends ConsumerWidget {
-  const VenueSheet({required this.venueId});
+  const VenueSheet({super.key, required this.venueId});
 ```
 
 ```dart
 @visibleForTesting
 class ParkingSheet extends ConsumerWidget {
-  const ParkingSheet({required this.parkingId});
+  const ParkingSheet({super.key, required this.parkingId});
 ```
 
 3. Update the two call sites inside `map_screen.dart`:
@@ -447,28 +450,50 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 **Interfaces:**
 - Produces: `const double kMaxTextScale`; `TextScaler resolveAppTextScaler(TextScaler os)`.
 
-- [ ] **Step 1: Write the failing policy test**
+Two tests: a pure-function test of the policy, **and an app-root integration
+test that proves `main.dart` actually wires it** — the latter is the one that
+catches a revert of the production clamp (verified during planning: with the
+current inline 1.6 clamp it reads 160, and after wiring it reads 200).
+
+- [ ] **Step 1: Write both failing tests**
 
 Create `test/widget/text_scale_policy_test.dart`:
 
 ```dart
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/app/text_scale.dart';
+import 'package:aon2026/main.dart';
 
 void main() {
   // Compare scalers by the number they produce, not by TextScaler identity.
   double resolved(double os) =>
       resolveAppTextScaler(TextScaler.linear(os)).scale(100);
 
-  test('production text-scale policy: floor 1.0, ceiling 2.0', () {
+  test('policy function: floor 1.0, ceiling 2.0', () {
     expect(kMaxTextScale, 2.0);
     expect(resolved(0.5), 100); // below floor -> 1.0
     expect(resolved(1.0), 100);
-    expect(resolved(1.6), 160); // passes through
+    expect(resolved(1.6), 160); // passes through (exactly 160.0 — verified)
     expect(resolved(2.0), 200); // ceiling reached, not clipped
     expect(resolved(3.0), 200); // ceiling ENFORCED (would be 300 uncapped / 160 if reverted to 1.6)
+  });
+
+  // The steering-wheel test: proves the PRODUCTION app caps the effective scale
+  // at 2.0, not just that the pure function is correct. Catches a revert of the
+  // main.dart wiring (which the function test alone cannot see).
+  testWidgets('app root caps effective text scale at 2.0', (tester) async {
+    tester.platformDispatcher.textScaleFactorTestValue = 3.0; // OS asks for 3.0
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(const ProviderScope(child: AonApp()));
+    await tester.pump(const Duration(milliseconds: 400));
+
+    // Effective scale at a descendant of the app root is capped to 2.0.
+    final ctx = tester.element(find.byType(Text).first);
+    expect(MediaQuery.textScalerOf(ctx).scale(100), 200);
   });
 }
 ```
@@ -506,13 +531,15 @@ TextScaler resolveAppTextScaler(TextScaler os) => os.clamp(
     );
 ```
 
-- [ ] **Step 4: Run — verify the policy test PASSES**
+- [ ] **Step 4: Run — policy function PASSES, app-root STILL FAILS**
 
 ```bash
 flutter test test/widget/text_scale_policy_test.dart
 ```
 
-Expected: PASS.
+Expected: the `policy function` test PASSES; the `app root caps…` test **FAILS**
+with `Expected: <200> Actual: <160.0>` — because `main.dart` still uses the
+inline 1.6 clamp. This is the meaningful red proving the wiring is not yet done.
 
 - [ ] **Step 5: Wire `main.dart` to use the policy**
 
@@ -556,14 +583,17 @@ New:
       },
 ```
 
-- [ ] **Step 6: Run analyze + full suite**
+- [ ] **Step 6: Run — both policy tests now GREEN, then analyze + full suite**
 
 ```bash
+flutter test test/widget/text_scale_policy_test.dart
 flutter analyze
 flutter test
 ```
 
-Expected: analyze clean; all tests green (the app now exposes 2.0, and every surface is hardened + regression-tested).
+Expected: both policy tests PASS (the app-root test now reads 200); analyze
+clean (`textScaleFactorTestValue`/`clearTextScaleFactorTestValue` are **not**
+deprecated — verified during planning); full suite green.
 
 - [ ] **Step 7: Commit**
 
@@ -571,9 +601,10 @@ Expected: analyze clean; all tests green (the app now exposes 2.0, and every sur
 git add lib/app/text_scale.dart lib/main.dart test/widget/text_scale_policy_test.dart
 git commit -m "feat(a11y): lift text-scale ceiling 1.6 -> 2.0 via a tested policy (Phase 5)
 
-Extract the inline clamp into resolveAppTextScaler + kMaxTextScale=2.0 so the
-production ceiling is asserted by a unit test (floor 1.0, ceiling 2.0; 3.0->2.0).
-Reverting the cap now breaks the suite — the regression the inline clamp never had.
+Extract the inline clamp into resolveAppTextScaler + kMaxTextScale=2.0 so both
+the policy function AND the production app-root wiring are asserted (a pumped
+AonApp caps an OS-requested 3.0 to an effective 2.0). Reverting the cap OR the
+main.dart wiring now breaks the suite — the regression the inline clamp lacked.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
@@ -789,6 +820,6 @@ Boot an iOS simulator, run the app, and set an effective 2.0 text scale. Prove t
 | `lib/screens/whats_on_screen.dart` | `_TimeSimulatorSheet` scroll wrap | 1 |
 | `lib/screens/map_screen.dart` | expose `ParkingSheet`/`VenueSheet` `@visibleForTesting`; Parking scroll wrap + name `Expanded` | 2 |
 | `test/widget/text_scale_sheets_test.dart` | **create** — 3 sheet tests + modal harness | 1, 2 |
-| `test/widget/text_scale_policy_test.dart` | **create** — clamp policy test | 3 |
+| `test/widget/text_scale_policy_test.dart` | **create** — policy-function test **+ app-root wiring test** (pumps `AonApp`, proves effective cap = 2.0) | 3 |
 | `test/widget/responsive_layout_test.dart` | matrix +360w +2.0 + 320×568 screens | 4 |
 | `test/widget/shell_responsive_test.dart` | tab-nav @ 2.0 (tall + short) | 4 |

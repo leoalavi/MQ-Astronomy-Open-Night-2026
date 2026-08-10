@@ -35,6 +35,13 @@ abstract final class TimeFormat {
   /// '19 September 2026'.
   static String date(DateTime d) => DateFormat('d MMMM y').format(d);
 
+  /// A live wall clock with seconds, in the app's convention: '8.41.07pm'.
+  /// Used by the passport reward screen as a "this is live" nudge (design §7.3).
+  static String clockWithSeconds(DateTime t) {
+    final meridiem = _meridiem.format(t).toLowerCase();
+    return '${DateFormat('h.mm.ss').format(t)}$meridiem';
+  }
+
   /// All sessions of an event, joined for display.
   /// '5pm – 5.45pm, 6.15pm – 7pm, 8.45pm – 9.30pm'.
   static String allSessions(AonEvent event) {

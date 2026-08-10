@@ -10,6 +10,7 @@ import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/screens/panorama_screen.dart';
 import 'package:aon2026/screens/passport_reward_screen.dart';
 import 'package:aon2026/screens/passport_scan_screen.dart';
+import 'package:aon2026/screens/passport_screen.dart';
 import 'package:aon2026/screens/whats_on_screen.dart';
 import 'package:aon2026/widgets/app_shell.dart';
 
@@ -137,6 +138,11 @@ GoRouter buildRouter() {
         parentNavigatorKey: rootNavigatorKey,
         path: Routes.passportReward,
         builder: (context, state) => const PassportRewardScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.passport,
+        builder: (context, state) => const PassportScreen(),
       ),
     ],
   );

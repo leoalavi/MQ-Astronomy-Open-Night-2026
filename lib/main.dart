@@ -6,6 +6,7 @@ import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/widgets/glass_shader.dart';
+import 'package:aon2026/app/text_scale.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -57,13 +58,11 @@ class _AonAppState extends State<AonApp> {
       themeMode: ThemeMode.dark,
       routerConfig: _router,
       builder: (context, child) {
-        // Clamp the OS text scale. Users on a large accessibility setting are
-        // still respected up to 1.6x, but beyond that the programme cards
-        // overflow badly; capping is kinder than clipping.
-        final scale = MediaQuery.textScalerOf(context).clamp(
-          minScaleFactor: 1.0,
-          maxScaleFactor: 1.6,
-        );
+        // Clamp the OS text scale to the app's verified range (see
+        // lib/app/text_scale.dart). Every surface is hardened to 2.0; the cap
+        // is held there deliberately so the app never exposes an unverified
+        // scale. Lifting past 2.0 is future accessibility work.
+        final scale = resolveAppTextScaler(MediaQuery.textScalerOf(context));
         return MediaQuery(
           data: MediaQuery.of(context).copyWith(textScaler: scale),
           child: child!,

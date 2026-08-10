@@ -8,6 +8,7 @@ import 'package:aon2026/screens/map_screen.dart';
 import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/screens/panorama_screen.dart';
+import 'package:aon2026/screens/passport_scan_screen.dart';
 import 'package:aon2026/screens/whats_on_screen.dart';
 import 'package:aon2026/widgets/app_shell.dart';
 
@@ -125,6 +126,11 @@ GoRouter buildRouter() {
         builder: (context, state) => PanoramaScreen(
           venueId: state.pathParameters['venueId']!,
         ),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.passportScan,
+        builder: (context, state) => const PassportScanScreen(),
       ),
     ],
   );

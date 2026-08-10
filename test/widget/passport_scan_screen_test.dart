@@ -1,0 +1,55 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:aon2026/screens/passport_scan_screen.dart';
+import 'package:aon2026/services/passport_providers.dart';
+
+Widget _host({bool enabled = true}) => ProviderScope(
+      overrides: [
+        passportSnapshotProvider.overrideWithValue(<String>{}),
+        passportCollectionEnabledProvider.overrideWithValue(enabled),
+      ],
+      child: const MaterialApp(home: PassportScanScreen()),
+    );
+
+Future<void> _enter(WidgetTester t, String code) async {
+  await t.enterText(find.byKey(const Key('passport-manual-field')), code);
+  await t.tap(find.byKey(const Key('passport-manual-submit')));
+  await t.pumpAndSettle();
+}
+
+void main() {
+  testWidgets('valid manual code collects (no camera)', (t) async {
+    await t.pumpWidget(_host());
+    await _enter(t, 'AON-A-TBC');
+    expect(find.textContaining('collected'), findsOneWidget);
+  });
+
+  testWidgets('unknown code shows the not-a-code message', (t) async {
+    await t.pumpWidget(_host());
+    await _enter(t, 'NOPE');
+    expect(
+      find.textContaining('not an Astronomy Open Night code'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('disabled (release + placeholder) shows the not-live message',
+      (t) async {
+    await t.pumpWidget(_host(enabled: false));
+    await _enter(t, 'AON-A-TBC');
+    expect(find.textContaining('live yet'), findsOneWidget);
+  });
+
+  testWidgets('no overflow at 320x568 / 2.0', (t) async {
+    t.view.physicalSize = const Size(320, 568);
+    t.view.devicePixelRatio = 1.0;
+    t.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    await t.pumpWidget(_host());
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+  });
+}

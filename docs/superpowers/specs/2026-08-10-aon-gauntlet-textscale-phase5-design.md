@@ -268,3 +268,35 @@ overflow-free at 2.0.
   → `Scrollable` present); plus the **app-root clamp policy test** (§5.4)
   asserting the 2.0 ceiling and 1.0 floor via `resolveAppTextScaler`. (Split the
   policy test into `text_scale_policy_test.dart` if the file grows unwieldy.)
+
+## 11. Runtime verification results (2026-08-10)
+
+Executed inline; all 5 tasks landed on `feature/gauntlet-textscale-phase5`.
+
+**Automated:** `flutter analyze` clean; `flutter test` **239 passed** (baseline
+195 → +44: sheet/policy tests + the widened responsive & shell matrices). The
+app-root policy test proves *platform request → production clamp → effective
+2.0* (a pumped `AonApp` with an OS-requested 3.0 resolves to 200 through the real
+`main.dart` wiring), so the effective-scale ceiling is machine-verified, not
+assumed.
+
+**Platform build gate:** iOS simulator `flutter build ios --simulator --debug` =
+**PASS**; Android `flutter build apk --debug` = **PASS** (toolchain present).
+Android *runtime* = **NOT AVAILABLE** (no emulator). Performance traces = **NOT
+AVAILABLE**.
+
+**On-device (iOS 17 Pro simulator, content size = accessibility-XXXL → clamped
+to 2.0):**
+- Home, What's On: legible and unclipped; long body copy wraps across many lines;
+  the floating glass tab bar stays fixed-height and its selected label ellipsizes
+  gracefully rather than overflowing.
+- **What's On time-simulator sheet (the primary fix): confirmed scrolling
+  cleanly** — title, full intro, and all 12 time chips render and scroll (before
+  the fix this exact sheet overflowed ~1098px).
+- Parking + Venue sheets: overflow-free at true 2.0 is proven by the automated
+  sheet tests (Parking overflowed 1566px at true 2.0 → fixed; Venue already
+  scrollable). Not separately eyeballed on-device this pass (full-height modal
+  dismiss + map-marker navigation made it impractical) — honestly flagged.
+
+No temporary debug probe was added to source, so the working tree needed no
+post-runtime cleanup.

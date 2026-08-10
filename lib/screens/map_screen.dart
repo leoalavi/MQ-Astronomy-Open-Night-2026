@@ -7,7 +7,9 @@ import 'package:latlong2/latlong.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/map_mode_toggle.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
+import 'package:aon2026/widgets/panorama_building_picker.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
@@ -38,6 +40,7 @@ class MapScreen extends ConsumerStatefulWidget {
 class _MapScreenState extends ConsumerState<MapScreen> {
   final MapController _controller = MapController();
   final Set<VenueCategory> _visible = {...VenueCategory.values};
+  MapMode _mode = MapMode.campusMap;
 
   @override
   void dispose() {
@@ -96,6 +99,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       body: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.all(AonSpacing.space3),
+            child: Center(
+              child: MapModeToggle(
+                value: _mode,
+                onChanged: (m) => setState(() => _mode = m),
+              ),
+            ),
+          ),
+          if (_mode == MapMode.panorama)
+            Expanded(
+              child: PanoramaBuildingPicker(
+                onOpen: (id) => context.push(Routes.panoramaFor(id)),
+              ),
+            )
+          else ...[
           MapCategoryFilterBar(
             selected: _visible,
             onToggle: (category) => setState(() {
@@ -165,9 +184,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ],
             ),
           ),
+          ],
         ],
       ),
-      floatingActionButton: Padding(
+      floatingActionButton: _mode == MapMode.panorama
+          ? null
+          : Padding(
         padding: EdgeInsets.only(
           bottom: AonNavMetrics.clearance(context) - AonSpacing.space3,
         ),

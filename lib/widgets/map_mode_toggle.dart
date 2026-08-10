@@ -61,7 +61,7 @@ class _Segment extends StatelessWidget {
             constraints: const BoxConstraints(minHeight: 56), // ≥56px target
             child: Padding(
               padding: const EdgeInsets.symmetric(
-                  horizontal: AonSpacing.space3, vertical: AonSpacing.space3),
+                  horizontal: AonSpacing.space2, vertical: AonSpacing.space3),
               child: Center(
                 child: Text(
                   label,

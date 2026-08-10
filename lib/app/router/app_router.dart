@@ -7,6 +7,7 @@ import 'package:aon2026/screens/info_screen.dart';
 import 'package:aon2026/screens/map_screen.dart';
 import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
+import 'package:aon2026/screens/panorama_screen.dart';
 import 'package:aon2026/screens/whats_on_screen.dart';
 import 'package:aon2026/widgets/app_shell.dart';
 
@@ -26,6 +27,10 @@ abstract final class Routes {
 
   /// Wayfinding, pre-seeded with a destination.
   static String wayfindingTo(String venueId) => '/wayfinding?to=$venueId';
+
+  /// Immersive 360° panorama for a venue.
+  static const String panorama = '/panorama/:venueId';
+  static String panoramaFor(String venueId) => '/panorama/$venueId';
 }
 
 /// The app's navigator.
@@ -106,6 +111,13 @@ GoRouter buildRouter() {
         path: Routes.wayfinding,
         builder: (context, state) => WayfindingScreen(
           initialDestinationId: state.uri.queryParameters['to'],
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.panorama,
+        builder: (context, state) => PanoramaScreen(
+          venueId: state.pathParameters['venueId']!,
         ),
       ),
     ],

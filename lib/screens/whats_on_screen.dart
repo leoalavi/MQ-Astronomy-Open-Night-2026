@@ -309,53 +309,55 @@ class _TimeSimulatorSheet extends ConsumerWidget {
     ];
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AonSpacing.space5,
-          0,
-          AonSpacing.space5,
-          AonSpacing.space6,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Preview event night', style: theme.textTheme.headlineSmall),
-            const SizedBox(height: AonSpacing.space2),
-            Text(
-              'Set the app’s clock to any point on '
-              '${TimeFormat.date(EventInfo.startsAt)} to see what the '
-              'programme looks like at that moment.',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
-            ),
-            const SizedBox(height: AonSpacing.space5),
-            Wrap(
-              spacing: AonSpacing.space2,
-              runSpacing: AonSpacing.space2,
-              children: [
-                for (final step in steps)
-                  ChoiceChip(
-                    label: Text(TimeFormat.time(step)),
-                    selected: simulated == step,
-                    onSelected: (_) =>
-                        ref.read(simulatedTimeProvider.notifier).set(step),
-                  ),
-              ],
-            ),
-            const SizedBox(height: AonSpacing.space5),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  ref.read(simulatedTimeProvider.notifier).clear();
-                  Navigator.of(context).pop();
-                },
-                icon: const Icon(Icons.restore_rounded),
-                label: const Text('Back to real time'),
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AonSpacing.space5,
+            0,
+            AonSpacing.space5,
+            AonSpacing.space6,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Preview event night', style: theme.textTheme.headlineSmall),
+              const SizedBox(height: AonSpacing.space2),
+              Text(
+                'Set the app’s clock to any point on '
+                '${TimeFormat.date(EventInfo.startsAt)} to see what the '
+                'programme looks like at that moment.',
+                style: theme.textTheme.bodyMedium
+                    ?.copyWith(color: AonColors.contentSecondary),
               ),
-            ),
-          ],
+              const SizedBox(height: AonSpacing.space5),
+              Wrap(
+                spacing: AonSpacing.space2,
+                runSpacing: AonSpacing.space2,
+                children: [
+                  for (final step in steps)
+                    ChoiceChip(
+                      label: Text(TimeFormat.time(step)),
+                      selected: simulated == step,
+                      onSelected: (_) =>
+                          ref.read(simulatedTimeProvider.notifier).set(step),
+                    ),
+                ],
+              ),
+              const SizedBox(height: AonSpacing.space5),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    ref.read(simulatedTimeProvider.notifier).clear();
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(Icons.restore_rounded),
+                  label: const Text('Back to real time'),
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

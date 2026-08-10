@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
@@ -21,6 +23,7 @@ class InfoScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final venues = ref.watch(venuesProvider);
     final parking = ref.watch(parkingProvider);
@@ -30,10 +33,10 @@ class InfoScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Useful information'),
+        title: Text(l.infoTitle),
         actions: [
           IconButton(
-            tooltip: 'Settings',
+            tooltip: l.settingsTitle,
             icon: const Icon(Icons.settings_outlined),
             onPressed: () => context.push(Routes.settings),
           ),
@@ -52,9 +55,9 @@ class InfoScreen extends ConsumerWidget {
             margin: const EdgeInsets.only(top: AonSpacing.space4),
             padding: const EdgeInsets.all(AonSpacing.space4),
             decoration: BoxDecoration(
-              color: AonColors.night900,
+              color: context.aon.surface,
               borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-              border: Border.all(color: AonColors.night700),
+              border: Border.all(color: context.aon.border),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -69,7 +72,7 @@ class InfoScreen extends ConsumerWidget {
                   )}\n'
                   '${EventInfo.host}',
                   style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: AonColors.contentSecondary),
+                      ?.copyWith(color: context.aon.contentSecondary),
                 ),
               ],
             ),
@@ -87,28 +90,28 @@ class InfoScreen extends ConsumerWidget {
           ),
 
           // ── First aid ──
-          const SectionHeader(
+          SectionHeader(
             title: 'First aid',
             icon: Icons.medical_services_rounded,
-            iconColor: AonColors.error,
+            iconColor: context.aon.error,
           ),
           for (final v in byCategory(VenueCategory.firstAid))
             _InfoTile(venue: v),
 
           // ── Toilets ──
-          const SectionHeader(
+          SectionHeader(
             title: 'Toilets',
             icon: Icons.wc_rounded,
-            iconColor: AonColors.mapFacility,
+            iconColor: context.aon.mapFacility,
           ),
           for (final v in byCategory(VenueCategory.toilets))
             _InfoTile(venue: v),
 
           // ── Information & registration ──
-          const SectionHeader(
+          SectionHeader(
             title: 'Registration and information',
             icon: Icons.info_rounded,
-            iconColor: AonColors.mapFacility,
+            iconColor: context.aon.mapFacility,
           ),
           for (final v in [
             ...byCategory(VenueCategory.registration),
@@ -117,10 +120,10 @@ class InfoScreen extends ConsumerWidget {
             _InfoTile(venue: v),
 
           // ── Food ──
-          const SectionHeader(
+          SectionHeader(
             title: 'Food and drink',
             icon: Icons.local_cafe_rounded,
-            iconColor: AonColors.nebula,
+            iconColor: context.aon.tertiary,
           ),
           for (final v in byCategory(VenueCategory.foodAndDrink))
             _InfoTile(venue: v),
@@ -130,7 +133,7 @@ class InfoScreen extends ConsumerWidget {
             title: 'Parking',
             subtitle: 'Free event parking',
             icon: Icons.local_parking_rounded,
-            iconColor: AonColors.mapParking,
+            iconColor: context.aon.mapParking,
             count: parking.length,
           ),
           for (final p in parking)
@@ -143,9 +146,9 @@ class InfoScreen extends ConsumerWidget {
                   children: [
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.local_parking_rounded,
-                          color: AonColors.mapParking,
+                          color: context.aon.mapParking,
                           size: AonSpacing.iconMd,
                         ),
                         const SizedBox(width: AonSpacing.space3),
@@ -157,7 +160,7 @@ class InfoScreen extends ConsumerWidget {
                       Text(
                         p.notes!,
                         style: theme.textTheme.bodySmall
-                            ?.copyWith(color: AonColors.contentSecondary),
+                            ?.copyWith(color: context.aon.contentSecondary),
                       ),
                     ],
                     const SizedBox(height: AonSpacing.space3),
@@ -182,10 +185,10 @@ class InfoScreen extends ConsumerWidget {
           ),
 
           // ── Transport ──
-          const SectionHeader(
+          SectionHeader(
             title: 'Getting here',
             icon: Icons.train_rounded,
-            iconColor: AonColors.mapTransport,
+            iconColor: context.aon.mapTransport,
           ),
           for (final v in [
             ...byCategory(VenueCategory.metro),
@@ -234,31 +237,31 @@ class InfoScreen extends ConsumerWidget {
           ),
 
           // ── Credits ──
-          const SectionHeader(title: 'Credits'),
+          SectionHeader(title: l.settingsCredits),
           Text(
             'Event materials, campus map and branding © Macquarie University, '
             '${EventInfo.faculty}. ${EventInfo.cricosProvider}.',
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentTertiary),
+                ?.copyWith(color: context.aon.contentTertiary),
           ),
           const SizedBox(height: AonSpacing.space2),
           Text(
             'Hero image: “A Deep Triangulum Galaxy” — Aleix Roig, 2026. '
             'Used with permission for this project.',
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentTertiary),
+                ?.copyWith(color: context.aon.contentTertiary),
           ),
           const SizedBox(height: AonSpacing.space2),
           Text(
             'Map data © OpenStreetMap contributors.',
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentTertiary),
+                ?.copyWith(color: context.aon.contentTertiary),
           ),
           const SizedBox(height: AonSpacing.space2),
           Text(
             '${EventInfo.socialHandle}  ${EventInfo.hashtag}',
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentTertiary),
+                ?.copyWith(color: context.aon.contentTertiary),
           ),
         ],
       ),
@@ -284,7 +287,7 @@ class _InfoTile extends StatelessWidget {
           children: [
             Icon(
               VenueStyle.iconFor(venue.category),
-              color: VenueStyle.colorFor(venue.category),
+              color: VenueStyle.colorFor(context, venue.category),
               size: AonSpacing.iconMd,
             ),
             const SizedBox(width: AonSpacing.space3),
@@ -299,7 +302,7 @@ class _InfoTile extends StatelessWidget {
                     Text(
                       venue.building!,
                       style: theme.textTheme.bodySmall
-                          ?.copyWith(color: AonColors.contentTertiary),
+                          ?.copyWith(color: context.aon.contentTertiary),
                     ),
                   ],
                   if (venue.notes != null) ...[
@@ -307,7 +310,7 @@ class _InfoTile extends StatelessWidget {
                     Text(
                       venue.notes!,
                       style: theme.textTheme.bodySmall
-                          ?.copyWith(color: AonColors.contentSecondary),
+                          ?.copyWith(color: context.aon.contentSecondary),
                     ),
                   ],
                   if (!venue.coordinateConfidence.isReliable ||
@@ -348,7 +351,7 @@ class _Guidance extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: AonSpacing.iconMd, color: AonColors.amber),
+          Icon(icon, size: AonSpacing.iconMd, color: context.aon.accent),
           const SizedBox(width: AonSpacing.space3),
           Expanded(
             child: Column(
@@ -359,7 +362,7 @@ class _Guidance extends StatelessWidget {
                 Text(
                   body,
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: AonColors.contentSecondary),
+                      ?.copyWith(color: context.aon.contentSecondary),
                 ),
               ],
             ),

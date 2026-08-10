@@ -57,9 +57,8 @@ void main() {
 
     test('no venue is named after the Exploratorium', () {
       final offenders = VenuesData.all.where((v) {
-        final haystack =
-            '${v.name} ${v.building ?? ''} ${v.aliases.join(' ')}'
-                .toLowerCase();
+        final haystack = '${v.name} ${v.building ?? ''} ${v.aliases.join(' ')}'
+            .toLowerCase();
         return haystack.contains('huntsman') ||
             haystack.contains('exploratorium');
       }).toList();
@@ -67,26 +66,23 @@ void main() {
       expect(offenders, isEmpty, reason: 'Cancelled — see file header.');
     });
 
-    test(
-      'the other 1 Central Courtyard rooms ARE still present',
-      () {
-        // A blunt "remove anything mentioning Central Courtyard" fix would
-        // also pass the tests above. This asserts we removed exactly one
-        // thing, not the whole venue.
-        final roomsAt1CC = EventsData.all
-            .where((e) => e.venueId == '1-central-courtyard')
-            .map((e) => e.room)
-            .whereType<String>()
-            .toList();
+    test('the other 1 Central Courtyard rooms ARE still present', () {
+      // A blunt "remove anything mentioning Central Courtyard" fix would
+      // also pass the tests above. This asserts we removed exactly one
+      // thing, not the whole venue.
+      final roomsAt1CC = EventsData.all
+          .where((e) => e.venueId == '1-central-courtyard')
+          .map((e) => e.room)
+          .whereType<String>()
+          .toList();
 
-        expect(roomsAt1CC, contains('Room 108'));
-        expect(roomsAt1CC, contains('Room 112'));
-        expect(
-          roomsAt1CC.length,
-          greaterThanOrEqualTo(7),
-          reason: 'Room 109 aside, 1 Central Courtyard hosts many rooms.',
-        );
-      },
-    );
+      expect(roomsAt1CC, contains('Room 108'));
+      expect(roomsAt1CC, contains('Room 112'));
+      expect(
+        roomsAt1CC.length,
+        greaterThanOrEqualTo(7),
+        reason: 'Room 109 aside, 1 Central Courtyard hosts many rooms.',
+      );
+    });
   });
 }

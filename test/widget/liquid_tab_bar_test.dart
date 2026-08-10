@@ -1,16 +1,35 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/widgets/liquid_tab_bar.dart';
 
 const _items = [
-  LiquidNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home', fx: TabFx.homecoming),
-  LiquidNavItem(icon: Icons.info_outline, activeIcon: Icons.info, label: 'Info', fx: TabFx.orbit),
-  LiquidNavItem(icon: Icons.map_outlined, activeIcon: Icons.map, label: 'Map', fx: TabFx.rotateOpen),
+  LiquidNavItem(
+    icon: Icons.home_outlined,
+    activeIcon: Icons.home,
+    label: 'Home',
+    fx: TabFx.homecoming,
+  ),
+  LiquidNavItem(
+    icon: Icons.info_outline,
+    activeIcon: Icons.info,
+    label: 'Info',
+    fx: TabFx.orbit,
+  ),
+  LiquidNavItem(
+    icon: Icons.map_outlined,
+    activeIcon: Icons.map,
+    label: 'Map',
+    fx: TabFx.rotateOpen,
+  ),
 ];
 
 Finder _orbit() => find.byWidgetPredicate(
-    (w) => w is CustomPaint && w.painter.runtimeType.toString() == '_OrbitPainter');
+  (w) =>
+      w is CustomPaint && w.painter.runtimeType.toString() == '_OrbitPainter',
+);
 
 Widget _host({
   int index = 0,
@@ -21,6 +40,8 @@ Widget _host({
 }) {
   var i = index;
   return MaterialApp(
+    localizationsDelegates: AonL10n.localizationsDelegates,
+    supportedLocales: AonL10n.supportedLocales,
     home: MediaQuery(
       data: MediaQueryData(
         disableAnimations: disableAnimations,
@@ -32,7 +53,10 @@ Widget _host({
           bottomNavigationBar: StatefulBuilder(
             builder: (context, setState) => LiquidTabBar(
               currentIndex: i,
-              onSelected: (x) { onSelected?.call(x); setState(() => i = x); },
+              onSelected: (x) {
+                onSelected?.call(x);
+                setState(() => i = x);
+              },
               color: Colors.white,
               selectedColor: const Color(0xFFFFB945),
               accent: const Color(0xFFFFB945),
@@ -54,7 +78,9 @@ void main() {
     expect(picked, [2]);
   });
 
-  testWidgets('orbit fx plays on select and leaves no overlay when idle', (tester) async {
+  testWidgets('orbit fx plays on select and leaves no overlay when idle', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host());
     expect(_orbit(), findsNothing);
     await tester.tap(find.byIcon(Icons.info_outline), warnIfMissed: false);
@@ -65,20 +91,29 @@ void main() {
     expect(_orbit(), findsNothing);
   });
 
-  testWidgets('the selected label uses at least 13px (night floor)', (tester) async {
+  testWidgets('the selected label uses at least 13px (night floor)', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host(index: 0));
     await tester.pumpAndSettle();
     final label = tester.widget<Text>(find.text('Home'));
     expect(label.style!.fontSize, greaterThanOrEqualTo(13));
   });
 
-  testWidgets('reduced motion: selection is instant - no orbit, active icon immediately', (tester) async {
-    await tester.pumpWidget(_host(disableAnimations: true));
-    await tester.tap(find.byIcon(Icons.info_outline), warnIfMissed: false);
-    await tester.pump(); // ONE frame, no settle - proves no in-flight animation
-    expect(_orbit(), findsNothing); // no decorative FX
-    expect(find.byIcon(Icons.info), findsOneWidget); // Info active icon shown at once
-  });
+  testWidgets(
+    'reduced motion: selection is instant - no orbit, active icon immediately',
+    (tester) async {
+      await tester.pumpWidget(_host(disableAnimations: true));
+      await tester.tap(find.byIcon(Icons.info_outline), warnIfMissed: false);
+      await tester
+          .pump(); // ONE frame, no settle - proves no in-flight animation
+      expect(_orbit(), findsNothing); // no decorative FX
+      expect(
+        find.byIcon(Icons.info),
+        findsOneWidget,
+      ); // Info active icon shown at once
+    },
+  );
 
   testWidgets('every tab is an accessible labelled button', (tester) async {
     final handle = tester.ensureSemantics();
@@ -96,17 +131,26 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('horizontal drag: crosses tabs, clamps in range, ends on the drag-end tab', (tester) async {
-    final picked = <int>[];
-    await tester.pumpWidget(_host(onSelected: picked.add));
-    final bar = tester.getRect(find.byType(LiquidTabBar));
-    // Drag from the left edge fully across to the right edge.
-    await tester.dragFrom(bar.centerLeft + const Offset(4, 0), Offset(bar.width, 0));
-    await tester.pumpAndSettle();
-    expect(picked, isNotEmpty);
-    expect(picked.every((x) => x >= 0 && x < _items.length), isTrue); // clamp
-    expect(picked.last, _items.length - 1); // dragging to the right edge lands on the last tab
-  });
+  testWidgets(
+    'horizontal drag: crosses tabs, clamps in range, ends on the drag-end tab',
+    (tester) async {
+      final picked = <int>[];
+      await tester.pumpWidget(_host(onSelected: picked.add));
+      final bar = tester.getRect(find.byType(LiquidTabBar));
+      // Drag from the left edge fully across to the right edge.
+      await tester.dragFrom(
+        bar.centerLeft + const Offset(4, 0),
+        Offset(bar.width, 0),
+      );
+      await tester.pumpAndSettle();
+      expect(picked, isNotEmpty);
+      expect(picked.every((x) => x >= 0 && x < _items.length), isTrue); // clamp
+      expect(
+        picked.last,
+        _items.length - 1,
+      ); // dragging to the right edge lands on the last tab
+    },
+  );
 
   testWidgets('no overflow at 2.0 text scale', (tester) async {
     await tester.pumpWidget(_host(textScale: 2.0));
@@ -114,9 +158,13 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('RTL: tapping the physically-left tab selects the last item', (tester) async {
+  testWidgets('RTL: tapping the physically-left tab selects the last item', (
+    tester,
+  ) async {
     final picked = <int>[];
-    await tester.pumpWidget(_host(dir: TextDirection.rtl, onSelected: picked.add));
+    await tester.pumpWidget(
+      _host(dir: TextDirection.rtl, onSelected: picked.add),
+    );
     // Under RTL item 2 (Map) renders at the physical left.
     await tester.tap(find.byIcon(Icons.map_outlined), warnIfMissed: false);
     await tester.pump();

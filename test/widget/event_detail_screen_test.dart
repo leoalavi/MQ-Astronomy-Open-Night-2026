@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -13,8 +15,7 @@ void main() {
   // guards against a regression in the badge's bounded-width layout.
   final liveEvent = EventsData.all.firstWhere((e) => e.sessions.isNotEmpty);
   final liveSession = liveEvent.sessions.first;
-  final duringSession =
-      liveSession.start.add(const Duration(minutes: 5));
+  final duringSession = liveSession.start.add(const Duration(minutes: 5));
 
   Widget harness(String eventId) {
     return ProviderScope(
@@ -22,14 +23,17 @@ void main() {
         baseClockProvider.overrideWithValue(FixedClock(duringSession)),
       ],
       child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
         theme: AonTheme.build(),
         home: EventDetailScreen(eventId: eventId),
       ),
     );
   }
 
-  testWidgets('shows a running event with its live status badge',
-      (tester) async {
+  testWidgets('shows a running event with its live status badge', (
+    tester,
+  ) async {
     await tester.pumpWidget(harness(liveEvent.id));
     await tester.pump();
 
@@ -39,8 +43,9 @@ void main() {
     expect(find.textContaining('Happening now'), findsWidgets);
   });
 
-  testWidgets('a removed event id lands on a recoverable not-found screen',
-      (tester) async {
+  testWidgets('a removed event id lands on a recoverable not-found screen', (
+    tester,
+  ) async {
     await tester.pumpWidget(harness('this-id-does-not-exist'));
     await tester.pump();
 

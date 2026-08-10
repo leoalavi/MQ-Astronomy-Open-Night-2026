@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -25,6 +27,8 @@ void main() {
     required VoidCallback onRecenter,
   }) {
     return MaterialApp(
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
       theme: ThemeData(brightness: Brightness.dark),
       home: Scaffold(
         body: Center(
@@ -39,12 +43,13 @@ void main() {
   }
 
   testWidgets('renders ONE glass surface with three buttons', (tester) async {
-    await tester.pumpWidget(harness(
-      onZoomIn: () {},
-      onZoomOut: () {},
-      onRecenter: () {},
-    ));
-    expect(find.byType(GlassSurface), findsOneWidget); // one control layer, not three
+    await tester.pumpWidget(
+      harness(onZoomIn: () {}, onZoomOut: () {}, onRecenter: () {}),
+    );
+    expect(
+      find.byType(GlassSurface),
+      findsOneWidget,
+    ); // one control layer, not three
     expect(find.byType(IconButton), findsNWidgets(3));
     expect(find.byIcon(Icons.add_rounded), findsOneWidget);
     expect(find.byIcon(Icons.remove_rounded), findsOneWidget);
@@ -53,35 +58,45 @@ void main() {
 
   testWidgets('each button fires its injected callback', (tester) async {
     var zin = 0, zout = 0, rec = 0;
-    await tester.pumpWidget(harness(
-      onZoomIn: () => zin++,
-      onZoomOut: () => zout++,
-      onRecenter: () => rec++,
-    ));
+    await tester.pumpWidget(
+      harness(
+        onZoomIn: () => zin++,
+        onZoomOut: () => zout++,
+        onRecenter: () => rec++,
+      ),
+    );
     await tester.tap(find.byIcon(Icons.add_rounded));
     await tester.tap(find.byIcon(Icons.remove_rounded));
     await tester.tap(find.byIcon(Icons.my_location_rounded));
     expect([zin, zout, rec], [1, 1, 1]);
   });
 
-  testWidgets('tap targets are >= 56 at 1.0 and 2.0 text scale', (tester) async {
+  testWidgets('tap targets are >= 56 at 1.0 and 2.0 text scale', (
+    tester,
+  ) async {
     for (final scale in [1.0, 2.0]) {
-      await tester.pumpWidget(MaterialApp(
-        theme: ThemeData(brightness: Brightness.dark),
-        home: MediaQuery(
-          data: MediaQueryData(textScaler: TextScaler.linear(scale)),
-          child: Scaffold(
-            body: Center(
-              child: MapControlIsland(
-                onZoomIn: () {},
-                onZoomOut: () {},
-                onRecenter: () {},
+      await tester.pumpWidget(
+        MaterialApp(
+          localizationsDelegates: AonL10n.localizationsDelegates,
+          supportedLocales: AonL10n.supportedLocales,
+          theme: ThemeData(brightness: Brightness.dark),
+          home: MediaQuery(
+            data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+            child: Scaffold(
+              body: Center(
+                child: MapControlIsland(
+                  onZoomIn: () {},
+                  onZoomOut: () {},
+                  onRecenter: () {},
+                ),
               ),
             ),
           ),
         ),
-      ));
-      final size = tester.getSize(find.widgetWithIcon(IconButton, Icons.add_rounded));
+      );
+      final size = tester.getSize(
+        find.widgetWithIcon(IconButton, Icons.add_rounded),
+      );
       expect(size.height, greaterThanOrEqualTo(56.0), reason: 'scale $scale');
       expect(size.width, greaterThanOrEqualTo(56.0), reason: 'scale $scale');
     }

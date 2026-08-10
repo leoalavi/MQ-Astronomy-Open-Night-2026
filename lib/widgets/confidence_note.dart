@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/data_confidence.dart';
 
@@ -36,17 +36,17 @@ class ConfidenceNote extends StatelessWidget {
 
     final text = message ?? 'This detail is still to be confirmed.';
     final style = Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: AonColors.soon,
+          color: context.aon.soon,
         );
 
     if (compact) {
       return Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
             size: AonSpacing.iconSm,
-            color: AonColors.soon,
+            color: context.aon.soon,
           ),
           const SizedBox(width: AonSpacing.space2),
           Expanded(child: Text(text, style: style)),
@@ -59,17 +59,17 @@ class ConfidenceNote extends StatelessWidget {
       decoration: BoxDecoration(
         // Low-saturation amber wash — noticeable without competing with the
         // primary accent, which is also amber.
-        color: AonColors.soon.withValues(alpha: 0.10),
+        color: context.aon.soon.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
-        border: Border.all(color: AonColors.soon.withValues(alpha: 0.35)),
+        border: Border.all(color: context.aon.soon.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.info_outline_rounded,
             size: AonSpacing.iconMd,
-            color: AonColors.soon,
+            color: context.aon.soon,
           ),
           const SizedBox(width: AonSpacing.space3),
           Expanded(child: Text(text, style: style)),

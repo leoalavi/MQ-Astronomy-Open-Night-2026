@@ -1,17 +1,23 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/widgets/passport_grid.dart';
 
 Widget _host(Set<String> collected) => MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: PassportGrid(collectedVenueIds: collected),
-        ),
-      ),
-    );
+  localizationsDelegates: AonL10n.localizationsDelegates,
+  supportedLocales: AonL10n.supportedLocales,
+  home: Scaffold(
+    body: SingleChildScrollView(
+      child: PassportGrid(collectedVenueIds: collected),
+    ),
+  ),
+);
 
 void main() {
-  testWidgets('renders all 9 cells, all uncollected when empty', (tester) async {
+  testWidgets('renders all 9 cells, all uncollected when empty', (
+    tester,
+  ) async {
     await tester.pumpWidget(_host(<String>{}));
     expect(
       find.bySemanticsLabel(RegExp(r', not yet collected$')),

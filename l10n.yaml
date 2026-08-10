@@ -1,0 +1,19 @@
+# Flutter localisation generation.
+#
+# Astronomy Open Night ships **English and Persian only**. MQ Journey carries
+# 35 locales, but its translations are Open Day wording — reusing them for
+# Astronomy strings ("My Night", "Telescope Park", the event phase copy) would
+# be wrong, and machine-filling 35 locales to reach "zero untranslated keys"
+# would be worse: confidently wrong translations at a public event.
+#
+# Adding a locale is a one-file change (lib/l10n/app_<code>.arb) plus a real
+# translator.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-localization-file: app_localizations.dart
+output-class: AonL10n
+output-dir: lib/l10n/generated
+nullable-getter: false
+# Fail loudly if a key is missing from a non-template locale, rather than
+# silently falling back to English at runtime.
+untranslated-messages-file: .dart_tool/untranslated_messages.json

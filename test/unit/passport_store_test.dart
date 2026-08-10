@@ -26,29 +26,30 @@ class InMemoryPassportStore implements PassportStore {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('fake contract: save/load round-trips; failed save is non-fatal',
-      () async {
-    final s = InMemoryPassportStore();
-    expect(await s.save({'a', 'b'}), isTrue);
-    expect(await s.loadSnapshot(), {'a', 'b'});
-    s.failNextSave = true;
-    expect(await s.save({'a', 'b', 'c'}), isFalse);
-    expect(await s.loadSnapshot(), {'a', 'b'}); // prior data intact
-  });
+  test(
+    'fake contract: save/load round-trips; failed save is non-fatal',
+    () async {
+      final s = InMemoryPassportStore();
+      expect(await s.save({'a', 'b'}), isTrue);
+      expect(await s.loadSnapshot(), {'a', 'b'});
+      s.failNextSave = true;
+      expect(await s.save({'a', 'b', 'c'}), isFalse);
+      expect(await s.loadSnapshot(), {'a', 'b'}); // prior data intact
+    },
+  );
 
-  test('real SharedPrefsPassportStore round-trips via in-memory platform',
-      () async {
-    SharedPreferencesAsyncPlatform.instance =
-        InMemorySharedPreferencesAsync.empty();
-    final store = SharedPrefsPassportStore(SharedPreferencesAsync());
-    expect(await store.loadSnapshot(), isEmpty);
-    expect(
-      await store.save({'macquarie-theatre', 'mason-theatre'}),
-      isTrue,
-    );
-    expect(
-      await store.loadSnapshot(),
-      {'macquarie-theatre', 'mason-theatre'},
-    );
-  });
+  test(
+    'real SharedPrefsPassportStore round-trips via in-memory platform',
+    () async {
+      SharedPreferencesAsyncPlatform.instance =
+          InMemorySharedPreferencesAsync.empty();
+      final store = SharedPrefsPassportStore(SharedPreferencesAsync());
+      expect(await store.loadSnapshot(), isEmpty);
+      expect(await store.save({'macquarie-theatre', 'mason-theatre'}), isTrue);
+      expect(await store.loadSnapshot(), {
+        'macquarie-theatre',
+        'mason-theatre',
+      });
+    },
+  );
 }

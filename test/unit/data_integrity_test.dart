@@ -20,7 +20,8 @@ void main() {
         expect(
           VenuesData.byId(event.venueId),
           isNotNull,
-          reason: 'Event "${event.id}" references unknown venue '
+          reason:
+              'Event "${event.id}" references unknown venue '
               '"${event.venueId}"',
         );
       }
@@ -28,7 +29,8 @@ void main() {
 
     test('every route endpoint resolves to a venue or car park', () {
       for (final route in RoutesData.all) {
-        final fromExists = VenuesData.byId(route.fromId) != null ||
+        final fromExists =
+            VenuesData.byId(route.fromId) != null ||
             ParkingData.byId(route.fromId) != null;
         final toExists = VenuesData.byId(route.toId) != null;
 
@@ -130,7 +132,8 @@ void main() {
             expect(
               s.note,
               isNotNull,
-              reason: '${event.id} has a placeholder time with no note '
+              reason:
+                  '${event.id} has a placeholder time with no note '
                   'explaining why — the UI needs something to show.',
             );
           }

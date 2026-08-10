@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -19,6 +21,8 @@ void main() {
         baseClockProvider.overrideWithValue(FixedClock(EventInfo.at(19, 0))),
       ],
       child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
         theme: AonTheme.build(),
         home: Builder(
           builder: (context) => MediaQuery(
@@ -46,27 +50,37 @@ void main() {
     );
   });
 
-  testWidgets('high-contrast renders the solid rung (no BackdropFilter in the pill)',
-      (tester) async {
-    await tester.pumpWidget(harness(highContrast: true));
-    await tester.pump();
-    final pill = find.ancestor(of: dateText(), matching: find.byType(GlassSurface));
-    expect(
-      find.descendant(of: pill, matching: find.byType(BackdropFilter)),
-      findsNothing,
-    );
-  });
+  testWidgets(
+    'high-contrast renders the solid rung (no BackdropFilter in the pill)',
+    (tester) async {
+      await tester.pumpWidget(harness(highContrast: true));
+      await tester.pump();
+      final pill = find.ancestor(
+        of: dateText(),
+        matching: find.byType(GlassSurface),
+      );
+      expect(
+        find.descendant(of: pill, matching: find.byType(BackdropFilter)),
+        findsNothing,
+      );
+    },
+  );
 
-  testWidgets('reduced-motion renders the frost rung (BackdropFilter present)',
-      (tester) async {
-    await tester.pumpWidget(harness(reduceMotion: true));
-    await tester.pump();
-    final pill = find.ancestor(of: dateText(), matching: find.byType(GlassSurface));
-    expect(
-      find.descendant(of: pill, matching: find.byType(BackdropFilter)),
-      findsOneWidget,
-    );
-  });
+  testWidgets(
+    'reduced-motion renders the frost rung (BackdropFilter present)',
+    (tester) async {
+      await tester.pumpWidget(harness(reduceMotion: true));
+      await tester.pump();
+      final pill = find.ancestor(
+        of: dateText(),
+        matching: find.byType(GlassSurface),
+      );
+      expect(
+        find.descendant(of: pill, matching: find.byType(BackdropFilter)),
+        findsOneWidget,
+      );
+    },
+  );
 
   testWidgets('no overflow at 320px across text scales', (tester) async {
     tester.view.physicalSize = const Size(320, 720);

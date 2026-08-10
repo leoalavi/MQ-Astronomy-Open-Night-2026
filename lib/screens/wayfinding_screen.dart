@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/walking_route.dart';
@@ -57,6 +59,7 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final parking = ref.watch(parkingProvider);
     final routes = ref.watch(routesProvider);
@@ -80,7 +83,7 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Walking directions'),
+        title: Text(l.mapWalkingDirections),
         actions: [
           if (fromId != null || toId != null)
             TextButton(
@@ -224,19 +227,19 @@ class _RouteDetail extends StatelessWidget {
         Container(
           padding: const EdgeInsets.all(AonSpacing.space4),
           decoration: BoxDecoration(
-            color: AonColors.night900,
+            color: context.aon.surface,
             borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-            border: Border.all(color: AonColors.night700),
+            border: Border.all(color: context.aon.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.trip_origin_rounded,
                     size: AonSpacing.iconSm,
-                    color: AonColors.stellar,
+                    color: context.aon.info,
                   ),
                   const SizedBox(width: AonSpacing.space3),
                   Expanded(
@@ -247,23 +250,23 @@ class _RouteDetail extends StatelessWidget {
                   ),
                 ],
               ),
-              const Padding(
-                padding: EdgeInsets.only(left: 8, top: 2, bottom: 2),
+              Padding(
+                padding: const EdgeInsets.only(left: 8, top: 2, bottom: 2),
                 child: SizedBox(
                   height: 18,
                   child: VerticalDivider(
                     width: 2,
                     thickness: 2,
-                    color: AonColors.night600,
+                    color: context.aon.borderStrong,
                   ),
                 ),
               ),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.place_rounded,
                     size: AonSpacing.iconSm,
-                    color: AonColors.amber,
+                    color: context.aon.accent,
                   ),
                   const SizedBox(width: AonSpacing.space3),
                   Expanded(
@@ -319,14 +322,14 @@ class _RouteDetail extends StatelessWidget {
         if (route.lightingNotes != null)
           _InfoRow(
             icon: Icons.lightbulb_outline_rounded,
-            color: AonColors.soon,
+            color: context.aon.soon,
             text: route.lightingNotes!,
           ),
 
         // ── Accessibility ──
         _InfoRow(
           icon: Icons.accessible_rounded,
-          color: AonColors.stellar,
+          color: context.aon.info,
           text: switch (route.isAccessible) {
             true => route.accessibilityNotes ??
                 'Step-free access along this route.',
@@ -377,7 +380,7 @@ class _RouteMap extends StatelessWidget {
                 ),
                 minZoom: MapConfig.minZoom,
                 maxZoom: MapConfig.maxZoom,
-                backgroundColor: AonColors.night950,
+                backgroundColor: context.aon.surfaceBase,
                 // A static preview — panning it would just get people lost.
                 interactionOptions: const InteractionOptions(
                   flags: InteractiveFlag.none,
@@ -392,12 +395,12 @@ class _RouteMap extends StatelessWidget {
                     Polyline(
                       points: route.points,
                       strokeWidth: 9,
-                      color: AonColors.mapRouteCasing,
+                      color: context.aon.mapRouteCasing,
                     ),
                     Polyline(
                       points: route.points,
                       strokeWidth: 5,
-                      color: AonColors.mapRoute,
+                      color: context.aon.mapRoute,
                       // Dashed while the geometry is unverified — a solid
                       // line would claim a precision we don't have.
                       pattern: isDraftGeometry
@@ -408,8 +411,8 @@ class _RouteMap extends StatelessWidget {
                 ),
                 MarkerLayer(
                   markers: [
-                    _endpoint(route.points.first, AonColors.stellar),
-                    _endpoint(route.points.last, AonColors.amber),
+                    _endpoint(context, route.points.first, context.aon.info),
+                    _endpoint(context, route.points.last, context.aon.accent),
                   ],
                 ),
               ],
@@ -422,14 +425,14 @@ class _RouteMap extends StatelessWidget {
             'Straight line shown — this is the general direction, not the '
             'exact path. Follow the written directions below.',
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentTertiary),
+                ?.copyWith(color: context.aon.contentTertiary),
           ),
         ],
       ],
     );
   }
 
-  Marker _endpoint(LatLng point, Color color) {
+  Marker _endpoint(BuildContext context, LatLng point, Color color) {
     return Marker(
       point: point,
       width: 20,
@@ -438,7 +441,7 @@ class _RouteMap extends StatelessWidget {
         decoration: BoxDecoration(
           color: color,
           shape: BoxShape.circle,
-          border: Border.all(color: AonColors.night950, width: 3),
+          border: Border.all(color: context.aon.surfaceBase, width: 3),
         ),
       ),
     );
@@ -465,14 +468,14 @@ class _StepRow extends StatelessWidget {
             height: 32,
             alignment: Alignment.center,
             decoration: BoxDecoration(
-              color: AonColors.night800,
+              color: context.aon.surfaceRaised,
               shape: BoxShape.circle,
-              border: Border.all(color: AonColors.night600),
+              border: Border.all(color: context.aon.borderStrong),
             ),
             child: Text(
               '$index',
               style: theme.textTheme.labelMedium
-                  ?.copyWith(color: AonColors.amber),
+                  ?.copyWith(color: context.aon.accent),
             ),
           ),
           const SizedBox(width: AonSpacing.space3),
@@ -486,17 +489,17 @@ class _StepRow extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.visibility_outlined,
                         size: AonSpacing.iconSm,
-                        color: AonColors.contentTertiary,
+                        color: context.aon.contentTertiary,
                       ),
                       const SizedBox(width: AonSpacing.space2),
                       Expanded(
                         child: Text(
                           step.landmark!,
                           style: theme.textTheme.bodySmall
-                              ?.copyWith(color: AonColors.contentTertiary),
+                              ?.copyWith(color: context.aon.contentTertiary),
                         ),
                       ),
                     ],
@@ -527,7 +530,7 @@ class _Stat extends StatelessWidget {
           Icon(
             icon,
             size: AonSpacing.iconSm,
-            color: AonColors.contentTertiary,
+            color: context.aon.contentTertiary,
           ),
           const SizedBox(width: AonSpacing.space2),
           Text(
@@ -535,7 +538,7 @@ class _Stat extends StatelessWidget {
             style: Theme.of(context)
                 .textTheme
                 .bodyMedium
-                ?.copyWith(color: AonColors.contentSecondary),
+                ?.copyWith(color: context.aon.contentSecondary),
           ),
         ],
       ),
@@ -569,7 +572,7 @@ class _InfoRow extends StatelessWidget {
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
           ),
         ],

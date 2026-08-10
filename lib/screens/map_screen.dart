@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/widgets/map_mode_toggle.dart';
@@ -51,6 +53,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     final venues = ref.watch(venuesProvider);
     final parking = ref.watch(parkingProvider);
 
@@ -84,7 +87,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
             height: 44,
             child: _MarkerPin(
               icon: Icons.local_parking_rounded,
-              color: AonColors.mapParking,
+              color: context.aon.mapParking,
               semanticLabel: '${p.name}. Parking.',
               onTap: () => _showParkingSheet(p.id),
             ),
@@ -96,7 +99,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Content-page AppBar stays opaque (governance rule 4). Recentre moved to
       // the floating glass control island over the tiles (Phase 2).
       appBar: AppBar(
-        title: const Text('Map'),
+        title: Text(l.mapTitle),
       ),
       body: Column(
         children: [
@@ -139,7 +142,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     cameraConstraint: CameraConstraint.contain(
                       bounds: MapConfig.campusBounds,
                     ),
-                    backgroundColor: AonColors.night950,
+                    backgroundColor: context.aon.surfaceBase,
                   ),
                   children: [
                     const DarkTileLayer(),
@@ -196,10 +199,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         ),
         child: FloatingActionButton.extended(
           onPressed: () => context.push(Routes.wayfinding),
-          backgroundColor: AonColors.amber,
-          foregroundColor: AonColors.onAccent,
+          backgroundColor: context.aon.accent,
+          foregroundColor: context.aon.onAccent,
           icon: const Icon(Icons.directions_walk_rounded),
-          label: const Text('Directions'),
+          label: Text(l.wayfindingDirections),
         ),
       ),
     );
@@ -212,7 +215,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       height: 44,
       child: _MarkerPin(
         icon: VenueStyle.iconFor(v.category),
-        color: VenueStyle.colorFor(v.category),
+        color: VenueStyle.colorFor(context, v.category),
         label: v.mapReference,
         semanticLabel: '${v.name}. ${v.category.label}.',
         onTap: () => _showVenueSheet(v.id),
@@ -267,7 +270,7 @@ class _MarkerPin extends StatelessWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: AonColors.night950,
+            color: context.aon.surfaceBase,
             shape: BoxShape.circle,
             border: Border.all(color: color, width: 2.5),
             boxShadow: const [
@@ -299,7 +302,7 @@ class _MapAttribution extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AonColors.night950.withValues(alpha: 0.75),
+        color: context.aon.surfaceBase.withValues(alpha: 0.75),
         borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
       ),
       child: Text(
@@ -307,7 +310,7 @@ class _MapAttribution extends StatelessWidget {
         style: Theme.of(context)
             .textTheme
             .labelSmall
-            ?.copyWith(color: AonColors.contentTertiary, fontSize: 11),
+            ?.copyWith(color: context.aon.contentTertiary, fontSize: 11),
       ),
     );
   }
@@ -321,6 +324,7 @@ class VenueSheet extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final venue = ref.watch(venueByIdProvider(venueId));
     if (venue == null) return const SizedBox.shrink();
 
@@ -344,7 +348,7 @@ class VenueSheet extends ConsumerWidget {
             children: [
               Icon(
                 VenueStyle.iconFor(venue.category),
-                color: VenueStyle.colorFor(venue.category),
+                color: VenueStyle.colorFor(context, venue.category),
               ),
               const SizedBox(width: AonSpacing.space3),
               Expanded(
@@ -357,7 +361,7 @@ class VenueSheet extends ConsumerWidget {
             Text(
               venue.building!,
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
           ],
           if (venue.notes != null) ...[
@@ -365,7 +369,7 @@ class VenueSheet extends ConsumerWidget {
             Text(
               venue.notes!,
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
           ],
           const SizedBox(height: AonSpacing.space3),
@@ -380,7 +384,7 @@ class VenueSheet extends ConsumerWidget {
                 context.push(Routes.wayfindingTo(venue.id));
               },
               icon: const Icon(Icons.directions_walk_rounded),
-              label: const Text('Walking directions'),
+              label: Text(l.mapWalkingDirections),
             ),
           ),
 
@@ -400,7 +404,7 @@ class VenueSheet extends ConsumerWidget {
                   context.push(Routes.panoramaFor(venue.id));
                 },
                 icon: const Icon(Icons.threesixty_rounded),
-                label: const Text('Look inside in 360°'),
+                label: Text(l.mapLookInside360),
               ),
             ),
           ],
@@ -456,9 +460,9 @@ class ParkingSheet extends ConsumerWidget {
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.local_parking_rounded,
-                    color: AonColors.mapParking,
+                    color: context.aon.mapParking,
                   ),
                   const SizedBox(width: AonSpacing.space3),
                   Expanded(
@@ -472,7 +476,7 @@ class ParkingSheet extends ConsumerWidget {
                 Text(
                   'Free event parking',
                   style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: AonColors.live),
+                      ?.copyWith(color: context.aon.live),
                 ),
               ],
               if (parking.notes != null) ...[
@@ -480,7 +484,7 @@ class ParkingSheet extends ConsumerWidget {
                 Text(
                   parking.notes!,
                   style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: AonColors.contentSecondary),
+                      ?.copyWith(color: context.aon.contentSecondary),
                 ),
               ],
               const SizedBox(height: AonSpacing.space3),

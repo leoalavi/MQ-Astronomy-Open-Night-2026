@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/saved_events.dart';
@@ -43,13 +45,14 @@ class SaveButton extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final saved = ref.watch(isSavedProvider(eventId));
-    final planName = ref.watch(terminologyProvider).myPlan;
+    final planName = ref.watch(terminologyProvider).myPlan(l);
 
     // Filled star = saved, outline = not. Shape carries the state as well as
     // colour, so it survives a night-shift filter and colour-blindness.
     final icon = saved ? Icons.star_rounded : Icons.star_outline_rounded;
-    final colour = saved ? AonColors.amber : AonColors.contentSecondary;
+    final colour = saved ? context.aon.accent : context.aon.contentSecondary;
     final semanticLabel = saved
         ? 'Remove $eventTitle from $planName'
         : 'Save $eventTitle to $planName';
@@ -87,7 +90,7 @@ class SaveButton extends ConsumerWidget {
             style: OutlinedButton.styleFrom(
               foregroundColor: colour,
               side: BorderSide(
-                color: saved ? AonColors.amber : AonColors.night600,
+                color: saved ? context.aon.accent : context.aon.borderStrong,
               ),
             ),
           ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 
 /// A titled section divider used down the length of the scrolling screens.
@@ -41,7 +41,7 @@ class SectionHeader extends StatelessWidget {
                 Icon(
                   icon,
                   size: AonSpacing.iconMd,
-                  color: iconColor ?? AonColors.amber,
+                  color: iconColor ?? context.aon.accent,
                 ),
                 const SizedBox(width: AonSpacing.space2),
               ],
@@ -56,14 +56,14 @@ class SectionHeader extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: AonColors.night800,
+                    color: context.aon.surfaceRaised,
                     borderRadius:
                         BorderRadius.circular(AonSpacing.radiusFull),
                   ),
                   child: Text(
                     '$count',
                     style: theme.textTheme.labelSmall
-                        ?.copyWith(color: AonColors.contentSecondary),
+                        ?.copyWith(color: context.aon.contentSecondary),
                   ),
                 ),
               ],
@@ -74,7 +74,7 @@ class SectionHeader extends StatelessWidget {
             Text(
               subtitle!,
               style: theme.textTheme.bodySmall
-                  ?.copyWith(color: AonColors.contentTertiary),
+                  ?.copyWith(color: context.aon.contentTertiary),
             ),
           ],
         ],

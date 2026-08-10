@@ -12,10 +12,12 @@ class _ThrowingStore implements PassportStore {
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  test('loadPassport swallows a store failure -> empty snapshot, never throws',
-      () async {
-    final (snapshot, store) = await loadPassport(store: _ThrowingStore());
-    expect(snapshot, isEmpty);
-    expect(store, isA<PassportStore>());
-  });
+  test(
+    'loadPassport swallows a store failure -> empty snapshot, never throws',
+    () async {
+      final (snapshot, store) = await loadPassport(store: _ThrowingStore());
+      expect(snapshot, isEmpty);
+      expect(store, isA<PassportStore>());
+    },
+  );
 }

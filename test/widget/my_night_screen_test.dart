@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -34,14 +36,17 @@ void main() {
         ),
       ],
       child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
         theme: AonTheme.build(),
         home: home ?? const MyNightScreen(),
       ),
     );
   }
 
-  testWidgets('empty state invites the visitor to the programme',
-      (tester) async {
+  testWidgets('empty state invites the visitor to the programme', (
+    tester,
+  ) async {
     seedSaved([]);
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
@@ -60,8 +65,7 @@ void main() {
     expect(find.textContaining('Your Day'), findsNothing);
   });
 
-  testWidgets('shows a saved activity with its venue and time',
-      (tester) async {
+  testWidgets('shows a saved activity with its venue and time', (tester) async {
     seedSaved(['keynote-artemis']);
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
@@ -81,7 +85,9 @@ void main() {
     await tester.pumpAndSettle();
 
     final pope = tester.getTopLeft(find.textContaining('Galactic guesswork'));
-    final keynote = tester.getTopLeft(find.textContaining('Artemis and beyond'));
+    final keynote = tester.getTopLeft(
+      find.textContaining('Artemis and beyond'),
+    );
     // The 4.30pm talk must sit above the 7.30pm keynote.
     expect(pope.dy, lessThan(keynote.dy));
   });
@@ -94,8 +100,9 @@ void main() {
     expect(find.text('Walk there'), findsOneWidget);
   });
 
-  testWidgets('removing an entry empties the timeline and offers undo',
-      (tester) async {
+  testWidgets('removing an entry empties the timeline and offers undo', (
+    tester,
+  ) async {
     seedSaved(['keynote-artemis']);
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
@@ -128,8 +135,9 @@ void main() {
     expect(find.textContaining('Overlaps'), findsWidgets);
   });
 
-  testWidgets('does not warn about two sessions of the same activity',
-      (tester) async {
+  testWidgets('does not warn about two sessions of the same activity', (
+    tester,
+  ) async {
     seedSaved(['physics-magic-show']);
     await tester.pumpWidget(harness(now: EventInfo.at(16, 0)));
     await tester.pumpAndSettle();
@@ -137,8 +145,9 @@ void main() {
     expect(find.textContaining('run at the same time'), findsNothing);
   });
 
-  testWidgets('finished entries collapse into their own section',
-      (tester) async {
+  testWidgets('finished entries collapse into their own section', (
+    tester,
+  ) async {
     seedSaved(['physics-magic-show']);
     await tester.pumpWidget(harness(now: EventInfo.at(19, 0)));
     await tester.pumpAndSettle();
@@ -178,8 +187,9 @@ void main() {
       );
     });
 
-    testWidgets('carries an accessible name, not just a star glyph',
-        (tester) async {
+    testWidgets('carries an accessible name, not just a star glyph', (
+      tester,
+    ) async {
       seedSaved([]);
       await tester.pumpWidget(
         harness(
@@ -190,16 +200,14 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(
-        find.bySemanticsLabel('Save Keynote to My Night'),
-        findsOneWidget,
-      );
+      expect(find.bySemanticsLabel('Save Keynote to My Night'), findsOneWidget);
     });
   });
 
   group('saved storage', () {
-    testWidgets('is scoped per event so a future event starts empty',
-        (tester) async {
+    testWidgets('is scoped per event so a future event starts empty', (
+      tester,
+    ) async {
       // Last year's saved ids must not leak into this event's plan.
       SharedPreferences.setMockInitialValues({
         SavedEventsStorage.keyFor('open-day-2026'): ['something-else'],
@@ -218,10 +226,13 @@ void main() {
       await tester.pumpWidget(
         ProviderScope(
           overrides: [
-            baseClockProvider
-                .overrideWithValue(FixedClock(EventInfo.at(19, 0))),
+            baseClockProvider.overrideWithValue(
+              FixedClock(EventInfo.at(19, 0)),
+            ),
           ],
           child: MaterialApp.router(
+            localizationsDelegates: AonL10n.localizationsDelegates,
+            supportedLocales: AonL10n.supportedLocales,
             theme: AonTheme.build(),
             routerConfig: buildRouter(),
           ),

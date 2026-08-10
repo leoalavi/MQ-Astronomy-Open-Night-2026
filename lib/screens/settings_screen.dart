@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/app/text_scale.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/app_settings.dart';
@@ -26,11 +28,12 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final config = ref.watch(eventConfigProvider);
     final settings = ref.watch(appSettingsProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(title: Text(l.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AonSpacing.space4,
@@ -40,24 +43,19 @@ class SettingsScreen extends ConsumerWidget {
         ),
         children: [
           // ── Appearance ──
-          const SectionHeader(
-            title: 'Appearance',
+          SectionHeader(
+            title: l.settingsAppearance,
             icon: Icons.dark_mode_rounded,
           ),
-          const _InfoCard(
-            icon: Icons.nightlight_round,
-            title: 'Built for the dark',
-            body:
-                'This app stays in its night theme. Astronomy Open Night runs '
-                'from dusk until 10pm, and a bright screen next to a telescope '
-                'spoils night vision — yours and everyone else’s nearby.\n\n'
-                'If you need a brighter screen, use your phone’s own '
-                'brightness control.',
+          settings.when(
+            loading: () => const _SettingSkeleton(),
+            error: (_, _) => const _SettingUnavailable(),
+            data: (s) => _AppearanceCard(selected: s.themeMode),
           ),
 
           // ── Motion ──
-          const SectionHeader(
-            title: 'Motion',
+          SectionHeader(
+            title: l.settingsMotion,
             icon: Icons.animation_rounded,
           ),
           settings.when(
@@ -68,7 +66,7 @@ class SettingsScreen extends ConsumerWidget {
                 value: s.reduceMotion,
                 onChanged: (v) =>
                     ref.read(appSettingsProvider.notifier).setReduceMotion(v),
-                title: const Text('Reduce motion'),
+                title: Text(l.settingsReduceMotion),
                 subtitle: const Text(
                   'Turns off the tab bar and glass animations. Your phone’s '
                   'own reduce-motion setting is always respected too.',
@@ -82,8 +80,8 @@ class SettingsScreen extends ConsumerWidget {
           ),
 
           // ── Text size ──
-          const SectionHeader(
-            title: 'Text size',
+          SectionHeader(
+            title: l.settingsTextSize,
             icon: Icons.format_size_rounded,
           ),
           _InfoCard(
@@ -104,8 +102,8 @@ class SettingsScreen extends ConsumerWidget {
           _AboutCard(config: config),
 
           // ── Privacy ──
-          const SectionHeader(
-            title: 'Privacy',
+          SectionHeader(
+            title: l.settingsPrivacy,
             icon: Icons.lock_outline_rounded,
           ),
           const _InfoCard(
@@ -120,12 +118,69 @@ class SettingsScreen extends ConsumerWidget {
           ),
 
           // ── Credits ──
-          const SectionHeader(
-            title: 'Credits',
+          SectionHeader(
+            title: l.settingsCredits,
             icon: Icons.copyright_rounded,
           ),
           _CreditsCard(config: config),
         ],
+      ),
+    );
+  }
+}
+
+/// The appearance chooser.
+///
+/// A real, three-way control — System / Light / Dark — because the app now
+/// ships two complete themes. Dark carries a "Recommended" hint rather than
+/// being forced: the event runs after sunset and a bright screen beside a
+/// telescope spoils night vision, but that is guidance, not a lock.
+class _AppearanceCard extends ConsumerWidget {
+  const _AppearanceCard({required this.selected});
+
+  final AppThemeMode selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+
+    return Card(
+      // RadioGroup, not per-tile onChanged: Flutter deprecated the old
+      // groupValue/onChanged pair after 3.32.
+      child: RadioGroup<AppThemeMode>(
+        groupValue: selected,
+        onChanged: (v) {
+          if (v != null) {
+            ref.read(appSettingsProvider.notifier).setThemeMode(v);
+          }
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (final mode in AppThemeMode.values)
+              RadioListTile<AppThemeMode>(
+                value: mode,
+                title: Text(switch (mode) {
+                  AppThemeMode.system => 'Follow my phone',
+                  AppThemeMode.light => 'Light',
+                  AppThemeMode.dark => 'Dark',
+                }),
+                subtitle: mode == AppThemeMode.dark
+                    ? Text(
+                        'Recommended — kinder to your night vision at the '
+                        'event',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: context.aon.contentTertiary,
+                        ),
+                      )
+                    : null,
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: AonSpacing.space4,
+                  vertical: AonSpacing.space1,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -153,13 +208,13 @@ class _AboutCard extends StatelessWidget {
               '${TimeFormat.range(config.startsAt, config.endsAt)}\n'
               '${config.host}',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
             const SizedBox(height: AonSpacing.space3),
             Text(
               config.faculty,
               style: theme.textTheme.bodySmall
-                  ?.copyWith(color: AonColors.contentTertiary),
+                  ?.copyWith(color: context.aon.contentTertiary),
             ),
           ],
         ),
@@ -177,7 +232,7 @@ class _CreditsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final body = theme.textTheme.bodySmall
-        ?.copyWith(color: AonColors.contentSecondary);
+        ?.copyWith(color: context.aon.contentSecondary);
 
     return Card(
       child: Padding(
@@ -229,7 +284,7 @@ class _InfoCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(icon, size: AonSpacing.iconMd, color: AonColors.amber),
+            Icon(icon, size: AonSpacing.iconMd, color: context.aon.accent),
             const SizedBox(width: AonSpacing.space3),
             Expanded(
               child: Column(
@@ -240,7 +295,7 @@ class _InfoCard extends StatelessWidget {
                   Text(
                     body,
                     style: theme.textTheme.bodySmall
-                        ?.copyWith(color: AonColors.contentSecondary),
+                        ?.copyWith(color: context.aon.contentSecondary),
                   ),
                 ],
               ),
@@ -260,9 +315,9 @@ class _SettingSkeleton extends StatelessWidget {
     return Container(
       height: 88,
       decoration: BoxDecoration(
-        color: AonColors.night900,
+        color: context.aon.surface,
         borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-        border: Border.all(color: AonColors.night700),
+        border: Border.all(color: context.aon.border),
       ),
     );
   }

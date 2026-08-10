@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/models/event.dart';
@@ -26,6 +28,7 @@ class EventDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final event = ref.watch(eventByIdProvider(eventId));
 
     // A deep link to a removed event (the cancelled Huntsman session is the
@@ -39,7 +42,7 @@ class EventDetailScreen extends ConsumerWidget {
           message:
               'It may have been changed or removed from the program since '
               'this link was shared.',
-          actionLabel: 'Browse the program',
+          actionLabel: l.actionBrowseProgram,
           onAction: () => context.go(Routes.program),
         ),
       );
@@ -49,7 +52,7 @@ class EventDetailScreen extends ConsumerWidget {
     final venue = ref.watch(venueByIdProvider(event.venueId));
     final now = ref.watch(currentTimeProvider);
     final timed = WhatsOnService.classify(event, now);
-    final accent = VenueStyle.colorForEventCategory(event.category);
+    final accent = VenueStyle.colorForEventCategory(context, event.category);
 
     return Scaffold(
       appBar: AppBar(title: Text(event.category.label)),
@@ -143,7 +146,7 @@ class EventDetailScreen extends ConsumerWidget {
                   Text(
                     session.note!,
                     style: theme.textTheme.bodySmall
-                        ?.copyWith(color: AonColors.contentTertiary),
+                        ?.copyWith(color: context.aon.contentTertiary),
                   ),
                 ],
                 ConfidenceNote(
@@ -164,18 +167,18 @@ class EventDetailScreen extends ConsumerWidget {
               child: Container(
                 padding: const EdgeInsets.all(AonSpacing.space4),
                 decoration: BoxDecoration(
-                  color: AonColors.soon.withValues(alpha: 0.10),
+                  color: context.aon.soon.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
                   border: Border.all(
-                    color: AonColors.soon.withValues(alpha: 0.35),
+                    color: context.aon.soon.withValues(alpha: 0.35),
                   ),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.confirmation_number_rounded,
-                      color: AonColors.soon,
+                      color: context.aon.soon,
                       size: AonSpacing.iconMd,
                     ),
                     const SizedBox(width: AonSpacing.space3),
@@ -186,14 +189,14 @@ class EventDetailScreen extends ConsumerWidget {
                           Text(
                             'Pre-booking required',
                             style: theme.textTheme.titleSmall
-                                ?.copyWith(color: AonColors.soon),
+                                ?.copyWith(color: context.aon.soon),
                           ),
                           if (event.bookingNote != null) ...[
                             const SizedBox(height: AonSpacing.space1),
                             Text(
                               event.bookingNote!,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: AonColors.contentSecondary,
+                                color: context.aon.contentSecondary,
                               ),
                             ),
                           ],
@@ -230,7 +233,7 @@ class EventDetailScreen extends ConsumerWidget {
             Text(
               'Source: ${event.sourceNote}',
               style: theme.textTheme.bodySmall
-                  ?.copyWith(color: AonColors.night600),
+                  ?.copyWith(color: context.aon.borderStrong),
             ),
           ],
         ],
@@ -257,7 +260,7 @@ class EventDetailScreen extends ConsumerWidget {
                       Routes.wayfindingTo(venue.id),
                     ),
                     icon: const Icon(Icons.directions_walk_rounded),
-                    label: const Text('Walk there'),
+                    label: Text(l.actionWalkThere),
                   ),
                 ),
               ],
@@ -287,7 +290,7 @@ class _LocationBlock extends StatelessWidget {
           Text(
             'Location to be confirmed.',
             style: theme.textTheme.bodyMedium
-                ?.copyWith(color: AonColors.contentSecondary),
+                ?.copyWith(color: context.aon.contentSecondary),
           ),
         ],
       );
@@ -306,13 +309,13 @@ class _LocationBlock extends StatelessWidget {
           style: event.room == null
               ? theme.textTheme.titleMedium
               : theme.textTheme.bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
         ),
         if (v.building != null && v.building != v.name)
           Text(
             v.building!,
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentTertiary),
+                ?.copyWith(color: context.aon.contentTertiary),
           ),
         if (event.mapReference != null) ...[
           const SizedBox(height: AonSpacing.space3),
@@ -322,14 +325,14 @@ class _LocationBlock extends StatelessWidget {
                 width: 30,
                 height: 30,
                 alignment: Alignment.center,
-                decoration: const BoxDecoration(
-                  color: AonColors.amber,
+                decoration: BoxDecoration(
+                  color: context.aon.accent,
                   shape: BoxShape.circle,
                 ),
                 child: Text(
                   event.mapReference!,
                   style: theme.textTheme.labelMedium
-                      ?.copyWith(color: AonColors.onAccent),
+                      ?.copyWith(color: context.aon.onAccent),
                 ),
               ),
               const SizedBox(width: AonSpacing.space3),
@@ -337,7 +340,7 @@ class _LocationBlock extends StatelessWidget {
                 child: Text(
                   'Marked ${event.mapReference} on the printed event map',
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: AonColors.contentSecondary),
+                      ?.copyWith(color: context.aon.contentSecondary),
                 ),
               ),
             ],
@@ -348,7 +351,7 @@ class _LocationBlock extends StatelessWidget {
           Text(
             v.notes!,
             style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentSecondary),
+                ?.copyWith(color: context.aon.contentSecondary),
           ),
         ],
         if (v.accessibilityNotes != null) ...[
@@ -356,17 +359,17 @@ class _LocationBlock extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
+              Icon(
                 Icons.accessible_rounded,
                 size: AonSpacing.iconSm,
-                color: AonColors.stellar,
+                color: context.aon.info,
               ),
               const SizedBox(width: AonSpacing.space2),
               Expanded(
                 child: Text(
                   v.accessibilityNotes!,
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: AonColors.stellar),
+                      ?.copyWith(color: context.aon.info),
                 ),
               ),
             ],
@@ -400,6 +403,7 @@ class _VenueActions extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final hasPanorama = ref.watch(featuresProvider).panorama &&
         ref.watch(venuesWithPanoramaProvider).contains(venueId);
 
@@ -409,7 +413,7 @@ class _VenueActions extends ConsumerWidget {
           child: OutlinedButton.icon(
             onPressed: () => context.go(Routes.map),
             icon: const Icon(Icons.map_rounded, size: AonSpacing.iconSm),
-            label: const Text('Show on map'),
+            label: Text(l.actionShowOnMap),
           ),
         ),
         if (hasPanorama) ...[
@@ -448,9 +452,9 @@ class _DetailBlock extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AonSpacing.space4),
         decoration: BoxDecoration(
-          color: AonColors.night900,
+          color: context.aon.surface,
           borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-          border: Border.all(color: AonColors.night700),
+          border: Border.all(color: context.aon.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -460,13 +464,13 @@ class _DetailBlock extends StatelessWidget {
                 Icon(
                   icon,
                   size: AonSpacing.iconSm,
-                  color: AonColors.contentTertiary,
+                  color: context.aon.contentTertiary,
                 ),
                 const SizedBox(width: AonSpacing.space2),
                 Text(
                   title.toUpperCase(),
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color: AonColors.contentTertiary,
+                    color: context.aon.contentTertiary,
                     letterSpacing: 1.1,
                   ),
                 ),

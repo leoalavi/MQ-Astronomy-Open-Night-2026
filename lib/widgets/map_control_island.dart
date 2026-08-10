@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
@@ -42,22 +42,27 @@ class MapControlIsland extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _button(Icons.add_rounded, 'Zoom in', onZoomIn),
+          _button(context, Icons.add_rounded, 'Zoom in', onZoomIn),
           _divider(),
-          _button(Icons.remove_rounded, 'Zoom out', onZoomOut),
+          _button(context, Icons.remove_rounded, 'Zoom out', onZoomOut),
           _divider(),
-          _button(Icons.my_location_rounded, 'Recentre', onRecenter),
+          _button(context, Icons.my_location_rounded, 'Recentre', onRecenter),
         ],
       ),
     );
   }
 
-  Widget _button(IconData icon, String tooltip, VoidCallback onPressed) {
+  Widget _button(
+    BuildContext context,
+    IconData icon,
+    String tooltip,
+    VoidCallback onPressed,
+  ) {
     return IconButton(
       icon: Icon(icon),
       tooltip: tooltip,
       onPressed: onPressed,
-      color: AonColors.contentPrimary,
+      color: context.aon.contentPrimary,
       iconSize: AonSpacing.iconDefault,
       constraints: const BoxConstraints(
         minWidth: AonSpacing.minTapTarget,

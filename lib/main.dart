@@ -5,8 +5,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
+import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/config/event_config.dart';
-import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/app_settings.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/passport_store.dart';
@@ -88,11 +89,29 @@ class _AonAppState extends ConsumerState<AonApp> {
     return MaterialApp.router(
       title: config.name,
       debugShowCheckedModeBanner: false,
-      theme: AonTheme.build(),
-      // Dark only, by design — see AonTheme.
+      // Both themes are real; `themeMode` decides. Dark is the event default
+      // (see EventConfig.defaultThemeMode) but the visitor can override it.
+      theme: AonTheme.light(),
       darkTheme: AonTheme.build(),
-      themeMode: ThemeMode.dark,
+      themeMode: ref.watch(themeModeProvider).themeMode,
+      // Astronomy ships English + Persian only — see l10n.yaml for why we do
+      // not inherit MQ Journey's 35 Open Day locales.
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
+      locale: ref.watch(localeProvider),
       routerConfig: _router,
+      // Keep intl's formatting locale in step with the UI locale, so dates
+      // and times are never English inside a Persian screen.
+      localeResolutionCallback: (device, supported) {
+        // Match by language code, falling back to the first supported locale
+        // (English). Mirrors Flutter's own resolution for our simple case.
+        final resolved = supported.firstWhere(
+          (s) => s.languageCode == device?.languageCode,
+          orElse: () => supported.first,
+        );
+        TimeFormat.locale = resolved.toLanguageTag();
+        return resolved;
+      },
       builder: (context, child) {
         // Clamp the OS text scale to the app's verified range (see
         // lib/app/text_scale.dart). Every surface is hardened to 2.0; the cap

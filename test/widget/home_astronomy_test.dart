@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,7 +27,12 @@ void main() {
   Widget harness(DateTime now) {
     return ProviderScope(
       overrides: [baseClockProvider.overrideWithValue(FixedClock(now))],
-      child: MaterialApp(theme: AonTheme.build(), home: const HomeScreen()),
+      child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        theme: AonTheme.build(),
+        home: const HomeScreen(),
+      ),
     );
   }
 
@@ -60,8 +67,9 @@ void main() {
       expect(find.text('Happening now'), findsWidgets);
     });
 
-    testWidgets('shows "Starts soon" in the two hours before doors',
-        (tester) async {
+    testWidgets('shows "Starts soon" in the two hours before doors', (
+      tester,
+    ) async {
       seedSaved([]);
       await tester.pumpWidget(harness(EventInfo.at(15, 0)));
       await tester.pumpAndSettle();
@@ -96,11 +104,15 @@ void main() {
 
       expect(find.byType(ActivityRailCard), findsWidgets);
       // The keynote runs 7.30–8.15pm, so at 7pm it is upcoming, not running.
+      // "Up next" sits below the Happening-now rail and the passport card, so
+      // it is not built until scrolled to.
+      await scrollTo(tester, find.text('Up next'));
       expect(find.text('Up next'), findsWidgets);
     });
 
-    testWidgets('an activity can be saved straight from the rail',
-        (tester) async {
+    testWidgets('an activity can be saved straight from the rail', (
+      tester,
+    ) async {
       seedSaved([]);
       await tester.pumpWidget(harness(EventInfo.at(19, 0)));
       await tester.pumpAndSettle();
@@ -168,8 +180,9 @@ void main() {
       );
     });
 
-    testWidgets('quick access uses the official venue vocabulary',
-        (tester) async {
+    testWidgets('quick access uses the official venue vocabulary', (
+      tester,
+    ) async {
       seedSaved([]);
       await tester.pumpWidget(harness(EventInfo.at(19, 0)));
       await tester.pumpAndSettle();
@@ -184,8 +197,9 @@ void main() {
       expect(find.text('Parking'), findsOneWidget);
     });
 
-    testWidgets('quick access grounds each shortcut in its real venue name',
-        (tester) async {
+    testWidgets('quick access grounds each shortcut in its real venue name', (
+      tester,
+    ) async {
       seedSaved([]);
       await tester.pumpWidget(harness(EventInfo.at(19, 0)));
       await tester.pumpAndSettle();
@@ -214,8 +228,9 @@ void main() {
   });
 
   group('excluded content', () {
-    testWidgets('never surfaces the cancelled Huntsman session',
-        (tester) async {
+    testWidgets('never surfaces the cancelled Huntsman session', (
+      tester,
+    ) async {
       seedSaved([]);
       await tester.pumpWidget(harness(EventInfo.at(18, 0)));
       await tester.pumpAndSettle();

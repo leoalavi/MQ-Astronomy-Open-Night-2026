@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -60,7 +60,7 @@ class _VenueCard extends StatelessWidget {
           children: [
             Icon(
               hasTour ? Icons.panorama_photosphere : Icons.lock_outline_rounded,
-              color: hasTour ? AonColors.amber : AonColors.contentTertiary,
+              color: hasTour ? context.aon.accent : context.aon.contentTertiary,
             ),
             const SizedBox(width: AonSpacing.space3),
             Expanded(
@@ -74,16 +74,16 @@ class _VenueCard extends StatelessWidget {
                     hasTour ? kPanoramaDemoFlag : 'Coming soon',
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: hasTour
-                          ? AonColors.soon
-                          : AonColors.contentTertiary,
+                          ? context.aon.soon
+                          : context.aon.contentTertiary,
                     ),
                   ),
                 ],
               ),
             ),
             if (hasTour)
-              const Icon(Icons.chevron_right_rounded,
-                  color: AonColors.contentSecondary),
+              Icon(Icons.chevron_right_rounded,
+                  color: context.aon.contentSecondary),
           ],
         ),
       ),

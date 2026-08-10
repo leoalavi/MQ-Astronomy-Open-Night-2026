@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:confetti/confetti.dart';
@@ -6,12 +8,16 @@ import 'package:aon2026/screens/passport_reward_screen.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
 
-Widget _host(Set<String> snapshot, {bool reduceMotion = false}) => ProviderScope(
+Widget _host(Set<String> snapshot, {bool reduceMotion = false}) =>
+    ProviderScope(
       overrides: [passportSnapshotProvider.overrideWithValue(snapshot)],
       child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
         builder: (context, child) => MediaQuery(
-          data:
-              MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(disableAnimations: reduceMotion),
           child: child!,
         ),
         home: const PassportRewardScreen(),

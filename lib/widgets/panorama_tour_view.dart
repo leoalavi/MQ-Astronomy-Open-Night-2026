@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/indoor_manifest.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -82,7 +82,7 @@ class _PanoramaTourViewState extends State<PanoramaTourView> {
                 style: Theme.of(context)
                     .textTheme
                     .titleMedium
-                    ?.copyWith(color: AonColors.contentPrimary),
+                    ?.copyWith(color: context.aon.contentPrimary),
               ),
             ),
           ),

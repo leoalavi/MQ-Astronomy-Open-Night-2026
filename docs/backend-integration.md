@@ -140,6 +140,50 @@ line renders solid automatically. No frontend change required.
 
 ---
 
+## 3b. Changes since the first pass (light theme + l10n)
+
+Two cross-cutting migrations landed. Both are mechanical from your side, but
+you should know about them before your next merge.
+
+### Colours now come from a ThemeExtension
+
+`AonColors`' static tokens were replaced by `AonPalette`, resolved per
+brightness and read as **`context.aon.<token>`**. The app now ships a real
+light theme, so a `static const Color` can no longer be correct.
+
+Token renames (role-based, because "night900" is wrong in light mode):
+
+| Was | Now |
+|---|---|
+| `AonColors.night950` | `context.aon.surfaceBase` |
+| `AonColors.night900` | `context.aon.surface` |
+| `AonColors.night800` | `context.aon.surfaceRaised` |
+| `AonColors.night700` | `context.aon.border` |
+| `AonColors.night600` | `context.aon.borderStrong` |
+| `AonColors.amber` | `context.aon.accent` |
+| `AonColors.stellar` | `context.aon.info` |
+| `AonColors.nebula` | `context.aon.tertiary` |
+
+`VenueStyle.colorFor(...)` and `colorForEventCategory(...)` now take a
+`BuildContext` as their first argument. The icon lookups are unchanged.
+
+### Strings come from ARB
+
+English + Persian only (`lib/l10n/`). Widgets read `AonL10n.of(context)`.
+If you add user-facing copy, add a key rather than a literal — there is a test
+(`localisation_rtl_test.dart`) that fails on hardcoded Astronomy strings.
+
+### One thing to look at in your code
+
+`lib/widgets/passport_grid.dart` imports `data/venues_data.dart` **directly**
+rather than reading `venuesProvider`. Everything else in `lib/screens` and
+`lib/widgets` goes through a provider, which is what will let the fixtures be
+swapped for Supabase in one file. The fixture-boundary test currently exempts
+`passport_*` and `panorama_*` so it does not fail your work — but that exemption
+is a placeholder, not an endorsement. Worth a one-line change when convenient.
+
+---
+
 ## 4. Boundaries I did not cross
 
 Per the split, I did not modify:
@@ -150,11 +194,34 @@ Per the split, I did not modify:
 - `lib/widgets/panorama_*.dart`
 - `assets/web/**` (viewer HTML, Pannellum vendor bundle)
 
-**One shared file changed:** `lib/screens/map_screen.dart` gained a "Look
-inside in 360°" button in the venue sheet, guarded by
-`venuesWithPanoramaProvider`. It calls `Routes.panoramaFor(venue.id)` and
-touches no panorama internals. The existing Map/360 mode toggle and
-`PanoramaBuildingPicker` wiring were left exactly as they were.
+**Shared files changed, and exactly how:**
+
+| File | Change | Behaviour altered? |
+|---|---|---|
+| `lib/screens/map_screen.dart` | Added a "Look inside in 360°" button to the venue sheet, guarded by `venuesWithPanoramaProvider`; calls `Routes.panoramaFor(venue.id)` | No panorama internals touched. Your Map/360 toggle and `PanoramaBuildingPicker` wiring are untouched |
+| `lib/screens/panorama_screen.dart` | Colour tokens only (`AonColors.*` → `context.aon.*`) | **No** |
+| `lib/widgets/panorama_web_view.dart` | Colour tokens only | **No** |
+| `lib/widgets/panorama_tour_view.dart` | Colour tokens only | **No** |
+| `lib/widgets/panorama_scene_rail.dart` | Colour tokens only | **No** |
+| `lib/widgets/panorama_building_picker.dart` | Colour tokens only | **No** |
+| `lib/screens/passport_reward_screen.dart` | Colour tokens only | **No** |
+| `lib/widgets/passport_grid.dart` | Colour tokens only | **No** |
+| `lib/widgets/passport_home_card.dart` | Colour tokens only | **No** |
+
+Untouched entirely: `panorama_data.dart`, `panorama_server.dart`,
+`viewer_url_policy.dart`, `webview_bridge.dart`, `indoor_manifest.dart`,
+`assets/web/**`, and all passport data/logic.
+
+Your panorama and passport tests all still pass (430 total, green).
+
+### Also worth knowing
+
+* `AonColors` has been **deleted**. Every colour now comes from `AonPalette`
+  via `context.aon.*`. If you have work in flight that references it, the
+  rename table above is the whole migration.
+* Your passport UI is not localised yet — `passport_home_card.dart` renders
+  "0 / 9 stamps" in English even in Persian. Add ARB keys when convenient;
+  `lib/l10n/app_en.arb` + `app_fa.arb` are the files.
 
 ---
 

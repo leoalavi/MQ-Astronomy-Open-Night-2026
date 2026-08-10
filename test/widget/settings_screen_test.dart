@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,7 +16,11 @@ void main() {
   Widget harness() {
     SharedPreferences.setMockInitialValues({});
     return const ProviderScope(
-      child: MaterialApp(home: SettingsScreen()),
+      child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: SettingsScreen(),
+      ),
     );
   }
 
@@ -45,14 +51,15 @@ void main() {
     expect(prefs.getBool('settings.reduceMotion'), isTrue);
   });
 
-  testWidgets('reduceMotionProvider reflects the stored value',
-      (tester) async {
+  testWidgets('reduceMotionProvider reflects the stored value', (tester) async {
     SharedPreferences.setMockInitialValues({'settings.reduceMotion': true});
 
     late WidgetRef captured;
     await tester.pumpWidget(
       ProviderScope(
         child: MaterialApp(
+          localizationsDelegates: AonL10n.localizationsDelegates,
+          supportedLocales: AonL10n.supportedLocales,
           home: Consumer(
             builder: (context, ref, _) {
               captured = ref;
@@ -73,15 +80,27 @@ void main() {
     expect(captured.read(reduceMotionProvider), isTrue);
   });
 
-  testWidgets('explains the dark-only appearance rather than faking a toggle',
-      (tester) async {
+  testWidgets('offers a real three-way appearance choice', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
     expect(find.text('Appearance'), findsOneWidget);
-    expect(find.text('Built for the dark'), findsOneWidget);
-    // No non-functional light/system radio buttons.
-    expect(find.byType(RadioListTile<Object>), findsNothing);
+    expect(find.text('Follow my phone'), findsOneWidget);
+    expect(find.text('Light'), findsOneWidget);
+    expect(find.text('Dark'), findsOneWidget);
+    // Dark is recommended, not forced.
+    expect(find.textContaining('Recommended'), findsOneWidget);
+  });
+
+  testWidgets('choosing Light persists the preference', (tester) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Light'));
+    await tester.pumpAndSettle();
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getString('settings.themeMode'), 'light');
   });
 
   testWidgets('states the privacy position in plain terms', (tester) async {
@@ -126,6 +145,8 @@ void main() {
           builder: (context, ref, _) {
             final reduce = ref.watch(reduceMotionProvider);
             return MaterialApp(
+              localizationsDelegates: AonL10n.localizationsDelegates,
+              supportedLocales: AonL10n.supportedLocales,
               home: Builder(
                 builder: (context) {
                   final media = MediaQuery.of(context);
@@ -153,8 +174,9 @@ void main() {
   });
 
   group('no dead Open Day settings', () {
-    testWidgets('carries none of MQ Journey Open-Day-only preferences',
-        (tester) async {
+    testWidgets('carries none of MQ Journey Open-Day-only preferences', (
+      tester,
+    ) async {
       await tester.pumpWidget(harness());
       await tester.pumpAndSettle();
 

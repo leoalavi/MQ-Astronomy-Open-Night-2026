@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
 
 /// Typography scale.
 ///
@@ -21,7 +20,9 @@ import 'package:aon2026/app/theme/aon_colors.dart';
 abstract final class AonTypography {
   static const String? _fontPrimary = null;
 
-  static TextTheme get textTheme => _build(AonColors.contentPrimary);
+  /// The scale, rendered in [baseColor]. The colour is supplied by the theme
+  /// rather than baked in, so the same scale serves light and dark.
+  static TextTheme textThemeFor(Color baseColor) => _build(baseColor);
 
   static TextTheme _build(Color base) {
     return TextTheme(

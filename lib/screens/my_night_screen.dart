@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/clock.dart';
@@ -11,6 +13,7 @@ import 'package:aon2026/services/itinerary_service.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/services/whats_on_service.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/empty_state.dart';
@@ -28,17 +31,18 @@ class MyNightScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final terminology = ref.watch(terminologyProvider);
     final saved = ref.watch(savedEventsProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(terminology.myPlan),
+        title: Text(terminology.myPlan(l)),
         actions: [
-          if ((saved.value ?? const <String>{}).isNotEmpty)
+          if ((saved.value ?? <String>{}).isNotEmpty)
             TextButton(
-              onPressed: () => _confirmClear(context, ref),
-              child: const Text('Clear'),
+              onPressed: () => _confirmClear(context, ref, l),
+              child: Text(l.actionClear),
             ),
         ],
       ),
@@ -54,8 +58,12 @@ class MyNightScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
-    final planName = ref.read(terminologyProvider).myPlan;
+  Future<void> _confirmClear(
+    BuildContext context,
+    WidgetRef ref,
+    AonL10n l,
+  ) async {
+    final planName = ref.read(terminologyProvider).myPlan(l);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -66,11 +74,11 @@ class MyNightScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: Text(l.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Clear'),
+            child: Text(l.actionClear),
           ),
         ],
       ),
@@ -89,6 +97,7 @@ class _Timeline extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final remaining = ref.watch(itineraryRemainingProvider);
     final finished = ref.watch(itineraryFinishedProvider);
     final hasConflict = ref.watch(hasItineraryConflictProvider);
@@ -96,11 +105,11 @@ class _Timeline extends ConsumerWidget {
     if (remaining.isEmpty && finished.isEmpty) {
       return EmptyState(
         icon: Icons.star_outline_rounded,
-        title: terminology.myPlanEmpty,
+        title: terminology.myPlanEmpty(l),
         message:
             'Tap the star on any activity to plan your night. We’ll line '
             'everything up in time order and tell you where to go.',
-        actionLabel: 'Browse the program',
+        actionLabel: l.actionBrowseProgram,
         onAction: () => context.go(Routes.program),
       );
     }
@@ -129,16 +138,16 @@ class _Timeline extends ConsumerWidget {
               style: Theme.of(context)
                   .textTheme
                   .bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
           ),
 
         if (finished.isNotEmpty) ...[
           SectionHeader(
-            title: 'Finished',
+            title: l.timingFinished,
             count: finished.length,
             icon: Icons.check_circle_outline_rounded,
-            iconColor: AonColors.contentTertiary,
+            iconColor: context.aon.contentTertiary,
           ),
           for (final entry in finished) ...[
             _ItineraryCard(entry: entry, dimmed: true),
@@ -159,13 +168,14 @@ class _ItineraryCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final venue = ref.watch(venueByIdProvider(entry.event.venueId));
-    final accent = VenueStyle.colorForEventCategory(entry.event.category);
+    final accent = VenueStyle.colorForEventCategory(context, entry.event.category);
     final now = ref.watch(currentTimeProvider);
 
     final titleColour =
-        dimmed ? AonColors.contentTertiary : AonColors.contentPrimary;
+        dimmed ? context.aon.contentTertiary : context.aon.contentPrimary;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -177,15 +187,21 @@ class _ItineraryCard extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Time + status ──
-              Row(
+              // A Wrap, not a Row: Persian renders longer time strings, and a
+              // Row here forced the session time and the status badge to share
+              // a line they cannot both fit on. Wrapping drops the badge to the
+              // next line instead of overflowing.
+              Wrap(
+                spacing: AonSpacing.space2,
+                runSpacing: AonSpacing.space2,
+                crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
                     TimeFormat.session(entry.session),
                     style: theme.textTheme.titleMedium?.copyWith(
-                      color: dimmed ? AonColors.contentTertiary : accent,
+                      color: dimmed ? context.aon.contentTertiary : accent,
                     ),
                   ),
-                  const Spacer(),
                   TimingBadge(
                     timing: entry.timing,
                     trailingText: switch (entry.timing) {
@@ -214,7 +230,7 @@ class _ItineraryCard extends ConsumerWidget {
                 Text(
                   'Session ${entry.sessionIndex} of ${entry.sessionCount}',
                   style: theme.textTheme.bodySmall
-                      ?.copyWith(color: AonColors.contentTertiary),
+                      ?.copyWith(color: context.aon.contentTertiary),
                 ),
               ],
 
@@ -224,20 +240,20 @@ class _ItineraryCard extends ConsumerWidget {
               Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.place_rounded,
                     size: AonSpacing.iconSm,
-                    color: AonColors.contentSecondary,
+                    color: context.aon.contentSecondary,
                   ),
                   const SizedBox(width: AonSpacing.space2),
                   Expanded(
                     child: Text(
-                      [
-                        if (entry.event.room != null) entry.event.room!,
-                        venue?.name ?? 'Location to be confirmed',
-                      ].join(' · '),
+                      Bidi.joinIsolated([
+                        entry.event.room,
+                        venue?.name ?? l.infoLocationToBeConfirmed,
+                      ]),
                       style: theme.textTheme.bodySmall
-                          ?.copyWith(color: AonColors.contentSecondary),
+                          ?.copyWith(color: context.aon.contentSecondary),
                     ),
                   ),
                 ],
@@ -256,25 +272,34 @@ class _ItineraryCard extends ConsumerWidget {
               Row(
                 children: [
                   if (venue != null)
-                    TextButton.icon(
+                    // Flexible: the localised label ("مسیر پیاده") is wider
+                    // than the English one and must be allowed to ellipsize
+                    // rather than push the delete button off the card.
+                    Flexible(
+                      child: TextButton.icon(
                       onPressed: () =>
                           context.push(Routes.wayfindingTo(venue.id)),
                       icon: const Icon(
                         Icons.directions_walk_rounded,
                         size: AonSpacing.iconSm,
                       ),
-                      label: const Text('Walk there'),
+                      label: Text(
+                        l.actionWalkThere,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     ),
                   const Spacer(),
                   IconButton(
-                    tooltip: 'Remove from plan',
+                    tooltip: l.actionRemoveFromPlan,
                     icon: const Icon(Icons.delete_outline_rounded),
-                    color: AonColors.contentSecondary,
+                    color: context.aon.contentSecondary,
                     constraints: const BoxConstraints(
                       minWidth: AonSpacing.minTapTarget,
                       minHeight: AonSpacing.minTapTarget,
                     ),
-                    onPressed: () => _remove(context, ref),
+                    onPressed: () => _remove(context, ref, l),
                   ),
                 ],
               ),
@@ -285,8 +310,12 @@ class _ItineraryCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _remove(BuildContext context, WidgetRef ref) async {
-    final planName = ref.read(terminologyProvider).myPlan;
+  Future<void> _remove(
+    BuildContext context,
+    WidgetRef ref,
+    AonL10n l,
+  ) async {
+    final planName = ref.read(terminologyProvider).myPlan(l);
     final id = entry.event.id;
     await ref.read(savedEventsProvider.notifier).remove(id);
     if (!context.mounted) return;
@@ -301,7 +330,7 @@ class _ItineraryCard extends ConsumerWidget {
           // Undo matters here: the remove button sits next to "Walk there" on
           // a card being tapped in the dark.
           action: SnackBarAction(
-            label: 'Undo',
+            label: l.actionUndo,
             onPressed: () =>
                 ref.read(savedEventsProvider.notifier).toggle(id),
           ),
@@ -325,16 +354,16 @@ class _ConflictNote extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Icon(
+        Icon(
           Icons.warning_amber_rounded,
           size: AonSpacing.iconSm,
-          color: AonColors.soon,
+          color: context.aon.soon,
         ),
         const SizedBox(width: AonSpacing.space2),
         Expanded(
           child: Text(
             'Overlaps $list',
-            style: theme.textTheme.bodySmall?.copyWith(color: AonColors.soon),
+            style: theme.textTheme.bodySmall?.copyWith(color: context.aon.soon),
           ),
         ),
       ],
@@ -353,16 +382,16 @@ class _ConflictBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: AonSpacing.space4),
       padding: const EdgeInsets.all(AonSpacing.space4),
       decoration: BoxDecoration(
-        color: AonColors.soon.withValues(alpha: 0.10),
+        color: context.aon.soon.withValues(alpha: 0.10),
         borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-        border: Border.all(color: AonColors.soon.withValues(alpha: 0.35)),
+        border: Border.all(color: context.aon.soon.withValues(alpha: 0.35)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
-            color: AonColors.soon,
+            color: context.aon.soon,
             size: AonSpacing.iconMd,
           ),
           const SizedBox(width: AonSpacing.space3),
@@ -372,7 +401,7 @@ class _ConflictBanner extends StatelessWidget {
               'flagged below — most run more than once, so check for another '
               'session.',
               style: theme.textTheme.bodySmall
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
           ),
         ],
@@ -396,9 +425,9 @@ class _TimelineSkeleton extends StatelessWidget {
             child: Container(
               height: 132,
               decoration: BoxDecoration(
-                color: AonColors.night900,
+                color: context.aon.surface,
                 borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-                border: Border.all(color: AonColors.night700),
+                border: Border.all(color: context.aon.border),
               ),
             ),
           ),
@@ -414,6 +443,7 @@ class _LoadFailed extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     return EmptyState(
       icon: Icons.cloud_off_rounded,
       title: 'Couldn’t open your saved plan',
@@ -421,7 +451,7 @@ class _LoadFailed extends StatelessWidget {
       // the visitor can do about it.
       message: 'Your saved activities are stored on this device. '
           'Try again in a moment.',
-      actionLabel: 'Try again',
+      actionLabel: l.actionRetry,
       onAction: onRetry,
     );
   }

@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/whats_on_service.dart';
@@ -34,7 +34,7 @@ class ActivityRailCard extends ConsumerWidget {
     final theme = Theme.of(context);
     final event = timed.event;
     final venue = ref.watch(venueByIdProvider(event.venueId));
-    final accent = VenueStyle.colorForEventCategory(event.category);
+    final accent = VenueStyle.colorForEventCategory(context, event.category);
 
     // Same structure as EventCard: the save button is a sibling of the
     // tactile button, so both remain separately reachable to screen readers.
@@ -85,7 +85,7 @@ class ActivityRailCard extends ConsumerWidget {
                           child: Text(
                             venue?.chipLabel ?? 'Location to be confirmed',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AonColors.contentSecondary,
+                              color: context.aon.contentSecondary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -96,10 +96,10 @@ class ActivityRailCard extends ConsumerWidget {
                     const SizedBox(height: AonSpacing.space1),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.schedule_rounded,
                           size: AonSpacing.iconSm,
-                          color: AonColors.contentTertiary,
+                          color: context.aon.contentTertiary,
                         ),
                         const SizedBox(width: AonSpacing.space2),
                         Expanded(
@@ -108,7 +108,7 @@ class ActivityRailCard extends ConsumerWidget {
                                 ? TimeFormat.allSessions(event)
                                 : TimeFormat.session(timed.session!),
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: AonColors.contentTertiary,
+                              color: context.aon.contentTertiary,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,

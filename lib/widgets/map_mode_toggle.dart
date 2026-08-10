@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
@@ -52,7 +52,7 @@ class _Segment extends StatelessWidget {
       selected: selected,
       label: label,
       child: Material(
-        color: selected ? AonColors.amber : Colors.transparent,
+        color: selected ? context.aon.accent : Colors.transparent,
         borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
         child: InkWell(
           borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
@@ -69,7 +69,7 @@ class _Segment extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelLarge?.copyWith(
                     color:
-                        selected ? AonColors.night950 : AonColors.contentPrimary,
+                        selected ? context.aon.surfaceBase : context.aon.contentPrimary,
                   ),
                 ),
               ),

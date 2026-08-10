@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/aon_tactile_button.dart';
 
@@ -33,7 +33,7 @@ class QuickLinkTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: AonSpacing.radiusMd, // focus ring / pressed outline match the tile corners
       child: Material(
-        color: AonColors.night900,
+        color: context.aon.surface,
         borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
         clipBehavior: Clip.antiAlias,
         child: Container(
@@ -41,7 +41,7 @@ class QuickLinkTile extends StatelessWidget {
           padding: const EdgeInsets.all(AonSpacing.space4),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-            border: Border.all(color: AonColors.night700),
+            border: Border.all(color: context.aon.border),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,7 +65,7 @@ class QuickLinkTile extends StatelessWidget {
               Text(
                 description,
                 style: theme.textTheme.bodySmall
-                    ?.copyWith(color: AonColors.contentTertiary),
+                    ?.copyWith(color: context.aon.contentTertiary),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),

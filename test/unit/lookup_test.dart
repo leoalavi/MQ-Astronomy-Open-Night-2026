@@ -67,25 +67,18 @@ void main() {
 
   group('route lookup', () {
     test('finds a defined route between two points', () {
-      final route =
-          RoutesData.between('west-6', 'central-courtyard');
+      final route = RoutesData.between('west-6', 'central-courtyard');
       expect(route, isNotNull);
       expect(route!.steps, isNotEmpty);
     });
 
     test('returns null when no route is defined for a pair', () {
       // The UI must distinguish this from "nothing selected yet".
-      expect(
-        RoutesData.between('west-5', '11-wallys-walk'),
-        isNull,
-      );
+      expect(RoutesData.between('west-5', '11-wallys-walk'), isNull);
     });
 
     test('routes are directional — A→B does not imply B→A', () {
-      expect(
-        RoutesData.between('west-5', 'central-courtyard'),
-        isNotNull,
-      );
+      expect(RoutesData.between('west-5', 'central-courtyard'), isNotNull);
       expect(
         RoutesData.between('central-courtyard', 'west-5'),
         isNull,
@@ -133,7 +126,8 @@ void main() {
         expect(
           route.isAccessible,
           isNull,
-          reason: '${route.id}: if this route has been surveyed, update the '
+          reason:
+              '${route.id}: if this route has been surveyed, update the '
               'test along with the data.',
         );
       }
@@ -188,9 +182,7 @@ void main() {
     test('selectedRouteProvider is null until both ends are chosen', () {
       expect(container.read(selectedRouteProvider), isNull);
 
-      container
-          .read(selectedRouteStartProvider.notifier)
-          .select('west-5');
+      container.read(selectedRouteStartProvider.notifier).select('west-5');
       expect(container.read(selectedRouteProvider), isNull);
 
       container
@@ -210,8 +202,10 @@ void main() {
 
   group('event lookup', () {
     test('finds a known event', () {
-      expect(EventsData.byId('keynote-artemis')?.presenter,
-          'Professor Fred Watson AM');
+      expect(
+        EventsData.byId('keynote-artemis')?.presenter,
+        'Professor Fred Watson AM',
+      );
     });
 
     test('returns null for an unknown id', () {

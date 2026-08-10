@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
 import 'package:aon2026/data/venues_data.dart';
@@ -62,11 +62,11 @@ class _Cell extends StatelessWidget {
         padding: const EdgeInsets.all(AonSpacing.space3),
         decoration: BoxDecoration(
           color: collected
-              ? AonColors.amber.withValues(alpha: 0.12)
-              : AonColors.night900,
+              ? context.aon.accent.withValues(alpha: 0.12)
+              : context.aon.surface,
           borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
           border: Border.all(
-            color: collected ? AonColors.amber : AonColors.night700,
+            color: collected ? context.aon.accent : context.aon.border,
           ),
         ),
         child: Column(
@@ -74,7 +74,7 @@ class _Cell extends StatelessWidget {
           children: [
             Icon(
               collected ? Icons.check_circle_rounded : Icons.circle_outlined,
-              color: collected ? AonColors.amber : AonColors.contentTertiary,
+              color: collected ? context.aon.accent : context.aon.contentTertiary,
               size: AonSpacing.iconMd,
             ),
             const SizedBox(height: AonSpacing.space2),

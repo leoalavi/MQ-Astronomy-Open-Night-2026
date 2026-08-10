@@ -17,7 +17,10 @@ void main() {
     expect(resolved(1.0), 100);
     expect(resolved(1.6), 160); // passes through (exactly 160.0 — verified)
     expect(resolved(2.0), 200); // ceiling reached, not clipped
-    expect(resolved(3.0), 200); // ceiling ENFORCED (would be 300 uncapped / 160 if reverted to 1.6)
+    expect(
+      resolved(3.0),
+      200,
+    ); // ceiling ENFORCED (would be 300 uncapped / 160 if reverted to 1.6)
   });
 
   // The steering-wheel test: proves the PRODUCTION app caps the effective scale

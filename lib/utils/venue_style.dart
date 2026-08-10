@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/models/venue.dart';
 
@@ -14,18 +14,23 @@ import 'package:aon2026/models/venue.dart';
 /// icon shape, so the map remains usable for colour-blind attendees and under
 /// a phone's night-shift filter, which badly distorts hue.
 abstract final class VenueStyle {
-  static Color colorFor(VenueCategory category) => switch (category) {
-        VenueCategory.eventVenue => AonColors.mapVenue,
-        VenueCategory.registration => AonColors.amberBright,
-        VenueCategory.informationPoint => AonColors.mapFacility,
-        VenueCategory.toilets => AonColors.mapFacility,
-        VenueCategory.firstAid => AonColors.error,
-        VenueCategory.foodAndDrink => AonColors.nebula,
-        VenueCategory.parking => AonColors.mapParking,
-        VenueCategory.metro => AonColors.mapTransport,
-        VenueCategory.shuttleStop => AonColors.mapTransport,
-        VenueCategory.busStop => AonColors.mapTransport,
-        VenueCategory.other => AonColors.contentTertiary,
+  /// Colours now depend on the active theme, so the colour lookups take a
+  /// [BuildContext]. The icon lookups deliberately do not — an icon is the
+  /// same shape in both themes, and that is the point: colour is never the
+  /// only channel carrying meaning.
+  static Color colorFor(BuildContext context, VenueCategory category) =>
+      switch (category) {
+        VenueCategory.eventVenue => context.aon.mapVenue,
+        VenueCategory.registration => context.aon.accentBright,
+        VenueCategory.informationPoint => context.aon.mapFacility,
+        VenueCategory.toilets => context.aon.mapFacility,
+        VenueCategory.firstAid => context.aon.error,
+        VenueCategory.foodAndDrink => context.aon.tertiary,
+        VenueCategory.parking => context.aon.mapParking,
+        VenueCategory.metro => context.aon.mapTransport,
+        VenueCategory.shuttleStop => context.aon.mapTransport,
+        VenueCategory.busStop => context.aon.mapTransport,
+        VenueCategory.other => context.aon.contentTertiary,
       };
 
   static IconData iconFor(VenueCategory category) => switch (category) {
@@ -50,11 +55,14 @@ abstract final class VenueStyle {
         EventCategory.featuredPresentation => Icons.star_rounded,
       };
 
-  static Color colorForEventCategory(EventCategory category) =>
+  static Color colorForEventCategory(
+    BuildContext context,
+    EventCategory category,
+  ) =>
       switch (category) {
-        EventCategory.activity => AonColors.stellar,
-        EventCategory.shortTalk => AonColors.mapTransport,
-        EventCategory.keynote => AonColors.amber,
-        EventCategory.featuredPresentation => AonColors.nebula,
+        EventCategory.activity => context.aon.info,
+        EventCategory.shortTalk => context.aon.mapTransport,
+        EventCategory.keynote => context.aon.accent,
+        EventCategory.featuredPresentation => context.aon.tertiary,
       };
 }

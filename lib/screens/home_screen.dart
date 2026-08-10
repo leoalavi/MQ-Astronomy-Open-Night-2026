@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
+import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/aon_tactile_button.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -16,7 +19,9 @@ import 'package:aon2026/services/event_phase.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/services/whats_on_service.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/widgets/passport_home_card.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/activity_rail_card.dart';
@@ -32,6 +37,7 @@ class HomeScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final now = ref.watch(currentTimeProvider);
     final happeningNow = ref.watch(happeningNowProvider);
@@ -43,7 +49,9 @@ class HomeScreen extends ConsumerWidget {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: _Hero(now: now, phase: phase)),
+          SliverToBoxAdapter(
+            child: _Hero(now: now, phase: phase),
+          ),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               AonSpacing.space4,
@@ -58,9 +66,9 @@ class HomeScreen extends ConsumerWidget {
 
                 // ── 2. What's happening now ──
                 _ActivityRail(
-                  title: 'Happening now',
+                  title: l.timingHappeningNow,
                   icon: Icons.circle,
-                  iconColor: AonColors.live,
+                  iconColor: context.aon.live,
                   items: happeningNow,
                   now: now,
                   emptyMessage: phase.isLive
@@ -72,13 +80,15 @@ class HomeScreen extends ConsumerWidget {
                 const PassportHomeCard(),
 
                 _ActivityRail(
-                  title: 'Up next',
+                  title: l.homeUpNext,
                   subtitle: startingSoon.isNotEmpty
                       ? 'Starting in the next ${WhatsOnService.soonWindow.inMinutes} minutes'
                       : null,
                   icon: Icons.schedule_rounded,
-                  iconColor: AonColors.soon,
-                  items: startingSoon.isNotEmpty ? startingSoon : upcoming.take(6).toList(),
+                  iconColor: context.aon.soon,
+                  items: startingSoon.isNotEmpty
+                      ? startingSoon
+                      : upcoming.take(6).toList(),
                   now: now,
                 ),
 
@@ -91,7 +101,7 @@ class HomeScreen extends ConsumerWidget {
                     child: TextButton.icon(
                       onPressed: () => context.push(Routes.whatsOn),
                       icon: const Icon(Icons.timeline_rounded),
-                      label: Text('See the whole ${terminology.eventPeriod}'),
+                      label: Text('See the whole ${terminology.eventPeriod(l)}'),
                     ),
                   ),
                 ],
@@ -106,7 +116,6 @@ class HomeScreen extends ConsumerWidget {
                 const SizedBox(height: AonSpacing.space3),
                 const _QuickAccessGrid(),
 
-
                 const SizedBox(height: AonSpacing.space6),
 
                 // ── Practical summary ──
@@ -115,14 +124,16 @@ class HomeScreen extends ConsumerWidget {
                 const _FactRow(
                   icon: Icons.dark_mode_rounded,
                   title: 'It gets cold and dark',
-                  body: 'Bring a jacket and a torch. Red-light mode is best '
+                  body:
+                      'Bring a jacket and a torch. Red-light mode is best '
                       'near the telescopes — it protects everyone’s night '
                       'vision.',
                 ),
                 const _FactRow(
                   icon: Icons.confirmation_number_rounded,
                   title: 'Some shows need pre-booking',
-                  body: 'The magic shows and Destination Moon need seats '
+                  body:
+                      'The magic shows and Destination Moon need seats '
                       'booked at the time of ticket purchase.',
                 ),
                 const _FactRow(
@@ -133,7 +144,8 @@ class HomeScreen extends ConsumerWidget {
                 const _FactRow(
                   icon: Icons.train_rounded,
                   title: 'Metro',
-                  body: 'Macquarie University Metro Station is about a '
+                  body:
+                      'Macquarie University Metro Station is about a '
                       '10 minute walk from the Central Courtyard.',
                 ),
 
@@ -157,7 +169,8 @@ class _Hero extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // No `theme` here on purpose: every text style in this hero resolves from
+    // the forced-dark Theme installed below, not from the page theme.
     final topInset = MediaQuery.paddingOf(context).top;
 
     // A minimum height, not a fixed one: at a large accessibility text size
@@ -178,106 +191,134 @@ class _Hero extends StatelessWidget {
               excludeFromSemantics: true,
               // If the asset is ever missing, fall back to flat night rather
               // than throwing a red error box over the app's first screen.
-              errorBuilder: (_, _, _) =>
-                  const ColoredBox(color: AonColors.night900),
+              errorBuilder: (_, _, _) => ColoredBox(color: context.aon.surface),
             ),
           ),
           // Two-stop scrim. The image is bright in places; without this the
           // title would fail contrast over the galaxy core.
-          const Positioned.fill(
+          Positioned.fill(
             child: DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                   colors: [
-                    Color(0x6605070F),
-                    Color(0xCC05070F),
-                    AonColors.night950,
+                    const Color(0x6605070F),
+                    const Color(0xCC05070F),
+                    context.aon.surfaceBase,
                   ],
                   stops: [0.0, 0.55, 1.0],
                 ),
               ),
             ),
           ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(
-              AonSpacing.space5,
-              topInset + AonSpacing.space5,
-              AonSpacing.space5,
-              AonSpacing.space5,
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  EventInfo.host.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: AonColors.contentSecondary,
-                    letterSpacing: 1.6,
+          // The hero text always renders in the DARK palette, in both themes.
+          //
+          // It sits on a photograph of deep space — a permanently dark
+          // backdrop. In light mode the page's near-black body text would be
+          // dark-on-dark and effectively invisible, and the deep-amber light
+          // accent would vanish too. Forcing the dark theme for this subtree
+          // (text, the glass date pill and the phase badge alike) is the
+          // standard fix for content over fixed-dark imagery.
+          //
+          // Note the scrim above deliberately stays outside this Theme: its
+          // final stop blends into the *page* background, which is light in
+          // light mode, so the hero melts into the screen instead of ending
+          // on a hard dark edge.
+          Theme(
+            data: AonTheme.build(),
+            // Builder so `Theme.of(context)` below resolves the DARK theme we
+            // just installed. Without it the styles would still come from the
+            // outer (possibly light) theme captured at the top of build().
+            child: Builder(
+              builder: (context) {
+                final theme = Theme.of(context);
+                final l = AonL10n.of(context);
+                return Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    AonSpacing.space5,
+                    topInset + AonSpacing.space5,
+                    AonSpacing.space5,
+                    AonSpacing.space5,
                   ),
-                ),
-                const SizedBox(height: AonSpacing.space2),
-                Text(
-                  EventInfo.name,
-                  style: theme.textTheme.displayMedium,
-                ),
-                Text(
-                  EventInfo.year,
-                  style: theme.textTheme.displayMedium
-                      ?.copyWith(color: AonColors.amber),
-                ),
-                const SizedBox(height: AonSpacing.space3),
-                // A glass "date pill" floating over the galaxy photo — the hero's
-                // single glass element (Phase 2). control tier = the translucent
-                // rendering rung; the pill is not interactive.
-                LayoutBuilder(
-                  builder: (context, constraints) => GlassSurface(
-                    variant: GlassVariant.control,
-                    borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
-                    child: ConstrainedBox(
-                      // maxWidth = the available hero text-column width, so the
-                      // pill never exceeds the hero's horizontal content bounds.
-                      constraints: BoxConstraints(maxWidth: constraints.maxWidth),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: AonSpacing.space3,
-                          vertical: AonSpacing.space2,
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.event_rounded,
-                              size: AonSpacing.iconSm,
-                              color: AonColors.contentSecondary,
-                            ),
-                            const SizedBox(width: AonSpacing.space2),
-                            // Flexible so the long date+time string wraps on a
-                            // narrow phone instead of overflowing off the edge.
-                            Flexible(
-                              child: Text(
-                                '${TimeFormat.longDate(EventInfo.startsAt)}  ·  '
-                                '${TimeFormat.range(
-                                  EventInfo.startsAt,
-                                  EventInfo.endsAt,
-                                )}',
-                                style: theme.textTheme.bodySmall
-                                    ?.copyWith(color: AonColors.contentSecondary),
-                              ),
-                            ),
-                          ],
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        EventInfo.host.toUpperCase(),
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: context.aon.contentSecondary,
+                          letterSpacing: 1.6,
                         ),
                       ),
-                    ),
+                      const SizedBox(height: AonSpacing.space2),
+                      Text(
+                        EventInfo.name,
+                        style: theme.textTheme.displayMedium,
+                      ),
+                      Text(
+                        EventInfo.year,
+                        style: theme.textTheme.displayMedium?.copyWith(
+                          color: context.aon.accent,
+                        ),
+                      ),
+                      const SizedBox(height: AonSpacing.space3),
+                      // A glass "date pill" floating over the galaxy photo — the hero's
+                      // single glass element (Phase 2). control tier = the translucent
+                      // rendering rung; the pill is not interactive.
+                      LayoutBuilder(
+                        builder: (context, constraints) => GlassSurface(
+                          variant: GlassVariant.control,
+                          borderRadius: BorderRadius.circular(
+                            AonSpacing.radiusFull,
+                          ),
+                          child: ConstrainedBox(
+                            // maxWidth = the available hero text-column width, so the
+                            // pill never exceeds the hero's horizontal content bounds.
+                            constraints: BoxConstraints(
+                              maxWidth: constraints.maxWidth,
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: AonSpacing.space3,
+                                vertical: AonSpacing.space2,
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.event_rounded,
+                                    size: AonSpacing.iconSm,
+                                    color: context.aon.contentSecondary,
+                                  ),
+                                  const SizedBox(width: AonSpacing.space2),
+                                  // Flexible so the long date+time string wraps on a
+                                  // narrow phone instead of overflowing off the edge.
+                                  Flexible(
+                                    child: Text(
+                                      '${TimeFormat.longDate(EventInfo.startsAt)}  ·  '
+                                      '${TimeFormat.range(EventInfo.startsAt, EventInfo.endsAt)}',
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: context.aon.contentSecondary,
+                                          ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      if (_phaseLabel(phase, l) != null) ...[
+                        const SizedBox(height: AonSpacing.space3),
+                        _PhasePill(phase: phase, now: now),
+                      ],
+                    ],
                   ),
-                ),
-                if (_phaseLabel(phase, now) != null) ...[
-                  const SizedBox(height: AonSpacing.space3),
-                  _PhasePill(phase: phase, now: now),
-                ],
-              ],
+                );
+              },
             ),
           ),
         ],
@@ -289,14 +330,7 @@ class _Hero extends StatelessWidget {
 /// Human phrasing for the event's own status. Returns null when there is
 /// nothing worth saying — a badge reading "the event is in 3 weeks" on every
 /// launch would be noise, so the pill only appears once it is actionable.
-String? _phaseLabel(EventPhase phase, DateTime now) => switch (phase) {
-      EventPhase.future => null,
-      EventPhase.today => 'Tonight',
-      EventPhase.startingSoon => 'Starts soon',
-      EventPhase.running => 'Happening now',
-      EventPhase.endingSoon => 'Ending soon',
-      EventPhase.ended => 'This event has finished',
-    };
+String? _phaseLabel(EventPhase phase, AonL10n l) => phase.labelOf(l);
 
 /// The hero's event-status badge.
 class _PhasePill extends StatelessWidget {
@@ -307,19 +341,23 @@ class _PhasePill extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final label = _phaseLabel(phase, now);
+    final l = AonL10n.of(context);
+    final label = _phaseLabel(phase, l);
     if (label == null) return const SizedBox.shrink();
 
     final (colour, icon) = switch (phase) {
-      EventPhase.running => (AonColors.live, Icons.circle),
-      EventPhase.endingSoon => (AonColors.soon, Icons.hourglass_bottom_rounded),
-      EventPhase.startingSoon => (AonColors.soon, Icons.schedule_rounded),
-      EventPhase.today => (AonColors.amber, Icons.event_available_rounded),
+      EventPhase.running => (context.aon.live, Icons.circle),
+      EventPhase.endingSoon => (
+        context.aon.soon,
+        Icons.hourglass_bottom_rounded,
+      ),
+      EventPhase.startingSoon => (context.aon.soon, Icons.schedule_rounded),
+      EventPhase.today => (context.aon.accent, Icons.event_available_rounded),
       EventPhase.ended => (
-          AonColors.contentTertiary,
-          Icons.check_circle_outline_rounded
-        ),
-      EventPhase.future => (AonColors.contentTertiary, Icons.event_rounded),
+        context.aon.contentTertiary,
+        Icons.check_circle_outline_rounded,
+      ),
+      EventPhase.future => (context.aon.contentTertiary, Icons.event_rounded),
     };
 
     return Container(
@@ -335,8 +373,11 @@ class _PhasePill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: phase == EventPhase.running ? 9 : AonSpacing.iconSm,
-              color: colour),
+          Icon(
+            icon,
+            size: phase == EventPhase.running ? 9 : AonSpacing.iconSm,
+            color: colour,
+          ),
           const SizedBox(width: AonSpacing.space2),
           // Same rule as TimingBadge: a min-size Row must let its label
           // shrink, or a long phase string ("This event has finished") runs
@@ -347,10 +388,9 @@ class _PhasePill extends StatelessWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               softWrap: false,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelSmall
-                  ?.copyWith(color: colour),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(color: colour),
             ),
           ),
         ],
@@ -360,11 +400,7 @@ class _PhasePill extends StatelessWidget {
 }
 
 class _FactRow extends StatelessWidget {
-  const _FactRow({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
+  const _FactRow({required this.icon, required this.title, required this.body});
 
   final IconData icon;
   final String title;
@@ -379,7 +415,7 @@ class _FactRow extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, size: AonSpacing.iconMd, color: AonColors.amber),
+          Icon(icon, size: AonSpacing.iconMd, color: context.aon.accent),
           const SizedBox(width: AonSpacing.space3),
           Expanded(
             child: Column(
@@ -389,8 +425,9 @@ class _FactRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: AonColors.contentSecondary),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: context.aon.contentSecondary,
+                  ),
                 ),
               ],
             ),
@@ -411,30 +448,33 @@ class _Attribution extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(AonSpacing.space4),
       decoration: BoxDecoration(
-        color: AonColors.night900,
+        color: context.aon.surface,
         borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-        border: Border.all(color: AonColors.night700),
+        border: Border.all(color: context.aon.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Image credit',
-            style: theme.textTheme.labelSmall
-                ?.copyWith(color: AonColors.contentTertiary),
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
           const SizedBox(height: AonSpacing.space1),
           Text(
             'A Deep Triangulum Galaxy — Aleix Roig, 2026',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentSecondary),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentSecondary,
+            ),
           ),
           const SizedBox(height: AonSpacing.space3),
           Text(
             '${EventInfo.faculty}, ${EventInfo.host}. '
             '${EventInfo.cricosProvider}.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: AonColors.contentTertiary),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
         ],
       ),
@@ -450,6 +490,7 @@ class _NextUpCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final entry = ref.watch(nextUpProvider);
     final terminology = ref.watch(terminologyProvider);
     final savedCount = ref.watch(savedCountProvider);
@@ -467,26 +508,29 @@ class _NextUpCard extends ConsumerWidget {
         child: Container(
           padding: const EdgeInsets.all(AonSpacing.space4),
           decoration: BoxDecoration(
-            color: AonColors.amber.withValues(alpha: 0.10),
+            color: context.aon.accent.withValues(alpha: 0.10),
             borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-            border: Border.all(color: AonColors.amber.withValues(alpha: 0.40)),
+            border: Border.all(
+              color: context.aon.accent.withValues(alpha: 0.40),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.star_rounded,
                     size: AonSpacing.iconSm,
-                    color: AonColors.amber,
+                    color: context.aon.accent,
                   ),
                   const SizedBox(width: AonSpacing.space2),
                   Expanded(
                     child: Text(
-                      'Next in ${terminology.myPlan}',
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: AonColors.amber),
+                      l.myNightNext(terminology.myPlan(l)),
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: context.aon.accent,
+                      ),
                     ),
                   ),
                   // TimingBadge is a min-size Row and documents that callers
@@ -498,11 +542,13 @@ class _NextUpCard extends ConsumerWidget {
                       timing: entry.timing,
                       trailingText: switch (entry.timing) {
                         EventTiming.happeningNow => TimeFormat.remaining(
-                            now,
-                            entry.session.end,
-                          ).replaceFirst('ends ', ''),
-                        EventTiming.startingSoon =>
-                          TimeFormat.until(now, entry.session.start),
+                          now,
+                          entry.session.end,
+                        ).replaceFirst('ends ', ''),
+                        EventTiming.startingSoon => TimeFormat.until(
+                          now,
+                          entry.session.start,
+                        ),
                         _ => TimeFormat.time(entry.session.start),
                       },
                     ),
@@ -513,19 +559,21 @@ class _NextUpCard extends ConsumerWidget {
               Text(entry.event.title, style: theme.textTheme.titleLarge),
               const SizedBox(height: AonSpacing.space1),
               Text(
-                [
+                Bidi.joinIsolated([
                   TimeFormat.session(entry.session),
-                  venue?.chipLabel ?? 'Location to be confirmed',
-                ].join('  ·  '),
-                style: theme.textTheme.bodySmall
-                    ?.copyWith(color: AonColors.contentSecondary),
+                  venue?.chipLabel ?? l.infoLocationToBeConfirmed,
+                ], separator: '  ·  '),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: context.aon.contentSecondary,
+                ),
               ),
               if (savedCount > 1) ...[
                 const SizedBox(height: AonSpacing.space2),
                 Text(
-                  '$savedCount activities saved',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: AonColors.contentTertiary),
+                  l.myNightSavedCount(savedCount),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: context.aon.contentTertiary,
+                  ),
                 ),
               ],
             ],
@@ -582,10 +630,9 @@ class _ActivityRail extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: AonSpacing.space2),
             child: Text(
               emptyMessage!,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AonColors.contentTertiary),
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: context.aon.contentTertiary,
+              ),
             ),
           )
         else
@@ -625,6 +672,7 @@ class _MapCta extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
     final features = ref.watch(featuresProvider);
 
     return AonTactileButton(
@@ -633,21 +681,21 @@ class _MapCta extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(AonSpacing.space5),
         decoration: BoxDecoration(
-          color: AonColors.night900,
+          color: context.aon.surface,
           borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-          border: Border.all(color: AonColors.night700),
+          border: Border.all(color: context.aon.border),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(AonSpacing.space3),
               decoration: BoxDecoration(
-                color: AonColors.amber.withValues(alpha: 0.15),
+                color: context.aon.accent.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.map_rounded,
-                color: AonColors.amber,
+                color: context.aon.accent,
                 size: AonSpacing.iconLg,
               ),
             ),
@@ -656,23 +704,26 @@ class _MapCta extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Open the campus map',
-                      style: theme.textTheme.titleMedium),
+                  Text(
+                    l.homeOpenMapTitle,
+                    style: theme.textTheme.titleMedium,
+                  ),
                   const SizedBox(height: 2),
                   Text(
                     features.wayfinding
                         ? 'Venues, toilets, first aid — and walking directions '
-                            'from the car parks'
+                              'from the car parks'
                         : 'Venues, toilets, first aid and parking',
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: AonColors.contentSecondary),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: context.aon.contentSecondary,
+                    ),
                   ),
                 ],
               ),
             ),
-            const Icon(
+            Icon(
               Icons.chevron_right_rounded,
-              color: AonColors.contentSecondary,
+              color: context.aon.contentSecondary,
             ),
           ],
         ),
@@ -733,8 +784,8 @@ class _QuickAccessTile extends ConsumerWidget {
         ? Icons.local_parking_rounded
         : VenueStyle.iconFor(venue?.category ?? VenueCategory.other);
     final accent = isParking
-        ? AonColors.mapParking
-        : VenueStyle.colorFor(venue?.category ?? VenueCategory.other);
+        ? context.aon.mapParking
+        : VenueStyle.colorFor(context, venue?.category ?? VenueCategory.other);
 
     return QuickLinkTile(
       icon: icon,

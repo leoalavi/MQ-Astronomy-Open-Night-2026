@@ -1,9 +1,11 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/utils/haptics.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -24,42 +26,46 @@ class AppShell extends ConsumerWidget {
   /// The third tab's label comes from the event config ("My Night" here,
   /// "Your Day" at a daytime event), so this list is built per-event rather
   /// than being a `const`.
-  static List<LiquidNavItem> itemsFor(EventTerminology terminology) => [
-    const LiquidNavItem(
+  static List<LiquidNavItem> itemsFor(
+    EventTerminology terminology,
+    AonL10n l,
+  ) => [
+    LiquidNavItem(
       icon: Icons.home_outlined,
       activeIcon: Icons.home_rounded,
-      label: 'Home',
+      label: l.tabHome,
       fx: TabFx.homecoming,
     ),
-    const LiquidNavItem(
+    LiquidNavItem(
       icon: Icons.list_alt_outlined,
       activeIcon: Icons.list_alt_rounded,
-      label: 'Program',
+      label: l.tabProgram,
       fx: TabFx.bounce,
     ),
     LiquidNavItem(
       icon: Icons.star_outline_rounded,
       activeIcon: Icons.star_rounded,
-      label: terminology.myPlanShort,
+      label: terminology.myPlanShort(l),
       fx: TabFx.spin,
     ),
-    const LiquidNavItem(
+    LiquidNavItem(
       icon: Icons.map_outlined,
       activeIcon: Icons.map_rounded,
-      label: 'Map',
+      label: l.mapTitle,
       fx: TabFx.rotateOpen,
     ),
-    const LiquidNavItem(
+    LiquidNavItem(
       icon: Icons.info_outline_rounded,
       activeIcon: Icons.info_rounded,
-      label: 'Info',
+      label: l.tabInfo,
       fx: TabFx.orbit,
     ),
   ];
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final items = itemsFor(ref.watch(terminologyProvider));
+    final l = AonL10n.of(context);
+    final items = itemsFor(ref.watch(terminologyProvider), l);
 
     return Scaffold(
       // The body runs behind the floating island so the glass has live content
@@ -78,9 +84,9 @@ class AppShell extends ConsumerWidget {
             child: LiquidTabBar(
               height: AonNavMetrics.resolvedBarHeight(context),
               currentIndex: navigationShell.currentIndex,
-              color: AonColors.contentSecondary,
-              selectedColor: AonColors.amber,
-              accent: AonColors.amber,
+              color: context.aon.contentSecondary,
+              selectedColor: context.aon.accent,
+              accent: context.aon.accent,
               items: items,
               onSelected: (index) {
                 // Fire-and-forget haptic; `unawaited` makes the intent explicit

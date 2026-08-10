@@ -1,6 +1,6 @@
 import 'package:flutter/widgets.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 
 /// Design tokens for the Liquid Glass-inspired ("Glass UI layer") material.
 ///
@@ -40,8 +40,13 @@ abstract final class AonGlass {
   /// Strength of the physically-based (Snell) refraction march.
   static const double refractIntensity = 0.85;
 
-  /// Base tint colour. aon2026 is dark-only; the light branch is retained for
-  /// API symmetry with the reference but resolves to a night surface.
-  static Color tint(bool isDark) =>
-      isDark ? AonColors.night800 : AonColors.night900;
+  /// Base tint colour, per brightness.
+  ///
+  /// Now that the app ships a real light theme, the light branch resolves to a
+  /// **light** raised surface rather than a night one. Glass over a light
+  /// background must lighten, not darken, or every glass panel reads as a
+  /// black smear on a white screen.
+  static Color tint(bool isDark) => isDark
+      ? AonPalette.dark.surfaceRaised
+      : AonPalette.light.surface;
 }

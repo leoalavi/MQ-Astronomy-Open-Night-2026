@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/models/event.dart';
@@ -45,6 +47,7 @@ class ProgramScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final filter = ref.watch(eventFilterProvider);
     final grouped = ref.watch(groupedEventsProvider);
     final total = ref.watch(filteredEventsProvider).length;
@@ -53,13 +56,13 @@ class ProgramScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(ref.watch(terminologyProvider).programLabel),
+        title: Text(ref.watch(terminologyProvider).programLabel(l)),
         actions: [
           if (!filter.isEmpty)
             TextButton(
               onPressed: () =>
                   ref.read(eventFilterProvider.notifier).clear(),
-              child: const Text('Clear'),
+              child: Text(l.actionClear),
             ),
         ],
       ),
@@ -83,7 +86,7 @@ class ProgramScreen extends ConsumerWidget {
                     style: Theme.of(context)
                         .textTheme
                         .bodySmall
-                        ?.copyWith(color: AonColors.contentTertiary),
+                        ?.copyWith(color: context.aon.contentTertiary),
                   ),
                 ),
               ],
@@ -93,11 +96,11 @@ class ProgramScreen extends ConsumerWidget {
             child: grouped.isEmpty
                 ? EmptyState(
                     icon: Icons.search_off_rounded,
-                    title: 'Nothing matches',
+                    title: l.programNoMatchTitle,
                     message:
                         'Try removing a filter or searching for something '
                         'else.',
-                    actionLabel: 'Clear filters',
+                    actionLabel: l.programClearFilters,
                     onAction: () =>
                         ref.read(eventFilterProvider.notifier).clear(),
                   )
@@ -151,6 +154,7 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     // Keep the field in sync when the filter is cleared from elsewhere
     // (the app-bar Clear button), without fighting the user's own typing.
     ref.listen(eventFilterProvider, (previous, next) {
@@ -172,7 +176,7 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
             ref.read(eventFilterProvider.notifier).setQuery(value),
         textInputAction: TextInputAction.search,
         decoration: InputDecoration(
-          hintText: 'Search talks, activities, presenters',
+          hintText: l.programSearchHint,
           prefixIcon: const Icon(Icons.search_rounded),
           suffixIcon: _showClear
               ? IconButton(
@@ -281,12 +285,12 @@ class _ChipDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(
+    return Padding(
+      padding: const EdgeInsets.symmetric(
         horizontal: AonSpacing.space2,
         vertical: AonSpacing.space3,
       ),
-      child: VerticalDivider(width: 1, color: AonColors.night700),
+      child: VerticalDivider(width: 1, color: context.aon.border),
     );
   }
 }
@@ -297,6 +301,7 @@ class _ViewSwitcher extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final view = ref.watch(programViewProvider);
     final terminology = ref.watch(terminologyProvider);
 
@@ -311,15 +316,15 @@ class _ViewSwitcher extends ConsumerWidget {
             value: ProgramView.tonight,
             // "Tonight" / "Today" — event vocabulary, not hardcoded.
             label: Text(
-              terminology.eventPeriod[0].toUpperCase() +
-                  terminology.eventPeriod.substring(1),
+              terminology.eventPeriod(l)[0].toUpperCase() +
+                  terminology.eventPeriod(l).substring(1),
             ),
             icon: const Icon(Icons.schedule_rounded, size: AonSpacing.iconSm),
           ),
-          const ButtonSegment(
+          ButtonSegment(
             value: ProgramView.sections,
-            label: Text('Sections'),
-            icon: Icon(Icons.list_alt_rounded, size: AonSpacing.iconSm),
+            label: Text(l.programSections),
+            icon: const Icon(Icons.list_alt_rounded, size: AonSpacing.iconSm),
           ),
         ],
         selected: {view},
@@ -340,6 +345,7 @@ class _TonightList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final now = ref.watch(currentTimeProvider);
     final filtered = ref.watch(filteredEventsProvider);
     final terminology = ref.watch(terminologyProvider);
@@ -360,37 +366,37 @@ class _TonightList extends ConsumerWidget {
       ),
       children: [
         _Bucket(
-          title: 'Happening now',
+          title: l.timingHappeningNow,
           items: happening,
           timing: EventTiming.happeningNow,
           now: now,
           icon: Icons.circle,
-          iconColor: AonColors.live,
+          iconColor: context.aon.live,
         ),
         _Bucket(
-          title: 'Starting soon',
+          title: l.timingStartingSoon,
           subtitle: 'In the next ${WhatsOnService.soonWindow.inMinutes} minutes',
           items: soon,
           timing: EventTiming.startingSoon,
           now: now,
           icon: Icons.schedule_rounded,
-          iconColor: AonColors.soon,
+          iconColor: context.aon.soon,
         ),
         _Bucket(
-          title: terminology.laterLabel,
+          title: terminology.laterLabel(l),
           items: later,
           timing: EventTiming.upcoming,
           now: now,
           icon: Icons.more_time_rounded,
-          iconColor: AonColors.contentTertiary,
+          iconColor: context.aon.contentTertiary,
         ),
         _Bucket(
-          title: 'Finished',
+          title: l.timingFinished,
           items: finished,
           timing: EventTiming.finished,
           now: now,
           icon: Icons.check_circle_outline_rounded,
-          iconColor: AonColors.contentTertiary,
+          iconColor: context.aon.contentTertiary,
         ),
       ],
     );
@@ -466,7 +472,7 @@ class _SectionsList extends StatelessWidget {
             title: entry.key.label,
             count: entry.value.length,
             icon: VenueStyle.iconForEventCategory(entry.key),
-            iconColor: VenueStyle.colorForEventCategory(entry.key),
+            iconColor: VenueStyle.colorForEventCategory(context, entry.key),
           ),
           for (final event in entry.value) ...[
             EventCard(

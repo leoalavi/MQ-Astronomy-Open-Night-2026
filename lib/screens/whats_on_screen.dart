@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
@@ -22,6 +24,7 @@ class WhatsOnScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final now = ref.watch(currentTimeProvider);
     final simulated = ref.watch(simulatedTimeProvider);
 
@@ -50,7 +53,7 @@ class WhatsOnScreen extends ConsumerWidget {
               simulated == null
                   ? Icons.science_outlined
                   : Icons.science_rounded,
-              color: simulated == null ? null : AonColors.soon,
+              color: simulated == null ? null : context.aon.soon,
             ),
             onPressed: () => _openTimeSimulator(context, ref),
           ),
@@ -86,39 +89,39 @@ class WhatsOnScreen extends ConsumerWidget {
               ),
 
             _Bucket(
-              title: 'Happening now',
+              title: l.timingHappeningNow,
               timing: EventTiming.happeningNow,
               items: happeningTimed,
               now: now,
               icon: Icons.circle,
-              iconColor: AonColors.live,
+              iconColor: context.aon.live,
             ),
             _Bucket(
-              title: 'Open all evening',
+              title: l.timingOpenAllEvening,
               subtitle: 'Drop in any time — no session times',
               timing: EventTiming.happeningNow,
               items: happeningDropIn,
               now: now,
               icon: Icons.all_inclusive_rounded,
-              iconColor: AonColors.stellar,
+              iconColor: context.aon.info,
             ),
             _Bucket(
-              title: 'Starting soon',
+              title: l.timingStartingSoon,
               subtitle:
                   'In the next ${WhatsOnService.soonWindow.inMinutes} minutes',
               timing: EventTiming.startingSoon,
               items: soon,
               now: now,
               icon: Icons.schedule_rounded,
-              iconColor: AonColors.soon,
+              iconColor: context.aon.soon,
             ),
             _Bucket(
-              title: 'Later tonight',
+              title: l.timingLaterTonight,
               timing: EventTiming.upcoming,
               items: upcoming,
               now: now,
               icon: Icons.more_time_rounded,
-              iconColor: AonColors.contentTertiary,
+              iconColor: context.aon.contentTertiary,
             ),
           ],
         ],
@@ -193,7 +196,7 @@ class _NowBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = simulated ? AonColors.soon : AonColors.contentTertiary;
+    final color = simulated ? context.aon.soon : context.aon.contentTertiary;
 
     return Padding(
       padding: const EdgeInsets.only(top: AonSpacing.space2),
@@ -238,9 +241,9 @@ class _OutsideEventNotice extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(AonSpacing.space5),
         decoration: BoxDecoration(
-          color: AonColors.night900,
+          color: context.aon.surface,
           borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-          border: Border.all(color: AonColors.night700),
+          border: Border.all(color: context.aon.border),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -250,7 +253,7 @@ class _OutsideEventNotice extends StatelessWidget {
                   ? Icons.event_available_rounded
                   : Icons.nightlight_round,
               size: AonSpacing.iconLg,
-              color: AonColors.amber,
+              color: context.aon.accent,
             ),
             const SizedBox(height: AonSpacing.space3),
             Text(
@@ -272,7 +275,7 @@ class _OutsideEventNotice extends StatelessWidget {
                   : 'Astronomy Open Night 2026 has finished. Thanks for '
                       'coming along.',
               style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
             const SizedBox(height: AonSpacing.space4),
             OutlinedButton.icon(
@@ -328,7 +331,7 @@ class _TimeSimulatorSheet extends ConsumerWidget {
                 '${TimeFormat.date(EventInfo.startsAt)} to see what the '
                 'programme looks like at that moment.',
                 style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: AonColors.contentSecondary),
+                    ?.copyWith(color: context.aon.contentSecondary),
               ),
               const SizedBox(height: AonSpacing.space5),
               Wrap(

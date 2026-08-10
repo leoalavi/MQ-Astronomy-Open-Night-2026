@@ -110,11 +110,8 @@ void main() {
       EventSession(start: at(20, 45), end: at(21, 30)),
     ]);
 
-    List<ItineraryEntry> entriesAt(DateTime now) => ItineraryService.build(
-          allEvents: [show],
-          savedIds: {'s'},
-          now: now,
-        );
+    List<ItineraryEntry> entriesAt(DateTime now) =>
+        ItineraryService.build(allEvents: [show], savedIds: {'s'}, now: now);
 
     test('classifies each session independently', () {
       // At 5.20pm the first session is running while the second is still

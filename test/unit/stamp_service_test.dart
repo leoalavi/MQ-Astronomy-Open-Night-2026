@@ -11,13 +11,19 @@ void main() {
 
   group('resolve — manual', () {
     test('valid bare code collects', () {
-      final r = StampService.resolve(const StampInput.manual(goodCode), <String>{});
+      final r = StampService.resolve(
+        const StampInput.manual(goodCode),
+        <String>{},
+      );
       expect(r, isA<StampCollected>());
       expect((r as StampCollected).venueId, goodVenue);
     });
     test('case/space-insensitive', () {
       expect(
-        StampService.resolve(const StampInput.manual('  aon-a-tbc '), <String>{}),
+        StampService.resolve(
+          const StampInput.manual('  aon-a-tbc '),
+          <String>{},
+        ),
         isA<StampCollected>(),
       );
     });
@@ -38,7 +44,10 @@ void main() {
   group('resolve — scan (namespace required)', () {
     test('namespaced QR collects', () {
       expect(
-        StampService.resolve(const StampInput.scan('AON2026:$goodCode'), <String>{}),
+        StampService.resolve(
+          const StampInput.scan('AON2026:$goodCode'),
+          <String>{},
+        ),
         isA<StampCollected>(),
       );
     });

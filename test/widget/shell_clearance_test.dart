@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -7,15 +9,24 @@ import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/widgets/liquid_tab_bar.dart';
 
 void main() {
-  testWidgets('Home last item clears the floating island after scrolling', (tester) async {
+  testWidgets('Home last item clears the floating island after scrolling', (
+    tester,
+  ) async {
     tester.view.physicalSize = const Size(390, 780);
     tester.view.devicePixelRatio = 1.0;
     addTearDown(tester.view.resetPhysicalSize);
     addTearDown(tester.view.resetDevicePixelRatio);
 
-    await tester.pumpWidget(ProviderScope(
-      child: MaterialApp.router(theme: AonTheme.build(), routerConfig: buildRouter()),
-    ));
+    await tester.pumpWidget(
+      ProviderScope(
+        child: MaterialApp.router(
+          localizationsDelegates: AonL10n.localizationsDelegates,
+          supportedLocales: AonL10n.supportedLocales,
+          theme: AonTheme.build(),
+          routerConfig: buildRouter(),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
 
     // Jump to the TRUE maximum scroll extent (a fling can under-scroll and
@@ -38,7 +49,10 @@ void main() {
     expect(last, findsOneWidget);
     final lastBottom = tester.getRect(last).bottom;
     final barTop = tester.getRect(find.byType(LiquidTabBar)).top;
-    expect(lastBottom, lessThanOrEqualTo(barTop),
-        reason: 'last item must sit above the floating glass island');
+    expect(
+      lastBottom,
+      lessThanOrEqualTo(barTop),
+      reason: 'last item must sit above the floating glass island',
+    );
   });
 }

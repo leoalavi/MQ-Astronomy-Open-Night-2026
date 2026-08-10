@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/indoor_manifest.dart';
 import 'package:aon2026/models/viewer_url_policy.dart';
@@ -24,8 +24,8 @@ class PanoramaUnavailable extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.panorama_photosphere_outlined,
-                size: AonSpacing.iconLg, color: AonColors.contentTertiary),
+            Icon(Icons.panorama_photosphere_outlined,
+                size: AonSpacing.iconLg, color: context.aon.contentTertiary),
             const SizedBox(height: AonSpacing.space3),
             Text(
               '360° preview unavailable',
@@ -33,7 +33,7 @@ class PanoramaUnavailable extends StatelessWidget {
               style: Theme.of(context)
                   .textTheme
                   .titleMedium
-                  ?.copyWith(color: AonColors.contentSecondary),
+                  ?.copyWith(color: context.aon.contentSecondary),
             ),
           ],
         ),

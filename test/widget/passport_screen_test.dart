@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/screens/passport_screen.dart';
@@ -6,9 +9,13 @@ import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
 
 Widget _host(Set<String> snapshot) => ProviderScope(
-      overrides: [passportSnapshotProvider.overrideWithValue(snapshot)],
-      child: const MaterialApp(home: PassportScreen()),
-    );
+  overrides: [passportSnapshotProvider.overrideWithValue(snapshot)],
+  child: const MaterialApp(
+    localizationsDelegates: AonL10n.localizationsDelegates,
+    supportedLocales: AonL10n.supportedLocales,
+    home: PassportScreen(),
+  ),
+);
 
 void main() {
   testWidgets('shows progress out of 9', (t) async {

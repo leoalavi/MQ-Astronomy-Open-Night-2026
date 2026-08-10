@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -21,22 +23,26 @@ void main() {
     return ProviderScope(
       overrides: [baseClockProvider.overrideWithValue(FixedClock(now))],
       child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
         theme: AonTheme.build(),
         home: const WhatsOnScreen(),
       ),
     );
   }
 
-  testWidgets('shows a pre-event notice before the event starts',
-      (tester) async {
+  testWidgets('shows a pre-event notice before the event starts', (
+    tester,
+  ) async {
     await tester.pumpWidget(harness(DateTime(2026, 9, 19, 12)));
     await tester.pump();
 
     expect(find.text('The event hasn’t started yet'), findsOneWidget);
   });
 
-  testWidgets('shows a post-event notice after the event closes',
-      (tester) async {
+  testWidgets('shows a post-event notice after the event closes', (
+    tester,
+  ) async {
     await tester.pumpWidget(harness(DateTime(2026, 9, 19, 23)));
     await tester.pump();
 
@@ -61,8 +67,9 @@ void main() {
     );
   });
 
-  testWidgets('shows a starting-soon section shortly before a talk',
-      (tester) async {
+  testWidgets('shows a starting-soon section shortly before a talk', (
+    tester,
+  ) async {
     // Short talks start at 8.15pm; at 8.05pm they are "starting soon".
     await tester.pumpWidget(harness(EventInfo.at(20, 5)));
     await tester.pump();

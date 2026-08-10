@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -14,6 +16,8 @@ void main() {
     double scale = 1.0,
   }) {
     return MaterialApp(
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
       theme: AonTheme.build(),
       home: Scaffold(
         body: MediaQuery(
@@ -54,12 +58,16 @@ void main() {
     );
     expect(glass, findsNothing); // solid, not glass
     final label = tester.widget<Text>(find.text(parking));
-    expect(label.style?.color, AonColors.onAccent); // brand-on-amber
+    expect(label.style?.color, AonPalette.dark.onAccent); // brand-on-amber
   });
 
-  testWidgets('tapping a chip fires onToggle with its category', (tester) async {
+  testWidgets('tapping a chip fires onToggle with its category', (
+    tester,
+  ) async {
     VenueCategory? toggled;
-    await tester.pumpWidget(harness(selected: const {}, onToggle: (c) => toggled = c));
+    await tester.pumpWidget(
+      harness(selected: const {}, onToggle: (c) => toggled = c),
+    );
     await tester.tap(find.text(parking));
     expect(toggled, parkingCat);
   });
@@ -67,25 +75,36 @@ void main() {
   testWidgets('chip hit target >= 56 at 1.0 and 2.0', (tester) async {
     for (final scale in [1.0, 2.0]) {
       await tester.pumpWidget(harness(selected: const {}, scale: scale));
-      final ink = find.ancestor(of: find.text(parking), matching: find.byType(InkWell));
-      expect(tester.getSize(ink).height, greaterThanOrEqualTo(56.0), reason: 'scale $scale');
+      final ink = find.ancestor(
+        of: find.text(parking),
+        matching: find.byType(InkWell),
+      );
+      expect(
+        tester.getSize(ink).height,
+        greaterThanOrEqualTo(56.0),
+        reason: 'scale $scale',
+      );
     }
   });
 
-  testWidgets('one coherent semantics node per chip; selected flag tracks state',
-      (tester) async {
-    final handle = tester.ensureSemantics();
-    await tester.pumpWidget(harness(selected: {parkingCat}));
+  testWidgets(
+    'one coherent semantics node per chip; selected flag tracks state',
+    (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(harness(selected: {parkingCat}));
 
-    // Single node carries the label (no duplicate read from the inner Text).
-    expect(find.bySemanticsLabel(parking), findsOneWidget);
+      // Single node carries the label (no duplicate read from the inner Text).
+      expect(find.bySemanticsLabel(parking), findsOneWidget);
 
-    final selectedSem = tester.getSemantics(find.bySemanticsLabel(parking));
-    final unselectedSem = tester.getSemantics(find.bySemanticsLabel(toilets));
-    expect(selectedSem.flagsCollection.isButton, isTrue);
-    // Avoid Tristate literals / deprecated APIs: selected differs from unselected.
-    expect(selectedSem.flagsCollection.isSelected,
-        isNot(unselectedSem.flagsCollection.isSelected));
-    handle.dispose();
-  });
+      final selectedSem = tester.getSemantics(find.bySemanticsLabel(parking));
+      final unselectedSem = tester.getSemantics(find.bySemanticsLabel(toilets));
+      expect(selectedSem.flagsCollection.isButton, isTrue);
+      // Avoid Tristate literals / deprecated APIs: selected differs from unselected.
+      expect(
+        selectedSem.flagsCollection.isSelected,
+        isNot(unselectedSem.flagsCollection.isSelected),
+      );
+      handle.dispose();
+    },
+  );
 }

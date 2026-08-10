@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 
 /// The "nothing here" placeholder.
@@ -37,7 +37,7 @@ class EmptyState extends StatelessWidget {
             Icon(
               icon,
               size: AonSpacing.iconHero,
-              color: AonColors.night600,
+              color: context.aon.borderStrong,
             ),
             const SizedBox(height: AonSpacing.space4),
             Text(
@@ -50,7 +50,7 @@ class EmptyState extends StatelessWidget {
               Text(
                 message!,
                 style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: AonColors.contentTertiary),
+                    ?.copyWith(color: context.aon.contentTertiary),
                 textAlign: TextAlign.center,
               ),
             ],

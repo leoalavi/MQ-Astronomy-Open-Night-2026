@@ -12,6 +12,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
 
   # State management — mirrors the MQ Journey stack so the team keeps one
   # mental model across both products.
@@ -43,6 +45,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  generate: true
 
   shaders:
     - shaders/glass_refraction.frag

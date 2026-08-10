@@ -4,7 +4,7 @@ import 'package:confetti/confetti.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/passport_providers.dart';
@@ -81,10 +81,10 @@ class _RewardState extends ConsumerState<PassportRewardScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.workspace_premium_rounded,
                     size: 72,
-                    color: AonColors.amber,
+                    color: context.aon.accent,
                   ),
                   const SizedBox(height: AonSpacing.space4),
                   Text(

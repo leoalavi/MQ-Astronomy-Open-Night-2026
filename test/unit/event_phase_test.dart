@@ -1,4 +1,7 @@
+import 'package:flutter/widgets.dart';
 import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/data/event_info.dart';
@@ -8,11 +11,8 @@ void main() {
   final opens = EventInfo.startsAt; // 4pm
   final closes = EventInfo.endsAt; // 10pm
 
-  EventPhase phaseAt(DateTime now) => EventPhaseService.phaseFor(
-        now: now,
-        startsAt: opens,
-        endsAt: closes,
-      );
+  EventPhase phaseAt(DateTime now) =>
+      EventPhaseService.phaseFor(now: now, startsAt: opens, endsAt: closes);
 
   group('phaseFor', () {
     test('weeks out is future', () {
@@ -69,13 +69,25 @@ void main() {
       expect(config.duration, const Duration(hours: 6));
     });
 
-    test('terminology is night vocabulary, not Open Day vocabulary', () {
+    test('terminology is night vocabulary, not Open Day vocabulary', () async {
+      // The config now stores a *vocabulary*, not English strings — the words
+      // come from the translation files, so resolve them through AonL10n.
       final t = EventConfig.astronomyOpenNight.terminology;
-      expect(t.myPlan, 'My Night');
-      expect(t.laterLabel, 'Later tonight');
-      expect(t.eventPeriod, 'tonight');
+      expect(t.vocabulary, EventVocabulary.night);
+
+      final en = await AonL10n.delegate.load(const Locale('en'));
+      expect(t.myPlan(en), 'My Night');
+      expect(t.laterLabel(en), 'Later tonight');
+      expect(t.eventPeriod(en), 'tonight');
       // The Open Day words must not leak into the Astronomy config.
-      expect(t.myPlan, isNot(contains('Day')));
+      expect(t.myPlan(en), isNot(contains('Day')));
+    });
+
+    test('terminology resolves in Persian too', () async {
+      final fa = await AonL10n.delegate.load(const Locale('fa'));
+      final t = EventConfig.astronomyOpenNight.terminology;
+      expect(t.myPlan(fa), 'شب من');
+      expect(t.myPlan(fa), isNot('My Night'));
     });
 
     test('defaults to dark — it is an after-dark event', () {

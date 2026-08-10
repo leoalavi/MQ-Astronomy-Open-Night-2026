@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart' show Locale;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -120,3 +121,13 @@ final themeModeProvider = Provider<AppThemeMode>((ref) {
 final reduceMotionProvider = Provider<bool>(
   (ref) => ref.watch(appSettingsProvider).value?.reduceMotion ?? false,
 );
+
+/// The app's locale override, or null to follow the device.
+///
+/// `MaterialApp.locale` treats null as "use the platform locale", which is
+/// exactly the behaviour we want for the default, so no special-casing is
+/// needed at the call site.
+final localeProvider = Provider<Locale?>((ref) {
+  final code = ref.watch(appSettingsProvider).value?.localeCode;
+  return code == null ? null : Locale(code);
+});

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/whats_on_service.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/aon_tactile_button.dart';
@@ -39,8 +42,9 @@ class EventCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
     final venue = ref.watch(venueByIdProvider(event.venueId));
-    final accent = VenueStyle.colorForEventCategory(event.category);
+    final accent = VenueStyle.colorForEventCategory(context, event.category);
 
     final hasPlaceholderTime = event.sessions.any(
       (s) => s.timeConfidence == DataConfidence.placeholder,
@@ -120,7 +124,7 @@ class EventCard extends ConsumerWidget {
                     Text(
                       event.presenter!,
                       style: theme.textTheme.bodyMedium?.copyWith(
-                        color: AonColors.contentSecondary,
+                        color: context.aon.contentSecondary,
                       ),
                     ),
                   ],
@@ -141,27 +145,29 @@ class EventCard extends ConsumerWidget {
                   // ── Location ──
                   _MetaRow(
                     icon: Icons.place_rounded,
-                    text: [
-                      if (event.room != null) event.room!,
-                      venue?.name ?? 'Location to be confirmed',
-                    ].join(' · '),
+                    // Isolated: English proper nouns must not reorder
+                    // against surrounding Persian text.
+                    text: Bidi.joinIsolated([
+                      event.room,
+                      venue?.name ?? l.infoLocationToBeConfirmed,
+                    ]),
                   ),
 
                   if (event.bookingRequired) ...[
                     const SizedBox(height: AonSpacing.space3),
                     Row(
                       children: [
-                        const Icon(
+                        Icon(
                           Icons.confirmation_number_rounded,
                           size: AonSpacing.iconSm,
-                          color: AonColors.soon,
+                          color: context.aon.soon,
                         ),
                         const SizedBox(width: AonSpacing.space2),
                         Expanded(
                           child: Text(
                             'Pre-booking required',
                             style: theme.textTheme.labelSmall?.copyWith(
-                              color: AonColors.soon,
+                              color: context.aon.soon,
                             ),
                           ),
                         ),
@@ -210,7 +216,7 @@ class _MetaRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = warn ? AonColors.soon : AonColors.contentSecondary;
+    final color = warn ? context.aon.soon : context.aon.contentSecondary;
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

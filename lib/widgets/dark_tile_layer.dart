@@ -14,10 +14,15 @@ class DarkTileLayer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // OSM raster tiles are designed for a light UI. In dark mode we invert
+    // them; in light mode we must NOT — inverting there would produce a dark
+    // basemap under light chrome, which is the worst of both.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+
     return TileLayer(
       urlTemplate: MapConfig.tileUrlTemplate,
       userAgentPackageName: MapConfig.userAgentPackageName,
-      tileBuilder: _darkTileBuilder,
+      tileBuilder: isDark ? _darkTileBuilder : null,
       maxNativeZoom: 19,
     );
   }

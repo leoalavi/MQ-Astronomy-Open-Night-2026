@@ -1,16 +1,23 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/screens/passport_scan_screen.dart';
 import 'package:aon2026/services/passport_providers.dart';
 
 Widget _host({bool enabled = true}) => ProviderScope(
-      overrides: [
-        passportSnapshotProvider.overrideWithValue(<String>{}),
-        passportCollectionEnabledProvider.overrideWithValue(enabled),
-      ],
-      child: const MaterialApp(home: PassportScanScreen()),
-    );
+  overrides: [
+    passportSnapshotProvider.overrideWithValue(<String>{}),
+    passportCollectionEnabledProvider.overrideWithValue(enabled),
+  ],
+  child: const MaterialApp(
+    localizationsDelegates: AonL10n.localizationsDelegates,
+    supportedLocales: AonL10n.supportedLocales,
+    home: PassportScanScreen(),
+  ),
+);
 
 Future<void> _enter(WidgetTester t, String code) async {
   // The manual field lives behind the "Enter a code" peer choice.
@@ -37,8 +44,9 @@ void main() {
     );
   });
 
-  testWidgets('disabled (release + placeholder) shows the not-live message',
-      (t) async {
+  testWidgets('disabled (release + placeholder) shows the not-live message', (
+    t,
+  ) async {
     await t.pumpWidget(_host(enabled: false));
     await _enter(t, 'AON-A-TBC');
     expect(find.textContaining('live yet'), findsOneWidget);

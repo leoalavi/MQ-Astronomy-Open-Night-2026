@@ -9,9 +9,22 @@ import 'package:aon2026/models/event.dart';
 /// the same as the paper in the attendee's other hand. `intl`'s default
 /// `jm` pattern would give "5:00 PM", which is subtly foreign here.
 abstract final class TimeFormat {
-  static final DateFormat _hour = DateFormat('h');
-  static final DateFormat _hourMinute = DateFormat('h.mm');
-  static final DateFormat _meridiem = DateFormat('a');
+  /// The locale used for date/time formatting.
+  ///
+  /// Set from `AonApp` whenever the app locale changes. `intl`'s `DateFormat`
+  /// resolves month and weekday names from this, so a Persian UI gets Persian
+  /// dates instead of English ones embedded in a right-to-left screen.
+  ///
+  /// A static rather than a parameter on every call: `TimeFormat` is used from
+  /// ~30 call sites, most of them deep in widget trees that would otherwise
+  /// have to thread a locale down purely for formatting.
+  static String? locale;
+
+  static DateFormat _fmt(String pattern) => DateFormat(pattern, locale);
+
+  static DateFormat get _hour => _fmt('h');
+  static DateFormat get _hourMinute => _fmt('h.mm');
+  static DateFormat get _meridiem => _fmt('a');
 
   /// '5pm', '6.15pm', '10pm'.
   ///
@@ -30,16 +43,16 @@ abstract final class TimeFormat {
 
   /// 'Saturday 19 September 2026'.
   static String longDate(DateTime d) =>
-      DateFormat('EEEE d MMMM y').format(d);
+      _fmt('EEEE d MMMM y').format(d);
 
   /// '19 September 2026'.
-  static String date(DateTime d) => DateFormat('d MMMM y').format(d);
+  static String date(DateTime d) => _fmt('d MMMM y').format(d);
 
   /// A live wall clock with seconds, in the app's convention: '8.41.07pm'.
   /// Used by the passport reward screen as a "this is live" nudge (design §7.3).
   static String clockWithSeconds(DateTime t) {
     final meridiem = _meridiem.format(t).toLowerCase();
-    return '${DateFormat('h.mm.ss').format(t)}$meridiem';
+    return '${_fmt('h.mm.ss').format(t)}$meridiem';
   }
 
   /// All sessions of an event, joined for display.

@@ -19,27 +19,27 @@ import 'package:aon2026/widgets/app_shell.dart';
 /// Route paths, in one place so nothing hard-codes a string literal.
 abstract final class Routes {
   // ── Tabs ──
-  static const String home = '/';
-  static const String program = '/program';
-  static const String myNight = '/my-night';
-  static const String map = '/map';
-  static const String info = '/info';
+  static String home = '/';
+  static String program = '/program';
+  static String myNight = '/my-night';
+  static String map = '/map';
+  static String info = '/info';
 
   /// Full-screen pages pushed above the tab shell.
-  static const String eventDetail = '/event/:id';
-  static const String wayfinding = '/wayfinding';
-  static const String settings = '/settings';
+  static String eventDetail = '/event/:id';
+  static String wayfinding = '/wayfinding';
+  static String settings = '/settings';
 
   /// The time-sliced programme view. Home surfaces the same content inline,
   /// so this is a "see everything" push rather than a tab of its own —
   /// keeping the tab bar at five.
-  static const String whatsOn = '/whats-on';
+  static String whatsOn = '/whats-on';
 
   /// Astronomy Passport (Phase 6). Builders are registered in the tasks that
   /// create each screen, so no builder imports a screen before it exists.
-  static const String passport = '/passport';
-  static const String passportScan = '/passport/scan';
-  static const String passportReward = '/passport/reward';
+  static String passport = '/passport';
+  static String passportScan = '/passport/scan';
+  static String passportReward = '/passport/reward';
 
   static String eventDetailFor(String id) => '/event/$id';
 
@@ -47,7 +47,7 @@ abstract final class Routes {
   static String wayfindingTo(String venueId) => '/wayfinding?to=$venueId';
 
   /// Immersive 360° panorama for a venue.
-  static const String panorama = '/panorama/:venueId';
+  static String panorama = '/panorama/:venueId';
   static String panoramaFor(String venueId) => '/panorama/$venueId';
 }
 

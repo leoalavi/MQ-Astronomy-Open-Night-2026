@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -27,11 +29,13 @@ void main() {
         baseClockProvider.overrideWithValue(FixedClock(EventInfo.at(19, 0))),
       ],
       child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
         theme: AonTheme.build(),
         builder: (context, child) => MediaQuery(
-          data: MediaQuery.of(context).copyWith(
-            textScaler: TextScaler.linear(scale),
-          ),
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(scale)),
           child: child!,
         ),
         home: screen,
@@ -55,8 +59,9 @@ void main() {
   ]) {
     for (final scale in [1.0, 1.6, 2.0]) {
       screens.forEach((name, screen) {
-        testWidgets('$name @ ${size.width.toInt()}x scale$scale',
-            (tester) async {
+        testWidgets('$name @ ${size.width.toInt()}x scale$scale', (
+          tester,
+        ) async {
           tester.view.physicalSize = size;
           tester.view.devicePixelRatio = 1.0;
           addTearDown(tester.view.resetPhysicalSize);

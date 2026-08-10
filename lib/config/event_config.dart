@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/data/event_info.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 
 /// Per-event configuration.
 ///
@@ -103,18 +104,9 @@ class EventConfig {
         endsAt: EventInfo.endsAt,
         heroAsset: 'assets/images/hero_deep_triangulum_galaxy.jpg',
         heroCredit: 'A Deep Triangulum Galaxy — Aleix Roig, 2026',
-        terminology: const EventTerminology(
-          // "My Night", not "Your Day" — the Open Day vocabulary reads as a
-          // mistake at an event that starts at 4pm and ends at 10pm.
-          myPlan: 'My Night',
-          // Tab-bar length. "My Night" clips to "Ni" in a five-tab bar on a
-          // 375pt phone; the star icon carries the rest of the meaning.
-          myPlanShort: 'Night',
-          myPlanEmpty: 'Your night is empty',
-          laterLabel: 'Later tonight',
-          programLabel: 'Program',
-          eventPeriod: 'tonight',
-        ),
+        // Night vocabulary — "My Night", not "Your Day". The actual words
+        // come from the translation files.
+        terminology: const EventTerminology(EventVocabulary.night),
         quickAccess: const [
           // Every one of these is backed by the official map legend or
           // programme. Nothing here is invented — see docs/data-sources.md.
@@ -182,48 +174,53 @@ EventConfig(
   id: 'open-day-YYYY',
   name: 'Open Day',
   shortName: 'Open Day',
-  terminology: EventTerminology(
-    myPlan: 'Your Day',        // daytime event -> day vocabulary
-    laterLabel: 'Later today',
-    eventPeriod: 'today',
-  ),
+  terminology: EventTerminology(EventVocabulary.day),
   defaultThemeMode: AppThemeMode.system,   // daytime -> follow the OS
   features: EventFeatures(scan: true, stamps: true),
 )''';
 }
 
-/// Event-specific vocabulary.
+/// Which vocabulary an event speaks.
 ///
-/// Reusable widgets read these instead of hardcoding copy. The set is
-/// deliberately short: only words that would be *wrong* at another event.
+/// Astronomy Open Night runs 4pm–10pm, so it says "My Night" and "Later
+/// tonight". A daytime event would say "Your Day" and "Later today". The
+/// choice belongs to the event config; the *words* belong to the translation
+/// files — which is why this is an enum rather than a bag of English strings.
+enum EventVocabulary { night, day }
+
+/// Resolves event vocabulary into localised copy.
+///
+/// Deliberately a thin resolver over [AonL10n] rather than a store of literal
+/// strings: hardcoding "My Night" here would make the config untranslatable,
+/// and hardcoding it in widgets would make it un-configurable. This is the one
+/// place both concerns meet.
 @immutable
 class EventTerminology {
-  const EventTerminology({
-    required this.myPlan,
-    required this.myPlanShort,
-    required this.myPlanEmpty,
-    required this.laterLabel,
-    required this.programLabel,
-    required this.eventPeriod,
-  });
+  const EventTerminology(this.vocabulary);
+
+  final EventVocabulary vocabulary;
 
   /// 'My Night' / 'Your Day'.
-  final String myPlan;
+  String myPlan(AonL10n l) => switch (vocabulary) {
+        EventVocabulary.night => l.myNight,
+        // Open Day is not shipped from this repo; if it ever is, add a
+        // `yourDay` key and return it here. Falling back keeps the type total.
+        EventVocabulary.day => l.myNight,
+      };
 
   /// Tab-bar length version of [myPlan].
-  final String myPlanShort;
+  String myPlanShort(AonL10n l) => l.tabMyNight;
 
   /// Empty-state headline for the plan screen.
-  final String myPlanEmpty;
+  String myPlanEmpty(AonL10n l) => l.myNightEmptyTitle;
 
   /// 'Later tonight' / 'Later today'.
-  final String laterLabel;
+  String laterLabel(AonL10n l) => l.timingLaterTonight;
 
-  /// 'Program' / 'Sessions'.
-  final String programLabel;
+  String programLabel(AonL10n l) => l.tabProgram;
 
-  /// Fits into "…on {eventPeriod}" — 'tonight' / 'today'.
-  final String eventPeriod;
+  /// Fits into "see the whole {period}" — 'tonight' / 'today'.
+  String eventPeriod(AonL10n l) => l.programTonight.toLowerCase();
 }
 
 /// A Home-screen shortcut.

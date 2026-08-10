@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/app/router/app_router.dart';
@@ -6,15 +8,20 @@ import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/widgets/passport_home_card.dart';
 
 Widget _app() => ProviderScope(
-      overrides: [
-        passportSnapshotProvider.overrideWithValue({'macquarie-theatre'}),
-      ],
-      child: MaterialApp.router(routerConfig: buildRouter()),
-    );
+  overrides: [
+    passportSnapshotProvider.overrideWithValue({'macquarie-theatre'}),
+  ],
+  child: MaterialApp.router(
+    localizationsDelegates: AonL10n.localizationsDelegates,
+    supportedLocales: AonL10n.supportedLocales,
+    routerConfig: buildRouter(),
+  ),
+);
 
 void main() {
-  testWidgets('Home shows the passport card with progress and it navigates',
-      (t) async {
+  testWidgets('Home shows the passport card with progress and it navigates', (
+    t,
+  ) async {
     // A tall viewport so the lazy Home sliver builds the whole page and the
     // card sits clear of the floating glass nav bar (a short viewport hides it
     // behind the bar and the tap misses).

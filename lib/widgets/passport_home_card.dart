@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/stamp_service.dart';
@@ -24,15 +24,15 @@ class PassportHomeCard extends ConsumerWidget {
       child: Container(
         padding: const EdgeInsets.all(AonSpacing.space4),
         decoration: BoxDecoration(
-          color: AonColors.night900,
+          color: context.aon.surface,
           borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-          border: Border.all(color: AonColors.amber.withValues(alpha: 0.5)),
+          border: Border.all(color: context.aon.accent.withValues(alpha: 0.5)),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.workspace_premium_rounded,
-              color: AonColors.amber,
+              color: context.aon.accent,
               size: AonSpacing.iconMd,
             ),
             const SizedBox(width: AonSpacing.space3),
@@ -47,12 +47,12 @@ class PassportHomeCard extends ConsumerWidget {
                   Text(
                     '${state.count} / ${PassportPolicy.stationCount} stamps',
                     style: theme.textTheme.bodySmall
-                        ?.copyWith(color: AonColors.contentSecondary),
+                        ?.copyWith(color: context.aon.contentSecondary),
                   ),
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: AonColors.amber),
+            Icon(Icons.chevron_right_rounded, color: context.aon.accent),
           ],
         ),
       ),

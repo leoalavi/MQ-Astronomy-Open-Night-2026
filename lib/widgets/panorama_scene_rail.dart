@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/indoor_manifest.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -63,7 +63,7 @@ class _SceneChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Material(
-      color: selected ? AonColors.amber : Colors.transparent,
+      color: selected ? context.aon.accent : Colors.transparent,
       borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
       child: InkWell(
         borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
@@ -78,7 +78,7 @@ class _SceneChip extends StatelessWidget {
               child: Text(
                 label,
                 style: theme.textTheme.labelLarge?.copyWith(
-                  color: selected ? AonColors.night950 : AonColors.contentPrimary,
+                  color: selected ? context.aon.surfaceBase : context.aon.contentPrimary,
                 ),
               ),
             ),

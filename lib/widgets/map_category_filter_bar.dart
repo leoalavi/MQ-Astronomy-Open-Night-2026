@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/utils/venue_style.dart';
@@ -63,8 +63,8 @@ class _MapCategoryChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final categoryColor = VenueStyle.colorFor(category);
-    final fg = isSelected ? AonColors.onAccent : AonColors.contentPrimary;
+    final categoryColor = VenueStyle.colorFor(context, category);
+    final fg = isSelected ? context.aon.onAccent : context.aon.contentPrimary;
     final radius = BorderRadius.circular(AonSpacing.radiusFull);
 
     final tappable = ConstrainedBox(
@@ -84,7 +84,7 @@ class _MapCategoryChip extends StatelessWidget {
                   Icon(
                     VenueStyle.iconFor(category),
                     size: AonSpacing.iconSm,
-                    color: isSelected ? AonColors.onAccent : categoryColor,
+                    color: isSelected ? context.aon.onAccent : categoryColor,
                   ),
                   const SizedBox(width: AonSpacing.space2),
                   Text(
@@ -108,7 +108,7 @@ class _MapCategoryChip extends StatelessWidget {
 
     final Widget visual = isSelected
         ? DecoratedBox(
-            decoration: BoxDecoration(color: AonColors.amber, borderRadius: radius),
+            decoration: BoxDecoration(color: context.aon.accent, borderRadius: radius),
             child: tappable,
           )
         : GlassSurface(

@@ -235,10 +235,7 @@ void main() {
       final talks = grouped[EventCategory.shortTalk]!;
 
       for (var i = 1; i < talks.length; i++) {
-        expect(
-          talks[i].firstStart.isBefore(talks[i - 1].firstStart),
-          isFalse,
-        );
+        expect(talks[i].firstStart.isBefore(talks[i - 1].firstStart), isFalse);
       }
     });
   });

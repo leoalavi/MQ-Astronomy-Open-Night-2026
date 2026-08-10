@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/whats_on_service.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 
 /// A small status pill: "Happening now", "Starting soon", "Later tonight".
 ///
@@ -20,21 +22,21 @@ class TimingBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (color, icon) = switch (timing) {
-      EventTiming.happeningNow => (AonColors.live, Icons.circle),
-      EventTiming.startingSoon => (AonColors.soon, Icons.schedule_rounded),
+      EventTiming.happeningNow => (context.aon.live, Icons.circle),
+      EventTiming.startingSoon => (context.aon.soon, Icons.schedule_rounded),
       EventTiming.upcoming => (
-          AonColors.contentTertiary,
+          context.aon.contentTertiary,
           Icons.more_time_rounded
         ),
       EventTiming.finished => (
-          AonColors.contentTertiary,
+          context.aon.contentTertiary,
           Icons.check_circle_outline_rounded
         ),
     };
 
-    final label = trailingText == null
-        ? timing.label
-        : '${timing.label} · $trailingText';
+    final localised = timing.labelOf(AonL10n.of(context));
+    final label =
+        trailingText == null ? localised : '$localised · $trailingText';
 
     return Container(
       padding: const EdgeInsets.symmetric(

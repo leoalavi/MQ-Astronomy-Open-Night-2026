@@ -1,6 +1,10 @@
 import 'package:aon2026/models/event.dart';
 
 /// Where an event sits relative to "now".
+///
+/// The [label] here is a **debug/diagnostic** name, not UI copy — user-facing
+/// text comes from the ARB files via `EventTimingL10n.labelOf`. Keeping an
+/// English label on the enum keeps test failure messages readable.
 enum EventTiming {
   happeningNow('Happening now'),
   startingSoon('Starting soon'),

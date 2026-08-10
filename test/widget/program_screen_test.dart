@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -11,11 +13,11 @@ void main() {
   Widget harness() {
     return ProviderScope(
       overrides: [
-        baseClockProvider.overrideWithValue(
-          FixedClock(EventInfo.at(19, 0)),
-        ),
+        baseClockProvider.overrideWithValue(FixedClock(EventInfo.at(19, 0))),
       ],
       child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
         theme: AonTheme.build(),
         home: const ProgramScreen(),
       ),
@@ -81,8 +83,9 @@ void main() {
     expect(find.text('Activities'), findsNothing);
   });
 
-  testWidgets('the programme never lists the cancelled Huntsman session',
-      (tester) async {
+  testWidgets('the programme never lists the cancelled Huntsman session', (
+    tester,
+  ) async {
     await tester.pumpWidget(harness());
     await tester.pump();
 

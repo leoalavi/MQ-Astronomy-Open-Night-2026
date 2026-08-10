@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/data/panorama_data.dart';
 import 'package:aon2026/services/providers.dart';
@@ -23,6 +25,7 @@ class PanoramaScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final tour = PanoramaData.tourFor(venueId);
     final venue = ref.watch(venueByIdProvider(venueId));
     final title = venue?.name ?? '360° preview';
@@ -45,7 +48,7 @@ class PanoramaScreen extends ConsumerWidget {
     }
 
     return Scaffold(
-      backgroundColor: AonColors.night950,
+      backgroundColor: context.aon.surfaceBase,
       body: Stack(
         fit: StackFit.expand,
         children: [
@@ -59,9 +62,9 @@ class PanoramaScreen extends ConsumerWidget {
               borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
               padding: EdgeInsets.zero,
               child: IconButton(
-                tooltip: 'Back',
-                icon: const Icon(Icons.arrow_back_rounded,
-                    color: AonColors.contentPrimary),
+                tooltip: l.actionBack,
+                icon: Icon(Icons.arrow_back_rounded,
+                    color: context.aon.contentPrimary),
                 onPressed: () => context.pop(),
               ),
             ),

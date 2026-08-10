@@ -1,74 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/app/theme/aon_typography.dart';
 
-/// Builds the single application [ThemeData].
+/// Builds the application [ThemeData] for a given brightness.
 ///
-/// **There is intentionally no light theme.** MQ Journey ships light + dark and
-/// follows the system setting. This app does not: the event runs from dusk to
-/// 10pm, and a phone that flashes a white screen at someone standing at a
-/// telescope eyepiece ruins their dark adaptation (and their neighbours').
-/// Locking to dark is a product decision, not an unfinished one.
+/// Dark remains the **recommended** experience — the event runs from dusk to
+/// 10pm and a bright screen beside a telescope spoils night vision — so it is
+/// the event config's default. But light is a fully supported, deliberately
+/// designed theme, not an inversion: see [AonPalette].
+///
+/// Every colour comes from the [AonPalette] extension, which is attached to
+/// the returned theme. Widgets read it through `context.aon`, so a theme
+/// switch repaints them with no restart and no manual plumbing.
 abstract final class AonTheme {
-  static ThemeData build() {
-    final textTheme = AonTypography.textTheme;
+  /// The dark (default) theme.
+  static ThemeData build() => forBrightness(Brightness.dark);
 
-    const colorScheme = ColorScheme.dark(
-      primary: AonColors.amber,
-      onPrimary: AonColors.onAccent,
-      primaryContainer: AonColors.amberDeep,
-      onPrimaryContainer: AonColors.contentPrimary,
-      secondary: AonColors.stellar,
-      onSecondary: AonColors.onAccent,
-      secondaryContainer: AonColors.stellarDeep,
-      onSecondaryContainer: AonColors.contentPrimary,
-      tertiary: AonColors.nebula,
-      onTertiary: AonColors.onAccent,
-      error: AonColors.error,
-      onError: AonColors.onAccent,
-      surface: AonColors.night900,
-      onSurface: AonColors.contentPrimary,
-      surfaceContainerHighest: AonColors.night800,
-      onSurfaceVariant: AonColors.contentSecondary,
-      outline: AonColors.night700,
-      outlineVariant: AonColors.night700,
+  static ThemeData light() => forBrightness(Brightness.light);
+
+  static ThemeData forBrightness(Brightness brightness) {
+    final palette = AonPalette.of(brightness);
+    final textTheme = AonTypography.textThemeFor(palette.contentPrimary);
+
+    final colorScheme = ColorScheme(
+      brightness: brightness,
+      primary: palette.accent,
+      onPrimary: palette.onAccent,
+      primaryContainer: palette.accentDeep,
+      onPrimaryContainer: palette.contentPrimary,
+      secondary: palette.info,
+      onSecondary: palette.onAccent,
+      secondaryContainer: palette.infoDeep,
+      onSecondaryContainer: palette.contentPrimary,
+      tertiary: palette.tertiary,
+      onTertiary: palette.onAccent,
+      error: palette.error,
+      onError: palette.onAccent,
+      surface: palette.surface,
+      onSurface: palette.contentPrimary,
+      surfaceContainerHighest: palette.surfaceRaised,
+      onSurfaceVariant: palette.contentSecondary,
+      outline: palette.border,
+      outlineVariant: palette.border,
     );
 
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
+      brightness: brightness,
+      extensions: <ThemeExtension<dynamic>>[palette],
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AonColors.night950,
-      canvasColor: AonColors.night950,
+      scaffoldBackgroundColor: palette.surfaceBase,
+      canvasColor: palette.surfaceBase,
       textTheme: textTheme,
 
       appBarTheme: AppBarTheme(
-        backgroundColor: AonColors.night950,
-        foregroundColor: AonColors.contentPrimary,
+        backgroundColor: palette.surfaceBase,
+        foregroundColor: palette.contentPrimary,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
         titleTextStyle: textTheme.headlineSmall,
-        systemOverlayStyle: SystemUiOverlayStyle.light,
+        systemOverlayStyle: brightness == Brightness.dark
+            ? SystemUiOverlayStyle.light
+            : SystemUiOverlayStyle.dark,
       ),
 
       cardTheme: CardThemeData(
-        color: AonColors.night900,
+        color: palette.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-          side: const BorderSide(color: AonColors.night700),
+          side: BorderSide(color: palette.border),
         ),
       ),
 
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AonColors.amber,
-          foregroundColor: AonColors.onAccent,
+          backgroundColor: palette.accent,
+          foregroundColor: palette.onAccent,
           textStyle: textTheme.labelLarge,
           minimumSize: const Size(0, AonSpacing.minTapTarget),
           padding: const EdgeInsets.symmetric(horizontal: AonSpacing.space5),
@@ -80,10 +93,10 @@ abstract final class AonTheme {
 
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AonColors.contentPrimary,
+          foregroundColor: palette.contentPrimary,
           textStyle: textTheme.labelLarge,
           minimumSize: const Size(0, AonSpacing.minTapTarget),
-          side: const BorderSide(color: AonColors.night600),
+          side: BorderSide(color: palette.borderStrong),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AonSpacing.radius),
           ),
@@ -92,28 +105,28 @@ abstract final class AonTheme {
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
-          foregroundColor: AonColors.amber,
+          foregroundColor: palette.accent,
           textStyle: textTheme.labelLarge,
           minimumSize: const Size(0, AonSpacing.minTapTarget),
         ),
       ),
 
       chipTheme: ChipThemeData(
-        backgroundColor: AonColors.night800,
-        selectedColor: AonColors.amber,
+        backgroundColor: palette.surfaceRaised,
+        selectedColor: palette.accent,
         // ChoiceChip resolves its selected background from
         // `secondarySelectedColor`, not `selectedColor` — leaving it at the
         // default produced a blue-grey fill with near-black label text, about
         // 2:1 contrast. Both must be set or the wayfinding chips fail WCAG.
-        secondarySelectedColor: AonColors.amber,
-        disabledColor: AonColors.night800,
+        secondarySelectedColor: palette.accent,
+        disabledColor: palette.surfaceRaised,
         labelStyle: textTheme.labelMedium,
         // Applied to the label when a chip is selected.
         secondaryLabelStyle: textTheme.labelMedium?.copyWith(
-          color: AonColors.onAccent,
+          color: palette.onAccent,
         ),
-        checkmarkColor: AonColors.onAccent,
-        side: const BorderSide(color: AonColors.night700),
+        checkmarkColor: palette.onAccent,
+        side: BorderSide(color: palette.border),
         padding: const EdgeInsets.symmetric(
           horizontal: AonSpacing.space3,
           vertical: AonSpacing.space2,
@@ -125,9 +138,9 @@ abstract final class AonTheme {
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AonColors.night900,
+        fillColor: palette.surface,
         hintStyle: textTheme.bodyMedium?.copyWith(
-          color: AonColors.contentTertiary,
+          color: palette.contentTertiary,
         ),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AonSpacing.space4,
@@ -135,59 +148,59 @@ abstract final class AonTheme {
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AonSpacing.radius),
-          borderSide: const BorderSide(color: AonColors.night700),
+          borderSide: BorderSide(color: palette.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AonSpacing.radius),
-          borderSide: const BorderSide(color: AonColors.night700),
+          borderSide: BorderSide(color: palette.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(AonSpacing.radius),
-          borderSide: const BorderSide(color: AonColors.amber, width: 2),
+          borderSide: BorderSide(color: palette.accent, width: 2),
         ),
       ),
 
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: AonColors.night900,
-        indicatorColor: AonColors.amber,
+        backgroundColor: palette.surface,
+        indicatorColor: palette.accent,
         height: 72,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         surfaceTintColor: Colors.transparent,
         labelTextStyle: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? textTheme.labelSmall?.copyWith(color: AonColors.amber)
+              ? textTheme.labelSmall?.copyWith(color: palette.accent)
               : textTheme.labelSmall?.copyWith(
-                  color: AonColors.contentSecondary,
+                  color: palette.contentSecondary,
                 ),
         ),
         iconTheme: WidgetStateProperty.resolveWith(
           (states) => states.contains(WidgetState.selected)
-              ? const IconThemeData(
-                  color: AonColors.onAccent,
+              ? IconThemeData(
+                  color: palette.onAccent,
                   size: AonSpacing.iconDefault,
                 )
-              : const IconThemeData(
-                  color: AonColors.contentSecondary,
+              : IconThemeData(
+                  color: palette.contentSecondary,
                   size: AonSpacing.iconDefault,
                 ),
         ),
       ),
 
-      dividerTheme: const DividerThemeData(
-        color: AonColors.night700,
+      dividerTheme: DividerThemeData(
+        color: palette.border,
         thickness: 1,
         space: 1,
       ),
 
-      bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: AonColors.night900,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: palette.surface,
         surfaceTintColor: Colors.transparent,
         showDragHandle: true,
       ),
 
-      listTileTheme: const ListTileThemeData(
-        iconColor: AonColors.contentSecondary,
-        textColor: AonColors.contentPrimary,
+      listTileTheme: ListTileThemeData(
+        iconColor: palette.contentSecondary,
+        textColor: palette.contentPrimary,
         minVerticalPadding: AonSpacing.space3,
       ),
     );

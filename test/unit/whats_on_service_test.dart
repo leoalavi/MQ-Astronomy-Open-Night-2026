@@ -13,19 +13,17 @@ void main() {
   DateTime at(int hour, [int minute = 0]) => EventInfo.at(hour, minute);
 
   AonEvent eventWith(List<EventSession> sessions) => AonEvent(
-        id: 'test',
-        title: 'Test',
-        description: '',
-        category: EventCategory.activity,
-        venueId: 'central-courtyard',
-        sessions: sessions,
-      );
+    id: 'test',
+    title: 'Test',
+    description: '',
+    category: EventCategory.activity,
+    venueId: 'central-courtyard',
+    sessions: sessions,
+  );
 
   group('classify', () {
     test('an event running now is happeningNow', () {
-      final event = eventWith([
-        EventSession(start: at(17), end: at(18)),
-      ]);
+      final event = eventWith([EventSession(start: at(17), end: at(18))]);
 
       final result = WhatsOnService.classify(event, at(17, 30));
 
@@ -34,9 +32,7 @@ void main() {
     });
 
     test('start time is inclusive, end time is exclusive', () {
-      final event = eventWith([
-        EventSession(start: at(17), end: at(18)),
-      ]);
+      final event = eventWith([EventSession(start: at(17), end: at(18))]);
 
       // Exactly at the start: running.
       expect(
@@ -52,9 +48,7 @@ void main() {
     });
 
     test('an event starting inside the soon window is startingSoon', () {
-      final event = eventWith([
-        EventSession(start: at(18), end: at(19)),
-      ]);
+      final event = eventWith([EventSession(start: at(18), end: at(19))]);
 
       expect(
         WhatsOnService.classify(event, at(17, 45)).timing,
@@ -63,9 +57,7 @@ void main() {
     });
 
     test('an event starting beyond the soon window is upcoming', () {
-      final event = eventWith([
-        EventSession(start: at(20), end: at(21)),
-      ]);
+      final event = eventWith([EventSession(start: at(20), end: at(21))]);
 
       expect(
         WhatsOnService.classify(event, at(17)).timing,
@@ -74,9 +66,7 @@ void main() {
     });
 
     test('the soon window boundary is inclusive', () {
-      final event = eventWith([
-        EventSession(start: at(18), end: at(19)),
-      ]);
+      final event = eventWith([EventSession(start: at(18), end: at(19))]);
 
       // Exactly 30 minutes before: still "soon".
       expect(
@@ -91,9 +81,7 @@ void main() {
     });
 
     test('an event with no remaining sessions is finished', () {
-      final event = eventWith([
-        EventSession(start: at(17), end: at(18)),
-      ]);
+      final event = eventWith([EventSession(start: at(17), end: at(18))]);
 
       final result = WhatsOnService.classify(event, at(21));
 
@@ -166,12 +154,11 @@ void main() {
     });
 
     test('upcoming sorts by start time', () {
-      final classified = WhatsOnService.classifyAll(
-        EventsData.all,
-        at(16, 0),
+      final classified = WhatsOnService.classifyAll(EventsData.all, at(16, 0));
+      final upcoming = WhatsOnService.inBucket(
+        classified,
+        EventTiming.upcoming,
       );
-      final upcoming =
-          WhatsOnService.inBucket(classified, EventTiming.upcoming);
 
       for (var i = 1; i < upcoming.length; i++) {
         expect(
@@ -185,18 +172,14 @@ void main() {
 
   group('all-evening drop-ins', () {
     test('a six-hour activity is flagged as all-evening', () {
-      final exhibition = eventWith([
-        EventSession(start: at(16), end: at(22)),
-      ]);
+      final exhibition = eventWith([EventSession(start: at(16), end: at(22))]);
 
       final result = WhatsOnService.classify(exhibition, at(18));
       expect(result.isAllEvening, isTrue);
     });
 
     test('a 30-minute talk is not', () {
-      final talk = eventWith([
-        EventSession(start: at(18), end: at(18, 30)),
-      ]);
+      final talk = eventWith([EventSession(start: at(18), end: at(18, 30))]);
 
       final result = WhatsOnService.classify(talk, at(18, 10));
       expect(result.isAllEvening, isFalse);
@@ -213,26 +196,19 @@ void main() {
     });
 
     test('nothing is happening before the event opens', () {
-      final classified = WhatsOnService.classifyAll(
-        EventsData.all,
-        at(12, 0),
+      final classified = WhatsOnService.classifyAll(EventsData.all, at(12, 0));
+      final running = WhatsOnService.inBucket(
+        classified,
+        EventTiming.happeningNow,
       );
-      final running =
-          WhatsOnService.inBucket(classified, EventTiming.happeningNow);
 
       expect(running, isEmpty);
     });
 
     test('everything is finished after the event closes', () {
-      final classified = WhatsOnService.classifyAll(
-        EventsData.all,
-        at(23, 0),
-      );
+      final classified = WhatsOnService.classifyAll(EventsData.all, at(23, 0));
 
-      expect(
-        classified.every((t) => t.timing == EventTiming.finished),
-        isTrue,
-      );
+      expect(classified.every((t) => t.timing == EventTiming.finished), isTrue);
     });
 
     test('something is on at every half hour of the event', () {
@@ -241,17 +217,15 @@ void main() {
       // has a gap worth telling the organisers about.
       for (var h = 16; h < 22; h++) {
         for (final m in [0, 30]) {
-          final classified =
-              WhatsOnService.classifyAll(EventsData.all, at(h, m));
+          final classified = WhatsOnService.classifyAll(
+            EventsData.all,
+            at(h, m),
+          );
           final running = WhatsOnService.inBucket(
             classified,
             EventTiming.happeningNow,
           );
-          expect(
-            running,
-            isNotEmpty,
-            reason: 'nothing running at ${at(h, m)}',
-          );
+          expect(running, isNotEmpty, reason: 'nothing running at ${at(h, m)}');
         }
       }
     });

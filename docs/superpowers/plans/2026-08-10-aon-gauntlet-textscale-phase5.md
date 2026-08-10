@@ -4,7 +4,7 @@
 
 **Goal:** Lift the app-wide text-scale clamp from 1.6 → 2.0, hardening every surface (screens, shell, all three modal sheets) to render overflow-free at TextScaler 2.0, with permanent regression coverage including the app-root clamp policy itself.
 
-**Architecture:** Three non-scrollable modal sheets overflow at 2.0 on a short viewport; each is fixed by wrapping its body in a `SingleChildScrollView` (one sheet is already safe and only gets a regression test). The inline text-scale clamp in `main.dart` is extracted into a pure, testable policy (`resolveAppTextScaler` + `kMaxTextScale = 2.0`) so the production ceiling can be asserted. The content screens and integrated shell already survive 2.0 (measured) and gain permanent short-viewport + 2.0 regression coverage.
+**Architecture:** Two non-scrollable modal sheets (`_TimeSimulatorSheet`, `_ParkingSheet`) overflow at 2.0 on a short viewport and are fixed by wrapping their bodies in a `SingleChildScrollView`; the third sheet (`_VenueSheet`) is already scrollable (`DraggableScrollableSheet`) and gets regression coverage only. The inline text-scale clamp in `main.dart` is extracted into a pure, testable policy (`resolveAppTextScaler` + `kMaxTextScale = 2.0`) so the production ceiling can be asserted. The content screens and integrated shell already survive 2.0 (measured) and gain permanent short-viewport + 2.0 regression coverage.
 
 **Tech Stack:** Flutter 3.44.7 / Dart 3.12; flutter_riverpod, go_router, flutter_map, flutter_test.
 
@@ -28,21 +28,25 @@
 
 **Files:** none (setup only).
 
-- [ ] **Step 1: Create the feature branch**
+- [ ] **Step 1: Require a clean tree, then branch (record the base commit)**
 
 ```bash
+git status --short   # MUST be empty — no unintended modifications before starting
+git rev-parse HEAD   # record this base commit alongside the baseline below
 git checkout main
 git checkout -b feature/gauntlet-textscale-phase5
 ```
 
-- [ ] **Step 2: Establish a green baseline**
+If `git status --short` prints anything, STOP and resolve it — the baseline must start from a clean tree.
+
+- [ ] **Step 2: Establish a green baseline (record the actual numbers)**
 
 ```bash
 flutter analyze
 flutter test
 ```
 
-Expected: analyze clean; all tests pass (~195). If anything is red here, STOP — the baseline must be green before changes.
+Expected: analyze clean; all tests pass. **Record the actual test total this run reports** (do not assume a number) and compare against it at the final gate. If anything is red here, STOP — the baseline must be green before changes.
 
 ---
 
@@ -100,9 +104,17 @@ void main() {
 
     // Mandatory: prove the sheet opened BEFORE judging layout.
     expect(find.text('Back to real time'), findsOneWidget);
-    // No overflow, and the body is genuinely scrollable.
+    // No overflow, and THIS sheet's body is genuinely scrollable (scoped to the
+    // sheet — not "exactly one SingleChildScrollView in the whole tree", which
+    // would be brittle if a screen later gains its own).
     expect(tester.takeException(), isNull);
-    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    expect(
+      find.ancestor(
+        of: find.text('Back to real time'),
+        matching: find.byType(SingleChildScrollView),
+      ),
+      findsOneWidget,
+    );
   });
 }
 ```
@@ -219,9 +231,13 @@ import 'package:aon2026/widgets/confidence_note.dart';
 Add a shared harness helper and the two tests inside `main()`:
 
 ```dart
-  // Opens `sheet` via a real modal bottom sheet at the given viewport / 2.0,
-  // matching production's isScrollControlled flag so real modal height
-  // constraints (and thus overflow) reproduce.
+  // Opens `sheet` via a real modal bottom sheet at the given viewport / 2.0.
+  // CRITICAL: the 2.0 override goes in MaterialApp.builder (ABOVE the Navigator),
+  // so the pushed modal route inherits it. Verified: a descendant INSIDE the
+  // sheet then reads scale(100)==200; if the MediaQuery is placed in `home:`
+  // (below the Navigator) the modal renders at 1.0 and the test silently proves
+  // nothing. Matches production's isScrollControlled flag so the real modal
+  // height constraint (and thus the overflow) reproduces.
   Future<void> openModalSheet(
     WidgetTester tester,
     Widget sheet, {
@@ -236,20 +252,21 @@ Add a shared harness helper and the two tests inside `main()`:
     await tester.pumpWidget(ProviderScope(
       child: MaterialApp(
         theme: AonTheme.build(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2.0)),
+          child: child!,
+        ),
         home: Builder(
-          builder: (ctx) => MediaQuery(
-            data: MediaQuery.of(ctx)
-                .copyWith(textScaler: const TextScaler.linear(2.0)),
-            child: Scaffold(
-              body: Center(
-                child: ElevatedButton(
-                  onPressed: () => showModalBottomSheet<void>(
-                    context: ctx,
-                    isScrollControlled: scrollControlled,
-                    builder: (_) => sheet,
-                  ),
-                  child: const Text('open'),
+          builder: (ctx) => Scaffold(
+            body: Center(
+              child: ElevatedButton(
+                onPressed: () => showModalBottomSheet<void>(
+                  context: ctx,
+                  isScrollControlled: scrollControlled,
+                  builder: (_) => sheet,
                 ),
+                child: const Text('open'),
               ),
             ),
           ),
@@ -260,7 +277,12 @@ Add a shared harness helper and the two tests inside `main()`:
     await tester.pump(const Duration(milliseconds: 400));
   }
 
-  testWidgets('Parking sheet: opens, no overflow, scrollable @ 320x568 / 2.0',
+  // Effective text scale at a descendant — guards against the modal silently
+  // rendering at 1.0 (see the harness note above).
+  double scaleAt(WidgetTester tester, Finder descendant) =>
+      MediaQuery.textScalerOf(tester.element(descendant)).scale(100);
+
+  testWidgets('Parking sheet: opens at 2.0, no overflow, scrollable @ 320x568',
       (tester) async {
     // Production opens the parking sheet with isScrollControlled: false.
     await openModalSheet(tester, const ParkingSheet(parkingId: 'west-6'),
@@ -268,11 +290,21 @@ Add a shared harness helper and the two tests inside `main()`:
 
     // Mandatory: ConfidenceNote is unique to the parking sheet — proves it opened.
     expect(find.byType(ConfidenceNote), findsOneWidget);
+    // Prove the sheet is genuinely at 2.0 (not 1.0) BEFORE judging overflow.
+    expect(scaleAt(tester, find.byType(ConfidenceNote)), 200);
     expect(tester.takeException(), isNull);
-    expect(find.byType(SingleChildScrollView), findsOneWidget);
+    // Scoped: THIS sheet scrolls (ancestor of its own content), not "exactly one
+    // SingleChildScrollView in the whole app tree".
+    expect(
+      find.ancestor(
+        of: find.byType(ConfidenceNote),
+        matching: find.byType(SingleChildScrollView),
+      ),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('Venue sheet: already safe, opens, no overflow @ 320x568 / 2.0',
+  testWidgets('Venue sheet: already safe, opens at 2.0, no overflow @ 320x568',
       (tester) async {
     // Production opens the venue sheet with isScrollControlled: true.
     await openModalSheet(tester, const VenueSheet(venueId: 'macquarie-theatre'),
@@ -280,6 +312,7 @@ Add a shared harness helper and the two tests inside `main()`:
 
     // DraggableScrollableSheet is unique to the venue sheet — proves it opened.
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(scaleAt(tester, find.byType(DraggableScrollableSheet)), 200);
     expect(tester.takeException(), isNull);
     expect(find.byType(Scrollable), findsWidgets);
   });
@@ -324,13 +357,20 @@ class ParkingSheet extends ConsumerWidget {
       builder: (_) => ParkingSheet(parkingId: parkingId),
 ```
 
+> **Honest trade — this is a testability API exposure.** `@visibleForTesting`
+> does not make a Dart declaration private; `ParkingSheet`/`VenueSheet` become
+> importable package-wide. They remain implementation-detail widgets **by
+> convention**: production code outside `map_screen.dart` must not consume them,
+> and the annotation makes any such use outside a test warn. The deterministic
+> test seam is worth this over camera-dependent marker tapping.
+
 - [ ] **Step 4: Run — Parking FAILS (overflow), Venue PASSES**
 
 ```bash
 flutter test test/widget/text_scale_sheets_test.dart
 ```
 
-Expected: the What's On test (Task 1) passes; **Venue passes**; **Parking FAILS** with `RenderFlex overflowed by ~315 pixels`. (Confirms the harness reproduces the real overflow.)
+Expected: the What's On test (Task 1) passes; **Venue passes** (opens, scale==200, no overflow); **Parking FAILS** on `expect(tester.takeException(), isNull)` — a `RenderFlex overflowed … on the bottom` at true 2.0 (the `scaleAt(...)==200` assertion passes first, confirming the harness really is at 2.0, not 1.0). This is the valid red.
 
 - [ ] **Step 5: Fix `ParkingSheet` — scroll wrap + `Expanded` on the name**
 
@@ -428,12 +468,13 @@ Expected: clean. (`@visibleForTesting` symbols are used only inside `map_screen.
 git add lib/screens/map_screen.dart test/widget/text_scale_sheets_test.dart
 git commit -m "fix(ui): scroll the map parking sheet at large text; test both map sheets (Phase 5)
 
-_ParkingSheet overflowed ~315px at 320x568 / 2.0 (non-scrollable Column in a
+_ParkingSheet overflowed at 320x568 / TextScaler 2.0 (non-scrollable Column in a
 default modal). Wrap in SingleChildScrollView and give the name Text an
 Expanded (defensive: wrap long names). _VenueSheet already scrolls
 (DraggableScrollableSheet) — add a regression test proving it stays clean.
 Both sheets exposed @visibleForTesting so tests drive a real modal
-deterministically instead of tapping camera-dependent map markers.
+deterministically (2.0 above the Navigator, asserted in-sheet) instead of
+tapping camera-dependent map markers.
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ```
@@ -466,6 +507,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/app/text_scale.dart';
 import 'package:aon2026/main.dart';
+import 'package:aon2026/widgets/liquid_tab_bar.dart';
 
 void main() {
   // Compare scalers by the number they produce, not by TextScaler identity.
@@ -491,8 +533,10 @@ void main() {
     await tester.pumpWidget(const ProviderScope(child: AonApp()));
     await tester.pump(const Duration(milliseconds: 400));
 
-    // Effective scale at a descendant of the app root is capped to 2.0.
-    final ctx = tester.element(find.byType(Text).first);
+    // Read the effective scale at a STABLE descendant of the app root — the
+    // always-present LiquidTabBar — not an arbitrary "first Text" whose order
+    // can change without changing the policy.
+    final ctx = tester.element(find.byType(LiquidTabBar));
     expect(MediaQuery.textScalerOf(ctx).scale(100), 200);
   });
 }
@@ -697,22 +741,41 @@ Expected: all PASS (screens already survive 2.0 at every width and the 320×568 
 
 - [ ] **Step 3: Extend `shell_responsive_test.dart` — navigate every tab at 2.0 (tall + short)**
 
-Append inside `main()` (after the existing loop), a nav test per short/tall size. Add imports at the top of the file if missing:
+Append inside `main()` (after the existing loop), a nav test per short/tall size, **and** a nav-clearance invariant. Add imports at the top of the file if missing:
 
 ```dart
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/clock.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 ```
 
-Add:
+Add. **No silent skips**: tap each tab's *inactive* (`_outlined`) icon and then
+assert the destination's tab label is showing — the `LiquidTabBar` renders a
+label ONLY for the selected tab, so the label appearing proves the branch
+actually switched (verified: an unselected tab's label count is 0). A missed tap
+therefore fails the label assertion rather than being skipped. The final hop
+uses `Icons.home_outlined` (once Home is deselected its icon is the outlined
+variant — `home_rounded` would find nothing and a `continue` would silently skip
+it).
 
 ```dart
   // The existing loop above only exercises the INITIAL (Home) route at 2.0.
   // StatefulShellRoute.indexedStack builds branches lazily, so Map/Program/Now/
   // Info are never built there. Navigate each tab at 2.0 on a tall AND a short
-  // viewport — this is the only coverage MapScreen has.
+  // viewport, proving each destination actually opens — this is the only
+  // coverage MapScreen has.
+  //
+  // (inactive icon to TAP, tab label proving the destination became selected)
+  const destinations = <(IconData, String)>[
+    (Icons.list_alt_outlined, 'Program'),
+    (Icons.schedule_outlined, 'Now'),
+    (Icons.map_outlined, 'Map'),
+    (Icons.info_outline_rounded, 'Info'),
+    (Icons.home_outlined, 'Home'), // Home deselects to the OUTLINED icon
+  ];
+
   for (final size in [const Size(320, 640), const Size(320, 568)]) {
-    testWidgets('shell navigates every tab, no overflow @ ${size.height.toInt()}h scale2.0',
+    testWidgets('shell navigates EVERY tab, each opens, no overflow @ ${size.height.toInt()}h scale2.0',
         (tester) async {
       tester.view.physicalSize = size;
       tester.view.devicePixelRatio = 1.0;
@@ -735,21 +798,52 @@ Add:
       ));
       await tester.pump(const Duration(milliseconds: 400));
 
-      for (final icon in const [
-        Icons.list_alt_outlined, // Program
-        Icons.schedule_outlined, // Now
-        Icons.map_outlined, // Map
-        Icons.info_outline_rounded, // Info
-        Icons.home_rounded, // back to Home
-      ]) {
-        final finder = find.byIcon(icon);
-        if (finder.evaluate().isEmpty) continue;
-        await tester.tap(finder, warnIfMissed: false);
-        await tester.pump(const Duration(milliseconds: 400));
+      for (final (tapIcon, label) in destinations) {
+        // The tab is present and not yet selected.
+        expect(find.byIcon(tapIcon), findsOneWidget);
+        // warnIfMissed:false is safe ONLY because the label assertion below
+        // makes a real miss (no navigation) a hard failure.
+        await tester.tap(find.byIcon(tapIcon), warnIfMissed: false);
+        await tester.pumpAndSettle();
+        // Destination actually became active: its tab label now renders (labels
+        // show only for the selected tab; unselected tabs render no label).
+        expect(find.text(label), findsWidgets,
+            reason: 'tapping $tapIcon did not navigate to $label');
+        // ...and it did so without overflow.
         expect(tester.takeException(), isNull);
       }
     });
   }
+
+  // Nav-clearance invariant at 2.0: Phase 1 reserves body clearance assuming the
+  // floating island is AonNavMetrics.barHeight tall. Prove the bar does NOT grow
+  // at 2.0 (its labels are height-clamped), so that reservation stays correct
+  // and content is never occluded by the island. (Verified: 66.0 at 1.0 AND 2.0.)
+  testWidgets('LiquidTabBar height == reserved clearance at 320x568 / 2.0',
+      (tester) async {
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(ProviderScope(
+      child: MaterialApp.router(
+        theme: AonTheme.build(),
+        routerConfig: buildRouter(),
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context)
+              .copyWith(textScaler: const TextScaler.linear(2.0)),
+          child: child!,
+        ),
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(
+      tester.getRect(find.byType(LiquidTabBar)).height,
+      AonNavMetrics.barHeight,
+    );
+  });
 ```
 
 - [ ] **Step 4: Run — verify green**
@@ -758,7 +852,7 @@ Add:
 flutter test test/widget/shell_responsive_test.dart
 ```
 
-Expected: all PASS (shell nav, incl. Map, is clean at 2.0 on both heights).
+Expected: all PASS — every tab navigates (label proves it), no overflow on tall or short, and the tab-bar height equals the reserved clearance at 2.0.
 
 - [ ] **Step 5: Full suite + analyze**
 
@@ -799,15 +893,37 @@ Expected: analyze clean; all green, including `text_scale_policy_test.dart` (ass
 - [ ] **Platform build gate** — record each as `PASS / FAIL / NOT AVAILABLE`:
 
 ```bash
-flutter build ios --simulator --no-codesign
+flutter build ios --simulator --debug
 flutter build apk --debug
 ```
 
-iOS simulator build expected PASS. Android build: PASS if the Android toolchain is present, else record `NOT AVAILABLE` (build availability ≠ emulator availability; Android *runtime* remains `NOT AVAILABLE`).
+iOS simulator build expected PASS (`--debug` is the meaningful simulator boundary;
+`--no-codesign` is for a *device* build, which is not what we verify here).
+Android build: PASS if the Android toolchain is present, else record
+`NOT AVAILABLE` (build availability ≠ emulator availability; Android *runtime*
+remains `NOT AVAILABLE`).
 
 - [ ] **On-device iOS pass at 2.0 (best-effort, honestly reported)**
 
-Boot an iOS simulator, run the app, and set an effective 2.0 text scale. Prove the scale is *effective* (not assumed): temporarily add a debug probe at a descendant of the app root that logs `MediaQuery.textScalerOf(context).scale(100)` and confirm it reports `200` when the OS requests ≥2.0 — evidence of *platform request → production clamp → effective 2.0*. Visually confirm every screen + the What's On and Parking sheets are legible and unclipped (ellipsis truncation does not throw, so only a human eye catches it). Remove the debug probe before the final commit. Record findings (including any critical truncation fixed) as a short runtime-results note appended to the design spec.
+Boot an iOS simulator, run the app, and set an effective 2.0 text scale. Prove the scale is *effective* (not assumed): temporarily add a debug probe at a descendant of the app root that logs `MediaQuery.textScalerOf(context).scale(100)` and confirm it reports `200` when the OS requests ≥2.0 — evidence of *platform request → production clamp → effective 2.0*. Visually confirm every screen **and all three sheets — What's On (time simulator), Parking, and Venue** — are legible and unclipped. Venue is included because it is one of the "every surface" guarantees, and runtime is where silent ellipsis truncation (which does not throw, so no automated test catches it) is caught by a human eye. Remove the debug probe before the final commit. Record findings (including any critical truncation fixed) as a short runtime-results note appended to the design spec.
+
+- [ ] **MANDATORY final re-gate (after ALL runtime changes)**
+
+The runtime pass above may add a temporary probe, fix a truncation, and edit the
+spec — all *after* the last green suite. A runtime fix can break a widget test or
+analysis. So after removing the probe and applying any fix, re-run from clean:
+
+```bash
+flutter analyze                     # clean
+flutter test                        # green; compare the total to the Task 0 baseline
+git diff --check                    # no whitespace/conflict errors
+git status --short                  # only intended files changed; debug probe gone
+```
+
+Then re-run any build/runtime check affected by a runtime fix, and do a final
+hostile read of `git diff` against `main`. The evidence you record must describe
+**this final tree**, not the tree from before the last patch. Only when this
+re-gate is green do you proceed to finish the branch.
 
 - [ ] **Finish the branch** — REQUIRED SUB-SKILL: use superpowers:finishing-a-development-branch (verify green suite → present merge options → execute → clean up).
 
@@ -819,7 +935,7 @@ Boot an iOS simulator, run the app, and set an effective 2.0 text scale. Prove t
 | `lib/main.dart` | use the policy; comment | 3 |
 | `lib/screens/whats_on_screen.dart` | `_TimeSimulatorSheet` scroll wrap | 1 |
 | `lib/screens/map_screen.dart` | expose `ParkingSheet`/`VenueSheet` `@visibleForTesting`; Parking scroll wrap + name `Expanded` | 2 |
-| `test/widget/text_scale_sheets_test.dart` | **create** — 3 sheet tests + modal harness | 1, 2 |
-| `test/widget/text_scale_policy_test.dart` | **create** — policy-function test **+ app-root wiring test** (pumps `AonApp`, proves effective cap = 2.0) | 3 |
+| `test/widget/text_scale_sheets_test.dart` | **create** — 3 sheet tests + `builder:`-pattern modal harness (2.0 above the Navigator) that asserts in-sheet scale==200 | 1, 2 |
+| `test/widget/text_scale_policy_test.dart` | **create** — policy-function test **+ app-root wiring test** (pumps `AonApp`, reads scale at `LiquidTabBar`, proves effective cap = 2.0) | 3 |
 | `test/widget/responsive_layout_test.dart` | matrix +360w +2.0 + 320×568 screens | 4 |
-| `test/widget/shell_responsive_test.dart` | tab-nav @ 2.0 (tall + short) | 4 |
+| `test/widget/shell_responsive_test.dart` | tab-nav @ 2.0 (tall + short), each destination label-asserted; + tab-bar-height clearance invariant | 4 |

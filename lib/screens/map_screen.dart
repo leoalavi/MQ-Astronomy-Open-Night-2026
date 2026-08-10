@@ -201,14 +201,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _VenueSheet(venueId: venueId),
+      builder: (_) => VenueSheet(venueId: venueId),
     );
   }
 
   void _showParkingSheet(String parkingId) {
     showModalBottomSheet<void>(
       context: context,
-      builder: (_) => _ParkingSheet(parkingId: parkingId),
+      builder: (_) => ParkingSheet(parkingId: parkingId),
     );
   }
 }
@@ -290,8 +290,9 @@ class _MapAttribution extends StatelessWidget {
   }
 }
 
-class _VenueSheet extends ConsumerWidget {
-  const _VenueSheet({required this.venueId});
+@visibleForTesting
+class VenueSheet extends ConsumerWidget {
+  const VenueSheet({super.key, required this.venueId});
 
   final String venueId;
 
@@ -382,8 +383,9 @@ class _VenueSheet extends ConsumerWidget {
   }
 }
 
-class _ParkingSheet extends ConsumerWidget {
-  const _ParkingSheet({required this.parkingId});
+@visibleForTesting
+class ParkingSheet extends ConsumerWidget {
+  const ParkingSheet({super.key, required this.parkingId});
 
   final String parkingId;
 
@@ -396,60 +398,65 @@ class _ParkingSheet extends ConsumerWidget {
     final routes = ref.watch(routesFromProvider(parkingId));
 
     return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(
-          AonSpacing.space5,
-          0,
-          AonSpacing.space5,
-          AonSpacing.space6,
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(
-                  Icons.local_parking_rounded,
-                  color: AonColors.mapParking,
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            AonSpacing.space5,
+            0,
+            AonSpacing.space5,
+            AonSpacing.space6,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.local_parking_rounded,
+                    color: AonColors.mapParking,
+                  ),
+                  const SizedBox(width: AonSpacing.space3),
+                  Expanded(
+                    child: Text(parking.name,
+                        style: theme.textTheme.headlineSmall),
+                  ),
+                ],
+              ),
+              if (parking.isFree) ...[
+                const SizedBox(height: AonSpacing.space2),
+                Text(
+                  'Free event parking',
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: AonColors.live),
                 ),
-                const SizedBox(width: AonSpacing.space3),
-                Text(parking.name, style: theme.textTheme.headlineSmall),
               ],
-            ),
-            if (parking.isFree) ...[
-              const SizedBox(height: AonSpacing.space2),
-              Text(
-                'Free event parking',
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: AonColors.live),
-              ),
-            ],
-            if (parking.notes != null) ...[
-              const SizedBox(height: AonSpacing.space3),
-              Text(
-                parking.notes!,
-                style: theme.textTheme.bodyMedium
-                    ?.copyWith(color: AonColors.contentSecondary),
-              ),
-            ],
-            const SizedBox(height: AonSpacing.space3),
-            ConfidenceNote(confidence: parking.coordinateConfidence),
-            if (routes.isNotEmpty) ...[
-              const SizedBox(height: AonSpacing.space4),
-              SizedBox(
-                width: double.infinity,
-                child: FilledButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    context.push(Routes.wayfinding);
-                  },
-                  icon: const Icon(Icons.directions_walk_rounded),
-                  label: Text('${routes.length} walking routes from here'),
+              if (parking.notes != null) ...[
+                const SizedBox(height: AonSpacing.space3),
+                Text(
+                  parking.notes!,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: AonColors.contentSecondary),
                 ),
-              ),
+              ],
+              const SizedBox(height: AonSpacing.space3),
+              ConfidenceNote(confidence: parking.coordinateConfidence),
+              if (routes.isNotEmpty) ...[
+                const SizedBox(height: AonSpacing.space4),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push(Routes.wayfinding);
+                    },
+                    icon: const Icon(Icons.directions_walk_rounded),
+                    label: Text('${routes.length} walking routes from here'),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );

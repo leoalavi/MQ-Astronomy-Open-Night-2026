@@ -10,6 +10,7 @@ import 'package:aon2026/data/events_data.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/widgets/aon_tactile_button.dart';
 import 'package:aon2026/widgets/event_card.dart';
+import 'package:aon2026/screens/map_screen.dart';
 import 'package:aon2026/widgets/quick_link_tile.dart';
 
 int buttonCount(SemanticsNode n) {
@@ -69,8 +70,9 @@ void main() {
     handle.dispose();
   });
 
-  testWidgets('EventCard (complex surface): tactile button, no InkWell, one titled button node',
-      (tester) async {
+  testWidgets(
+      'EventCard: tactile buttons, no InkWell, TWO distinct button nodes '
+      '(open + save)', (tester) async {
     var taps = 0;
     final handle = tester.ensureSemantics();
     final event = EventsData.all.first;
@@ -81,17 +83,40 @@ void main() {
       ),
     ));
 
+    // The card body AND the save button are both tactile buttons.
     expect(find.descendant(of: find.byType(EventCard), matching: find.byType(AonTactileButton)),
-        findsOneWidget);
+        findsNWidgets(2));
     expect(find.descendant(of: find.byType(EventCard), matching: find.byType(InkWell)), findsNothing);
 
-    await tester.tap(find.byType(EventCard));
+    // Tapping the card body still opens it. Tap the title rather than the
+    // card bounds, so the hit never lands on the save button's corner.
+    await tester.tap(find.text(event.title));
     expect(taps, 1);
-    expectOneButtonLabelled(tester, event.title);
+
+    // GOVERNANCE CHANGE (Astronomy): a card now exposes exactly TWO button
+    // nodes, not one. The brief requires a save action on programme cards, and
+    // AonTactileButton's MergeSemantics would swallow a *nested* control — so
+    // the save button is mounted as a sibling and is separately reachable.
+    // Both nodes must be individually labelled.
+    final root = tester.semantics
+        .find(find.byType(EventCard))
+        .owner!
+        .rootSemanticsNode!;
+    expect(buttonCount(root), 2);
+
+    // The save action carries its own accessible name (not just a star glyph).
+    expect(
+      find.bySemanticsLabel(RegExp('Save ${RegExp.escape(event.title)}')),
+      findsOneWidget,
+    );
     handle.dispose();
   });
 
-  testWidgets('_LiveStrip: tactile button, no InkWell, tapping navigates to What\'s On', (tester) async {
+  testWidgets('Home map CTA: tactile button, no InkWell, navigates to the map',
+      (tester) async {
+    // Replaces the old _LiveStrip check. The live strip was superseded by the
+    // "Happening now" rail; the map CTA is now Home's primary tactile surface
+    // and the organisers' most-requested affordance.
     await tester.pumpWidget(ProviderScope(
       overrides: [
         baseClockProvider.overrideWithValue(FixedClock(EventInfo.at(19, 0))),
@@ -100,15 +125,21 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    final strip = find.textContaining('happening right now');
-    expect(strip, findsOneWidget);
-    final stripButton = find.ancestor(of: strip, matching: find.byType(AonTactileButton));
-    expect(stripButton, findsOneWidget);
-    expect(find.descendant(of: stripButton, matching: find.byType(InkWell)), findsNothing);
+    // The CTA sits below the hero and the activity rails, so it is not built
+    // until scrolled into view.
+    final cta = find.text('Open the campus map');
+    await tester.scrollUntilVisible(
+      cta,
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(cta, findsOneWidget);
+    final ctaButton = find.ancestor(of: cta, matching: find.byType(AonTactileButton));
+    expect(ctaButton, findsOneWidget);
+    expect(find.descendant(of: ctaButton, matching: find.byType(InkWell)), findsNothing);
 
-    await tester.tap(strip);
+    await tester.tap(cta);
     await tester.pumpAndSettle();
-    // Landed on What's On. (textContaining dodges the title's curly apostrophe.)
-    expect(find.textContaining('On Now'), findsWidgets);
+    expect(find.byType(MapScreen), findsOneWidget);
   });
 }

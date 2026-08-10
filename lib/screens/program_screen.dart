@@ -7,12 +7,37 @@ import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/models/event.dart';
+import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/event_filter.dart';
 import 'package:aon2026/services/providers.dart';
+import 'package:aon2026/services/whats_on_service.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/empty_state.dart';
 import 'package:aon2026/widgets/event_card.dart';
 import 'package:aon2026/widgets/section_header.dart';
+
+/// How the programme is grouped.
+enum ProgramView {
+  /// Time-sliced against the clock: happening now, starting soon, later.
+  /// The default, because during the event "what can I still get to" beats
+  /// "what categories exist".
+  tonight,
+
+  /// The printed programme's own sections. Better for planning ahead, and it
+  /// matches the paper in the visitor's other hand.
+  sections,
+}
+
+final programViewProvider =
+    NotifierProvider<ProgramViewNotifier, ProgramView>(ProgramViewNotifier.new);
+
+class ProgramViewNotifier extends Notifier<ProgramView> {
+  @override
+  ProgramView build() => ProgramView.tonight;
+
+  void set(ProgramView view) => state = view;
+}
 
 /// The full programme, with search and filters by time, category and location.
 class ProgramScreen extends ConsumerWidget {
@@ -24,10 +49,11 @@ class ProgramScreen extends ConsumerWidget {
     final grouped = ref.watch(groupedEventsProvider);
     final total = ref.watch(filteredEventsProvider).length;
     final allTotal = ref.watch(eventsProvider).length;
+    final view = ref.watch(programViewProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Program'),
+        title: Text(ref.watch(terminologyProvider).programLabel),
         actions: [
           if (!filter.isEmpty)
             TextButton(
@@ -41,6 +67,7 @@ class ProgramScreen extends ConsumerWidget {
         children: [
           const _SearchField(),
           const _FilterBar(),
+          const _ViewSwitcher(),
           Padding(
             padding: const EdgeInsets.symmetric(
               horizontal: AonSpacing.space4,
@@ -74,34 +101,10 @@ class ProgramScreen extends ConsumerWidget {
                     onAction: () =>
                         ref.read(eventFilterProvider.notifier).clear(),
                   )
-                : ListView(
-                    padding: EdgeInsets.fromLTRB(
-                      AonSpacing.space4,
-                      0,
-                      AonSpacing.space4,
-                      AonNavMetrics.clearance(context),
-                    ),
-                    children: [
-                      for (final entry in grouped.entries) ...[
-                        SectionHeader(
-                          title: entry.key.label,
-                          count: entry.value.length,
-                          icon: VenueStyle.iconForEventCategory(entry.key),
-                          iconColor:
-                              VenueStyle.colorForEventCategory(entry.key),
-                        ),
-                        for (final event in entry.value) ...[
-                          EventCard(
-                            event: event,
-                            onTap: () => context.push(
-                              Routes.eventDetailFor(event.id),
-                            ),
-                          ),
-                          const SizedBox(height: AonSpacing.space3),
-                        ],
-                      ],
-                    ],
-                  ),
+                : switch (view) {
+                    ProgramView.tonight => const _TonightList(),
+                    ProgramView.sections => _SectionsList(grouped: grouped),
+                  },
           ),
         ],
       ),
@@ -284,6 +287,196 @@ class _ChipDivider extends StatelessWidget {
         vertical: AonSpacing.space3,
       ),
       child: VerticalDivider(width: 1, color: AonColors.night700),
+    );
+  }
+}
+
+/// Switches between the time-sliced view and the printed programme's sections.
+class _ViewSwitcher extends ConsumerWidget {
+  const _ViewSwitcher();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final view = ref.watch(programViewProvider);
+    final terminology = ref.watch(terminologyProvider);
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AonSpacing.space4,
+        vertical: AonSpacing.space2,
+      ),
+      child: SegmentedButton<ProgramView>(
+        segments: [
+          ButtonSegment(
+            value: ProgramView.tonight,
+            // "Tonight" / "Today" — event vocabulary, not hardcoded.
+            label: Text(
+              terminology.eventPeriod[0].toUpperCase() +
+                  terminology.eventPeriod.substring(1),
+            ),
+            icon: const Icon(Icons.schedule_rounded, size: AonSpacing.iconSm),
+          ),
+          const ButtonSegment(
+            value: ProgramView.sections,
+            label: Text('Sections'),
+            icon: Icon(Icons.list_alt_rounded, size: AonSpacing.iconSm),
+          ),
+        ],
+        selected: {view},
+        showSelectedIcon: false,
+        onSelectionChanged: (s) =>
+            ref.read(programViewProvider.notifier).set(s.first),
+      ),
+    );
+  }
+}
+
+/// The night timeline: what is on now, next, and later — the same buckets the
+/// Home rails use, so the two screens can never disagree.
+///
+/// Applies the active filters, so search and chips work in this view too.
+class _TonightList extends ConsumerWidget {
+  const _TonightList();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final now = ref.watch(currentTimeProvider);
+    final filtered = ref.watch(filteredEventsProvider);
+    final terminology = ref.watch(terminologyProvider);
+
+    final timed = WhatsOnService.classifyAll(filtered, now);
+    final happening =
+        WhatsOnService.inBucket(timed, EventTiming.happeningNow);
+    final soon = WhatsOnService.inBucket(timed, EventTiming.startingSoon);
+    final later = WhatsOnService.inBucket(timed, EventTiming.upcoming);
+    final finished = WhatsOnService.inBucket(timed, EventTiming.finished);
+
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AonSpacing.space4,
+        0,
+        AonSpacing.space4,
+        AonNavMetrics.clearance(context),
+      ),
+      children: [
+        _Bucket(
+          title: 'Happening now',
+          items: happening,
+          timing: EventTiming.happeningNow,
+          now: now,
+          icon: Icons.circle,
+          iconColor: AonColors.live,
+        ),
+        _Bucket(
+          title: 'Starting soon',
+          subtitle: 'In the next ${WhatsOnService.soonWindow.inMinutes} minutes',
+          items: soon,
+          timing: EventTiming.startingSoon,
+          now: now,
+          icon: Icons.schedule_rounded,
+          iconColor: AonColors.soon,
+        ),
+        _Bucket(
+          title: terminology.laterLabel,
+          items: later,
+          timing: EventTiming.upcoming,
+          now: now,
+          icon: Icons.more_time_rounded,
+          iconColor: AonColors.contentTertiary,
+        ),
+        _Bucket(
+          title: 'Finished',
+          items: finished,
+          timing: EventTiming.finished,
+          now: now,
+          icon: Icons.check_circle_outline_rounded,
+          iconColor: AonColors.contentTertiary,
+        ),
+      ],
+    );
+  }
+}
+
+class _Bucket extends StatelessWidget {
+  const _Bucket({
+    required this.title,
+    required this.items,
+    required this.timing,
+    required this.now,
+    required this.icon,
+    required this.iconColor,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+  final List<TimedEvent> items;
+  final EventTiming timing;
+  final DateTime now;
+  final IconData icon;
+  final Color iconColor;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: title,
+          subtitle: subtitle,
+          count: items.length,
+          icon: icon,
+          iconColor: iconColor,
+        ),
+        for (final item in items) ...[
+          EventCard(
+            event: item.event,
+            timing: timing,
+            now: now,
+            onTap: () =>
+                context.push(Routes.eventDetailFor(item.event.id)),
+          ),
+          const SizedBox(height: AonSpacing.space3),
+        ],
+      ],
+    );
+  }
+}
+
+/// The printed programme's own sections.
+class _SectionsList extends StatelessWidget {
+  const _SectionsList({required this.grouped});
+
+  final Map<EventCategory, List<AonEvent>> grouped;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(
+        AonSpacing.space4,
+        0,
+        AonSpacing.space4,
+        AonNavMetrics.clearance(context),
+      ),
+      children: [
+        for (final entry in grouped.entries) ...[
+          SectionHeader(
+            title: entry.key.label,
+            count: entry.value.length,
+            icon: VenueStyle.iconForEventCategory(entry.key),
+            iconColor: VenueStyle.colorForEventCategory(entry.key),
+          ),
+          for (final event in entry.value) ...[
+            EventCard(
+              event: event,
+              onTap: () => context.push(Routes.eventDetailFor(event.id)),
+            ),
+            const SizedBox(height: AonSpacing.space3),
+          ],
+        ],
+      ],
     );
   }
 }

@@ -5,9 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
+import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/data/event_info.dart';
+import 'package:aon2026/services/app_settings.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/passport_store.dart';
+
 import 'package:aon2026/widgets/glass_shader.dart';
 import 'package:aon2026/app/text_scale.dart';
 
@@ -61,14 +64,14 @@ Future<void> main() async {
   );
 }
 
-class AonApp extends StatefulWidget {
+class AonApp extends ConsumerStatefulWidget {
   const AonApp({super.key});
 
   @override
-  State<AonApp> createState() => _AonAppState();
+  ConsumerState<AonApp> createState() => _AonAppState();
 }
 
-class _AonAppState extends State<AonApp> {
+class _AonAppState extends ConsumerState<AonApp> {
   // Built once and held, rather than rebuilt in build(). A GoRouter carries
   // navigation state; recreating it on every rebuild would reset the user to
   // the home screen at random.
@@ -76,8 +79,14 @@ class _AonAppState extends State<AonApp> {
 
   @override
   Widget build(BuildContext context) {
+    final config = ref.watch(eventConfigProvider);
+    // The app's own reduce-motion preference. It only ever *adds* to what the
+    // OS asks for — the app never re-enables animations the platform has
+    // turned off.
+    final reduceMotion = ref.watch(reduceMotionProvider);
+
     return MaterialApp.router(
-      title: EventInfo.fullName,
+      title: config.name,
       debugShowCheckedModeBanner: false,
       theme: AonTheme.build(),
       // Dark only, by design — see AonTheme.
@@ -89,9 +98,17 @@ class _AonAppState extends State<AonApp> {
         // lib/app/text_scale.dart). Every surface is hardened to 2.0; the cap
         // is held there deliberately so the app never exposes an unverified
         // scale. Lifting past 2.0 is future accessibility work.
-        final scale = resolveAppTextScaler(MediaQuery.textScalerOf(context));
+        final media = MediaQuery.of(context);
+        final scale = resolveAppTextScaler(media.textScaler);
         return MediaQuery(
-          data: MediaQuery.of(context).copyWith(textScaler: scale),
+          data: media.copyWith(
+            textScaler: scale,
+            // AonTactileButton and GlassSurface both read
+            // MediaQuery.disableAnimations, so folding the preference in here
+            // makes one setting reach every animated surface — and keeps the
+            // setting honest rather than decorative.
+            disableAnimations: media.disableAnimations || reduceMotion,
+          ),
           child: child!,
         );
       },

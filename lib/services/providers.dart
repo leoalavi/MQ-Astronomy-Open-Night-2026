@@ -13,6 +13,8 @@ import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/models/walking_route.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/event_filter.dart';
+import 'package:aon2026/services/itinerary_service.dart';
+import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 
 /// Data access for the app.
@@ -233,3 +235,37 @@ final indoorManifestProvider =
   final raw = await rootBundle.loadString(tour.manifestAsset);
   return IndoorManifest.fromJson(raw);
 });
+
+// ── My Night (saved itinerary) ───────────────────────────
+
+/// The visitor's saved activities as a time-ordered timeline.
+///
+/// Recomputes on the 30s clock tick so entry status (now / soon / finished)
+/// stays live without the screen managing its own timer.
+final itineraryProvider = Provider<List<ItineraryEntry>>((ref) {
+  return ItineraryService.build(
+    allEvents: ref.watch(eventsProvider),
+    savedIds: ref.watch(savedEventsProvider).value ?? const <String>{},
+    now: ref.watch(currentTimeProvider),
+  );
+});
+
+/// Entries that have not finished — the default timeline view.
+final itineraryRemainingProvider = Provider<List<ItineraryEntry>>(
+  (ref) => ItineraryService.remaining(ref.watch(itineraryProvider)),
+);
+
+/// Entries already over, shown collapsed at the bottom.
+final itineraryFinishedProvider = Provider<List<ItineraryEntry>>(
+  (ref) => ItineraryService.finished(ref.watch(itineraryProvider)),
+);
+
+/// The single "where should I be" answer, for the Home preview.
+final nextUpProvider = Provider<ItineraryEntry?>(
+  (ref) => ItineraryService.nextUp(ref.watch(itineraryProvider)),
+);
+
+/// Whether any saved activities clash. Drives the timeline's warning banner.
+final hasItineraryConflictProvider = Provider<bool>(
+  (ref) => ref.watch(itineraryProvider).any((e) => e.hasConflict),
+);

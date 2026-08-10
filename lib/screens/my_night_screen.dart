@@ -1,0 +1,428 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+
+import 'package:aon2026/app/router/app_router.dart';
+import 'package:aon2026/app/theme/aon_colors.dart';
+import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/services/clock.dart';
+import 'package:aon2026/services/itinerary_service.dart';
+import 'package:aon2026/services/providers.dart';
+import 'package:aon2026/services/saved_events.dart';
+import 'package:aon2026/services/whats_on_service.dart';
+import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/utils/venue_style.dart';
+import 'package:aon2026/widgets/empty_state.dart';
+import 'package:aon2026/widgets/section_header.dart';
+import 'package:aon2026/widgets/timing_badge.dart';
+
+/// The visitor's saved activities as a night timeline ("My Night").
+///
+/// Adapted from MQ Journey's "Your Day" concept, rebuilt for an evening event.
+/// The screen answers one question — *where should I be, and when* — so it is
+/// a single chronological list rather than a grouped programme. Anything
+/// already finished collapses to the bottom.
+class MyNightScreen extends ConsumerWidget {
+  const MyNightScreen({super.key});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final terminology = ref.watch(terminologyProvider);
+    final saved = ref.watch(savedEventsProvider);
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(terminology.myPlan),
+        actions: [
+          if ((saved.value ?? const <String>{}).isNotEmpty)
+            TextButton(
+              onPressed: () => _confirmClear(context, ref),
+              child: const Text('Clear'),
+            ),
+        ],
+      ),
+      body: saved.when(
+        // First read hits disk. A skeleton beats a spinner — the user sees the
+        // shape of what is coming rather than an indeterminate wait.
+        loading: () => const _TimelineSkeleton(),
+        error: (_, _) => _LoadFailed(
+          onRetry: () => ref.invalidate(savedEventsProvider),
+        ),
+        data: (_) => _Timeline(terminology: terminology),
+      ),
+    );
+  }
+
+  Future<void> _confirmClear(BuildContext context, WidgetRef ref) async {
+    final planName = ref.read(terminologyProvider).myPlan;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Clear $planName?'),
+        content: const Text(
+          'This removes every saved activity. It can’t be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('Clear'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed ?? false) {
+      await ref.read(savedEventsProvider.notifier).clear();
+    }
+  }
+}
+
+class _Timeline extends ConsumerWidget {
+  const _Timeline({required this.terminology});
+
+  final EventTerminology terminology;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final remaining = ref.watch(itineraryRemainingProvider);
+    final finished = ref.watch(itineraryFinishedProvider);
+    final hasConflict = ref.watch(hasItineraryConflictProvider);
+
+    if (remaining.isEmpty && finished.isEmpty) {
+      return EmptyState(
+        icon: Icons.star_outline_rounded,
+        title: terminology.myPlanEmpty,
+        message:
+            'Tap the star on any activity to plan your night. We’ll line '
+            'everything up in time order and tell you where to go.',
+        actionLabel: 'Browse the program',
+        onAction: () => context.go(Routes.program),
+      );
+    }
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        AonSpacing.space4,
+        AonSpacing.space2,
+        AonSpacing.space4,
+        AonSpacing.space16,
+      ),
+      children: [
+        if (hasConflict) const _ConflictBanner(),
+
+        if (remaining.isNotEmpty)
+          for (final entry in remaining) ...[
+            _ItineraryCard(entry: entry),
+            const SizedBox(height: AonSpacing.space3),
+          ]
+        else
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: AonSpacing.space6),
+            child: Text(
+              'Everything you saved has finished. What a night.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(color: AonColors.contentSecondary),
+            ),
+          ),
+
+        if (finished.isNotEmpty) ...[
+          SectionHeader(
+            title: 'Finished',
+            count: finished.length,
+            icon: Icons.check_circle_outline_rounded,
+            iconColor: AonColors.contentTertiary,
+          ),
+          for (final entry in finished) ...[
+            _ItineraryCard(entry: entry, dimmed: true),
+            const SizedBox(height: AonSpacing.space3),
+          ],
+        ],
+      ],
+    );
+  }
+}
+
+/// One line on the timeline.
+class _ItineraryCard extends ConsumerWidget {
+  const _ItineraryCard({required this.entry, this.dimmed = false});
+
+  final ItineraryEntry entry;
+  final bool dimmed;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final venue = ref.watch(venueByIdProvider(entry.event.venueId));
+    final accent = VenueStyle.colorForEventCategory(entry.event.category);
+    final now = ref.watch(currentTimeProvider);
+
+    final titleColour =
+        dimmed ? AonColors.contentTertiary : AonColors.contentPrimary;
+
+    return Card(
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: () => context.push(Routes.eventDetailFor(entry.event.id)),
+        child: Padding(
+          padding: const EdgeInsets.all(AonSpacing.space4),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // ── Time + status ──
+              Row(
+                children: [
+                  Text(
+                    TimeFormat.session(entry.session),
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: dimmed ? AonColors.contentTertiary : accent,
+                    ),
+                  ),
+                  const Spacer(),
+                  TimingBadge(
+                    timing: entry.timing,
+                    trailingText: switch (entry.timing) {
+                      EventTiming.happeningNow => TimeFormat.remaining(
+                          now,
+                          entry.session.end,
+                        ).replaceFirst('ends ', ''),
+                      EventTiming.startingSoon =>
+                        TimeFormat.until(now, entry.session.start),
+                      _ => null,
+                    },
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: AonSpacing.space2),
+
+              // ── Title ──
+              Text(
+                entry.event.title,
+                style: theme.textTheme.titleLarge?.copyWith(color: titleColour),
+              ),
+
+              if (entry.isMultiSession) ...[
+                const SizedBox(height: 2),
+                Text(
+                  'Session ${entry.sessionIndex} of ${entry.sessionCount}',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: AonColors.contentTertiary),
+                ),
+              ],
+
+              const SizedBox(height: AonSpacing.space2),
+
+              // ── Where ──
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Icon(
+                    Icons.place_rounded,
+                    size: AonSpacing.iconSm,
+                    color: AonColors.contentSecondary,
+                  ),
+                  const SizedBox(width: AonSpacing.space2),
+                  Expanded(
+                    child: Text(
+                      [
+                        if (entry.event.room != null) entry.event.room!,
+                        venue?.name ?? 'Location to be confirmed',
+                      ].join(' · '),
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: AonColors.contentSecondary),
+                    ),
+                  ),
+                ],
+              ),
+
+              if (entry.hasConflict) ...[
+                const SizedBox(height: AonSpacing.space3),
+                _ConflictNote(titles: entry.conflictsWith),
+              ],
+
+              const SizedBox(height: AonSpacing.space3),
+              const Divider(height: 1),
+              const SizedBox(height: AonSpacing.space2),
+
+              // ── Actions ──
+              Row(
+                children: [
+                  if (venue != null)
+                    TextButton.icon(
+                      onPressed: () =>
+                          context.push(Routes.wayfindingTo(venue.id)),
+                      icon: const Icon(
+                        Icons.directions_walk_rounded,
+                        size: AonSpacing.iconSm,
+                      ),
+                      label: const Text('Walk there'),
+                    ),
+                  const Spacer(),
+                  IconButton(
+                    tooltip: 'Remove from plan',
+                    icon: const Icon(Icons.delete_outline_rounded),
+                    color: AonColors.contentSecondary,
+                    constraints: const BoxConstraints(
+                      minWidth: AonSpacing.minTapTarget,
+                      minHeight: AonSpacing.minTapTarget,
+                    ),
+                    onPressed: () => _remove(context, ref),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _remove(BuildContext context, WidgetRef ref) async {
+    final planName = ref.read(terminologyProvider).myPlan;
+    final id = entry.event.id;
+    await ref.read(savedEventsProvider.notifier).remove(id);
+    if (!context.mounted) return;
+
+    ScaffoldMessenger.maybeOf(context)
+      ?..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('Removed from $planName'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 4),
+          // Undo matters here: the remove button sits next to "Walk there" on
+          // a card being tapped in the dark.
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () =>
+                ref.read(savedEventsProvider.notifier).toggle(id),
+          ),
+        ),
+      );
+  }
+}
+
+class _ConflictNote extends StatelessWidget {
+  const _ConflictNote({required this.titles});
+
+  final List<String> titles;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final list = titles.length == 1
+        ? titles.single
+        : '${titles.take(titles.length - 1).join(', ')} and ${titles.last}';
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(
+          Icons.warning_amber_rounded,
+          size: AonSpacing.iconSm,
+          color: AonColors.soon,
+        ),
+        const SizedBox(width: AonSpacing.space2),
+        Expanded(
+          child: Text(
+            'Overlaps $list',
+            style: theme.textTheme.bodySmall?.copyWith(color: AonColors.soon),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ConflictBanner extends StatelessWidget {
+  const _ConflictBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: AonSpacing.space4),
+      padding: const EdgeInsets.all(AonSpacing.space4),
+      decoration: BoxDecoration(
+        color: AonColors.soon.withValues(alpha: 0.10),
+        borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+        border: Border.all(color: AonColors.soon.withValues(alpha: 0.35)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: AonColors.soon,
+            size: AonSpacing.iconMd,
+          ),
+          const SizedBox(width: AonSpacing.space3),
+          Expanded(
+            child: Text(
+              'Some of your saved activities run at the same time. They’re '
+              'flagged below — most run more than once, so check for another '
+              'session.',
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: AonColors.contentSecondary),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Placeholder cards shown while the saved set loads from disk.
+class _TimelineSkeleton extends StatelessWidget {
+  const _TimelineSkeleton();
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.all(AonSpacing.space4),
+      children: [
+        for (var i = 0; i < 3; i++)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AonSpacing.space3),
+            child: Container(
+              height: 132,
+              decoration: BoxDecoration(
+                color: AonColors.night900,
+                borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+                border: Border.all(color: AonColors.night700),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _LoadFailed extends StatelessWidget {
+  const _LoadFailed({required this.onRetry});
+
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return EmptyState(
+      icon: Icons.cloud_off_rounded,
+      title: 'Couldn’t open your saved plan',
+      // No stack trace, no storage terminology — just what happened and what
+      // the visitor can do about it.
+      message: 'Your saved activities are stored on this device. '
+          'Try again in a moment.',
+      actionLabel: 'Try again',
+      onAction: onRetry,
+    );
+  }
+}

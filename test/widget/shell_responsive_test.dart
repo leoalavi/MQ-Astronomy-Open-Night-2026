@@ -46,7 +46,7 @@ void main() {
   // (inactive icon to TAP, tab label proving the destination became selected)
   const destinations = <(IconData, String)>[
     (Icons.list_alt_outlined, 'Program'),
-    (Icons.schedule_outlined, 'Now'),
+    (Icons.star_outline_rounded, 'Night'),
     (Icons.map_outlined, 'Map'),
     (Icons.info_outline_rounded, 'Info'),
     (Icons.home_outlined, 'Home'), // Home deselects to the OUTLINED icon
@@ -78,11 +78,18 @@ void main() {
       await tester.pump(const Duration(milliseconds: 400));
 
       for (final (tapIcon, label) in destinations) {
+        // Scoped to the tab bar: several tab glyphs (notably the star) are
+        // also used by content — the save button — so an unscoped byIcon
+        // finder now matches many widgets.
+        final tab = find.descendant(
+          of: find.byType(LiquidTabBar),
+          matching: find.byIcon(tapIcon),
+        );
         // The tab is present and not yet selected.
-        expect(find.byIcon(tapIcon), findsOneWidget);
+        expect(tab, findsOneWidget);
         // warnIfMissed:false is safe ONLY because the label assertion below
         // makes a real miss (no navigation) a hard failure.
-        await tester.tap(find.byIcon(tapIcon), warnIfMissed: false);
+        await tester.tap(tab, warnIfMissed: false);
         await tester.pumpAndSettle();
         // Destination actually became active: its tab label now renders (labels
         // show only for the selected tab; unselected tabs render no label).

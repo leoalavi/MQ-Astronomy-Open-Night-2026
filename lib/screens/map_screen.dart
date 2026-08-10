@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/widgets/map_mode_toggle.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/widgets/panorama_building_picker.dart';
@@ -382,6 +383,27 @@ class VenueSheet extends ConsumerWidget {
               label: const Text('Walking directions'),
             ),
           ),
+
+          // 360° entry. Present only when Raouf's panorama layer actually has
+          // a tour for this venue id — availability comes from
+          // `venuesWithPanoramaProvider`, never from guessing an asset path.
+          // No tour => no button, rather than a disabled one that explains
+          // nothing.
+          if (ref.watch(featuresProvider).panorama &&
+              ref.watch(venuesWithPanoramaProvider).contains(venue.id)) ...[
+            const SizedBox(height: AonSpacing.space3),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.push(Routes.panoramaFor(venue.id));
+                },
+                icon: const Icon(Icons.threesixty_rounded),
+                label: const Text('Look inside in 360°'),
+              ),
+            ),
+          ],
 
           if (events.isNotEmpty) ...[
             const SizedBox(height: AonSpacing.space5),

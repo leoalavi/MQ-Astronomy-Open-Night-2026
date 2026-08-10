@@ -5,6 +5,8 @@ import 'package:aon2026/screens/event_detail_screen.dart';
 import 'package:aon2026/screens/home_screen.dart';
 import 'package:aon2026/screens/info_screen.dart';
 import 'package:aon2026/screens/map_screen.dart';
+import 'package:aon2026/screens/my_night_screen.dart';
+import 'package:aon2026/screens/settings_screen.dart';
 import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/screens/panorama_screen.dart';
@@ -16,15 +18,22 @@ import 'package:aon2026/widgets/app_shell.dart';
 
 /// Route paths, in one place so nothing hard-codes a string literal.
 abstract final class Routes {
+  // ── Tabs ──
   static const String home = '/';
   static const String program = '/program';
-  static const String whatsOn = '/whats-on';
+  static const String myNight = '/my-night';
   static const String map = '/map';
   static const String info = '/info';
 
   /// Full-screen pages pushed above the tab shell.
   static const String eventDetail = '/event/:id';
   static const String wayfinding = '/wayfinding';
+  static const String settings = '/settings';
+
+  /// The time-sliced programme view. Home surfaces the same content inline,
+  /// so this is a "see everything" push rather than a tab of its own —
+  /// keeping the tab bar at five.
+  static const String whatsOn = '/whats-on';
 
   /// Astronomy Passport (Phase 6). Builders are registered in the tasks that
   /// create each screen, so no builder imports a screen before it exists.
@@ -82,8 +91,8 @@ GoRouter buildRouter() {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: Routes.whatsOn,
-                builder: (context, state) => const WhatsOnScreen(),
+                path: Routes.myNight,
+                builder: (context, state) => const MyNightScreen(),
               ),
             ],
           ),
@@ -121,6 +130,16 @@ GoRouter buildRouter() {
         builder: (context, state) => WayfindingScreen(
           initialDestinationId: state.uri.queryParameters['to'],
         ),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.whatsOn,
+        builder: (context, state) => const WhatsOnScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.settings,
+        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,

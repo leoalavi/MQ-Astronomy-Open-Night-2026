@@ -5,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_colors.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/clock.dart';
@@ -14,6 +15,7 @@ import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/empty_state.dart';
+import 'package:aon2026/widgets/save_button.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
 
 /// Full detail for one programme item, plus the action to navigate to it.
@@ -235,34 +237,34 @@ class EventDetailScreen extends ConsumerWidget {
       ),
 
       // ── Navigation action ──
-      bottomNavigationBar: venue == null
-          ? null
-          : SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.all(AonSpacing.space4),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => context.go(Routes.map),
-                        icon: const Icon(Icons.map_rounded),
-                        label: const Text('Show on map'),
-                      ),
-                    ),
-                    const SizedBox(width: AonSpacing.space3),
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: () => context.push(
-                          Routes.wayfindingTo(venue.id),
-                        ),
-                        icon: const Icon(Icons.directions_walk_rounded),
-                        label: const Text('Walk there'),
-                      ),
-                    ),
-                  ],
-                ),
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(AonSpacing.space4),
+          child: Row(
+            children: [
+              // Save is always available — it does not depend on the venue
+              // being resolvable, so an activity with a to-be-confirmed
+              // location can still be planned for.
+              SaveButton.labelled(
+                eventId: event.id,
+                eventTitle: event.title,
               ),
-            ),
+              if (venue != null) ...[
+                const SizedBox(width: AonSpacing.space3),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => context.push(
+                      Routes.wayfindingTo(venue.id),
+                    ),
+                    icon: const Icon(Icons.directions_walk_rounded),
+                    label: const Text('Walk there'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -377,6 +379,50 @@ class _LocationBlock extends StatelessWidget {
           message: 'The exact position of this location is still being '
               'confirmed. Follow signage and ask at an information point.',
         ),
+        const SizedBox(height: AonSpacing.space3),
+        _VenueActions(venueId: v.id),
+      ],
+    );
+  }
+}
+
+/// Map and 360° entry points for a venue.
+///
+/// The 360° button appears only when Raouf's panorama layer actually has a
+/// tour for this venue — availability comes from `venuesWithPanoramaProvider`,
+/// never from guessing an asset path. When there is no tour the button is
+/// absent rather than disabled: a greyed-out control invites tapping and then
+/// explains nothing.
+class _VenueActions extends ConsumerWidget {
+  const _VenueActions({required this.venueId});
+
+  final String venueId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasPanorama = ref.watch(featuresProvider).panorama &&
+        ref.watch(venuesWithPanoramaProvider).contains(venueId);
+
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton.icon(
+            onPressed: () => context.go(Routes.map),
+            icon: const Icon(Icons.map_rounded, size: AonSpacing.iconSm),
+            label: const Text('Show on map'),
+          ),
+        ),
+        if (hasPanorama) ...[
+          const SizedBox(width: AonSpacing.space3),
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: () => context.push(Routes.panoramaFor(venueId)),
+              icon: const Icon(Icons.threesixty_rounded,
+                  size: AonSpacing.iconSm),
+              label: const Text('360° view'),
+            ),
+          ),
+        ],
       ],
     );
   }

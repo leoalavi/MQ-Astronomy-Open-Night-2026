@@ -29,7 +29,16 @@ class InfoScreen extends ConsumerWidget {
         venues.where((v) => v.category == c).toList();
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Useful information')),
+      appBar: AppBar(
+        title: const Text('Useful information'),
+        actions: [
+          IconButton(
+            tooltip: 'Settings',
+            icon: const Icon(Icons.settings_outlined),
+            onPressed: () => context.push(Routes.settings),
+          ),
+        ],
+      ),
       body: ListView(
         padding: EdgeInsets.fromLTRB(
           AonSpacing.space4,

@@ -8,12 +8,22 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/aon_tactile_button.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
+import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/clock.dart';
+import 'package:aon2026/services/event_phase.dart';
 import 'package:aon2026/services/providers.dart';
+import 'package:aon2026/services/saved_events.dart';
+import 'package:aon2026/services/whats_on_service.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/widgets/passport_home_card.dart';
+import 'package:aon2026/utils/venue_style.dart';
+import 'package:aon2026/widgets/activity_rail_card.dart';
+
 import 'package:aon2026/widgets/quick_link_tile.dart';
+import 'package:aon2026/widgets/section_header.dart';
+import 'package:aon2026/widgets/timing_badge.dart';
 
 /// Landing screen: branding, when and where, and the four things people
 /// actually open the app for.
@@ -25,11 +35,15 @@ class HomeScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final now = ref.watch(currentTimeProvider);
     final happeningNow = ref.watch(happeningNowProvider);
+    final startingSoon = ref.watch(startingSoonProvider);
+    final upcoming = ref.watch(upcomingProvider);
+    final phase = ref.watch(eventPhaseProvider);
+    final terminology = ref.watch(terminologyProvider);
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          SliverToBoxAdapter(child: _Hero(now: now)),
+          SliverToBoxAdapter(child: _Hero(now: now, phase: phase)),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               AonSpacing.space4,
@@ -39,71 +53,59 @@ class HomeScreen extends ConsumerWidget {
             ),
             sliver: SliverList.list(
               children: [
-                // ── Live strip ──
-                if (happeningNow.isNotEmpty)
-                  _LiveStrip(count: happeningNow.length),
-                if (happeningNow.isNotEmpty)
-                  const SizedBox(height: AonSpacing.space5),
+                // ── 1. Where should I be? ──
+                const _NextUpCard(),
 
-                // ── Quick links ──
-                Text('Get started', style: theme.textTheme.headlineSmall),
-                const SizedBox(height: AonSpacing.space3),
-                // A max column width, then add columns — the same intent as a
-                // grid, but the tile height follows its content. A fixed cell
-                // height clipped the two-line descriptions on a narrow phone
-                // and at large accessibility text sizes; letting the row grow
-                // is the accessible fix.
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    const spacing = AonSpacing.space3;
-                    final columns =
-                        (constraints.maxWidth / 260).ceil().clamp(1, 4);
-                    final tileWidth =
-                        (constraints.maxWidth - spacing * (columns - 1)) /
-                            columns;
-                    final tiles = <Widget>[
-                      QuickLinkTile(
-                        icon: Icons.list_alt_rounded,
-                        label: 'Program',
-                        description: 'Everything on tonight',
-                        accent: AonColors.stellar,
-                        onTap: () => context.go(Routes.program),
-                      ),
-                      QuickLinkTile(
-                        icon: Icons.schedule_rounded,
-                        label: 'What’s On Now',
-                        description: 'Happening and starting soon',
-                        accent: AonColors.live,
-                        onTap: () => context.go(Routes.whatsOn),
-                      ),
-                      QuickLinkTile(
-                        icon: Icons.map_rounded,
-                        label: 'Map',
-                        description: 'Venues, toilets, first aid',
-                        accent: AonColors.amber,
-                        onTap: () => context.go(Routes.map),
-                      ),
-                      QuickLinkTile(
-                        icon: Icons.local_parking_rounded,
-                        label: 'Parking & walking',
-                        description: 'Get from your car to the event',
-                        accent: AonColors.mapParking,
-                        onTap: () => context.push(Routes.wayfinding),
-                      ),
-                    ];
-                    return Wrap(
-                      spacing: spacing,
-                      runSpacing: spacing,
-                      children: [
-                        for (final tile in tiles)
-                          SizedBox(width: tileWidth, child: tile),
-                      ],
-                    );
-                  },
+                // ── 2. What's happening now ──
+                _ActivityRail(
+                  title: 'Happening now',
+                  icon: Icons.circle,
+                  iconColor: AonColors.live,
+                  items: happeningNow,
+                  now: now,
+                  emptyMessage: phase.isLive
+                      ? 'Nothing running this minute — check what’s next.'
+                      : null,
                 ),
 
                 const SizedBox(height: AonSpacing.space5),
                 const PassportHomeCard(),
+
+                _ActivityRail(
+                  title: 'Up next',
+                  subtitle: startingSoon.isNotEmpty
+                      ? 'Starting in the next ${WhatsOnService.soonWindow.inMinutes} minutes'
+                      : null,
+                  icon: Icons.schedule_rounded,
+                  iconColor: AonColors.soon,
+                  items: startingSoon.isNotEmpty ? startingSoon : upcoming.take(6).toList(),
+                  now: now,
+                ),
+
+                if (happeningNow.isNotEmpty ||
+                    startingSoon.isNotEmpty ||
+                    upcoming.isNotEmpty) ...[
+                  const SizedBox(height: AonSpacing.space2),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: () => context.push(Routes.whatsOn),
+                      icon: const Icon(Icons.timeline_rounded),
+                      label: Text('See the whole ${terminology.eventPeriod}'),
+                    ),
+                  ),
+                ],
+
+                const SizedBox(height: AonSpacing.space5),
+
+                const _MapCta(),
+
+                const SizedBox(height: AonSpacing.space6),
+
+                Text('Find your way to', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: AonSpacing.space3),
+                const _QuickAccessGrid(),
+
 
                 const SizedBox(height: AonSpacing.space6),
 
@@ -148,9 +150,10 @@ class HomeScreen extends ConsumerWidget {
 
 /// Hero header — the supplied astrophotography image behind the event title.
 class _Hero extends StatelessWidget {
-  const _Hero({required this.now});
+  const _Hero({required this.now, required this.phase});
 
   final DateTime now;
+  final EventPhase phase;
 
   @override
   Widget build(BuildContext context) {
@@ -270,6 +273,10 @@ class _Hero extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (_phaseLabel(phase, now) != null) ...[
+                  const SizedBox(height: AonSpacing.space3),
+                  _PhasePill(phase: phase, now: now),
+                ],
               ],
             ),
           ),
@@ -279,49 +286,74 @@ class _Hero extends StatelessWidget {
   }
 }
 
-class _LiveStrip extends StatelessWidget {
-  const _LiveStrip({required this.count});
+/// Human phrasing for the event's own status. Returns null when there is
+/// nothing worth saying — a badge reading "the event is in 3 weeks" on every
+/// launch would be noise, so the pill only appears once it is actionable.
+String? _phaseLabel(EventPhase phase, DateTime now) => switch (phase) {
+      EventPhase.future => null,
+      EventPhase.today => 'Tonight',
+      EventPhase.startingSoon => 'Starts soon',
+      EventPhase.running => 'Happening now',
+      EventPhase.endingSoon => 'Ending soon',
+      EventPhase.ended => 'This event has finished',
+    };
 
-  final int count;
+/// The hero's event-status badge.
+class _PhasePill extends StatelessWidget {
+  const _PhasePill({required this.phase, required this.now});
+
+  final EventPhase phase;
+  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final label = _phaseLabel(phase, now);
+    if (label == null) return const SizedBox.shrink();
 
-    return AonTactileButton(
-      onTap: () => context.go(Routes.whatsOn),
-      borderRadius: AonSpacing.radiusMd,
-      child: Material(
-        color: AonColors.live.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-        clipBehavior: Clip.antiAlias,
-        child: Container(
-          padding: const EdgeInsets.all(AonSpacing.space4),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-            border: Border.all(
-              color: AonColors.live.withValues(alpha: 0.4),
+    final (colour, icon) = switch (phase) {
+      EventPhase.running => (AonColors.live, Icons.circle),
+      EventPhase.endingSoon => (AonColors.soon, Icons.hourglass_bottom_rounded),
+      EventPhase.startingSoon => (AonColors.soon, Icons.schedule_rounded),
+      EventPhase.today => (AonColors.amber, Icons.event_available_rounded),
+      EventPhase.ended => (
+          AonColors.contentTertiary,
+          Icons.check_circle_outline_rounded
+        ),
+      EventPhase.future => (AonColors.contentTertiary, Icons.event_rounded),
+    };
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AonSpacing.space3,
+        vertical: AonSpacing.space2,
+      ),
+      decoration: BoxDecoration(
+        color: colour.withValues(alpha: 0.16),
+        borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
+        border: Border.all(color: colour.withValues(alpha: 0.5)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: phase == EventPhase.running ? 9 : AonSpacing.iconSm,
+              color: colour),
+          const SizedBox(width: AonSpacing.space2),
+          // Same rule as TimingBadge: a min-size Row must let its label
+          // shrink, or a long phase string ("This event has finished") runs
+          // off a 320pt hero at large text scales.
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              softWrap: false,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: colour),
             ),
           ),
-          child: Row(
-            children: [
-              const Icon(Icons.circle, size: 10, color: AonColors.live),
-              const SizedBox(width: AonSpacing.space3),
-              Expanded(
-                child: Text(
-                  '$count ${count == 1 ? 'activity' : 'activities'} '
-                  'happening right now',
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(color: AonColors.live),
-                ),
-              ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AonColors.live,
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }
@@ -406,6 +438,320 @@ class _Attribution extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// "Where should I be" — the single most useful thing on Home once the
+/// visitor has saved anything. Absent entirely when they haven't, rather than
+/// showing an empty shell; Home already has plenty to read.
+class _NextUpCard extends ConsumerWidget {
+  const _NextUpCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final entry = ref.watch(nextUpProvider);
+    final terminology = ref.watch(terminologyProvider);
+    final savedCount = ref.watch(savedCountProvider);
+    if (entry == null) return const SizedBox.shrink();
+
+    final theme = Theme.of(context);
+    final now = ref.watch(currentTimeProvider);
+    final venue = ref.watch(venueByIdProvider(entry.event.venueId));
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AonSpacing.space5),
+      child: AonTactileButton(
+        onTap: () => context.go(Routes.myNight),
+        borderRadius: AonSpacing.radiusMd,
+        child: Container(
+          padding: const EdgeInsets.all(AonSpacing.space4),
+          decoration: BoxDecoration(
+            color: AonColors.amber.withValues(alpha: 0.10),
+            borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+            border: Border.all(color: AonColors.amber.withValues(alpha: 0.40)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(
+                    Icons.star_rounded,
+                    size: AonSpacing.iconSm,
+                    color: AonColors.amber,
+                  ),
+                  const SizedBox(width: AonSpacing.space2),
+                  Expanded(
+                    child: Text(
+                      'Next in ${terminology.myPlan}',
+                      style: theme.textTheme.labelSmall
+                          ?.copyWith(color: AonColors.amber),
+                    ),
+                  ),
+                  // TimingBadge is a min-size Row and documents that callers
+                  // must bound it. Flexible is that bound: on a 320pt phone at
+                  // 2.0 text scale the badge would otherwise push past the
+                  // card edge.
+                  Flexible(
+                    child: TimingBadge(
+                      timing: entry.timing,
+                      trailingText: switch (entry.timing) {
+                        EventTiming.happeningNow => TimeFormat.remaining(
+                            now,
+                            entry.session.end,
+                          ).replaceFirst('ends ', ''),
+                        EventTiming.startingSoon =>
+                          TimeFormat.until(now, entry.session.start),
+                        _ => TimeFormat.time(entry.session.start),
+                      },
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AonSpacing.space2),
+              Text(entry.event.title, style: theme.textTheme.titleLarge),
+              const SizedBox(height: AonSpacing.space1),
+              Text(
+                [
+                  TimeFormat.session(entry.session),
+                  venue?.chipLabel ?? 'Location to be confirmed',
+                ].join('  ·  '),
+                style: theme.textTheme.bodySmall
+                    ?.copyWith(color: AonColors.contentSecondary),
+              ),
+              if (savedCount > 1) ...[
+                const SizedBox(height: AonSpacing.space2),
+                Text(
+                  '$savedCount activities saved',
+                  style: theme.textTheme.bodySmall
+                      ?.copyWith(color: AonColors.contentTertiary),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// A horizontally scrolling row of activity cards.
+///
+/// Horizontal rather than a stacked list so Home can show three time horizons
+/// without becoming an endless scroll. Each rail is independently scrollable
+/// and shows a peek of the next card, which is what signals it scrolls.
+class _ActivityRail extends StatelessWidget {
+  const _ActivityRail({
+    required this.title,
+    required this.icon,
+    required this.iconColor,
+    required this.items,
+    required this.now,
+    this.subtitle,
+    this.emptyMessage,
+  });
+
+  final String title;
+  final String? subtitle;
+  final IconData icon;
+  final Color iconColor;
+  final List<TimedEvent> items;
+  final DateTime now;
+
+  /// Shown instead of the rail when [items] is empty. When null, the whole
+  /// section is omitted — an empty rail with no explanation is just noise.
+  final String? emptyMessage;
+
+  @override
+  Widget build(BuildContext context) {
+    if (items.isEmpty && emptyMessage == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SectionHeader(
+          title: title,
+          subtitle: subtitle,
+          count: items.isEmpty ? null : items.length,
+          icon: icon,
+          iconColor: iconColor,
+        ),
+        if (items.isEmpty)
+          Padding(
+            padding: const EdgeInsets.only(bottom: AonSpacing.space2),
+            child: Text(
+              emptyMessage!,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: AonColors.contentTertiary),
+            ),
+          )
+        else
+          // The rail sizes to its tallest card rather than a fixed height.
+          // A fixed height overflowed at large accessibility text sizes (the
+          // app supports up to 2.0), and clipping a card is exactly the
+          // failure the text-scale gauntlet exists to prevent. IntrinsicHeight
+          // is O(children) but there are at most a handful of cards.
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            clipBehavior: Clip.none,
+            child: IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var i = 0; i < items.length; i++) ...[
+                    if (i > 0) const SizedBox(width: AonSpacing.space3),
+                    ActivityRailCard(timed: items[i], now: now),
+                  ],
+                ],
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+/// The map call-to-action.
+///
+/// Given its own full-width surface rather than sharing the quick-access grid:
+/// after "what's on", "where is it" is the most common reason the app is open,
+/// and the organisers specifically asked for navigation to be obvious.
+class _MapCta extends ConsumerWidget {
+  const _MapCta();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
+    final features = ref.watch(featuresProvider);
+
+    return AonTactileButton(
+      onTap: () => context.go(Routes.map),
+      borderRadius: AonSpacing.radiusMd,
+      child: Container(
+        padding: const EdgeInsets.all(AonSpacing.space5),
+        decoration: BoxDecoration(
+          color: AonColors.night900,
+          borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+          border: Border.all(color: AonColors.night700),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(AonSpacing.space3),
+              decoration: BoxDecoration(
+                color: AonColors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
+              ),
+              child: const Icon(
+                Icons.map_rounded,
+                color: AonColors.amber,
+                size: AonSpacing.iconLg,
+              ),
+            ),
+            const SizedBox(width: AonSpacing.space4),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Open the campus map',
+                      style: theme.textTheme.titleMedium),
+                  const SizedBox(height: 2),
+                  Text(
+                    features.wayfinding
+                        ? 'Venues, toilets, first aid — and walking directions '
+                            'from the car parks'
+                        : 'Venues, toilets, first aid and parking',
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: AonColors.contentSecondary),
+                  ),
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.chevron_right_rounded,
+              color: AonColors.contentSecondary,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Astronomy quick access, driven entirely by [EventConfig.quickAccess].
+///
+/// Every destination is backed by the official map legend or programme — the
+/// list lives in the config so it is reviewable in one place and so another
+/// event supplies its own without touching this widget.
+class _QuickAccessGrid extends ConsumerWidget {
+  const _QuickAccessGrid();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final items = ref.watch(eventConfigProvider).quickAccess;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        const spacing = AonSpacing.space3;
+        final columns = (constraints.maxWidth / 180).floor().clamp(2, 4);
+        final tileWidth =
+            (constraints.maxWidth - spacing * (columns - 1)) / columns;
+
+        return Wrap(
+          spacing: spacing,
+          runSpacing: spacing,
+          children: [
+            for (final item in items)
+              SizedBox(
+                width: tileWidth,
+                child: _QuickAccessTile(item: item),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _QuickAccessTile extends ConsumerWidget {
+  const _QuickAccessTile({required this.item});
+
+  final QuickAccessItem item;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final venue = item.venueId == null
+        ? null
+        : ref.watch(venueByIdProvider(item.venueId!));
+
+    // Parking has no single venue — it opens the walking-route planner.
+    final isParking = item.venueId == null;
+    final icon = isParking
+        ? Icons.local_parking_rounded
+        : VenueStyle.iconFor(venue?.category ?? VenueCategory.other);
+    final accent = isParking
+        ? AonColors.mapParking
+        : VenueStyle.colorFor(venue?.category ?? VenueCategory.other);
+
+    return QuickLinkTile(
+      icon: icon,
+      label: item.label,
+      // The venue's own name as the subtitle — so "Telescopes" is immediately
+      // grounded in "Observatory", which is what the printed map calls it.
+      description: isParking
+          ? 'Walking routes'
+          : (venue?.chipLabel ?? 'Location to be confirmed'),
+      accent: accent,
+      onTap: () {
+        if (isParking) {
+          context.push(Routes.wayfinding);
+        } else {
+          context.push(Routes.wayfindingTo(item.venueId!));
+        }
+      },
     );
   }
 }

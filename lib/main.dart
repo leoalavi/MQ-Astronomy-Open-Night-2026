@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/data/event_info.dart';
+import 'package:aon2026/services/passport_providers.dart';
+import 'package:aon2026/services/passport_store.dart';
 import 'package:aon2026/widgets/glass_shader.dart';
 import 'package:aon2026/app/text_scale.dart';
+
+/// Best-effort passport hydration. NEVER throws — a persistence failure must
+/// not block launch (design §3.1). [store] is injectable for tests only;
+/// production passes nothing.
+Future<(Set<String>, PassportStore)> loadPassport({PassportStore? store}) async {
+  final s = store ?? SharedPrefsPassportStore(SharedPreferencesAsync());
+  Set<String> snapshot;
+  try {
+    snapshot = await s.loadSnapshot();
+  } catch (_) {
+    snapshot = <String>{};
+  }
+  return (snapshot, s);
+}
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,7 +48,17 @@ Future<void> main() async {
   // back to frost/solid — this must never block app startup.
   await GlassShaderCache.ensureLoaded();
 
-  runApp(const ProviderScope(child: AonApp()));
+  final (passportSnapshot, passportStore) = await loadPassport();
+
+  runApp(
+    ProviderScope(
+      overrides: [
+        passportSnapshotProvider.overrideWithValue(passportSnapshot),
+        passportStoreProvider.overrideWithValue(passportStore),
+      ],
+      child: const AonApp(),
+    ),
+  );
 }
 
 class AonApp extends StatefulWidget {

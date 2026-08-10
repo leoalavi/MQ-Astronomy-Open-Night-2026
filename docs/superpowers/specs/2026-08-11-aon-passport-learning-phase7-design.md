@@ -514,3 +514,34 @@ add collect haptic / stamp visual → update progress copy → complete 2.0,
 reduced-motion, semantics and runtime gates → re-review the final diff before
 branch completion. No production implementation begins before the plan is
 reviewed.
+
+---
+
+## 22. Implementation verification (Phase 7 executed)
+
+Branch `feature/passport-learning-phase7`, Flutter 3.44.7. Tasks 0–7 complete.
+
+- **Dependencies:** none added — Flutter-native throughout (design intent §2).
+- **Tests:** baseline **309 → 341** passing (+32 Phase 7); `flutter analyze` clean
+  throughout; no Phase 1–6 regression (the Phase 6 grid test stayed green
+  unchanged — the P1-5 "contradiction" was verified a non-issue).
+- **Builds:** `flutter build web` ✅, `flutter build apk --debug` ✅,
+  `flutter build ios --simulator --debug` ✅.
+- **iOS runtime (simulator, iPhone 17 Pro):** collect a stamp (manual) → fact
+  sheet opens for that venue showing **venue name + activity + a stamp pop in
+  the sheet header** ✅; revisit by tapping a collected cell ✅; placeholder draft
+  + review note shown in the debug build ✅. (9th→reward, reduced-motion, and
+  forced-scroll are proven by the automated suite: reward-routing test,
+  reduced-motion no-`TweenAnimationBuilder` test, real-modal `maxScrollExtent>0`
+  drag test.)
+
+### Two-gate status (design §16)
+
+- **CODE COMPLETE: YES.** All functionality, tests and builds green; the
+  release-safe fallback and per-fact publication gate are verified.
+- **RELEASE READY: NO.** Content closeout is **0 confirmed / 0 derived / 9
+  placeholder** — every attendee currently sees the "awaiting review" fallback.
+  `sourceRegistry` documented in docs/passport-fact-sources.md: PASS. The
+  learning layer is not shippable-to-attendees until the astronomy team reviews
+  the 9 drafts (promoting each to `confirmed`/`derived`); until then it is an
+  honest, working machine awaiting its content.

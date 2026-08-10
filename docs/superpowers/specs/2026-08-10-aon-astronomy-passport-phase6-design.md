@@ -492,3 +492,34 @@ written and reviewed.
   **Android/iOS/macOS/Web** (Linux/Windows unsupported); iOS 15 only for optional
   features with fallback — no hard 7.x minimum above 12. → withdraws v1 B2 (web
   build break) and the v1 "iOS 15 bump" work.
+
+---
+
+## 17. Implementation verification results (Phase 6 executed)
+
+Executed on branch `feature/astronomy-passport-phase6`, 14 tasks (0–13),
+Flutter 3.44.7.
+
+- **Resolved dependency versions:** `shared_preferences 2.5.5`,
+  `mobile_scanner 7.4.0`, `confetti 0.8.0`,
+  `shared_preferences_platform_interface 2.4.2` (dev, for the real-adapter test).
+- **iOS deployment target:** **unchanged at 13.0** — `mobile_scanner` 7.x
+  requires no bump (confirms §9.1; the v1 "bump to 15" work was correctly
+  withdrawn).
+- **Tests:** baseline 266 → **309 passing** (43 new passport tests); `flutter
+  analyze` clean throughout.
+- **Builds:** `flutter build web` ✅, `flutter build ios --no-codesign` ✅,
+  `flutter build apk --debug` ✅ — all green with the three new deps.
+- **Web:** builds with the scanner present and `kIsWeb`-guarded (never
+  instantiated) — confirms the withdrawn B2.
+- **iOS runtime (simulator, iPhone 17 Pro, iOS 26 point-space 402×874):**
+  passport card on Home ✅; adaptive 9-cell grid + progress ✅; opening the
+  capture screen shows **no camera permission prompt** (lazy) ✅; Scan / Enter-code
+  equal peers ✅; manual entry collects a stamp ("Stamp collected!") ✅; "Scan
+  another" resume ✅; grid reflects 1/9 with the venue marked ✅; **progress
+  persists across a full app relaunch** (real SharedPreferences round-trip on
+  device) ✅.
+- **Still requires a PHYSICAL iOS device** (the simulator has no camera): real
+  QR decode, torch toggle, and the live permission grant/deny flow. The pure
+  resolver, the injected-scanner QR→collect integration test, and the on-device
+  lazy-permission + persistence checks cover everything else.

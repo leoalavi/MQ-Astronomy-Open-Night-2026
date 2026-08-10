@@ -151,3 +151,14 @@ See `docs/navigation-strategy.md`.
 7. Lighting and step-free status for each route.
 8. Whether the **Macquarie University campus map raster** may be used in this
    app (it would give a much better basemap than OSM — see README limitations).
+9. The **9 Astronomy Passport station codes** (Phase 6). These are the tokens
+   printed on each venue sign that an attendee scans or types to collect a
+   stamp. They are **low-friction event tokens, not secrets or proof of
+   attendance** — staff redemption at the prize booth is the actual control
+   (see the Phase 6 design §4.1). Until the organiser confirms them, all 9 ship
+   as placeholders (`AON-A-TBC` … `AON-I-TBC`, `DataConfidence.placeholder`),
+   and the domain release gate keeps prize collection **disabled in release
+   builds** while any code is a placeholder (design §10). They must also be
+   available in an accessible form (staff assistance, large high-contrast print,
+   or a spoken/tactile alternative) for attendees who cannot read the sign
+   unaided (design §14).

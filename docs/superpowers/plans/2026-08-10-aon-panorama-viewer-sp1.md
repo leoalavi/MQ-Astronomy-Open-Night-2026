@@ -368,7 +368,18 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 **Interfaces:** Produces `PanoramaServer` with `Future<void> ensureStarted()` (idempotent), `bool get isRunning`, `String get baseUrl`. A single module-level instance (MQ's pattern).
 
-- [ ] **Step 1: Write the failing test**
+> **⚠ Verified gotcha (plan-gauntlet):** `InAppLocalhostServer(...)` throws
+> *"A platform implementation for flutter_inappwebview has not been set"* when
+> **constructed** in a headless `flutter_test` — and if it's constructed
+> eagerly (a `final _server = InAppLocalhostServer(...)` field or a module-level
+> `final panoramaServer = ...` that builds it), **importing this file crashes
+> every test that transitively imports it** (including Task 6's webview test).
+> The construction is therefore **deferred into `ensureStarted`'s Future** below,
+> so (a) importing is safe, and (b) the platform failure becomes an
+> **async-catchable** error the caller maps to the unavailable state. Verified:
+> import-safe + graceful failure both green in `flutter_test`.
+
+- [ ] **Step 1: Write the failing test** (import-safety + graceful failure — no real platform needed)
 
 ```dart
 // test/widget/panorama_server_test.dart
@@ -377,18 +388,23 @@ import 'package:aon2026/services/panorama_server.dart';
 import 'package:aon2026/models/viewer_url_policy.dart';
 
 void main() {
-  test('baseUrl matches the policy port; ensureStarted is idempotent', () async {
+  test('import-safe: baseUrl works without constructing the server', () {
     expect(panoramaServer.baseUrl, 'http://localhost:$kPanoramaServerPort');
-    // Idempotent: two calls reuse one start future and never throw double-bind.
-    await Future.wait([panoramaServer.ensureStarted(), panoramaServer.ensureStarted()])
-        .catchError((_) => <void>[]); // start may no-op/throw in the headless test VM; must not double-bind
+    expect(panoramaServer.isRunning, isFalse);
+  });
+
+  test('ensureStarted failure is graceful (async-catchable), isRunning stays false', () async {
+    // Headless VM has no platform impl → the deferred construction errors, but
+    // as a catchable async error, not a crash-at-import.
+    await panoramaServer.ensureStarted().catchError((_) {});
+    expect(panoramaServer.isRunning, isFalse);
     expect(() => panoramaServer.baseUrl, returnsNormally);
   });
 }
 ```
 
 - [ ] **Step 2: Run — FAIL (undefined).**
-- [ ] **Step 3: Implement** (MQ's `??=` idempotence + failure surfacing)
+- [ ] **Step 3: Implement** (single owner; **lazy + deferred construction**)
 
 ```dart
 // lib/services/panorama_server.dart
@@ -396,12 +412,14 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:aon2026/models/viewer_url_policy.dart';
 
-/// Single owner of the localhost asset server that serves the bundled viewer +
-/// panoramas. Idempotent start (memoized future); never bound per-widget.
+/// Single owner of the localhost asset server serving the bundled viewer +
+/// panoramas. The `InAppLocalhostServer` is built LAZILY inside [ensureStarted]
+/// (never at import/construction), so importing this file is safe in unit tests
+/// and on web; the deferred build turns a platform/bind failure into an async
+/// error the caller maps to the unavailable state.
 class PanoramaServer {
   PanoramaServer._();
-  final InAppLocalhostServer _server =
-      InAppLocalhostServer(documentRoot: 'assets', port: kPanoramaServerPort);
+  InAppLocalhostServer? _server;
   Future<void>? _starting;
   bool _running = false;
 
@@ -410,7 +428,12 @@ class PanoramaServer {
 
   Future<void> ensureStarted() {
     if (kIsWeb) return Future.value(); // web serves assets same-origin; no server
-    return _starting ??= _server.start().then((_) => _running = true);
+    return _starting ??= Future(() async {
+      _server ??=
+          InAppLocalhostServer(documentRoot: 'assets', port: kPanoramaServerPort);
+      await _server!.start();
+      _running = true;
+    });
   }
 }
 
@@ -518,7 +541,10 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 // - at least one venue WITHOUT a tour renders a non-tappable "coming soon" card;
 // - the picker is ALWAYS shown (there is no auto-open path even though exactly one tour exists).
 ```
-(Pump inside `ProviderScope`; the picker reads `venuesWithPanoramaProvider` + the venue list; no manifest I/O.)
+(Pump inside `ProviderScope`; the picker reads the full venue list from
+**`venuesProvider`** (`Provider<List<Venue>>` = `VenuesData.all`, in
+`services/providers.dart`) and availability from `venuesWithPanoramaProvider`;
+**no manifest I/O**.)
 
 - [ ] **Step 2: Run — FAIL.**
 - [ ] **Step 3: Implement**
@@ -537,7 +563,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 
 ## Task 9: panorama route + map screen integration (failure states, deep-link safety)
 
-**Files:** Create `lib/screens/panorama_screen.dart`; modify `lib/app/router/app_router.dart`, `lib/screens/map_screen.dart`, `lib/app/router/routes.dart` (route constants).
+**Files:** Create `lib/screens/panorama_screen.dart`; modify `lib/app/router/app_router.dart` (both the route table **and** the `Routes` class live here — there is no separate `routes.dart`) and `lib/screens/map_screen.dart`.
 
 - [ ] **Step 1: Write the failing test (deep-link safety + failure state)**
 
@@ -551,7 +577,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 - [ ] **Step 2: Run — FAIL.**
 - [ ] **Step 3: Implement**
   - `panorama_screen.dart`: a full-screen `Scaffold`; resolve the tour via `PanoramaData.tourFor(venueId)` — **null → the "360° preview unavailable" back state** (never interpolate a path). Watch `indoorManifestProvider(venueId)`; `null`/error/empty manifest → unavailable state; loaded → `PanoramaTourView(manifest: …)`. All the §5 failure states land here.
-  - `app_router.dart`: add a **top-level** route (outside the `StatefulShellRoute`, beside `eventDetail`/`wayfinding`) `path: '/panorama/:venueId'` → `PanoramaScreen(venueId: state.pathParameters['venueId']!)`. `routes.dart`: `static String panoramaFor(String id) => '/panorama/$id';`.
+  - `app_router.dart`: add a **top-level** route (outside the `StatefulShellRoute`, beside `eventDetail`/`wayfinding`) `path: '/panorama/:venueId'` → `PanoramaScreen(venueId: state.pathParameters['venueId']!)`; and add to the `Routes` class (same file, alongside `eventDetailFor`/`wayfindingTo`): `static String panoramaFor(String id) => '/panorama/$id';`.
   - `map_screen.dart`: hold `MapMode` state; render the `MapModeToggle` (floating, glass); `campusMap` → existing map; `panorama` → `PanoramaBuildingPicker(onOpen: (id) => context.push(Routes.panoramaFor(id)))`.
 - [ ] **Step 4: Run — PASS; analyze; full suite; commit.**
 
@@ -614,5 +640,5 @@ Then a hostile read of `git diff main..HEAD` and record evidence describing the 
 | `lib/widgets/panorama_scene_rail.dart`, `panorama_tour_view.dart` | create (ported, glass) | 7 |
 | `lib/widgets/map_mode_toggle.dart`, `panorama_building_picker.dart` | create | 8 |
 | `lib/screens/panorama_screen.dart` | create (immersive route) | 9 |
-| `lib/app/router/app_router.dart` + `routes.dart`, `lib/screens/map_screen.dart` | modify (route + toggle entry) | 9 |
+| `lib/app/router/app_router.dart` (route table + `Routes` class), `lib/screens/map_screen.dart` | modify (route + toggle entry) | 9 |
 | `test/…` | create (8 test files) | 1–9 |

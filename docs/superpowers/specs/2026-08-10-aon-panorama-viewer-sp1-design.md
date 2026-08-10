@@ -29,15 +29,23 @@ the "AR" label, is what we port.
 ## 3. Scope
 
 **In:**
-- Add dependency `flutter_inappwebview` (`^6.x`, matching MQ's 6.1.5 line).
+- Add dependency `flutter_inappwebview: ^6.1.5` (verified: resolves cleanly
+  against aon2026's Flutter 3.44.7 / Dart 3.12; pins to 6.1.5, MQ's exact line).
 - The viewer core: a webview host (localhost asset server + Pannellum + JS
   bridge + **origin allowlist**), a tour view, a scene rail.
 - A self-contained `IndoorManifest` model + an asset-backed repository/provider.
 - A **Map mode toggle** (Campus Map ↔ 360°) and a **panorama building picker**.
 - A full-screen immersive **panorama route** with a glass island title bar.
-- MQ's 3 panoramas as **placeholder content**, mapped to 3 aon2026 venues.
-- Bundled assets: `indoor_viewer.html`, vendored `pannellum.{js,css}` (MIT),
-  per-venue manifest JSON + equirectangular JPGs.
+- **1–2 placeholder tours** as content (≥1 with 2+ scenes, to prove hotspot
+  navigation), mapped to 1–2 aon2026 venues; the remaining venues show "coming
+  soon." **Placeholder asset budget ≤ ~8 MB** — MQ's full 3-tour set is ~23 MB
+  (individual equirectangular scenes are 1.7–4.2 MB), which is excessive for
+  throwaway content, so the placeholder JPGs are **downscaled** for SP1 and the
+  full-resolution real photos land later. Fewer tours also makes the picker's
+  "coming soon" state more visible, which is the honest look.
+- Bundled assets: `indoor_viewer.html`, vendored `pannellum.{js,css}` (MIT,
+  ~65 KB — trivial), per-venue manifest JSON + the downscaled equirectangular
+  JPGs.
 
 **Out (later sub-projects / content):**
 - QR scanning, camera, `mobile_scanner`, signed-QR verification → **SP3**.
@@ -55,7 +63,7 @@ the "AR" label, is what we port.
 | File | Role |
 |---|---|
 | `lib/models/indoor_manifest.dart` | **create** — `IndoorManifest` / `IndoorScene` / `SceneHotspot`; `buildPannellumConfig()` (emits Pannellum `equirectangular` config with `hotSpots` of `type: scene`); the `_isSafeRelativeImagePath()` guard (ported — gates panorama refs against off-origin fetches) |
-| `lib/data/panorama_data.dart` | **create** — the venue→panorama map: which venue ids have a tour + their manifest asset path, each carrying a `placeholder` flag. SP1 maps MQ's 3 tours to 3 real aon2026 venue ids: `macquarie-theatre`, `mason-theatre`, `central-courtyard` |
+| `lib/data/panorama_data.dart` | **create** — the venue→panorama map: which venue ids have a tour + their manifest asset path, each carrying a `placeholder` flag. SP1 maps **1–2** downscaled placeholder tours to real aon2026 venue ids (e.g. `macquarie-theatre`, and optionally `mason-theatre`); every other venue has no tour → "coming soon" |
 | `lib/services/providers.dart` | **modify** — add `indoorManifestProvider(venueId)` (loads + caches manifest JSON via `rootBundle`) and `venuesWithPanoramaProvider` |
 | `lib/widgets/panorama_web_view.dart` | **create** — `InAppLocalhostServer` (fixed port 8459) + `InAppWebView` host; `loadTour(config)`/`selectScene(id)` via `evaluateJavascript`; JS handler `sceneChanged`; `_shouldOverrideUrlLoading` **origin allowlist** (localhost viewer only — ported verbatim) |
 | `lib/widgets/panorama_tour_view.dart` | **create** — composes the webview + scene rail + glass island title bar; owns scene state |
@@ -90,13 +98,18 @@ glass over the webview is the panorama screen's own title bar + scene rail, both
 
 ## 6. Glass treatment (pays the deferred parity IOU)
 
-Mode toggle + picker cards: `GlassSurface(control)`. Panorama title bar: a
-`GlassSurface(bar)` **island with `allowShader: false`** — the platform-view case
+Mode toggle + picker cards + the panorama title bar all use
+**`GlassSurface(control)` with `allowShader: false`** — the platform-view case
 its own doc-comment names (*"glass floating over a platform view (e.g. an
-InAppWebView panorama)"*). This is the first legitimate home in aon2026 for the
-frosted media-page bar that MQ had and aon2026 lacked (it previously had no media
-page to host one). Branding adapts MQ → aon2026: `MqColors`/`MqSpacing` →
-`AonColors`/`AonSpacing`; `GlassAppBar` → `GlassSurface(bar)`.
+InAppWebView panorama)"*, verified verbatim). **Use `control`, not `bar`:** the
+`bar` variant renders a *top-only* hairline (`Border(top: side)`), shaped for the
+screen-bottom tab bar; a floating title island wants a full border + floating
+radius + shadow, which is `control` — and is exactly what MQ's own `GlassAppBar`
+is built on (`GlassSurface(variant: control)`). This is the first legitimate home
+in aon2026 for the frosted media-page island that MQ had and aon2026 lacked (it
+previously had no media page to host one). Branding adapts MQ → aon2026:
+`MqColors`/`MqSpacing` → `AonColors`/`AonSpacing`; `GlassAppBar` →
+`GlassSurface(control)`.
 
 ## 7. Fallback & accessibility
 
@@ -137,9 +150,12 @@ over it), exactly as MQ verifies it.
   are iOS/Android.)
 - **Android runtime & performance traces: NOT AVAILABLE** in this environment (no
   emulator, no profiler) — as flagged in Phases 2–5. Android *build* is gated.
-- **Content is placeholder** — the panoramas are MQ's buildings, flagged in-UI
-  ("Sample 360° · actual venue photos coming"). Not presented as real aon2026
-  venue interiors.
+- **Content is placeholder — and it is a DIFFERENT building.** The imagery is
+  MQ's Hadenfeld/Ondaatje interiors shown under an aon2026 venue name, so the
+  flag must say so explicitly — **"Demo 360° — sample imagery, not this venue"**
+  on the picker card and inside the panorama — not merely "photos coming" (which
+  would read as this venue). Placeholder JPGs are downscaled (≤ ~8 MB total; see
+  §3). Real full-resolution photos of the actual venues replace both later.
 - **Not a full port** — this is SP1 only. The QR/stamps/backend halves are
   separate specs with their own external dependencies (signing keys, Supabase,
   content), deliberately not started here.
@@ -153,8 +169,11 @@ over it), exactly as MQ verifies it.
 - **On-device iOS:** Map 360° toggle → picker → a placeholder tour loads, pans,
   hotspot-navigates between scenes, the glass island frosts over it, and the
   fallback state renders when forced. Reported honestly with a screenshot.
-- Placeholder content is visibly flagged; no MQ building shown as an aon2026
-  venue interior unlabelled.
+- Placeholder content carries the **"Demo 360° — sample imagery, not this
+  venue"** flag on card and panorama; no MQ building reads as an aon2026 venue
+  interior.
+- **Placeholder asset budget:** the bundled panorama JPGs total **≤ ~8 MB**
+  (downscaled); the Pannellum lib + HTML add ~65 KB.
 
 ## 11. Scope check
 

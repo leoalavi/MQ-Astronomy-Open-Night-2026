@@ -62,14 +62,17 @@
 **Interfaces:**
 - Produces: `StampStation({required String venueId, required String code, DataConfidence codeConfidence})`; `StampStationsData.all` (`List<StampStation>`), `StampStationsData.stationVenueIds` (`Set<String>`), `StampStationsData.count` (`int`).
 
-- [ ] **Step 1: Write the failing test** — append to `test/unit/data_integrity_test.dart`:
+- [ ] **Step 1: Write the failing test** — in `test/unit/data_integrity_test.dart`, add these imports at the **top** of the file, then insert the new `group(...)` **inside** the existing `void main() { ... }` body (a `group` cannot sit after `main`'s closing brace):
 
 ```dart
-// Add these imports at the top of the file if absent:
-// import 'package:aon2026/data/stamp_stations_data.dart';
-// import 'package:aon2026/data/venues_data.dart';
-// import 'package:aon2026/models/data_confidence.dart';
+// Top-of-file imports:
+import 'package:aon2026/data/stamp_stations_data.dart';
+import 'package:aon2026/data/venues_data.dart';
+import 'package:aon2026/models/data_confidence.dart';
+```
 
+```dart
+// Inside main():
 group('passport stations', () {
   final stations = StampStationsData.all;
 
@@ -659,16 +662,16 @@ void main() {
     expect(c.read(passportProvider).count, 0);
   });
 
-  test('a failed save flips saveFailed but keeps the stamp in session', () {
+  test('a failed save flips saveFailed but keeps the stamp in session',
+      () async {
     final store = _FakeStore()..failNextSave = true;
     final c = _container(store);
     c.read(passportProvider.notifier).collect(StampInput.manual(codeA));
     expect(c.read(passportProvider).collectedVenueIds, contains(venueA));
-    // saveFailed is set asynchronously by the fire-and-forget write.
-    // Pump microtasks:
-    return Future<void>.microtask(() {
-      expect(c.read(passportProvider).saveFailed, isTrue);
-    });
+    // The write is fire-and-forget; flush it deterministically before asserting
+    // (pumpEventQueue drains microtasks + timers — no racy Future.microtask).
+    await pumpEventQueue();
+    expect(c.read(passportProvider).saveFailed, isTrue);
   });
 
   test('reset clears progress', () {
@@ -796,15 +799,13 @@ git commit -m "feat(passport): PassportNotifier with transition-based completion
 
 **Interfaces:**
 - Consumes: `passportSnapshotProvider`, `passportStoreProvider` (Task 4); `SharedPrefsPassportStore` (Task 3).
-- Produces: `Future<(Set<String>, PassportStore)> loadPassport()` (top-level in `main.dart`) — hydrates best-effort and never throws.
+- Produces: `Future<(Set<String>, PassportStore)> loadPassport({PassportStore? store})` (top-level in `main.dart`) — hydrates best-effort and never throws. The optional `store` param exists **only for testing**; production calls it with no argument.
 
-- [ ] **Step 1: Write the failing test** — `test/widget/passport_boot_test.dart`:
+- [ ] **Step 1: Write the failing test** — `test/widget/passport_boot_test.dart`. This calls the **real** `loadPassport()` with an injected throwing store; it must not re-implement the guard:
 
 ```dart
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:aon2026/services/passport_providers.dart';
+import 'package:aon2026/main.dart';
 import 'package:aon2026/services/passport_store.dart';
 
 class _ThrowingStore implements PassportStore {
@@ -815,36 +816,24 @@ class _ThrowingStore implements PassportStore {
 }
 
 void main() {
-  testWidgets('a store failure yields an empty passport, app still builds',
-      (tester) async {
-    // Simulate main()'s guard: loadSnapshot must never throw out.
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  test('loadPassport swallows a store failure and returns an empty snapshot',
+      () async {
     final store = _ThrowingStore();
-    Set<String> snapshot;
-    try {
-      snapshot = await store.loadSnapshot();
-    } catch (_) {
-      snapshot = <String>{};
-    }
-
-    await tester.pumpWidget(ProviderScope(
-      overrides: [
-        passportSnapshotProvider.overrideWithValue(snapshot),
-        passportStoreProvider.overrideWithValue(store),
-      ],
-      child: const MaterialApp(home: Scaffold(body: Text('booted'))),
-    ));
-
-    expect(find.text('booted'), findsOneWidget);
+    final (snapshot, returnedStore) = await loadPassport(store: store);
+    expect(snapshot, isEmpty);          // failure ⇒ empty, never rethrown
+    expect(returnedStore, same(store)); // caller still gets a usable store
   });
 }
 ```
 
-Note: `main()`'s real `loadPassport()` wraps exactly this guard. The test asserts the property; Step 3 makes `main()` use it.
+Note: importing `package:aon2026/main.dart` pulls in `loadPassport` (and `main`, which is not invoked here). The test proves the production function's non-fatal contract directly — no inline re-implementation.
 
 - [ ] **Step 2: Run test to verify it fails**
 
 Run: `flutter test test/widget/passport_boot_test.dart`
-Expected: FAIL — providers not overridden / undefined symbol if imports missing. (It should compile; if `loadPassport` referenced, it fails until added. For this test it passes only once imports resolve — run to confirm current state, then proceed.)
+Expected: FAIL — `loadPassport` is undefined in `main.dart`.
 
 - [ ] **Step 3: Modify `lib/main.dart`**
 
@@ -861,15 +850,17 @@ Add a top-level helper above `main()`:
 ```dart
 /// Best-effort passport hydration. NEVER throws — a persistence failure must
 /// not block launch (design §3.1). Returns an empty snapshot on any error.
-Future<(Set<String>, PassportStore)> loadPassport() async {
-  final store = SharedPrefsPassportStore(SharedPreferencesAsync());
+///
+/// [store] is injectable for tests only; production passes nothing.
+Future<(Set<String>, PassportStore)> loadPassport({PassportStore? store}) async {
+  final s = store ?? SharedPrefsPassportStore(SharedPreferencesAsync());
   Set<String> snapshot;
   try {
-    snapshot = await store.loadSnapshot();
+    snapshot = await s.loadSnapshot();
   } catch (_) {
     snapshot = <String>{};
   }
-  return (snapshot, store);
+  return (snapshot, s);
 }
 ```
 
@@ -912,8 +903,8 @@ git commit -m "feat(passport): non-fatal hydration wired into main() (Phase 6)"
 - Create: `test/widget/passport_route_test.dart`
 
 **Interfaces:**
-- Produces: `Routes.passport` (`'/passport'`), `Routes.passportScan` (`'/passport/scan'`); both pushed above the shell.
-- Consumes (forward ref): `PassportScreen` (Task 8), `PassportScanScreen` (Task 9). To keep this task independently green, add **temporary placeholder screens inline** here and replace them in Tasks 8/9.
+- Produces: the route **path constants** `Routes.passport` (`'/passport'`), `Routes.passportScan` (`'/passport/scan'`), `Routes.passportReward` (`'/passport/reward'`).
+- **Scope note (breaks the route↔screen cycle):** this task adds **only the string constants** — no `GoRoute`, no screen imports. The `GoRoute` *builders* are registered in the task that creates each screen: `passport` in Task 8, `passportScan` in Task 9, `passportReward` in Task 11. A route builder importing a screen that doesn't exist yet would turn `flutter analyze` red, so the registration is deferred, not the constant.
 
 - [ ] **Step 1: Write the failing test** — `test/widget/passport_route_test.dart`:
 
@@ -926,6 +917,7 @@ void main() {
   test('passport route paths are defined', () {
     expect(Routes.passport, '/passport');
     expect(Routes.passportScan, '/passport/scan');
+    expect(Routes.passportReward, '/passport/reward');
   });
 }
 ```
@@ -935,37 +927,22 @@ void main() {
 Run: `flutter test test/widget/passport_route_test.dart`
 Expected: FAIL — `Routes.passport` undefined.
 
-- [ ] **Step 3: Modify `lib/app/router/app_router.dart`**
+- [ ] **Step 3: Modify `lib/app/router/app_router.dart` — constants only**
 
-In `abstract final class Routes`, after `wayfinding`:
+In `abstract final class Routes`, after `wayfinding` (no imports, no `GoRoute` yet):
 
 ```dart
   static const String passport = '/passport';
   static const String passportScan = '/passport/scan';
+  static const String passportReward = '/passport/reward';
 ```
 
-Add two pushed `GoRoute`s alongside the existing pushed routes (after the panorama route), using the real screens (created in Tasks 8/9 — add the imports now; if implementing strictly in order, temporarily point both at a `Scaffold(body: Center(child: Text('Passport')))` and swap in Tasks 8/9):
-
-```dart
-import 'package:aon2026/screens/passport_screen.dart';
-import 'package:aon2026/screens/passport_scan_screen.dart';
-// ...
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: Routes.passport,
-        builder: (context, state) => const PassportScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: Routes.passportScan,
-        builder: (context, state) => const PassportScanScreen(),
-      ),
-```
+The `GoRoute` builders are added later, each in the task that creates its screen (Task 8 → `passport`, Task 9 → `passportScan`, Task 11 → `passportReward`), so no builder ever imports a screen that doesn't exist.
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `flutter test test/widget/passport_route_test.dart`
-Expected: PASS. (If screens not yet created, this task's *route-path* test passes; the builder imports are added in Tasks 8/9. Keep this task focused on the path constants — do not commit broken imports. If building strictly in order, create minimal stub screens in Tasks 8/9 before adding the builder lines.)
+Run: `flutter test test/widget/passport_route_test.dart && flutter analyze`
+Expected: PASS; analyze clean (constants add no imports, so nothing can dangle).
 
 - [ ] **Step 5: Commit**
 
@@ -994,37 +971,47 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/widgets/passport_grid.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
 
-Widget _host(Set<String> collected, {Size size = const Size(320, 568),
-    double textScale = 1.0}) {
-  return MediaQuery(
-    data: MediaQueryData(size: size, textScaler: TextScaler.linear(textScale)),
-    child: MaterialApp(
+// Labels are unambiguous by design (see _Cell): a collected cell ends with
+// 'stamp collected'; an uncollected one with 'not yet collected'. Substring
+// 'collected' alone would match both, so tests assert the full phrase.
+Widget _host(Set<String> collected) => MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
           child: PassportGrid(collectedVenueIds: collected),
         ),
       ),
-    ),
-  );
-}
+    );
 
 void main() {
   testWidgets('renders all 9 station cells', (tester) async {
     await tester.pumpWidget(_host(<String>{}));
-    // Each cell carries a Semantics label 'stamp:<venueId>'.
     for (final s in StampStationsData.all) {
-      expect(find.bySemanticsLabel(RegExp('^${s.venueId}')), findsOneWidget);
+      expect(find.bySemanticsLabel(RegExp('^${s.venueId},')), findsOneWidget);
     }
   });
 
-  testWidgets('collected cells are marked collected', (tester) async {
+  testWidgets('a collected cell says "stamp collected", others do not',
+      (tester) async {
     await tester.pumpWidget(_host({'macquarie-theatre'}));
-    expect(find.bySemanticsLabel(RegExp('macquarie-theatre.*collected')),
+    expect(find.bySemanticsLabel('macquarie-theatre, stamp collected'),
+        findsOneWidget);
+    // The other 8 are uncollected — the collected phrase must appear once only.
+    expect(find.bySemanticsLabel(RegExp(r', stamp collected$')),
         findsOneWidget);
   });
 
   testWidgets('no overflow at 320x568 and text scale 2.0', (tester) async {
-    await tester.pumpWidget(_host(<String>{}, textScale: 2.0));
+    // Repo's proven harness (responsive_layout_test.dart / text_scale_policy):
+    // set the view + OS text scale directly; an outer MediaQuery would be reset
+    // by MaterialApp.
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1.0;
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(_host(<String>{}));
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
   });
@@ -1093,7 +1080,7 @@ class _Cell extends StatelessWidget {
     final name = venue?.shortName ?? venue?.name ?? venueId;
 
     return Semantics(
-      label: '$venueId ${collected ? 'collected' : 'not collected'}',
+      label: '$venueId, ${collected ? 'stamp collected' : 'not yet collected'}',
       child: Container(
         padding: const EdgeInsets.all(AonSpacing.space3),
         decoration: BoxDecoration(
@@ -1266,16 +1253,28 @@ class PassportScreen extends ConsumerWidget {
 
 Then wire the grid: add `import 'package:aon2026/widgets/passport_grid.dart';` and replace the commented line with `PassportGrid(collectedVenueIds: state.collectedVenueIds),`.
 
+- [ ] **Step 3b: Register the `passport` route** — now that `PassportScreen` exists, add to `lib/app/router/app_router.dart` (import + pushed `GoRoute` beside the panorama route):
+
+```dart
+import 'package:aon2026/screens/passport_screen.dart';
+// ...
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.passport,
+        builder: (context, state) => const PassportScreen(),
+      ),
+```
+
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `flutter test test/widget/passport_screen_test.dart`
-Expected: PASS.
+Run: `flutter test test/widget/passport_screen_test.dart && flutter analyze`
+Expected: PASS; analyze clean.
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/screens/passport_screen.dart test/widget/passport_screen_test.dart
-git commit -m "feat(passport): passport screen with progress + grid (Phase 6)"
+git add lib/screens/passport_screen.dart lib/app/router/app_router.dart test/widget/passport_screen_test.dart
+git commit -m "feat(passport): passport screen with progress + grid + route (Phase 6)"
 ```
 
 ---
@@ -1439,16 +1438,28 @@ class _PassportScanScreenState extends ConsumerState<PassportScanScreen> {
 }
 ```
 
+- [ ] **Step 3b: Register the `passportScan` route** — now that `PassportScanScreen` exists, add to `lib/app/router/app_router.dart`:
+
+```dart
+import 'package:aon2026/screens/passport_scan_screen.dart';
+// ...
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.passportScan,
+        builder: (context, state) => const PassportScanScreen(),
+      ),
+```
+
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `flutter test test/widget/passport_scan_screen_test.dart`
-Expected: PASS. (Note: `findRichText` not needed; if the matcher complains, use `find.textContaining('collected')`.)
+Run: `flutter test test/widget/passport_scan_screen_test.dart && flutter analyze`
+Expected: PASS; analyze clean. (Note: `find.textContaining('collected')` suffices — drop `findRichText` if the matcher complains.)
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add lib/screens/passport_scan_screen.dart test/widget/passport_scan_screen_test.dart
-git commit -m "feat(passport): camera-free manual capture (equal peer) (Phase 6)"
+git add lib/screens/passport_scan_screen.dart lib/app/router/app_router.dart test/widget/passport_scan_screen_test.dart
+git commit -m "feat(passport): camera-free manual capture (equal peer) + route (Phase 6)"
 ```
 
 ---
@@ -1457,56 +1468,78 @@ git commit -m "feat(passport): camera-free manual capture (equal peer) (Phase 6)
 
 **Files:**
 - Modify: `pubspec.yaml` (add `mobile_scanner`)
+- Create: `lib/services/scan_gate.dart` (pure debounce — the testable core)
 - Create: `lib/widgets/passport_scanner_view.dart`
 - Modify: `lib/screens/passport_scan_screen.dart` (mount the scanner, non-web)
-- Create: `test/widget/passport_scanner_view_test.dart`
+- Create: `test/unit/scan_gate_test.dart`
 
 **Interfaces:**
-- Produces: `PassportScannerView({required void Function(String decoded) onDecoded})` — on non-web, a `mobile_scanner` camera that calls `onDecoded` **once** per capture then pauses until dismissed; on web, a small "Scanning isn't available on the web — enter the code below" notice (never instantiates the scanner).
+- Produces:
+  - `ScanGate` — pure debounce: `bool accept()` returns `true` on the first call then `false` until `reset()`. This is the §7.1 "one decode per capture" rule, extracted so it is unit-testable **without a camera**.
+  - `PassportScannerView({required void Function(String decoded) onDecoded})` — on non-web, a `mobile_scanner` camera that, via `ScanGate`, calls `onDecoded` **once** per capture then pauses; on web, a "Scanning isn't available on the web — enter the code below" notice (never instantiates the scanner).
+- **Why no widget test here:** `mobile_scanner` 7.x starts the camera on widget creation (verified against the 7.2.0 example), so pumping `PassportScannerView` in a plain widget test hits the camera platform channel and does not produce a clean null exception. The debounce logic — the only thing worth asserting — lives in `ScanGate` and is unit-tested. The camera widget itself is verified by the on-device/web builds in Task 13.
 
 - [ ] **Step 1: Add the dependency**
 
 Run: `flutter pub add mobile_scanner`
 Expected: resolves a 7.x version compatible with Dart `^3.11` / Flutter `>=3.44`. Then run `flutter build ios --no-codesign` (or `flutter build apk --debug`) once to confirm the native minimums still satisfy `IPHONEOS_DEPLOYMENT_TARGET = 13.0`; if the plugin demands a bump, raise it **intentionally** and note it in the commit.
 
-- [ ] **Step 2: Write the failing test** — `test/widget/passport_scanner_view_test.dart`:
+- [ ] **Step 2: Write the failing test** — `test/unit/scan_gate_test.dart`:
 
 ```dart
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aon2026/widgets/passport_scanner_view.dart';
+import 'package:aon2026/services/scan_gate.dart';
 
 void main() {
-  testWidgets('web build shows the manual-only notice, no camera', (tester) async {
-    // The test harness reports kIsWeb == false, so this asserts the widget at
-    // least builds without throwing and exposes its debounce entry point.
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: PassportScannerView(onDecoded: (_) {}),
-      ),
-    ));
-    expect(tester.takeException(), isNull);
+  test('accepts the first decode only, until reset', () {
+    final gate = ScanGate();
+    expect(gate.accept(), isTrue);   // first capture handled
+    expect(gate.accept(), isFalse);  // repeated detections ignored
+    expect(gate.accept(), isFalse);
+    gate.reset();
+    expect(gate.accept(), isTrue);   // resume after dismiss
   });
 }
 ```
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `flutter test test/widget/passport_scanner_view_test.dart`
-Expected: FAIL — `passport_scanner_view` undefined.
+Run: `flutter test test/unit/scan_gate_test.dart`
+Expected: FAIL — `scan_gate` undefined.
 
-- [ ] **Step 4: Write minimal implementation** — `lib/widgets/passport_scanner_view.dart`:
+- [ ] **Step 4a: Write the pure debounce** — `lib/services/scan_gate.dart`:
 
 ```dart
+/// One-capture debounce for the QR scanner (design §7.1): [accept] returns true
+/// exactly once, then false until [reset]. Pure — no Flutter, unit-testable.
+class ScanGate {
+  bool _open = true;
+
+  bool accept() {
+    if (!_open) return false;
+    _open = false;
+    return true;
+  }
+
+  void reset() => _open = true;
+}
+```
+
+- [ ] **Step 4b: Write the camera adapter** — `lib/widgets/passport_scanner_view.dart`:
+
+```dart
+import 'dart:async';
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/services/scan_gate.dart';
 
 /// Camera QR adapter. Its only job is to emit a decoded string exactly once per
-/// capture, then pause (design §7.1). On web it never instantiates the scanner
-/// (design §5.1) — manual entry is the supported web path.
+/// capture, then pause (design §7.1, via [ScanGate]). On web it never
+/// instantiates the scanner (design §5.1) — manual entry is the web path.
 class PassportScannerView extends StatefulWidget {
   const PassportScannerView({required this.onDecoded, super.key});
 
@@ -1518,7 +1551,7 @@ class PassportScannerView extends StatefulWidget {
 
 class _PassportScannerViewState extends State<PassportScannerView> {
   MobileScannerController? _controller;
-  bool _handled = false;
+  final ScanGate _gate = ScanGate();
 
   @override
   void initState() {
@@ -1528,18 +1561,22 @@ class _PassportScannerViewState extends State<PassportScannerView> {
 
   @override
   void dispose() {
-    _controller?.dispose();
+    final c = _controller;
+    if (c != null) unawaited(c.dispose());
     super.dispose();
   }
 
   void _onDetect(BarcodeCapture capture) {
-    if (_handled) return; // debounce: one capture only
+    if (!_gate.accept()) return; // debounce: one capture only
     final raw = capture.barcodes.isNotEmpty
         ? capture.barcodes.first.rawValue
         : null;
-    if (raw == null) return;
-    _handled = true;
-    _controller?.stop();
+    if (raw == null) {
+      _gate.reset(); // empty frame — stay open for a real code
+      return;
+    }
+    final c = _controller;
+    if (c != null) unawaited(c.stop());
     widget.onDecoded(raw);
   }
 
@@ -1608,8 +1645,8 @@ Expected: PASS; analyze clean. (The prior manual-entry test still passes.)
 - [ ] **Step 7: Commit**
 
 ```bash
-git add pubspec.yaml pubspec.lock lib/widgets/passport_scanner_view.dart lib/screens/passport_scan_screen.dart test/widget/passport_scanner_view_test.dart
-git commit -m "feat(passport): debounced, web-guarded QR scanner adapter (Phase 6)"
+git add pubspec.yaml pubspec.lock lib/services/scan_gate.dart lib/widgets/passport_scanner_view.dart lib/screens/passport_scan_screen.dart test/unit/scan_gate_test.dart
+git commit -m "feat(passport): debounced (ScanGate), web-guarded QR scanner adapter (Phase 6)"
 ```
 
 ---
@@ -1637,34 +1674,54 @@ Expected: resolves `confetti: ^0.8.0` (or newer). `flutter pub get` succeeds.
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:confetti/confetti.dart';
 import 'package:aon2026/screens/passport_reward_screen.dart';
 
-Widget _host({double textScale = 1.0, bool reduceMotion = false}) => MediaQuery(
-      data: MediaQueryData(
-        size: const Size(320, 568),
-        textScaler: TextScaler.linear(textScale),
-        disableAnimations: reduceMotion,
+// Reduced motion is injected INSIDE MaterialApp's builder — an outer MediaQuery
+// would be reset by MaterialApp (see responsive_layout_test.dart:31).
+Widget _host({bool reduceMotion = false}) => MaterialApp(
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
+        child: child!,
       ),
-      child: const MaterialApp(home: PassportRewardScreen()),
+      home: const PassportRewardScreen(),
     );
+
+// The screen runs a Timer.periodic clock; dispose it before the test ends or
+// flutter_test fails with "A Timer is still pending". Pumping an empty tree
+// disposes PassportRewardScreen, cancelling the ticker.
+Future<void> _teardownTree(WidgetTester tester) =>
+    tester.pumpWidget(const SizedBox.shrink());
 
 void main() {
   testWidgets('shows the redeem instruction', (tester) async {
     await tester.pumpWidget(_host());
     await tester.pump(const Duration(seconds: 1));
     expect(find.textContaining('Show this to staff'), findsOneWidget);
+    await _teardownTree(tester);
   });
 
-  testWidgets('reduced motion builds without a confetti burst', (tester) async {
+  testWidgets('reduced motion omits the confetti widget entirely',
+      (tester) async {
     await tester.pumpWidget(_host(reduceMotion: true));
     await tester.pump(const Duration(seconds: 1));
+    expect(find.byType(ConfettiWidget), findsNothing); // asserts the claim
     expect(tester.takeException(), isNull);
+    await _teardownTree(tester);
   });
 
   testWidgets('no overflow at 320x568 / 2.0', (tester) async {
-    await tester.pumpWidget(_host(textScale: 2.0));
+    tester.view.physicalSize = const Size(320, 568);
+    tester.view.devicePixelRatio = 1.0;
+    tester.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(_host());
     await tester.pump(const Duration(seconds: 1));
     expect(tester.takeException(), isNull);
+    await _teardownTree(tester);
   });
 }
 ```
@@ -1784,7 +1841,17 @@ If `TimeFormat.clockWithSeconds` does not exist, add it to `lib/utils/time_forma
 
 - [ ] **Step 5: Wire the route + completion push**
 
-In `app_router.dart` add `static const String passportReward = '/passport/reward';` and a pushed `GoRoute` building `const PassportRewardScreen()`.
+In `app_router.dart` the constant `Routes.passportReward` already exists (Task 6). Add **only** the pushed `GoRoute` builder now that the screen exists:
+
+```dart
+import 'package:aon2026/screens/passport_reward_screen.dart';
+// ...
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.passportReward,
+        builder: (context, state) => const PassportRewardScreen(),
+      ),
+```
 
 In `passport_scan_screen.dart` `_handleDecoded`, after setting `_message`, add:
 
@@ -2058,5 +2125,9 @@ Verified across tasks: `StampInput.scan/manual`, `StampResult` (`StampCollected`
 
 ## Notes for the executor
 
-- Tasks 6, 8, 9, 10, 11 have **forward references** by design (routes reference screens; screens reference the reward route). If executing strictly one-at-a-time with a green `flutter analyze` between tasks, use the minimal stubs called out in each task, then replace them in the naming task. The subagent-driven flow's per-task review is the right fit.
-- Every task ends green (`flutter analyze && flutter test`). Never loosen a Phase 1–5 test to make a passport test pass — if an existing test breaks, the integration is wrong, not the test.
+- **Routes are cycle-free:** Task 6 adds only the `Routes.*` string constants; each `GoRoute` *builder* is registered in the task that creates its screen (Task 8 `passport`, Task 9 `passportScan`, Task 11 `passportReward`). No task ever imports a screen that doesn't exist yet, so `flutter analyze` stays green throughout.
+- **Widget tests that need a viewport or OS text scale** must use the repo's proven harness — `tester.view.physicalSize` + `tester.platformDispatcher.textScaleFactorTestValue` (with the teardowns), or inject via `MaterialApp(builder:)`. An outer `MediaQuery` wrapping `MaterialApp` is silently reset and tests nothing (verified against `text_scale_policy_test.dart:27`, `responsive_layout_test.dart:31`).
+- **Anything with a `Timer`/ticker or confetti** (the reward screen): pump with `pump(Duration)`, never `pumpAndSettle` (it would hang), and dispose the tree before the test ends (`pumpWidget(SizedBox.shrink())`) or `flutter_test` fails with "A Timer is still pending."
+- **`unawaited_futures` is enabled**: wrap fire-and-forget futures (`controller.stop()`, `controller.dispose()`, persistence writes) in `unawaited(...)`.
+- **`prefer_const_constructors` is enabled**: add `const` wherever the analyzer asks. Every task's gate is `flutter analyze` clean *and* `flutter test` green.
+- Never loosen a Phase 1–5 test to make a passport test pass — if an existing test breaks, the integration is wrong, not the test.

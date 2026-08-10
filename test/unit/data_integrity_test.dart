@@ -4,6 +4,7 @@ import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/data/events_data.dart';
 import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/routes_data.dart';
+import 'package:aon2026/data/stamp_stations_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/venue.dart';
@@ -219,6 +220,27 @@ void main() {
       expect(categories, contains(VenueCategory.toilets));
       expect(categories, contains(VenueCategory.firstAid));
       expect(categories, contains(VenueCategory.informationPoint));
+    });
+  });
+
+  group('passport stations', () {
+    const stations = StampStationsData.all;
+
+    test('there are exactly 9 stations', () {
+      expect(stations.length, 9);
+      expect(StampStationsData.count, 9);
+    });
+
+    test('the station set EQUALS the event-venue set (both directions)', () {
+      final eventVenueIds = VenuesData.eventVenues.map((v) => v.id).toSet();
+      // Not just subset: adding a 10th event venue must force a passport
+      // decision rather than silently leaving it off the trail.
+      expect(StampStationsData.stationVenueIds, eventVenueIds);
+    });
+
+    test('venueIds and codes are each unique', () {
+      expect(stations.map((s) => s.venueId).toSet().length, 9);
+      expect(stations.map((s) => s.code.toUpperCase()).toSet().length, 9);
     });
   });
 }

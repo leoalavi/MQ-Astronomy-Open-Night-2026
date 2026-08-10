@@ -7,6 +7,7 @@ import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/stamp_service.dart';
+import 'package:aon2026/widgets/passport_fact_sheet.dart';
 import 'package:aon2026/widgets/passport_grid.dart';
 
 /// The Astronomy Passport: progress, the 9-cell grid, and the capture entry.
@@ -72,7 +73,12 @@ class PassportScreen extends ConsumerWidget {
             ),
           ],
           const SizedBox(height: AonSpacing.space5),
-          PassportGrid(collectedVenueIds: state.collectedVenueIds),
+          PassportGrid(
+            collectedVenueIds: state.collectedVenueIds,
+            onTapCollected: (id) => showPassportFactSheet(
+              context, id,
+              reason: FactRevealReason.revisit),
+          ),
           const SizedBox(height: AonSpacing.space5),
           if (state.isComplete)
             FilledButton.icon(

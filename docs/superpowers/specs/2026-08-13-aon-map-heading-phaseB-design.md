@@ -55,7 +55,10 @@ locationControllerProvider (Phase A) ──────────────�
 
 **Files (create):**
 - `lib/services/heading_math.dart` — **pure** tilt-compensation + circular
-  smoothing helpers (no plugin import → runs in plain unit tests).
+  smoothing helpers. Takes **plain value types** (a local `Vector3(x,y,z)` /
+  raw doubles), **never** `sensors_plus`'s `MagnetometerEvent`/`AccelerometerEvent`
+  — importing those pulls the plugin and breaks VM-only unit tests. The service
+  adapter maps plugin events → these plain types.
 - `lib/services/heading_service.dart` — `HeadingAvailability`, `HeadingSample`,
   `HeadingService` interface, `SensorsHeadingService` (real).
 - `lib/services/point_me_controller.dart` — `PointMeState`, providers,
@@ -88,12 +91,22 @@ relativeAngle = shortestSignedDelta(trueBearing − trueHeading)   ∈ [−180, 
 arrow rotation (clockwise-positive; 0 = target dead ahead)
 ```
 
-`heading_math.tiltCompensatedHeadingDegrees(mag, accel)` implements the Android
-`getRotationMatrix` + `getOrientation` algorithm: normalize gravity `A` and
-geomagnetic `E`; `H = E × A` (east), if `‖H‖` too small (device pointing at a
-pole / degenerate) return `null`; normalize `H`; `M = A × H` (north); azimuth =
-`atan2(H.y, M.y)` → degrees → `normalizeBearing`. **Pure, no plugin import,
-unit-tested** with hand-computed vectors incl. a tilted phone and a degenerate case.
+`heading_math.tiltCompensatedHeadingDegrees(Vector3 mag, Vector3 accel)`
+(plain-value args, see above) implements the Android `getRotationMatrix` +
+`getOrientation` algorithm: normalize gravity `A` and geomagnetic `E`; `H = E × A`
+(east), if `‖H‖` too small (free-fall / device at a magnetic pole / degenerate)
+return `null`; normalize `H`; `M = A × H` (north); azimuth = `atan2(H.y, M.y)` →
+degrees → `normalizeBearing`. This equals Android's `getOrientation` azimuth
+`atan2(R[1], R[4])`. **Pure, no plugin import, unit-tested** with hand-computed
+vectors incl. a flat phone (known azimuth), a tilted phone (same azimuth — the
+point of tilt-compensation), and a degenerate case (→ null).
+
+**Stream fusion (in `SensorsHeadingService`, not the pure math):** the
+magnetometer and accelerometer are **separate streams at different rates** — do
+**NOT** `zip` them 1:1 (that pairs Nth-with-Nth and drifts). Cache the latest
+accelerometer sample and emit a heading on each **magnetometer** tick using that
+latest accel (a combine-latest-with-latest-accel). Bounded `acquiring` window
+before declaring `unavailable`.
 
 ## 5. Availability state machine
 
@@ -144,10 +157,14 @@ readout — so under reduced-motion we drop only the decorative easing/tween
 (snap to the new angle) but the arrow still reorients. Pulses/glows are removed
 under reduced-motion.
 
-**a11y:** the arrow carries a live semantic label — "{Venue} is to your
+**a11y:** the arrow carries a semantic label — "{Venue} is to your
 {left/right/ahead/behind}, {distance} away" — recomputed from `relativeAngle`
-(e.g. |angle|<20 ahead; >160 behind; else left/right). Distance + cardinal are in
-the tree as text. Never rely on colour/rotation alone.
+(e.g. |angle|<20 ahead; >160 behind; else left/right). The side words AND the
+cardinals are **l10n keys** (EN/FA), not English literals. The label is **not** a
+continuously-announcing `liveRegion` — a heading updates many times/second and
+would flood VoiceOver/TalkBack; the label updates silently (read on focus) and
+any spoken announcement is throttled to a **meaningful side change** only.
+Distance + cardinal are in the tree as text. Never rely on colour/rotation alone.
 
 ## 7. Geo math (`bearing_math.dart`, pure)
 
@@ -180,8 +197,10 @@ foregrounded** (battery + privacy):
 - Subscribe when the screen mounts; cancel in `dispose`.
 - An `AppLifecycleListener` cancels on `paused`/`inactive` and re-subscribes on
   `resumed` while still mounted.
-- The controller is a `NotifierProvider.autoDispose` (or explicitly cancels its
-  subscriptions in `ref.onDispose`) so leaving the screen tears the streams down.
+- The controller is a **`NotifierProvider.autoDispose.family`** keyed by the
+  target `venueId` (it needs the target, and must not outlive the screen); it
+  cancels its sensor subscriptions in `ref.onDispose` so leaving the screen tears
+  the streams down.
 - Never leave the magnetometer/accelerometer humming after the screen is gone.
 
 ## 10. Declination — preflight-verified, not guessed
@@ -202,8 +221,12 @@ Do **not** freeze an approximate "~12.7°E" lookup. Dynamic runtime WMM = IOU-B3
 ## 11. Global constraints (carried from Phase A)
 
 - **One new dependency: `sensors_plus`.** No `flutter_compass`.
-- **Web build is a hard gate** — `flutter build web` must stay green. `sensors_plus`
-  supports web; magnetometer is classified `unsupported` at the platform edge.
+- **Web build is a hard gate, checked the instant the dep lands.** `sensors_plus`
+  *lists* web support, but that is the exact class of claim that bit
+  `flutter_compass` — so the plan's dep-add task MUST run `flutter build web`
+  immediately after `flutter pub add sensors_plus` and STOP if it fails, isolating
+  any web break to the dep before any feature code exists. Magnetometer is
+  classified `unsupported` at the platform edge (`kIsWeb`).
 - **`context.aon` colours only**; the arrow is a themed shape (accent), no hex.
 - **EN + FA** for every new string (build fails if FA misses a key).
 - **Every new surface passes 320×568 / 2.0**; **reduced-motion-safe** (arrow

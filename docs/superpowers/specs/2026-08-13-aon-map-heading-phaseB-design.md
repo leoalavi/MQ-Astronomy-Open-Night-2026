@@ -197,10 +197,12 @@ foregrounded** (battery + privacy):
 - Subscribe when the screen mounts; cancel in `dispose`.
 - An `AppLifecycleListener` cancels on `paused`/`inactive` and re-subscribes on
   `resumed` while still mounted.
-- The controller is a **`NotifierProvider.autoDispose.family`** keyed by the
-  target `venueId` (it needs the target, and must not outlive the screen); it
-  cancels its sensor subscriptions in `ref.onDispose` so leaving the screen tears
-  the streams down.
+- Lifecycle uses **only the plain-`Notifier` patterns proven in Phase A** (the
+  Riverpod 3.4.2 manual `autoDispose.family` API is not what the plan verified):
+  a tiny `pointMeTargetProvider` (`Notifier<LatLng?>`) that `PointMeScreen` sets on
+  open and clears (null) on dispose/background. `PointMeController` (a plain
+  `Notifier`) subscribes to heading only while the target is non-null and cancels
+  the stream the instant it clears — so leaving the screen tears the streams down.
 - Never leave the magnetometer/accelerometer humming after the screen is gone.
 
 ## 10. Declination — preflight-verified, not guessed

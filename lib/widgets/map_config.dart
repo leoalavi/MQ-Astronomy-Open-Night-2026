@@ -22,6 +22,20 @@ abstract final class MapConfig {
     const LatLng(-33.7680, 151.1230),
   );
 
+  /// Follow-me only recenters within this radius of campus; beyond it the map
+  /// stays framed on campus and shows an "off campus" note (spec §5.4).
+  static const double locationCampusRadiusMeters = 2500;
+
+  static const Distance _distance = Distance();
+
+  /// One canonical calculation, consumed by BOTH the guard and the banner.
+  static double distanceFromCampusMeters(LatLng p) =>
+      _distance.as(LengthUnit.Meter, campusCentre, p);
+
+  static bool isNearCampus(LatLng p,
+          {double radiusMeters = locationCampusRadiusMeters}) =>
+      distanceFromCampusMeters(p) <= radiusMeters;
+
   /// Standard OpenStreetMap raster tiles.
   ///
   /// **No API key.** That is the point — see `docs/architecture.md`. Usage is

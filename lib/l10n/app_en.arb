@@ -197,5 +197,21 @@
   "@wayfindingAboutMinutes": { "placeholders": { "minutes": { "type": "int" } } },
   "wayfindingApproxMetres": "~{metres} m",
   "@wayfindingApproxMetres": { "placeholders": { "metres": { "type": "int" } } },
-  "wayfindingStepFreeUnknown": "Step-free access along this route has not been confirmed yet. Ask at an information point if you need a step-free path."
+  "wayfindingStepFreeUnknown": "Step-free access along this route has not been confirmed yet. Ask at an information point if you need a step-free path.",
+  "locateShow": "Show my location",
+  "@locateShow": { "description": "Map locate button, inactive state" },
+  "locateFollow": "Follow my location",
+  "@locateFollow": { "description": "Map locate button, active but not following" },
+  "locateStopFollowing": "Stop following my location",
+  "@locateStopFollowing": { "description": "Map locate button, following" },
+  "locateLowAccuracy": "Location accuracy is low",
+  "@locateLowAccuracy": { "description": "Map locate button, active but the fix is low-accuracy (>200m)" },
+  "locateUnavailable": "Location unavailable",
+  "@locateUnavailable": { "description": "Map locate button, permission denied" },
+  "locateServiceOff": "Turn on Location Services",
+  "@locateServiceOff": { "description": "Map locate button, device location services off" },
+  "mapLowAccuracy": "Location accuracy is low",
+  "@mapLowAccuracy": { "description": "Banner note shown when the current fix is low-accuracy" },
+  "mapOffCampus": "You're about {km} km from campus",
+  "@mapOffCampus": { "description": "Banner when the user is outside the campus radius", "placeholders": { "km": { "type": "String" } } }
 }

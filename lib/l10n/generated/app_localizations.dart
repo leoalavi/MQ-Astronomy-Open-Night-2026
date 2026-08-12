@@ -846,6 +846,54 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Step-free access along this route has not been confirmed yet. Ask at an information point if you need a step-free path.'**
   String get wayfindingStepFreeUnknown;
+
+  /// Map locate button, inactive state
+  ///
+  /// In en, this message translates to:
+  /// **'Show my location'**
+  String get locateShow;
+
+  /// Map locate button, active but not following
+  ///
+  /// In en, this message translates to:
+  /// **'Follow my location'**
+  String get locateFollow;
+
+  /// Map locate button, following
+  ///
+  /// In en, this message translates to:
+  /// **'Stop following my location'**
+  String get locateStopFollowing;
+
+  /// Map locate button, active but the fix is low-accuracy (>200m)
+  ///
+  /// In en, this message translates to:
+  /// **'Location accuracy is low'**
+  String get locateLowAccuracy;
+
+  /// Map locate button, permission denied
+  ///
+  /// In en, this message translates to:
+  /// **'Location unavailable'**
+  String get locateUnavailable;
+
+  /// Map locate button, device location services off
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on Location Services'**
+  String get locateServiceOff;
+
+  /// Banner note shown when the current fix is low-accuracy
+  ///
+  /// In en, this message translates to:
+  /// **'Location accuracy is low'**
+  String get mapLowAccuracy;
+
+  /// Banner when the user is outside the campus radius
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re about {km} km from campus'**
+  String mapOffCampus(String km);
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

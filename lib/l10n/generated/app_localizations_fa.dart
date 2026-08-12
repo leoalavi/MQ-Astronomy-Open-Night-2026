@@ -442,4 +442,30 @@ class AonL10nFa extends AonL10n {
   @override
   String get wayfindingStepFreeUnknown =>
       'دسترسی بدون پله در این مسیر هنوز تأیید نشده است. اگر به مسیر بدون پله نیاز دارید، از باجهٔ اطلاعات بپرسید.';
+
+  @override
+  String get locateShow => 'موقعیت من';
+
+  @override
+  String get locateFollow => 'دنبال‌کردن موقعیت من';
+
+  @override
+  String get locateStopFollowing => 'توقف دنبال‌کردن موقعیت';
+
+  @override
+  String get locateLowAccuracy => 'دقت موقعیت پایین است';
+
+  @override
+  String get locateUnavailable => 'موقعیت در دسترس نیست';
+
+  @override
+  String get locateServiceOff => 'روشن‌کردن سرویس موقعیت';
+
+  @override
+  String get mapLowAccuracy => 'دقت موقعیت پایین است';
+
+  @override
+  String mapOffCampus(String km) {
+    return 'حدود $km کیلومتر با پردیس فاصله دارید';
+  }
 }

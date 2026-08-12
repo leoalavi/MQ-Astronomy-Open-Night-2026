@@ -140,5 +140,13 @@
   "wayfindingDraftWarning": "این راهنما پیش‌نویس است و هنوز شبانه در پردیس پیموده و تأیید نشده است. اگر با تابلوها یا راهنمایان رویداد تفاوت داشت، از آن‌ها پیروی کنید.",
   "wayfindingAboutMinutes": "حدود {minutes} دقیقه",
   "wayfindingApproxMetres": "~{metres} متر",
-  "wayfindingStepFreeUnknown": "دسترسی بدون پله در این مسیر هنوز تأیید نشده است. اگر به مسیر بدون پله نیاز دارید، از باجهٔ اطلاعات بپرسید."
+  "wayfindingStepFreeUnknown": "دسترسی بدون پله در این مسیر هنوز تأیید نشده است. اگر به مسیر بدون پله نیاز دارید، از باجهٔ اطلاعات بپرسید.",
+  "locateShow": "موقعیت من",
+  "locateFollow": "دنبال‌کردن موقعیت من",
+  "locateStopFollowing": "توقف دنبال‌کردن موقعیت",
+  "locateLowAccuracy": "دقت موقعیت پایین است",
+  "locateUnavailable": "موقعیت در دسترس نیست",
+  "locateServiceOff": "روشن‌کردن سرویس موقعیت",
+  "mapLowAccuracy": "دقت موقعیت پایین است",
+  "mapOffCampus": "حدود {km} کیلومتر با پردیس فاصله دارید"
 }

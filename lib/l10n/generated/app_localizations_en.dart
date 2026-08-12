@@ -442,4 +442,30 @@ class AonL10nEn extends AonL10n {
   @override
   String get wayfindingStepFreeUnknown =>
       'Step-free access along this route has not been confirmed yet. Ask at an information point if you need a step-free path.';
+
+  @override
+  String get locateShow => 'Show my location';
+
+  @override
+  String get locateFollow => 'Follow my location';
+
+  @override
+  String get locateStopFollowing => 'Stop following my location';
+
+  @override
+  String get locateLowAccuracy => 'Location accuracy is low';
+
+  @override
+  String get locateUnavailable => 'Location unavailable';
+
+  @override
+  String get locateServiceOff => 'Turn on Location Services';
+
+  @override
+  String get mapLowAccuracy => 'Location accuracy is low';
+
+  @override
+  String mapOffCampus(String km) {
+    return 'You\'re about $km km from campus';
+  }
 }

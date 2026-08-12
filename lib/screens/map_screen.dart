@@ -14,6 +14,7 @@ import 'package:aon2026/widgets/map_mode_toggle.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/widgets/panorama_building_picker.dart';
 import 'package:aon2026/models/venue.dart';
+import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
@@ -22,6 +23,8 @@ import 'package:aon2026/widgets/dark_tile_layer.dart';
 import 'package:aon2026/widgets/map_category_filter_bar.dart';
 import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/map_control_island.dart';
+import 'package:aon2026/widgets/locate_button.dart';
+import 'package:aon2026/widgets/user_location_layer.dart';
 
 /// Campus map showing event venues, facilities, parking and transport.
 ///
@@ -56,6 +59,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final l = AonL10n.of(context);
     final venues = ref.watch(venuesProvider);
     final parking = ref.watch(parkingProvider);
+    final loc = ref.watch(locationControllerProvider);
+
+    // Follow-me recenter. Unconditional at the top of build (Riverpod requires
+    // ref.listen every build) — never inside a mode branch. The !isLowAccuracy
+    // guard stops a fuzzy estimate from yanking the camera (Phase A §5.1).
+    ref.listen(locationControllerProvider, (_, s) {
+      if (s.following &&
+          s.fix != null &&
+          !s.fix!.isLowAccuracy &&
+          MapConfig.isNearCampus(s.fix!.position)) {
+        _controller.move(s.fix!.position, _controller.camera.zoom);
+      }
+    });
 
     // Venues without coordinates are intentionally omitted from the map and
     // surfaced in the list sheet instead — see ParkingData / VenuesData.
@@ -143,12 +159,50 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       bounds: MapConfig.campusBounds,
                     ),
                     backgroundColor: context.aon.surfaceBase,
+                    // A deliberate user pan exits follow but keeps the dot; a
+                    // programmatic follow-move fires this with hasGesture:false,
+                    // so it does not self-cancel follow (Phase A §5.7).
+                    onPositionChanged: (camera, hasGesture) {
+                      if (hasGesture) {
+                        ref
+                            .read(locationControllerProvider.notifier)
+                            .onUserPan();
+                      }
+                    },
                   ),
                   children: [
                     const DarkTileLayer(),
+                    // Accuracy circle UNDER the venue pins; dot ON TOP (§5.5).
+                    if (loc.active && loc.fix != null)
+                      UserLocationCircle(fix: loc.fix!),
                     MarkerLayer(markers: markers),
+                    if (loc.active && loc.fix != null)
+                      UserLocationDot(fix: loc.fix!),
                   ],
                 ),
+                // One status note: off-campus takes priority over low-accuracy.
+                if (loc.active && loc.fix != null)
+                  if (!MapConfig.isNearCampus(loc.fix!.position))
+                    Positioned(
+                      top: AonSpacing.space4,
+                      left: AonSpacing.space4,
+                      right: AonSpacing.space4 + 56, // clear the control island
+                      child: _MapNote(
+                        text: l.mapOffCampus(
+                          (MapConfig.distanceFromCampusMeters(
+                                      loc.fix!.position) /
+                                  1000)
+                              .toStringAsFixed(1),
+                        ),
+                      ),
+                    )
+                  else if (loc.fix!.isLowAccuracy)
+                    Positioned(
+                      top: AonSpacing.space4,
+                      left: AonSpacing.space4,
+                      right: AonSpacing.space4 + 56,
+                      child: _MapNote(text: l.mapLowAccuracy),
+                    ),
                 Positioned(
                   left: AonSpacing.space2,
                   bottom: AonNavMetrics.clearance(context) - AonSpacing.space4,
@@ -179,10 +233,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         max: MapConfig.maxZoom,
                       ),
                     ),
-                    onRecenter: () => _controller.move(
-                      MapConfig.campusCentre,
-                      MapConfig.initialZoom,
-                    ),
+                    locateButton: const LocateButton(),
                   ),
                 ),
               ],
@@ -288,6 +339,44 @@ class _MarkerPin extends StatelessWidget {
                 )
               : Icon(icon, size: AonSpacing.iconMd, color: color),
         ),
+      ),
+    );
+  }
+}
+
+/// A small content-tier status pill over the map (off-campus / low-accuracy).
+/// Solid surface, never glass — it must stay legible over live tiles. The text
+/// wraps so it never overflows at 320×568 / 2.0.
+class _MapNote extends StatelessWidget {
+  const _MapNote({required this.text});
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: AonSpacing.space3, vertical: AonSpacing.space2),
+      decoration: BoxDecoration(
+        color: context.aon.surfaceBase.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
+        boxShadow: const [BoxShadow(color: Color(0x8805070F), blurRadius: 6)],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.info_outline_rounded,
+              size: AonSpacing.iconSm, color: context.aon.contentSecondary),
+          const SizedBox(width: AonSpacing.space2),
+          Flexible(
+            child: Text(
+              text,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium
+                  ?.copyWith(color: context.aon.contentSecondary),
+            ),
+          ),
+        ],
       ),
     );
   }

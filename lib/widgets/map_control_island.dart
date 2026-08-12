@@ -15,23 +15,28 @@ double clampZoom(double current, double delta,
   return next;
 }
 
-/// A floating glass island of map controls: zoom in / zoom out / recentre.
+/// A floating glass island of map controls: zoom in / zoom out / locate.
 ///
-/// One [GlassSurface] with three plain [IconButton]s — a single glass control
-/// layer, never glass-on-glass. It takes injected callbacks and carries **no**
-/// `MapController` dependency, so it is unit-testable without a live `FlutterMap`.
-/// The screen wires the callbacks to the controller (via [clampZoom]).
+/// One [GlassSurface] with two plain zoom [IconButton]s plus an injected
+/// [locateButton] widget — a single glass control layer, never glass-on-glass.
+/// It carries **no** `MapController` dependency, so it is unit-testable without
+/// a live `FlutterMap`. The screen wires the zoom callbacks to the controller
+/// (via [clampZoom]) and passes a stateful `LocateButton` for the third slot.
 class MapControlIsland extends StatelessWidget {
   const MapControlIsland({
     super.key,
     required this.onZoomIn,
     required this.onZoomOut,
-    required this.onRecenter,
+    required this.locateButton,
   });
 
   final VoidCallback onZoomIn;
   final VoidCallback onZoomOut;
-  final VoidCallback onRecenter;
+
+  /// The stateful "you are here" control (a `LocateButton`), placed where the
+  /// recentre button used to be — tapping it recenters on the user, and the
+  /// camera constraint keeps campus in view (Map Parity Phase A).
+  final Widget locateButton;
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +51,7 @@ class MapControlIsland extends StatelessWidget {
           _divider(),
           _button(context, Icons.remove_rounded, 'Zoom out', onZoomOut),
           _divider(),
-          _button(context, Icons.my_location_rounded, 'Recentre', onRecenter),
+          locateButton,
         ],
       ),
     );

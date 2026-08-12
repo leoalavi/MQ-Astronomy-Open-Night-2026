@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/utils/haptics.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 import 'package:aon2026/widgets/liquid_tab_bar.dart';
@@ -22,6 +23,10 @@ class AppShell extends ConsumerWidget {
   const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
+
+  /// Branch order below: home, program, plan, MAP, info. The Map branch's index
+  /// is the authoritative "Map tab on-screen" signal for `mapVisibleProvider`.
+  static const int mapBranchIndex = 3;
 
   /// The third tab's label comes from the event config ("My Night" here,
   /// "Your Day" at a daytime event), so this list is built per-event rather
@@ -66,6 +71,15 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AonL10n.of(context);
     final items = itemsFor(ref.watch(terminologyProvider), l);
+
+    // Drive GPS lifecycle from the authoritative branch index (Map Parity
+    // Phase A). Deferred to a post-frame callback because provider state must
+    // not be mutated mid-build; AppShell rebuilds whenever currentIndex changes,
+    // and `set()` no-ops when unchanged, so this stays in sync and cheap.
+    final onMap = navigationShell.currentIndex == mapBranchIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(mapVisibleProvider.notifier).set(onMap);
+    });
 
     return Scaffold(
       // The body runs behind the floating island so the glass has live content

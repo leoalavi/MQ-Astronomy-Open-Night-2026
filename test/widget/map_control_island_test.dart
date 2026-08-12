@@ -24,7 +24,7 @@ void main() {
   Widget harness({
     required VoidCallback onZoomIn,
     required VoidCallback onZoomOut,
-    required VoidCallback onRecenter,
+    required Widget locateButton,
   }) {
     return MaterialApp(
       localizationsDelegates: AonL10n.localizationsDelegates,
@@ -35,16 +35,23 @@ void main() {
           child: MapControlIsland(
             onZoomIn: onZoomIn,
             onZoomOut: onZoomOut,
-            onRecenter: onRecenter,
+            locateButton: locateButton,
           ),
         ),
       ),
     );
   }
 
+  // A stand-in for the injected LocateButton (which needs Riverpod); this test
+  // only cares that the island renders + wires the third slot.
+  Widget stubLocate(VoidCallback onTap) => IconButton(
+        icon: const Icon(Icons.my_location_rounded),
+        onPressed: onTap,
+      );
+
   testWidgets('renders ONE glass surface with three buttons', (tester) async {
     await tester.pumpWidget(
-      harness(onZoomIn: () {}, onZoomOut: () {}, onRecenter: () {}),
+      harness(onZoomIn: () {}, onZoomOut: () {}, locateButton: stubLocate(() {})),
     );
     expect(
       find.byType(GlassSurface),
@@ -62,7 +69,7 @@ void main() {
       harness(
         onZoomIn: () => zin++,
         onZoomOut: () => zout++,
-        onRecenter: () => rec++,
+        locateButton: stubLocate(() => rec++),
       ),
     );
     await tester.tap(find.byIcon(Icons.add_rounded));
@@ -87,7 +94,7 @@ void main() {
                 child: MapControlIsland(
                   onZoomIn: () {},
                   onZoomOut: () {},
-                  onRecenter: () {},
+                  locateButton: stubLocate(() {}),
                 ),
               ),
             ),

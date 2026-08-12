@@ -20,7 +20,8 @@
 - **Runtime-failure transition** — stream error / mid-session serviceOff → cancel, `active=false`, `following=false`, drop dot, recovery state (spec §5.7).
 - **iOS foreground/When-In-Use only** — only `NSLocationWhenInUseUsageDescription`; no Always key, no `UIBackgroundModes: location` (spec §D8).
 - **Layer order**: TileLayer → accuracy CircleLayer → venue MarkerLayer → user-dot MarkerLayer → controls (spec §5.5).
-- **Low-accuracy policy**: `accuracyMeters > 200` ⇒ dot shown, circle omitted, "low accuracy" state (spec §5.1).
+- **Low-accuracy policy** (`accuracyMeters > 200`), applied in FULL: dot still shown; accuracy circle omitted (Task 6); the locate button shows a distinct "low accuracy" label/state (Task 8); a localized "Location accuracy is low" note shows (Task 9); **and follow-me must NOT auto-recenter from a low-accuracy fix** — a fuzzy estimate must never yank the camera. When a good fix (`≤ 200 m`) arrives, normal follow resumes (spec §5.1, review #6).
+- **Palette rule + its one scoped exception**: all themed UI uses `context.aon` tokens, never hardcoded hex. **Exception, documented on purpose:** the user-location *dot* uses a fixed white ring + soft black shadow (`Colors.white` / `Colors.black26`). This is the platform "you-are-here" convention — the dot must read as *you* against any map tile regardless of light/dark theme, so it is deliberately theme-independent. No other new surface may hardcode a colour.
 - **Campus radius** `MapConfig.locationCampusRadiusMeters = 2500`; one canonical `distanceFromCampusMeters` used by guard + banner (spec §5.4).
 - **All new user strings** go in **both** `lib/l10n/app_en.arb` and `lib/l10n/app_fa.arb` (build fails if FA misses a key), via `context.aon` colours; every new surface passes `320×568 / 2.0`.
 - **Per-task gate:** `flutter analyze && flutter test`; **web build re-verified** where the dep is touched. Never weaken an existing test.
@@ -52,32 +53,60 @@ git branch --show-current   # must be feature/map-live-location-phaseA
 
 ---
 
-## Task 1: Add `geolocator` + platform config (web build must stay green)
+## Task 1: Add `geolocator` + platform config (all three native builds must stay green)
 
-**Files:** Modify `pubspec.yaml`, `ios/Runner/Info.plist`, `android/app/src/main/AndroidManifest.xml`.
+**Files:** Modify `pubspec.yaml`, `ios/Runner/Info.plist`, `ios/Podfile`, `android/app/src/main/AndroidManifest.xml`.
 
-- [ ] **Step 1: Add the dependency** — Run: `flutter pub add geolocator` — Expected: resolves 14.x; `pub get` OK.
+**Why native config lands here, not Task 10:** geolocator is a native plugin; integration trouble (Pod install, compileSdk, App-Store-review macros) must surface the moment the dep is added, not at the end. This task ends by building **all three** platforms.
 
-- [ ] **Step 2: Verify the web build still compiles** (the whole reason we dropped flutter_compass) — Run: `flutter build web` — Expected: SUCCESS. If it fails, STOP — geolocator's web support is a hard requirement; do not proceed.
+- [ ] **Step 1: Add the dependency, pinned** — Run: `flutter pub add geolocator:^14.0.3` — Expected: resolves 14.0.3+ within 14.x; `pub get` OK. Commit `pubspec.lock` (Step 7) so the version is frozen.
 
-- [ ] **Step 3: iOS — When-In-Use only** — in `ios/Runner/Info.plist` `<dict>` add ONLY:
+- [ ] **Step 2: iOS — When-In-Use only** — in `ios/Runner/Info.plist` `<dict>` add ONLY:
 ```xml
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Shows where you are on the campus map so you can find your way between venues at night. Your location stays on your device and is never sent anywhere.</string>
 ```
 Do NOT add `NSLocationAlwaysAndWhenInUseUsageDescription` or a `location` entry under `UIBackgroundModes` — foreground only (spec §D8).
 
-- [ ] **Step 4: Android — location permissions** — in `android/app/src/main/AndroidManifest.xml` above `<application>`:
+- [ ] **Step 3: iOS — exclude the Always-permission code path** — geolocator compiles Always/background location code by default, which triggers App-Store review questions for a When-In-Use app. Its docs supply a Podfile macro to strip it. **Append** to the EXISTING `post_install` target loop in `ios/Podfile` (do NOT replace the `flutter_additional_ios_build_settings(target)` line already there):
+```ruby
+post_install do |installer|
+  installer.pods_project.targets.each do |target|
+    flutter_additional_ios_build_settings(target)
+    # geolocator: We only use When-In-Use — exclude the Always-location code so
+    # App Store review doesn't ask about background location (spec §D8).
+    target.build_configurations.each do |config|
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)',
+        'BYPASS_PERMISSION_LOCATION_ALWAYS=1',
+      ]
+    end
+  end
+end
+```
+
+- [ ] **Step 4: Android — permissions + confirm we need NO foreground service** — in `android/app/src/main/AndroidManifest.xml` above `<application>`:
 ```xml
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 ```
+**Do NOT add `FOREGROUND_SERVICE` / `FOREGROUND_SERVICE_LOCATION`.** Determination (record in the Task 10 closeout): Phase A streams location only while the app is foregrounded and the Map tab is visible (`active && mapVisible`); it never runs a background/continuous service, so the Android 14 foreground-service-location permission is **not required**. Adding it would over-request.
 
-- [ ] **Step 5: Analyze + commit**
+- [ ] **Step 5: Verify compileSdk ≥ 35** — `android/app/build.gradle.kts` uses `compileSdk = flutter.compileSdkVersion` (inherited from the Flutter SDK — 3.44.7 resolves ≥ 35, which geolocator needs). Confirm the resolved value rather than hardcoding: Run `./android/gradlew -p android app:properties 2>/dev/null | grep -i compileSdk` (or read the Flutter SDK's `compileSdkVersion`); Expected: ≥ 35. If somehow < 35, pin `compileSdk = 35` in `build.gradle.kts` and note it.
+
+- [ ] **Step 6: Build ALL THREE platforms now** — Run:
+```bash
+flutter build web            # load-bearing: the reason flutter_compass was cut
+flutter build ios --simulator --debug
+flutter build apk --debug
+```
+Expected: all three SUCCEED. **If web fails, STOP** — geolocator web support is a hard requirement. If iOS Pod install fails, resolve it here (likely `cd ios && pod install`), not at Task 10.
+
+- [ ] **Step 7: Analyze + commit**
 ```bash
 flutter analyze
-git add pubspec.yaml pubspec.lock ios/Runner/Info.plist android/app/src/main/AndroidManifest.xml
-git commit -m "feat(map): add geolocator + When-In-Use location config (Phase A)"
+git add pubspec.yaml pubspec.lock ios/Runner/Info.plist ios/Podfile android/app/src/main/AndroidManifest.xml
+git commit -m "feat(map): add geolocator 14.0.3 + When-In-Use config + iOS Always-bypass (Phase A)"
 ```
 
 ---
@@ -86,9 +115,9 @@ git commit -m "feat(map): add geolocator + When-In-Use location config (Phase A)
 
 **Files:** Create `lib/models/user_location_fix.dart`, `test/unit/user_location_fix_test.dart`.
 
-**Interfaces:** Produces `UserLocationFix({required LatLng position, required double accuracyMeters})` with `isLowAccuracy` and `static const poorAccuracyMeters`.
+**Interfaces:** Produces `UserLocationFix({required LatLng position, required double accuracyMeters})` with `isLowAccuracy` and `static const poorAccuracyMeters`. **Validation is a real runtime `throw` (not `assert`) so it holds in release builds** — Dart strips asserts in production, and flutter_map 8.x has a history of crashes on invalid marker coordinates, so a bad fix must never reach a layer.
 
-- [ ] **Step 1: Write the failing test** — `test/unit/user_location_fix_test.dart`:
+- [ ] **Step 1: Write the failing test** — `test/unit/user_location_fix_test.dart` (covers NaN/infinity, not just out-of-range):
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -106,15 +135,16 @@ void main() {
         isTrue);
   });
 
-  test('rejects impossible coordinates and non-positive accuracy', () {
-    expect(
-        () => UserLocationFix(
-            position: const LatLng(200, 0), accuracyMeters: 5),
-        throwsA(isA<AssertionError>()));
-    expect(
-        () => UserLocationFix(
-            position: const LatLng(-33.77, 151.11), accuracyMeters: 0),
-        throwsA(isA<AssertionError>()));
+  test('rejects impossible coords, NaN/infinity, and non-positive accuracy', () {
+    UserLocationFix bad(double lat, double lng, double acc) =>
+        UserLocationFix(position: LatLng(lat, lng), accuracyMeters: acc);
+    expect(() => bad(200, 0, 5), throwsArgumentError);        // lat > 90
+    expect(() => bad(-33.77, 151.11, 0), throwsArgumentError); // acc <= 0
+    expect(() => bad(-33.77, 151.11, -1), throwsArgumentError);
+    expect(() => bad(double.nan, 151.11, 5), throwsArgumentError);
+    expect(() => bad(-33.77, double.infinity, 5), throwsArgumentError);
+    expect(() => bad(-33.77, 151.11, double.nan), throwsArgumentError);
+    expect(() => bad(-33.77, 151.11, double.infinity), throwsArgumentError);
   });
 }
 ```
@@ -127,11 +157,21 @@ void main() {
 import 'package:latlong2/latlong.dart';
 
 /// A validated device-position fix (no heading — Phase A, spec §5.1).
+///
+/// Validation is a real runtime check, NOT `assert` — asserts are stripped in
+/// release, and an invalid coordinate reaching flutter_map can crash a layer.
 class UserLocationFix {
-  UserLocationFix({required this.position, required this.accuracyMeters})
-      : assert(position.latitude.abs() <= 90 &&
-            position.longitude.abs() <= 180),
-        assert(accuracyMeters.isFinite && accuracyMeters > 0);
+  UserLocationFix({required this.position, required this.accuracyMeters}) {
+    if (!position.latitude.isFinite ||
+        !position.longitude.isFinite ||
+        position.latitude.abs() > 90 ||
+        position.longitude.abs() > 180 ||
+        !accuracyMeters.isFinite ||
+        accuracyMeters <= 0) {
+      throw ArgumentError(
+          'Invalid fix: position=$position accuracyMeters=$accuracyMeters');
+    }
+  }
 
   final LatLng position;
   final double accuracyMeters;
@@ -378,7 +418,7 @@ git commit -m "feat(map): LocationService seam over geolocator + web guards + sh
 
 **Interfaces:**
 - `LocationSnapshot({LocationStatus status, UserLocationFix? fix, bool active, bool following})`.
-- Providers: `locationServiceProvider` (`Provider<LocationService>`), `mapVisibleProvider` (`StateProvider<bool>`, default false), `locationControllerProvider` (`NotifierProvider<LocationController, LocationSnapshot>`).
+- Providers: `locationServiceProvider` (`Provider<LocationService>`), `mapVisibleProvider` (`NotifierProvider<MapVisibleNotifier, bool>`, default false, single writer `AppShell` via `.set(bool)`), `locationControllerProvider` (`NotifierProvider<LocationController, LocationSnapshot>`).
 - `LocationController.onLocateTapped()`, `.onUserPan()`.
 
 - [ ] **Step 1: Write the failing test** — `test/unit/location_controller_test.dart` (imports the shared `FakeLocationService` from `test/support/`):
@@ -396,7 +436,8 @@ ProviderContainer _c(FakeLocationService svc, {bool visible = true}) {
   final c = ProviderContainer(overrides: [
     locationServiceProvider.overrideWithValue(svc),
   ]);
-  c.read(mapVisibleProvider.notifier).state = visible;
+  addTearDown(c.dispose);
+  c.read(mapVisibleProvider.notifier).set(visible);
   return c;
 }
 
@@ -452,23 +493,38 @@ void main() {
     expect(off.locationSettingsOpened, 1);
   });
 
-  test('runtime stream error resets to a recovery state', () async {
-    final svc = FakeLocationService();
+  test('stream error resets AND re-evaluates status (not hardcoded serviceOff)',
+      () async {
+    // The fake still reports granted; a transient stream error must NOT be
+    // mislabelled serviceOff — it re-evaluates via status() (§5.7, review #5).
+    final svc = FakeLocationService(); // grant defaults to granted
     final c = _c(svc);
     await c.read(locationControllerProvider.notifier).onLocateTapped();
     svc.emitError(StateError('gps lost'));
-    await Future<void>.delayed(Duration.zero);
+    await Future<void>.delayed(const Duration(milliseconds: 1));
     final s = c.read(locationControllerProvider);
     expect(s.active, isFalse);
     expect(s.following, isFalse);
     expect(s.fix, isNull);
+    expect(s.status, LocationStatus.granted); // re-evaluated, not serviceOff
+  });
+
+  test('service switched off mid-session -> serviceOff status', () async {
+    final svc = FakeLocationService();
+    final c = _c(svc);
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emitServiceEnabled(false); // OS toggled Location Services off
+    await Future<void>.delayed(Duration.zero);
+    final s = c.read(locationControllerProvider);
+    expect(s.active, isFalse);
+    expect(s.status, LocationStatus.serviceOff); // this reason we DO know
   });
 
   test('hidden map pauses the stream and drops follow', () async {
     final svc = FakeLocationService();
     final c = _c(svc);
     await c.read(locationControllerProvider.notifier).onLocateTapped();
-    c.read(mapVisibleProvider.notifier).state = false; // tab hidden
+    c.read(mapVisibleProvider.notifier).set(false); // tab hidden
     await Future<void>.delayed(Duration.zero);
     expect(c.read(locationControllerProvider).following, isFalse);
     // A fix emitted while hidden is ignored (stream cancelled).
@@ -487,6 +543,7 @@ void main() {
 ```dart
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/models/user_location_fix.dart';
@@ -523,9 +580,21 @@ final locationServiceProvider =
     Provider<LocationService>((ref) => throw UnimplementedError(
         'override with GeolocatorLocationService in main / a fake in tests'));
 
-/// Whether the Map shell branch is on-screen (driven by the map screen via
-/// TickerMode). GPS runs only when this is true AND location is active.
-final mapVisibleProvider = StateProvider<bool>((ref) => false);
+/// Whether the Map shell branch is on-screen. Driven by [AppShell] from
+/// `StatefulNavigationShell.currentIndex` (the authoritative branch signal),
+/// NOT by animation infrastructure. GPS runs only when this is true AND
+/// location is active. Riverpod 3 removed `StateProvider`, so a tiny notifier
+/// stands in — the repo's established pattern (see `SelectedIdNotifier`).
+final mapVisibleProvider =
+    NotifierProvider<MapVisibleNotifier, bool>(MapVisibleNotifier.new);
+
+class MapVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool visible) {
+    if (state != visible) state = visible;
+  }
+}
 
 final locationControllerProvider =
     NotifierProvider<LocationController, LocationSnapshot>(
@@ -540,7 +609,7 @@ class LocationController extends Notifier<LocationSnapshot> {
   @override
   LocationSnapshot build() {
     ref.onDispose(_cancel);
-    ref.listen(mapVisibleProvider, (_, __) => _sync());
+    ref.listen(mapVisibleProvider, (_, _) => _sync());
     return const LocationSnapshot();
   }
 
@@ -574,9 +643,9 @@ class LocationController extends Notifier<LocationSnapshot> {
   void _sync() {
     final wantStream = state.active && ref.read(mapVisibleProvider);
     if (wantStream && _sub == null) {
-      _sub = _svc.watch().listen(_onFix, onError: _onFailure);
+      _sub = _svc.watch().listen(_onFix, onError: (_) => _onStreamError());
       _serviceSub = _svc.serviceEnabledChanges().listen((enabled) {
-        if (!enabled) _onFailure('service off');
+        if (!enabled) _onServiceOff();
       });
     } else if (!wantStream) {
       _cancel();
@@ -588,13 +657,26 @@ class LocationController extends Notifier<LocationSnapshot> {
 
   void _onFix(UserLocationFix fix) => state = state.copyWith(fix: fix);
 
-  void _onFailure(Object _) {
+  /// The OS told us Location Services were switched off — this reason we DO
+  /// know, so route the user to the location settings.
+  void _onServiceOff() {
     _cancel();
     state = state.copyWith(
         active: false,
         following: false,
         clearFix: true,
         status: LocationStatus.serviceOff);
+  }
+
+  /// A position-stream error can be many things (permission revoked mid-session,
+  /// acquisition lost, a platform error). Do NOT assume "service off" —
+  /// re-evaluate. On web `status()` isn't authoritative, so fall back to a
+  /// generic `unknown` (the button shows a neutral retry affordance) (§5.7).
+  Future<void> _onStreamError() async {
+    _cancel();
+    final status = kIsWeb ? LocationStatus.unknown : await _svc.status();
+    state = state.copyWith(
+        active: false, following: false, clearFix: true, status: status);
   }
 
   void _cancel() {
@@ -606,7 +688,7 @@ class LocationController extends Notifier<LocationSnapshot> {
 }
 ```
 
-The test overrides `locationServiceProvider` with the fake, so the `throw` default never fires in tests; `main` overrides it with `GeolocatorLocationService` (Task 9).
+The test overrides `locationServiceProvider` with the fake, so the `throw` default never fires in tests; `main` overrides it with `GeolocatorLocationService` (Task 9). `mapVisibleProvider` is driven by `AppShell` (Task 9) — its notifier's `set(bool)` is the only writer.
 
 - [ ] **Step 4: Run to verify it passes** — Run: `flutter test test/unit/location_controller_test.dart && flutter analyze` — Expected: PASS; clean.
 - [ ] **Step 5: Commit**
@@ -740,6 +822,8 @@ class UserLocationDot extends StatelessWidget {
 }
 ```
 
+The dot's `Colors.white` ring + `Colors.black26` shadow are the **one sanctioned palette exception** (see Global Constraints): a "you-are-here" dot must read as *you* on any tile independent of theme. Everything colour-bearing that DOES vary with theme (the accuracy circle, the dot's centre) reads from `context.aon`. Do not "fix" the ring to a palette token.
+
 - [ ] **Step 4: Run to verify it passes** — PASS.
 - [ ] **Step 5: Commit**
 ```bash
@@ -761,10 +845,14 @@ git commit -m "feat(map): user-location layers (circle + dot) as themed Stateles
   "@locateFollow": { "description": "Map locate button, active but not following" },
   "locateStopFollowing": "Stop following my location",
   "@locateStopFollowing": { "description": "Map locate button, following" },
+  "locateLowAccuracy": "Location accuracy is low",
+  "@locateLowAccuracy": { "description": "Map locate button, active but the fix is low-accuracy (>200m)" },
   "locateUnavailable": "Location unavailable",
   "@locateUnavailable": { "description": "Map locate button, permission denied" },
   "locateServiceOff": "Turn on Location Services",
   "@locateServiceOff": { "description": "Map locate button, device location services off" },
+  "mapLowAccuracy": "Location accuracy is low",
+  "@mapLowAccuracy": { "description": "Banner note shown when the current fix is low-accuracy" },
   "mapOffCampus": "You're about {km} km from campus",
   "@mapOffCampus": { "description": "Banner when the user is outside the campus radius", "placeholders": { "km": { "type": "String" } } },
 ```
@@ -774,8 +862,10 @@ git commit -m "feat(map): user-location layers (circle + dot) as themed Stateles
   "locateShow": "موقعیت من",
   "locateFollow": "دنبال‌کردن موقعیت من",
   "locateStopFollowing": "توقف دنبال‌کردن موقعیت",
+  "locateLowAccuracy": "دقت موقعیت پایین است",
   "locateUnavailable": "موقعیت در دسترس نیست",
   "locateServiceOff": "روشن‌کردن سرویس موقعیت",
+  "mapLowAccuracy": "دقت موقعیت پایین است",
   "mapOffCampus": "حدود {km} کیلومتر با پردیس فاصله دارید",
 ```
 
@@ -793,50 +883,107 @@ git commit -m "feat(map): l10n strings for locate control + off-campus banner (E
 
 **Files:** Create `lib/widgets/locate_button.dart`, `test/widget/locate_button_test.dart`. Modify `lib/widgets/map_control_island.dart` to host it.
 
-**Interfaces:** `LocateButton` (`ConsumerWidget`) reads `locationControllerProvider`, renders an `IconButton` with per-state icon, wrapped in an explicit `Semantics(button: true, label: …, excludeSemantics: true)` so **exactly one** node carries the l10n label (Task 7) — a `tooltip`-as-label is unreliable for `find.bySemanticsLabel`. Calls `onLocateTapped`. `MapControlIsland` gains a `Widget locateButton` slot replacing `onRecenter`.
+**Interfaces:** `LocateButton` (`ConsumerWidget`) reads `locationControllerProvider`, renders an `IconButton` wrapped in an explicit `Semantics(button: true, label: …, onTap: …, excludeSemantics: true)`. **The outer node MUST carry its own `onTap`** — `excludeSemantics` drops the child's tap action, so without `onTap` the node would be a label a screen reader can't activate (review #7). States: show / follow / stop-following / **low-accuracy** (active with `fix.isLowAccuracy`) / unavailable (denied) / serviceOff — labels from Task 7. `MapControlIsland` gains a `Widget locateButton` slot replacing `onRecenter`.
 
-- [ ] **Step 1: Write the failing test** — `test/widget/locate_button_test.dart` (one findable labelled node per state; the l10n keys already exist from Task 7):
+- [ ] **Step 1: Write the failing test** — `test/widget/locate_button_test.dart`. Covers each label (incl. low-accuracy), the **semantic tap action** (review #7), a 320×568/2.0 no-overflow pass and a FA-locale render (review #10):
 
 ```dart
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/location_service.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/widgets/locate_button.dart';
 
-Widget _host(LocationSnapshot snap) => ProviderScope(
-      overrides: [
-        locationControllerProvider.overrideWith(() => _StubController(snap)),
-      ],
+class _StubController extends LocationController {
+  _StubController(this._snap);
+  final LocationSnapshot _snap;
+  int taps = 0;
+  @override
+  LocationSnapshot build() => _snap;
+  @override
+  Future<void> onLocateTapped() async => taps++; // spy, no service needed
+}
+
+ProviderContainer _c(LocationSnapshot snap) {
+  final c = ProviderContainer(overrides: [
+    locationControllerProvider.overrideWith(() => _StubController(snap)),
+  ]);
+  addTearDown(c.dispose);
+  return c;
+}
+
+Widget _host(ProviderContainer c, {Locale? locale}) => UncontrolledProviderScope(
+      container: c,
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: AonL10n.localizationsDelegates,
         supportedLocales: AonL10n.supportedLocales,
         home: const Scaffold(body: LocateButton()),
       ),
     );
 
-class _StubController extends LocationController {
-  _StubController(this._snap);
-  final LocationSnapshot _snap;
-  @override
-  LocationSnapshot build() => _snap;
-}
+UserLocationFix _lowAcc() =>
+    UserLocationFix(position: const LatLng(-33.7737, 151.1134), accuracyMeters: 500);
 
 void main() {
   testWidgets('inactive -> "Show my location"', (t) async {
-    await t.pumpWidget(_host(const LocationSnapshot()));
+    await t.pumpWidget(_host(_c(const LocationSnapshot())));
     expect(find.bySemanticsLabel('Show my location'), findsOneWidget);
   });
   testWidgets('following -> "Stop following my location"', (t) async {
     await t.pumpWidget(
-        _host(const LocationSnapshot(active: true, following: true)));
+        _host(_c(const LocationSnapshot(active: true, following: true))));
     expect(find.bySemanticsLabel('Stop following my location'), findsOneWidget);
   });
+  testWidgets('low-accuracy fix -> "Location accuracy is low"', (t) async {
+    await t.pumpWidget(_host(
+        _c(LocationSnapshot(active: true, following: true, fix: _lowAcc()))));
+    expect(find.bySemanticsLabel('Location accuracy is low'), findsOneWidget);
+  });
   testWidgets('denied -> "Location unavailable"', (t) async {
-    await t.pumpWidget(_host(const LocationSnapshot(status: LocationStatus.denied)));
+    await t.pumpWidget(_host(_c(const LocationSnapshot(status: LocationStatus.denied))));
     expect(find.bySemanticsLabel('Location unavailable'), findsOneWidget);
+  });
+
+  testWidgets('semantic node has a tap action that fires onLocateTapped',
+      (t) async {
+    final handle = t.ensureSemantics();
+    final c = _c(const LocationSnapshot());
+    await t.pumpWidget(_host(c));
+    final node = t.getSemantics(find.bySemanticsLabel('Show my location'));
+    expect(node.hasAction(SemanticsAction.tap), isTrue); // assistive-activatable
+    // Perform the ACCESSIBILITY action (what a screen reader does), not a gesture.
+    t.binding.pipelineOwner.semanticsOwner!.performAction(node.id, SemanticsAction.tap);
+    await t.pump();
+    final spy = c.read(locationControllerProvider.notifier) as _StubController;
+    expect(spy.taps, 1);
+    handle.dispose();
+  });
+
+  testWidgets('no overflow at 320x568 / 2.0', (t) async {
+    t.view.physicalSize = const Size(320, 568);
+    t.view.devicePixelRatio = 1.0;
+    t.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    await t.pumpWidget(
+        _host(_c(const LocationSnapshot(active: true, following: true))));
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('renders under the FA locale', (t) async {
+    await t.pumpWidget(
+        _host(_c(const LocationSnapshot()), locale: const Locale('fa')));
+    await t.pumpAndSettle();
+    expect(find.bySemanticsLabel('موقعیت من'), findsOneWidget);
+    expect(t.takeException(), isNull);
   });
 }
 ```
@@ -868,6 +1015,10 @@ class LocateButton extends ConsumerWidget {
       LocationSnapshot(status: LocationStatus.denied) ||
       LocationSnapshot(status: LocationStatus.deniedForever) => (
           Icons.location_disabled_rounded, l.locateUnavailable, context.aon.contentTertiary),
+      // Low-accuracy wins over follow/stop so a fuzzy fix is called out and the
+      // action reads "accuracy is low", not "following" (review #6).
+      LocationSnapshot(active: true, fix: final f?) when f.isLowAccuracy => (
+          Icons.location_searching_rounded, l.locateLowAccuracy, context.aon.contentSecondary),
       LocationSnapshot(active: true, following: true) => (
           Icons.near_me_rounded, l.locateStopFollowing, context.aon.accent),
       LocationSnapshot(active: true) => (
@@ -875,19 +1026,20 @@ class LocateButton extends ConsumerWidget {
       _ => (Icons.my_location_rounded, l.locateShow, context.aon.contentSecondary),
     };
 
-    // One explicit semantics node with the label — excludeSemantics drops the
-    // IconButton's own (tooltip-derived) node so bySemanticsLabel finds exactly
-    // one. onPressed stays wired in every state (denied/serviceOff re-prompt or
-    // open settings via onLocateTapped).
+    void onTap() =>
+        ref.read(locationControllerProvider.notifier).onLocateTapped();
+
+    // ONE explicit semantics node: excludeSemantics drops the IconButton's own
+    // node so bySemanticsLabel finds exactly one — but the outer node must then
+    // carry `onTap` itself, or assistive tech can read the button yet not
+    // activate it (review #7). onTap stays wired in every state (denied /
+    // serviceOff re-prompt or open settings via onLocateTapped).
     return Semantics(
       button: true,
       label: label,
+      onTap: onTap,
       excludeSemantics: true,
-      child: IconButton(
-        icon: Icon(icon, color: color),
-        onPressed: () =>
-            ref.read(locationControllerProvider.notifier).onLocateTapped(),
-      ),
+      child: IconButton(icon: Icon(icon, color: color), onPressed: onTap),
     );
   }
 }
@@ -904,9 +1056,11 @@ git commit -m "feat(map): state-driven locate button with explicit per-state sem
 
 ---
 
-## Task 9: Wire into the map screen
+## Task 9: Wire into the map screen + shell-driven visibility
 
-**Files:** Modify `lib/main.dart` (override `locationServiceProvider`), `lib/screens/map_screen.dart`; Create `test/widget/map_location_wiring_test.dart`.
+**Files:** Modify `lib/main.dart` (override `locationServiceProvider`), `lib/widgets/app_shell.dart` (drive `mapVisible` from the branch index), `lib/screens/map_screen.dart`; Create `test/widget/map_location_wiring_test.dart`.
+
+**Visibility is driven by the shell, not TickerMode.** `StatefulShellRoute.indexedStack` keeps every branch alive (the Map branch is NOT disposed when you switch tabs), and it exposes the active branch via `StatefulNavigationShell.currentIndex`. That index is the authoritative "is the Map tab on-screen" signal — no reverse-engineering through animation infrastructure. `AppShell` already holds the shell and a `ref`; Map is branch index **3** (home=0, program=1, plan=2, map=3, info=4).
 
 - [ ] **Step 1: Override the service in `main.dart`** — add to the root `ProviderScope` overrides:
 ```dart
@@ -919,7 +1073,28 @@ import 'package:aon2026/services/location_service.dart';
   ],
 ```
 
-- [ ] **Step 2: Write the failing wiring test** — `test/widget/map_location_wiring_test.dart`. Four cases: near fix ⇒ circle+dot, no banner; far fix ⇒ off-campus banner; user pan ⇒ follow cleared; **offstage (TickerMode off) ⇒ `mapVisible` false** (the battery-pause proof, so it isn't only runtime-verified). Uses the shared fake and an `UncontrolledProviderScope` for direct container access:
+- [ ] **Step 1b: Drive `mapVisible` from `AppShell`** — in `lib/widgets/app_shell.dart` `build`, push the branch index into `mapVisibleProvider` after each frame (setting provider state mid-build is deferred to a post-frame callback; `AppShell` rebuilds whenever `navigationShell.currentIndex` changes, so this stays in sync):
+```dart
+import 'package:aon2026/services/location_providers.dart';
+// ...
+class AppShell extends ConsumerWidget {
+  // ...
+  static const int mapBranchIndex = 3; // home,program,plan,MAP,info
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // ...existing l/items...
+    final onMap = navigationShell.currentIndex == mapBranchIndex;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(mapVisibleProvider.notifier).set(onMap);
+    });
+    // ...existing Scaffold...
+  }
+}
+```
+(`set()` no-ops when unchanged, so the post-frame callback is cheap on rebuilds that don't change the tab.)
+
+- [ ] **Step 2: Write the failing wiring test** — `test/widget/map_location_wiring_test.dart`. The camera assertions must *earn* the follow claim: the near fix uses a coordinate DIFFERENT from `campusCentre` (the map's start) and asserts the camera actually moved to it; the far and low-accuracy fixes assert the camera stayed put. Read the live camera via `MapCamera.of` on a layer element:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -935,54 +1110,84 @@ import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/screens/map_screen.dart';
 import '../support/fake_location_service.dart';
 
-ProviderContainer _container(FakeLocationService svc, {bool visible = true}) {
+ProviderContainer _container(FakeLocationService svc) {
   final c = ProviderContainer(
       overrides: [locationServiceProvider.overrideWithValue(svc)]);
   addTearDown(c.dispose);
-  c.read(mapVisibleProvider.notifier).state = visible;
+  c.read(mapVisibleProvider.notifier).set(true); // map is on-screen
   return c;
 }
 
-Widget _app(ProviderContainer c, {Widget home = const MapScreen()}) =>
+Widget _app(ProviderContainer c, {Locale? locale}) =>
     UncontrolledProviderScope(
       container: c,
       child: MaterialApp(
+        locale: locale,
         localizationsDelegates: AonL10n.localizationsDelegates,
         supportedLocales: AonL10n.supportedLocales,
-        home: home,
+        home: const MapScreen(),
       ),
     );
 
+// The camera lives below FlutterMap — read it from any layer's element.
+MapCamera _cam(WidgetTester t) =>
+    MapCamera.of(t.element(find.byType(MarkerLayer).first));
+
+// ~111 m north of centre: distinct from the start, well inside campus bounds.
+final _nearPoint = LatLng(
+    MapConfig.campusCentre.latitude + 0.001, MapConfig.campusCentre.longitude);
 UserLocationFix _near() =>
-    UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: 10);
+    UserLocationFix(position: _nearPoint, accuracyMeters: 10);
 UserLocationFix _far() => UserLocationFix(
     position: LatLng(MapConfig.campusCentre.latitude + 0.05,
         MapConfig.campusCentre.longitude),
     accuracyMeters: 10);
+UserLocationFix _lowAccNear() =>
+    UserLocationFix(position: _nearPoint, accuracyMeters: 500);
+
+Future<void> _activateWith(WidgetTester t, ProviderContainer c,
+    FakeLocationService svc, UserLocationFix fix) async {
+  await t.pumpWidget(_app(c));
+  await c.read(locationControllerProvider.notifier).onLocateTapped();
+  svc.emit(fix);
+  await t.pump(); // deliver stream event
+  await t.pump(); // rebuild + apply follow move
+}
 
 void main() {
-  testWidgets('near fix -> circle + dot, no off-campus banner', (t) async {
+  testWidgets('near fix -> circle + dot, camera MOVES to the fix, no banner',
+      (t) async {
     final svc = FakeLocationService();
     final c = _container(svc);
-    await t.pumpWidget(_app(c));
-    await c.read(locationControllerProvider.notifier).onLocateTapped();
-    svc.emit(_near());
-    await t.pump(); // deliver stream event
-    await t.pump(); // rebuild
+    await _activateWith(t, c, svc, _near());
     expect(find.byType(CircleLayer), findsOneWidget);
     expect(find.byType(MarkerLayer), findsWidgets); // venue pins + user dot
     expect(find.textContaining('from campus'), findsNothing);
+    // Earns the follow claim: camera actually recentred onto the fix.
+    expect(_cam(t).center.latitude, closeTo(_nearPoint.latitude, 1e-4));
   });
 
-  testWidgets('far fix -> off-campus banner', (t) async {
+  testWidgets('far fix -> off-campus banner AND camera stays on campus',
+      (t) async {
     final svc = FakeLocationService();
     final c = _container(svc);
-    await t.pumpWidget(_app(c));
-    await c.read(locationControllerProvider.notifier).onLocateTapped();
-    svc.emit(_far());
-    await t.pump();
-    await t.pump();
+    await _activateWith(t, c, svc, _far());
     expect(find.textContaining('from campus'), findsOneWidget);
+    expect(_cam(t).center.latitude,
+        closeTo(MapConfig.campusCentre.latitude, 1e-4)); // did NOT fly away
+  });
+
+  testWidgets('low-accuracy fix -> dot, no circle, note, NO auto-recenter',
+      (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await _activateWith(t, c, svc, _lowAccNear());
+    expect(find.byType(CircleLayer), findsNothing); // circle omitted
+    expect(find.byType(MarkerLayer), findsWidgets); // dot still shown
+    expect(find.textContaining('accuracy is low'), findsOneWidget);
+    // A fuzzy fix must not yank the camera even though it's near campus.
+    expect(_cam(t).center.latitude,
+        closeTo(MapConfig.campusCentre.latitude, 1e-4));
   });
 
   testWidgets('user pan clears follow', (t) async {
@@ -996,45 +1201,95 @@ void main() {
     expect(c.read(locationControllerProvider).following, isFalse);
   });
 
-  // The battery-pause mechanism, proven pre-runtime: an offstage IndexedStack
-  // child has TickerMode disabled — the same primitive StatefulShellRoute.
-  // indexedStack uses — so MapScreen must push mapVisible=false. If this fails,
-  // TickerMode is the wrong signal and Task 10's fallback (navigationShell
-  // index) is required.
-  testWidgets('offstage (TickerMode off) -> mapVisible false', (t) async {
+  testWidgets('off-campus banner has no overflow at 320x568 / 2.0', (t) async {
+    t.view.physicalSize = const Size(320, 568);
+    t.view.devicePixelRatio = 1.0;
+    t.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
     final svc = FakeLocationService();
-    final c = _container(svc, visible: true);
-    await t.pumpWidget(_app(c,
-        home: const IndexedStack(
-          index: 1, // MapScreen (index 0) is offstage
-          children: [MapScreen(), SizedBox.shrink()],
-        )));
-    await t.pump(); // run didChangeDependencies' post-frame callback
+    final c = _container(svc);
+    await _activateWith(t, c, svc, _far());
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('off-campus banner renders under FA locale', (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await t.pumpWidget(_app(c, locale: const Locale('fa')));
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emit(_far());
     await t.pump();
-    expect(c.read(mapVisibleProvider), isFalse);
+    await t.pump();
+    expect(find.textContaining('پردیس'), findsOneWidget); // FA "campus"
+    expect(t.takeException(), isNull);
   });
 }
 ```
 
 (If flutter_map's gesture arena doesn't fire `onPositionChanged(hasGesture:true)` under `t.drag` in the headless harness, the pan→follow wiring is a reviewed one-liner and the Task 5 unit test already proves `onUserPan`; keep the drag test but the executor may mark it a known-harness-limitation with a receipt rather than weakening it.)
 
+- [ ] **Step 2b: Write the shell-visibility test** — `test/widget/map_visibility_shell_test.dart`. This proves the *authoritative* mechanism end-to-end: the real `AppShell` inside a `StatefulShellRoute.indexedStack` toggles `mapVisibleProvider` as the branch changes (replaces the old TickerMode experiment — no fallback branch remains):
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/widgets/app_shell.dart';
+
+GoRouter _router() => GoRouter(
+      initialLocation: '/home',
+      routes: [
+        StatefulShellRoute.indexedStack(
+          builder: (context, state, shell) => AppShell(navigationShell: shell),
+          branches: [
+            for (final p in const ['/home', '/program', '/plan', '/map', '/info'])
+              StatefulShellBranch(routes: [
+                GoRoute(path: p, builder: (_, _) => Text('screen $p')),
+              ]),
+          ],
+        ),
+      ],
+    );
+
+void main() {
+  testWidgets('mapVisible tracks the active branch', (t) async {
+    final c = ProviderContainer();
+    addTearDown(c.dispose);
+    final router = _router();
+    addTearDown(router.dispose);
+    await t.pumpWidget(UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp.router(
+        routerConfig: router,
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+      ),
+    ));
+    await t.pumpAndSettle();
+    expect(c.read(mapVisibleProvider), isFalse); // on /home
+
+    router.go('/map');
+    await t.pumpAndSettle();
+    expect(c.read(mapVisibleProvider), isTrue); // Map tab on-screen
+
+    router.go('/info');
+    await t.pumpAndSettle();
+    expect(c.read(mapVisibleProvider), isFalse); // switched away
+  });
+}
+```
+
 - [ ] **Step 3: Run to verify it fails** — FAIL (no layer/banner/pan wiring yet).
 
 - [ ] **Step 4: Wire `map_screen.dart`:**
   1. **Import** the model, providers, layer, locate button.
-  2. **mapVisible via TickerMode** — in `_MapScreenState`, override `didChangeDependencies` to push visibility:
-     ```dart
-     @override
-     void didChangeDependencies() {
-       super.didChangeDependencies();
-       // Offstage branches of the IndexedStack shell have TickerMode disabled.
-       final visible = TickerMode.of(context) && _mode == MapMode.campusMap;
-       WidgetsBinding.instance.addPostFrameCallback((_) {
-         if (mounted) ref.read(mapVisibleProvider.notifier).state = visible;
-       });
-     }
-     ```
-     Also set it in `build` when `_mode` changes (panorama hides the map). **If a widget test proves TickerMode does not toggle for the go_router shell, fall back to reading `navigationShell` — but verify first (Task 10 records which mechanism holds).**
+  2. **mapVisible is NOT touched here.** `AppShell` (Step 1b) is the single writer of `mapVisibleProvider`, driven by the authoritative `navigationShell.currentIndex`. `map_screen` must not also write it (two writers would race). Do NOT add any `TickerMode` / `didChangeDependencies` visibility code. *(IOU-A4: pausing GPS while the map's internal panorama sub-mode is open is deferred — GPS keeps running on the Map tab regardless of sub-mode in Phase A; acceptable, and it keeps a single writer.)*
   3. **onPositionChanged** on `MapOptions`:
      ```dart
      onPositionChanged: (camera, hasGesture) {
@@ -1050,30 +1305,40 @@ void main() {
      MarkerLayer(markers: markers),
      if (loc.active && loc.fix != null) UserLocationDot(fix: loc.fix!),
      ```
-  5. **Follow recenter** — a `ref.listen` that moves the camera when following near-campus. **Call it unconditionally at the very top of `build` (before any early return or `_mode` branch)** — Riverpod requires `ref.listen` to run on every build, so it must not sit inside an `if`/mode branch:
+  5. **Follow recenter** — a `ref.listen` that moves the camera when following near-campus **from a good fix**. **Call it unconditionally at the very top of `build` (before any early return or `_mode` branch)** — Riverpod requires `ref.listen` to run on every build, so it must not sit inside an `if`/mode branch. The `!isLowAccuracy` guard is what stops a fuzzy estimate from yanking the camera (review #6):
      ```dart
      ref.listen(locationControllerProvider, (_, s) {
-       if (s.following && s.fix != null && MapConfig.isNearCampus(s.fix!.position)) {
+       if (s.following &&
+           s.fix != null &&
+           !s.fix!.isLowAccuracy &&
+           MapConfig.isNearCampus(s.fix!.position)) {
          _controller.move(s.fix!.position, _controller.camera.zoom);
        }
      });
      ```
      (Programmatic `move` fires `onPositionChanged` with `hasGesture: false`, so it does not self-cancel follow.)
   6. **Locate button** — pass `locateButton: const LocateButton()` to `MapControlIsland` (replacing `onRecenter`).
-  7. **Off-campus banner** — a `Positioned` localized note shown when `loc.active && loc.fix != null && !MapConfig.isNearCampus(loc.fix!.position)`:
+  7. **Status note** — one `Positioned` note in the control Stack, off-campus taking priority over low-accuracy (both read `l.*` in a `context.aon.surface` pill via a small `_MapNote(text:)` helper):
      ```dart
-     if (loc.active && loc.fix != null && !MapConfig.isNearCampus(loc.fix!.position))
-       Positioned(top: ..., left: ..., right: ..., child: _OffCampusBanner(
-         km: (MapConfig.distanceFromCampusMeters(loc.fix!.position) / 1000).toStringAsFixed(1)));
+     if (loc.active && loc.fix != null) ...[
+       if (!MapConfig.isNearCampus(loc.fix!.position))
+         Positioned(top: ..., left: ..., right: ..., child: _MapNote(
+           text: l.mapOffCampus(
+             (MapConfig.distanceFromCampusMeters(loc.fix!.position) / 1000)
+                 .toStringAsFixed(1))))
+       else if (loc.fix!.isLowAccuracy)
+         Positioned(top: ..., left: ..., right: ..., child:
+           _MapNote(text: l.mapLowAccuracy)),
+     ],
      ```
-     where `_OffCampusBanner` renders `l.mapOffCampus(km)` in a `context.aon.surface` pill.
+     `_MapNote` is a private `StatelessWidget` rendering `text` in a `context.aon.surface` pill (content-tier, not glass). It must not overflow at 320×568 / 2.0 (wrap the text).
 
-- [ ] **Step 5: Run tests + web build** — Run: `flutter test test/widget/map_location_wiring_test.dart && flutter analyze && flutter build web` — Expected: PASS; clean; web green.
+- [ ] **Step 5: Run tests + web build** — Run: `flutter test test/widget/map_location_wiring_test.dart test/widget/map_visibility_shell_test.dart && flutter analyze && flutter build web` — Expected: PASS; clean; web green.
 
 - [ ] **Step 6: Commit**
 ```bash
-git add lib/main.dart lib/screens/map_screen.dart test/widget/map_location_wiring_test.dart
-git commit -m "feat(map): wire live location + follow + off-campus banner into the map (Phase A)"
+git add lib/main.dart lib/widgets/app_shell.dart lib/screens/map_screen.dart test/widget/map_location_wiring_test.dart test/widget/map_visibility_shell_test.dart
+git commit -m "feat(map): wire live location + follow (good-fix only) + shell-driven visibility (Phase A)"
 ```
 
 ---
@@ -1091,17 +1356,27 @@ git commit -m "feat(map): wire live location + follow + off-campus banner into t
 [ ] grant → dot + accuracy circle appear; map recenters (following)
 [ ] pan the map → follow stops, dot stays live (updates as sim location moves)
 [ ] tap locate again → follows again
+[ ] feed a low-accuracy fix → dot stays, circle gone, "accuracy is low" note, map does NOT jump
 [ ] set the sim location far from campus → off-campus banner; map does NOT fly away
-[ ] switch to another tab and back → GPS paused while away; dot resumes on return
+[ ] switch to another tab and back → GPS paused while away (mapVisible false); dot resumes on return
+[ ] turn off Location Services mid-session → locate shows "Turn on Location Services"
 [ ] deny permission (reset) → locate shows "unavailable"; map still fully usable
-[ ] confirm which visibility mechanism held (TickerMode vs shell index) — record it
 ```
-- [ ] **Step 4: Closeout** — append to the spec: resolved geolocator version, web-build result, the visibility mechanism that held, and the runtime checklist result.
-- [ ] **Step 5: Final re-gate** — Run: `flutter analyze && flutter test && git diff --check && git status --short`, then a hostile read of `git diff main...HEAD`.
-- [ ] **Step 6: Commit**
+- [ ] **Step 4: Web runtime smoke** (web is load-bearing, and a green build proves only compilation — not the browser permission/degradation path). Serve the release build over a secure context (`localhost` counts) and record `PASS / FAIL / NOT AVAILABLE` per line:
+```text
+[ ] open Map → NO permission prompt on tab open (lazy)
+[ ] tap locate → browser permission prompt appears
+[ ] allow → dot appears; location activates
+[ ] deny / block → map stays fully usable; locate shows the neutral unavailable/retry state
+[ ] no console UnsupportedError from openAppSettings / openLocationSettings / getServiceStatusStream
+[ ] (if testable) toggle offline / no-fix → stream-error path degrades gracefully, no crash
+```
+- [ ] **Step 5: Closeout** — append to the spec: resolved geolocator version, all three build results, the **web runtime** result, the iOS runtime result, and confirmation that visibility is shell-index-driven (the mechanism is settled in code + the Step 2b test — not an open question) and that `FOREGROUND_SERVICE_LOCATION` was determined **not** required (foreground-only).
+- [ ] **Step 6: Final re-gate** — Run: `flutter analyze && flutter test && git diff --check && git status --short`, then a hostile read of `git diff main...HEAD`.
+- [ ] **Step 7: Commit**
 ```bash
 git add docs/superpowers/specs/2026-08-11-aon-map-live-location-phaseA-design.md
-git commit -m "docs(map): Phase A verification + runtime closeout"
+git commit -m "docs(map): Phase A verification + web/iOS runtime closeout"
 ```
 
 ---
@@ -1118,27 +1393,30 @@ git commit -m "docs(map): Phase A verification + runtime closeout"
 | §5.2 service seam + web guards | 4 |
 | §5.2.1 web attempt-first | 4 (status/request), 10 (runtime) |
 | §5.3 three decoupled providers | 5 |
-| §5.6 locate control states + semantics | 8 |
-| §5.5 layer order + low-accuracy omit | 6, 9 |
-| §5.7 pan-exits-follow, off-campus, runtime failure | 5, 9 |
-| §6 lifecycle (`active && mapVisible`) | 5, 9 |
-| §8 iOS foreground-only / Android perms | 1 |
+| §5.6 locate control states (incl. low-accuracy) + semantic tap | 8 |
+| §5.5 layer order + low-accuracy omit + no-recenter | 6, 9 |
+| §5.7 pan-exits-follow, off-campus, runtime failure (classified) | 5, 9 |
+| §6 lifecycle (`active && mapVisible`, shell-index driven) | 5, 9 |
+| §8 iOS foreground-only / Android perms / iOS Always-bypass | 1 |
 | §D2 lazy permission | 5, 9, 10 |
 | §D5 instant recenter | 9 |
-| l10n EN/FA | 7 |
-| §9 tests | every task + 10 |
+| l10n EN/FA (incl. low-accuracy) | 7 |
+| §9 tests (incl. 2.0 + FA + camera-move + semantic-tap) | every task + 10 |
 
-**2. Placeholder scan** — clean. Task 9 Step 2's wiring test is now written in full (four cases incl. the TickerMode/mapVisible proof). Every other step carries complete code; no TBD/TODO/"add error handling"/described-not-written steps remain.
+**2. Placeholder scan** — clean. Every step carries complete code; no TBD/TODO/"add error handling"/described-not-written steps. Both the wiring test (Step 2) and the shell-visibility test (Step 2b) are written in full.
 
-**3. Type consistency** — `LocationStatus`, `LocationService` (`status`/`request`/`watch`/`serviceEnabledChanges`/`openAppSettings`/`openLocationSettings`), `UserLocationFix`(`position`/`accuracyMeters`/`isLowAccuracy`), `LocationSnapshot`(`status`/`fix`/`active`/`following`), `locationServiceProvider`/`mapVisibleProvider`/`locationControllerProvider`, `MapConfig.{distanceFromCampusMeters,isNearCampus,locationCampusRadiusMeters}`, `UserLocationCircle`/`UserLocationDot` (both `StatelessWidget`, `fix:` arg), `LocateButton`, `l.locate*`/`l.mapOffCampus` — consistent across tasks. Shared fake lives at `test/support/fake_location_service.dart` (imported by Tasks 4, 5, 9).
+**3. Type consistency** — `LocationStatus`, `LocationService` (`status`/`request`/`watch`/`serviceEnabledChanges`/`openAppSettings`/`openLocationSettings`), `UserLocationFix`(`position`/`accuracyMeters`/`isLowAccuracy`, throws `ArgumentError`), `LocationSnapshot`(`status`/`fix`/`active`/`following`), `locationServiceProvider`/`locationControllerProvider`, `mapVisibleProvider` (`NotifierProvider<MapVisibleNotifier,bool>` with `.set(bool)`), `MapConfig.{distanceFromCampusMeters,isNearCampus,locationCampusRadiusMeters}`, `UserLocationCircle`/`UserLocationDot` (both `StatelessWidget`, `fix:` arg), `LocateButton`, `l.locate*`/`l.mapLowAccuracy`/`l.mapOffCampus`, `AppShell.mapBranchIndex` — consistent across tasks. Shared fake lives at `test/support/fake_location_service.dart` (imported by Tasks 4, 5, 9).
 
 ---
 
 ## Notes for the executor
 
-- **The `mapVisible` mechanism is the one real unknown.** The plan uses `TickerMode.of(context)` (idiomatic for offstage IndexedStack children). **Verify it toggles under `StatefulShellRoute.indexedStack` with a widget test before relying on it**; if it doesn't, drive `mapVisibleProvider` from the `AppShell`'s `navigationShell.currentIndex` instead (spec §6's stated approach). Record which held (Task 10).
+- **`mapVisible` is settled: shell-index-driven, single writer.** `AppShell` pushes `navigationShell.currentIndex == mapBranchIndex(3)` into `mapVisibleProvider` (Task 9 Step 1b); `map_screen` never writes it. This is the authoritative branch signal `StatefulShellRoute.indexedStack` exposes — no `TickerMode`, no fallback experiment. The Step 2b test proves it end-to-end.
+- **`StateProvider` does not exist in this repo's Riverpod 3** — `mapVisibleProvider` is a `NotifierProvider` with a tiny `MapVisibleNotifier`, mirroring the repo's `SelectedIdNotifier` pattern.
+- **`UserLocationFix` validates with a `throw`, not `assert`** (asserts are stripped in release).
+- **Runtime GPS errors are classified, not blanket "serviceOff"**: `serviceEnabledChanges(false)` → serviceOff; a position-stream error → re-evaluate `status()` (mobile) / `unknown` (web).
 - **Never treat web `checkPermission()==denied` as authoritative** (§5.2.1) — the web path attempts acquisition.
-- **Web build is a hard gate** (Task 1 Step 2, Task 10 Step 2) — the entire reason heading was cut.
+- **Web is a hard gate at BOTH ends**: `flutter build web` in Task 1 Step 6 (integration) and Task 10 Step 2 (final), plus a Task 10 Step 4 web *runtime* smoke (the build proves compilation, not the browser permission path).
 - Programmatic `MapController.move` fires `onPositionChanged` with `hasGesture:false`; only `hasGesture:true` exits follow — do not cancel follow on a follow-driven move.
 - **Off-campus, the dot is off-screen by design.** The existing `MapOptions.cameraConstraint: CameraConstraint.contain(bounds: MapConfig.campusBounds)` keeps the camera framed on campus, so an off-campus fix never scrolls into view — the localized banner is the *sole* off-campus feedback. This is intended (spec §5.4); don't "fix" it by loosening the camera constraint.
 - Never weaken an existing test to make Phase A pass.

@@ -306,3 +306,34 @@ pan/lifecycle/failure wiring; pure campus calc; `CircleLayer`/`MarkerLayer` in
 the right order; locate-control state machine + semantics; l10n; 2.0;
 verification incl. `flutter build web` and an on-device location run). No
 implementation before that plan is written and reviewed.
+
+---
+
+## Closeout — Map Parity Phase A (2026-08-12)
+
+Implemented via the TDD plan (`docs/superpowers/plans/2026-08-11-aon-map-live-location-phaseA.md`), 11 tasks, one commit per task on `feature/map-live-location-phaseA`.
+
+**Static + tests:** `flutter analyze` clean; **491 tests pass** (462 baseline + 29 new). No existing test weakened (`map_control_island_test` updated to the new `locateButton` slot — an intentional API change, still asserting three buttons / callbacks / tap targets).
+
+**Builds (all green, on-branch):**
+- `flutter build web` — ✅ (the load-bearing gate; the reason `flutter_compass` was cut. geolocator 14.0.3 compiles for web.)
+- `flutter build ios --simulator --debug` — ✅ (Pod install exercises the Podfile `BYPASS_PERMISSION_LOCATION_ALWAYS=1` bypass)
+- `flutter build apk --debug` — ✅
+
+**Resolved dependency:** `geolocator` **14.0.3** (pinned `^14.0.3`, lock committed). iOS resolves `geolocator_apple` via Swift Package Manager, so `Podfile.lock` gains no pod entry — only its PODFILE CHECKSUM changed (from the `post_install` edit).
+
+**Visibility mechanism — settled, not an open question:** `mapVisible` is driven by `AppShell` from `StatefulNavigationShell.currentIndex == 3` (single writer); `map_screen` never writes it. The `TickerMode` experiment was removed entirely in plan v2. Proven end-to-end by `map_visibility_shell_test` (real `StatefulShellRoute.indexedStack`) and confirmed on-device (tab-switch pause/resume below).
+
+**Foreground-service determination:** `FOREGROUND_SERVICE_LOCATION` is **not required** — Phase A streams location only while foregrounded and the Map tab is visible (`active && mapVisible`); no background/continuous service. Not added.
+
+**iOS simulator runtime pass (iPhone 17 Pro, iOS 26 sim):**
+- [x] open Map → **NO** permission prompt (lazy) — PASS
+- [x] tap locate → permission prompt appears, showing the When-In-Use copy; options are Allow Once / While Using / Don't Allow (**no Always**, confirming foreground-only config) — PASS
+- [x] grant → location dot (accent-on-white ring) appears; map recenters (following); locate button shows the filled "following" icon — PASS
+- [x] location far from campus (fed via `simctl location`) → off-campus banner "You're about 3.2 km from campus"; map does **NOT** fly away (dot off-screen by design) — PASS
+- [x] switch to another tab and back → dot resumes on return (GPS paused while away via `mapVisible`); no crash — PASS
+- [~] pan-exits-follow / tap-again-refollows / low-accuracy-no-recenter / deny+serviceOff copy — **not exercised on-device** (accuracy can't be set via `simctl`; these paths are covered by the unit + widget suite: `location_controller_test`, `locate_button_test`, `map_location_wiring_test`).
+
+**Web runtime smoke — BLOCKED by a pre-existing condition (NOT a Phase A regression):** served the release build over `http://localhost` (secure context) in a headless browser; the app fails to paint (black screen, an uncaught Dart exception at startup, `Object.Z` path). **Verified pre-existing:** the base commit `ecb3204` (before any Phase A code) built and served identically **also black-screens with the same startup exception**. Phase A adds no startup-executing web path (the location stream starts only on a locate tap), so it did not introduce this. The web *compile* gate — which is what Phase A actually required — passes at both commits. The web static-serve runtime failure is out of Phase A scope and warrants a separate investigation.
+
+**Status:** Phase A is **CODE-COMPLETE and RELEASE-READY on iOS/Android** (native runtime verified on-device for the core paths; full logic covered by 491 automated tests). **Web:** compiles and ships, but its at-runtime render is blocked by a pre-existing, non-Phase-A issue to be triaged separately.

@@ -15,6 +15,11 @@
 - **Tilt-compensated heading is in-scope** (accelerometer + magnetometer, Android rotation-matrix method) — raw `atan2(x,y)` alone is not shipped.
 - **Pure math takes plain value types** (`Vector3`), never `sensors_plus` event types — so `heading_math`/`bearing_math` run in VM-only unit tests.
 - **Stream fusion is combine-latest** (emit on the magnetometer tick using the latest accelerometer sample), never a 1:1 `zip`.
+- **Explicit sampling rate:** subscribe with `samplingPeriod: const Duration(milliseconds: 50)` (~20 Hz) on both streams — an arrow UX must not silently run at max sensor speed (battery).
+- **Deterministic failure:** the heading stream has an **acquisition + staleness timeout** — if no valid heading arrives within a bounded window, or updates stop, it emits `unavailable` (so a no-magnetometer sim/device reaches the fallback rather than "finding north…" forever). A sensor **error is terminal for that session**: cancel BOTH streams, clear cached samples, emit `unavailable`, stop — never resurrect the arrow from stale data. The smoother is created **inside `watch()`** (fresh per session).
+- **Orientation policy (MVP):** `heading_math` computes azimuth in the device's **natural-orientation** frame (Android/iOS sensor convention). The app is **portrait-locked on phones** (`SystemChrome` + Info.plist), so natural == display there. **`PointMeScreen` locks portrait** on entry to hold that contract on devices whose Info.plist otherwise allows landscape (iPad). Remapping the sensor axes for landscape-natural / rotated displays is **IOU-B4** — until then, on a landscape-natural tablet the arrow is not trusted (documented, not silent).
+- **Location demand:** `PointMeScreen` is its own route, so Phase A's `active && mapVisible` GPS gate is widened to `active && (mapVisible || pointMeActive)` via a new `pointMeActiveProvider` — so a PointMe screen (even deep-linked) keeps GPS alive.
+- **Location quality respected:** a low-accuracy fix (`UserLocationFix.isLowAccuracy`, >200 m — Phase A) must NOT produce a `nearTarget` claim; the screen shows an "improving accuracy" note instead of false precision.
 - **Declination is preflight-verified** (WMM2025 @ campus centre @ 2026-09-19) and stored as `MapConfig.campusMagneticDeclinationDegrees`; `true = magnetic + east-positive declination`.
 - **`context.aon` colours only** (the arrow is a themed accent shape, no hex).
 - **All new strings** go in **both** `lib/l10n/app_en.arb` and `lib/l10n/app_fa.arb` (build fails if FA misses a key); cardinal + side words are l10n, not literals.
@@ -66,19 +71,39 @@ source:       <exact URL> (retrieved <date>)
 
 ---
 
-## Task 1: Add `sensors_plus` + web-build isolation gate
+## Task 1: Add `sensors_plus` + platform config + all-three build gate
 
-**Files:** Modify `pubspec.yaml`.
+**Files:** Modify `pubspec.yaml`, `android/settings.gradle.kts` (AGP bump), `ios/Runner/Info.plist` (motion key).
 
-- [ ] **Step 1: Add the dependency, pinned** — Run: `flutter pub add sensors_plus` — Expected: resolves 7.x; `pub get` OK. (No native permission config — motion sensors need none on iOS/Android.)
+**Why the toolchain step:** `sensors_plus` 7.x **requires AGP ≥ 8.12.1 / Gradle ≥ 8.13 / Kotlin ≥ 2.2.0 / Java 17** (verified against its changelog). The repo has **Gradle 9.1.0 ✓, Kotlin 2.3.20 ✓, Java 17 ✓, but AGP 8.11.1 ✗** — AGP must be bumped, and all three native builds must run the moment the dep lands (discover a toolchain break before any feature code exists).
 
-- [ ] **Step 2: Verify the web build STILL compiles** (the whole reason we did not use `flutter_compass`) — Run: `flutter build web` — Expected: SUCCESS. **If it fails, STOP** — `sensors_plus` web support is a hard requirement; do not proceed. This isolates any web break to the dependency before any feature code exists.
+- [ ] **Step 1: Add the dependency, pinned** — Run: `flutter pub add sensors_plus:^7.1.0` — Expected: resolves 7.1.0; `pub get` OK.
 
-- [ ] **Step 3: Analyze + commit**
+- [ ] **Step 2: Bump AGP to satisfy `sensors_plus`** — in `android/settings.gradle.kts`, change the Android Gradle Plugin version:
+```kotlin
+    id("com.android.application") version "8.12.1" apply false   // was 8.11.1 (sensors_plus 7.x needs >=8.12.1)
+```
+(Gradle 9.1.0, Kotlin 2.3.20, Java 17 already meet the floor — do not touch those.)
+
+- [ ] **Step 3: iOS — motion usage description (required since sensors_plus 6.0.0; omission CRASHES on motion access).** In `ios/Runner/Info.plist` `<dict>` add:
+```xml
+	<key>NSMotionUsageDescription</key>
+	<string>Used to sense which way you're facing so the map can point you toward the venues. This never leaves your device.</string>
+```
+
+- [ ] **Step 4: Build ALL THREE platforms now** — Run:
+```bash
+flutter build web            # sensors_plus web support (the reason flutter_compass was cut)
+flutter build apk --debug    # exercises the AGP bump — the real toolchain risk
+flutter build ios --simulator --debug
+```
+Expected: all three SUCCEED. **If web fails, STOP** (web support is a hard requirement). **If the APK fails on AGP/Gradle/Kotlin, resolve the toolchain here** (bump AGP further or, as a last resort, pin an older `sensors_plus` that supports AGP 8.11) — before any feature code.
+
+- [ ] **Step 5: Analyze + commit**
 ```bash
 flutter analyze
-git add pubspec.yaml pubspec.lock
-git commit -m "feat(map): add sensors_plus for heading (web build verified) (Phase B)"
+git add pubspec.yaml pubspec.lock android/settings.gradle.kts ios/Runner/Info.plist
+git commit -m "feat(map): add sensors_plus 7.1.0 + AGP 8.12.1 + iOS motion key (all builds green) (Phase B)"
 ```
 
 ---
@@ -241,11 +266,17 @@ void main() {
   });
 
   group('CircularSmoother', () {
-    test('averages across the 359/1 wrap near 0, not 180', () {
+    test('rejects an out-of-range alpha', () {
+      expect(() => CircularSmoother(0), throwsA(anything));
+      expect(() => CircularSmoother(1.5), throwsA(anything));
+    });
+    test('a hard wrap sequence stays near 0, never ~180', () {
       final s = CircularSmoother(0.5);
-      s.add(359);
-      final out = s.add(1);
-      expect(out < 20 || out > 340, isTrue); // near 0, never ~180
+      double out = 0;
+      for (final v in [358.0, 359.0, 0.0, 1.0, 2.0]) {
+        out = s.add(v);
+      }
+      expect(out < 20 || out > 340, isTrue);
     });
     test('converges to a steady input', () {
       final s = CircularSmoother(0.5);
@@ -277,6 +308,11 @@ class Vector3 {
 /// Tilt-compensated MAGNETIC heading in [0,360), or null if the inputs are
 /// degenerate (free-fall, device at a magnetic pole, parallel vectors).
 ///
+/// Computed in the device's NATURAL-orientation frame (sensor convention). This
+/// is correct only when natural == display orientation — true on a portrait-
+/// locked phone (which this app is). Landscape-natural/rotated displays (iPad)
+/// need axis remapping first — IOU-B4; `PointMeScreen` locks portrait meanwhile.
+///
 /// Implements Android `SensorManager.getRotationMatrix` + `getOrientation`:
 /// A = normalize(gravity) [up]; H = mag × A [east]; if ‖H‖≈0 → null; normalize H;
 /// M = A × H [north]; azimuth = atan2(H.y, M.y)  (== getOrientation's atan2(R[1],R[4])).
@@ -304,8 +340,9 @@ double? tiltCompensatedHeadingDegrees(Vector3 mag, Vector3 accel) {
 }
 
 /// Exponential low-pass over the unit circle, so 359° and 1° average near 0°.
+/// A fresh instance is created per heading session (see `SensorsHeadingService`).
 class CircularSmoother {
-  CircularSmoother(this.alpha);
+  CircularSmoother(this.alpha) : assert(alpha > 0 && alpha <= 1);
   final double alpha;
   double _sin = 0, _cos = 0;
   bool _seeded = false;
@@ -402,10 +439,13 @@ abstract interface class HeadingService {
 
 /// Real adapter over sensors_plus. Fuses magnetometer + accelerometer with
 /// combine-latest (emit on each magnetometer tick using the latest accel), applies
-/// [tiltCompensatedHeadingDegrees], and smooths. Web has no Magnetometer API in
-/// any browser, so it short-circuits to a single `unsupported` WITHOUT subscribing.
+/// [tiltCompensatedHeadingDegrees], smooths (fresh smoother per session), and is
+/// deterministic on failure. Web has no Magnetometer API in any browser, so it
+/// short-circuits to a single `unsupported` WITHOUT subscribing.
 class SensorsHeadingService implements HeadingService {
-  final _smoother = CircularSmoother(0.2);
+  static const _period = Duration(milliseconds: 50); // ~20 Hz
+  static const _acquireTimeout = Duration(seconds: 4);
+  static const _staleTimeout = Duration(seconds: 2);
 
   @override
   Stream<HeadingSample> watch() {
@@ -414,36 +454,58 @@ class SensorsHeadingService implements HeadingService {
           const HeadingSample(availability: HeadingAvailability.unsupported));
     }
     final controller = StreamController<HeadingSample>();
+    final smoother = CircularSmoother(0.2); // fresh per session
     Vector3? latestAccel;
     StreamSubscription? magSub, accSub;
+    Timer? acquireTimer, staleTimer;
+    var closed = false;
 
-    void startError(Object _) {
-      controller.add(
-          const HeadingSample(availability: HeadingAvailability.unavailable));
+    // Any required-sensor failure OR a timeout is TERMINAL for this session:
+    // cancel both streams, clear state, emit unavailable, stop. Never resurrect
+    // the arrow from stale data.
+    void fail() {
+      acquireTimer?.cancel();
+      staleTimer?.cancel();
+      magSub?.cancel();
+      accSub?.cancel();
+      magSub = null;
+      accSub = null;
+      latestAccel = null;
+      if (!closed) {
+        controller.add(
+            const HeadingSample(availability: HeadingAvailability.unavailable));
+      }
     }
 
     controller.onListen = () {
       controller.add(
           const HeadingSample(availability: HeadingAvailability.acquiring));
-      accSub = accelerometerEventStream().listen(
-        (e) => latestAccel = Vector3(e.x, e.y, e.z),
-        onError: startError,
-      );
-      magSub = magnetometerEventStream().listen(
+      // No valid heading within the window → deterministic fallback (this is
+      // what a no-magnetometer simulator/device hits instead of "finding north…").
+      acquireTimer = Timer(_acquireTimeout, fail);
+      accSub = accelerometerEventStream(samplingPeriod: _period)
+          .listen((e) => latestAccel = Vector3(e.x, e.y, e.z), onError: (_) => fail());
+      magSub = magnetometerEventStream(samplingPeriod: _period).listen(
         (e) {
           final a = latestAccel;
           if (a == null) return; // wait for first accel sample
           final mag = tiltCompensatedHeadingDegrees(Vector3(e.x, e.y, e.z), a);
-          if (mag == null) return; // degenerate; stay in current state
+          if (mag == null) return; // degenerate reading; keep waiting
+          acquireTimer?.cancel();
+          staleTimer?.cancel();
+          staleTimer = Timer(_staleTimeout, fail); // sensor stalled → unavailable
           controller.add(HeadingSample(
             availability: HeadingAvailability.available,
-            magneticHeadingDegrees: _smoother.add(mag),
+            magneticHeadingDegrees: smoother.add(mag),
           ));
         },
-        onError: startError,
+        onError: (_) => fail(),
       );
     };
     controller.onCancel = () async {
+      closed = true;
+      acquireTimer?.cancel();
+      staleTimer?.cancel();
       await magSub?.cancel();
       await accSub?.cancel();
     };
@@ -451,7 +513,7 @@ class SensorsHeadingService implements HeadingService {
   }
 }
 ```
-(If `sensors_plus` 7.x names the streams `magnetometerEvents`/`accelerometerEvents` instead of the `…EventStream()` functions, use whichever the installed version exports — `…EventStream()` is the non-deprecated form; confirm with `grep -r "magnetometerEventStream\|accelerometerEventStream" ~/.pub-cache/hosted/pub.dev/sensors_plus-*/lib`.)
+(Confirm the installed API exports `magnetometerEventStream({Duration samplingPeriod})` / `accelerometerEventStream(...)` — the non-deprecated 7.x form: `grep -rn "magnetometerEventStream\|accelerometerEventStream\|samplingPeriod" ~/.pub-cache/hosted/pub.dev/sensors_plus-*/lib`. If the arg name differs, use the installed signature.)
 
 - [ ] **Step 4: Run to verify it passes** — Run: `flutter test test/unit/heading_service_fake_test.dart && flutter analyze` — Expected: PASS; clean.
 
@@ -465,16 +527,17 @@ git commit -m "feat(map): HeadingService seam over sensors_plus + web-unsupporte
 
 ## Task 5: `PointMeController` + providers
 
-**Files:** Create `lib/services/point_me_controller.dart`, `test/unit/point_me_controller_test.dart`.
+**Files:** Create `lib/services/point_me_controller.dart`, `test/unit/point_me_controller_test.dart`. **Modify** `lib/services/location_providers.dart` (Phase A) to add `pointMeActiveProvider` and widen the GPS gate.
 
 **Interfaces:**
-- `class PointMeState { HeadingAvailability availability; double? relativeAngleDegrees; double? trueBearingDegrees; double? distanceMeters; bool nearTarget; bool hasFix; }`.
-- Providers (using ONLY the plain-`Notifier` patterns Phase A already compiled on Riverpod 3.4.2 — **no `.family`, no `.autoDispose` chain**, which are not the verified 3.4 manual API):
+- `class PointMeState { HeadingAvailability availability; double? relativeAngleDegrees; double? trueBearingDegrees; double? distanceMeters; bool nearTarget; bool hasFix; bool locationReliable; }` — `locationReliable` is false when the fix `isLowAccuracy`; `nearTarget` can only be true when `locationReliable`.
+- Providers (using ONLY the plain-`Notifier` patterns Phase A already compiled on Riverpod 3.4.2 — **no `.family`, no `.autoDispose` chain**):
   - `headingServiceProvider` (`Provider<HeadingService>`).
-  - `pointMeTargetProvider` (`NotifierProvider<PointMeTargetNotifier, LatLng?>`, default null) — a tiny setter notifier, exactly the shape of Phase A's `MapVisibleNotifier`. `PointMeScreen` sets it on open and clears it (null) on dispose/background — this IS the sensor lifecycle without needing `autoDispose`.
+  - `pointMeTargetProvider` (`NotifierProvider<PointMeTargetNotifier, LatLng?>`, default null) — set by `PointMeScreen` on open, cleared (null) on dispose/background. This IS the heading-stream lifecycle.
+  - `pointMeActiveProvider` (`NotifierProvider<PointMeActiveNotifier, bool>`, default false) — set true while `PointMeScreen` is open so GPS stays alive off the Map tab. **Added in `location_providers.dart`** and OR'd into Phase A's gate: `wantStream = state.active && (mapVisible || pointMeActive)`.
   - `pointMeControllerProvider` (`NotifierProvider<PointMeController, PointMeState>`).
 
-**Consumes:** Phase A's `locationControllerProvider` (for `fix.position`), `pointMeTargetProvider`, and `MapConfig.campusMagneticDeclinationDegrees` / `pointMeNearTargetMeters`. When the target is null the controller cancels the heading stream (lifecycle); when set, it subscribes.
+**Consumes:** Phase A's `locationControllerProvider` (for `fix.position` + `fix.isLowAccuracy`), `pointMeTargetProvider`, `MapConfig.campusMagneticDeclinationDegrees` / `pointMeNearTargetMeters`.
 
 - [ ] **Step 1: Write the failing test** — `test/unit/point_me_controller_test.dart`:
 ```dart
@@ -561,11 +624,44 @@ void main() {
     expect(s.trueBearingDegrees, isNotNull); // fallback card still works
   });
 
-  test('near target flips nearTarget true', () async {
+  test('near target flips nearTarget true (and short-circuits bearing)',
+      () async {
     final loc = FakeLocationService();
     final c = _c(FakeHeadingService(), loc, target: MapConfig.campusCentre);
     await _activate(c, loc); // user also at campus centre
-    expect(_state(c).nearTarget, isTrue);
+    final s = _state(c);
+    expect(s.nearTarget, isTrue);
+    expect(s.trueBearingDegrees, isNull); // no ill-defined bearing at ~0 range
+  });
+
+  test('low-accuracy fix → not reliable, no near-target claim', () async {
+    final loc = FakeLocationService();
+    final c = _c(FakeHeadingService(), loc, target: MapConfig.campusCentre);
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    loc.emit(
+        UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: 250));
+    await Future<void>.delayed(Duration.zero);
+    final s = _state(c);
+    expect(s.locationReliable, isFalse);
+    expect(s.nearTarget, isFalse); // never "you're here" on a ±250 m fix
+  });
+
+  test('PointMe keeps GPS alive when the Map tab is not visible', () async {
+    final loc = FakeLocationService();
+    final c = ProviderContainer(overrides: [
+      headingServiceProvider.overrideWithValue(FakeHeadingService()),
+      locationServiceProvider.overrideWithValue(loc),
+    ]);
+    addTearDown(c.dispose);
+    c.read(mapVisibleProvider.notifier).set(false); // Map not the active tab
+    c.read(pointMeActiveProvider.notifier).set(true); // PointMe screen open
+    c.read(pointMeControllerProvider);
+    c.read(pointMeTargetProvider.notifier).set(_target);
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    loc.emit(
+        UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: 8));
+    await Future<void>.delayed(Duration.zero);
+    expect(c.read(pointMeControllerProvider).hasFix, isTrue); // GPS not paused
   });
 
   test('clearing the target (screen left) cancels heading & drops to no-target',
@@ -587,7 +683,29 @@ void main() {
 
 - [ ] **Step 2: Run to verify it fails** — FAIL.
 
-- [ ] **Step 3: Implement** — `lib/services/point_me_controller.dart`:
+- [ ] **Step 3a: Widen the Phase A GPS gate** — in `lib/services/location_providers.dart` add, next to `mapVisibleProvider`:
+```dart
+/// True while a PointMeScreen is open. GPS must stay alive off the Map tab, so
+/// this is OR'd into the location gate below. Same tiny-notifier shape.
+final pointMeActiveProvider =
+    NotifierProvider<PointMeActiveNotifier, bool>(PointMeActiveNotifier.new);
+
+class PointMeActiveNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool active) {
+    if (state != active) state = active;
+  }
+}
+```
+In `LocationController.build()` add `ref.listen(pointMeActiveProvider, (_, _) => _sync());`, and in `_sync()` widen the gate:
+```dart
+    final wantStream = state.active &&
+        (ref.read(mapVisibleProvider) || ref.read(pointMeActiveProvider));
+```
+(The existing "hidden map drops follow" branch is unchanged; Phase A's `hidden map pauses` test still passes because `pointMeActive` defaults false.)
+
+- [ ] **Step 3b: Implement** — `lib/services/point_me_controller.dart`:
 ```dart
 import 'dart:async';
 
@@ -607,6 +725,7 @@ class PointMeState {
     this.distanceMeters,
     this.nearTarget = false,
     this.hasFix = false,
+    this.locationReliable = false,
   });
   final HeadingAvailability availability;
   final double? relativeAngleDegrees;
@@ -614,6 +733,7 @@ class PointMeState {
   final double? distanceMeters;
   final bool nearTarget;
   final bool hasFix;
+  final bool locationReliable;
 }
 
 final headingServiceProvider = Provider<HeadingService>(
@@ -636,36 +756,45 @@ final pointMeControllerProvider =
 
 class PointMeController extends Notifier<PointMeState> {
   StreamSubscription<HeadingSample>? _sub;
+  int _generation = 0; // discards late callbacks from a replaced/cancelled stream
   HeadingAvailability _availability = HeadingAvailability.acquiring;
   double? _magneticHeading;
 
   @override
   PointMeState build() {
-    ref.onDispose(() => _sub?.cancel());
-    ref.listen(pointMeTargetProvider, (_, target) => _onTarget(target));
+    ref.onDispose(() => unawaited(_sub?.cancel()));
+    ref.listen(pointMeTargetProvider, (_, target) => _onTargetChanged(target));
     ref.listen(locationControllerProvider, (_, _) => _recompute());
-    _onTarget(ref.read(pointMeTargetProvider)); // apply the initial target
-    return _compute();
+    _subscribe(ref.read(pointMeTargetProvider)); // subscribe ONLY — no state write
+    return _compute(); // build RETURNS the initial state, never assigns `state`
   }
 
-  /// Subscribe to heading only while a target is set; cancel when it clears.
-  void _onTarget(LatLng? target) {
-    _sub?.cancel();
+  void _onTargetChanged(LatLng? target) {
+    _subscribe(target);
+    _recompute(); // listener path may assign state (build is done)
+  }
+
+  /// (Re)subscribe to heading for [target]; a generation token makes any late
+  /// event from the previous (cancelled) stream a no-op, avoiding a race.
+  void _subscribe(LatLng? target) {
+    unawaited(_sub?.cancel());
     _sub = null;
+    final gen = ++_generation;
     _availability = HeadingAvailability.acquiring;
     _magneticHeading = null;
     if (target != null) {
       _sub = ref.read(headingServiceProvider).watch().listen((s) {
+        if (gen != _generation) return; // stale session
         _availability = s.availability;
         _magneticHeading = s.magneticHeadingDegrees;
         _recompute();
       }, onError: (_) {
+        if (gen != _generation) return;
         _availability = HeadingAvailability.unavailable;
         _magneticHeading = null;
         _recompute();
       });
     }
-    _recompute();
   }
 
   void _recompute() => state = _compute();
@@ -673,15 +802,23 @@ class PointMeController extends Notifier<PointMeState> {
   PointMeState _compute() {
     final target = ref.read(pointMeTargetProvider);
     final fix = ref.read(locationControllerProvider).fix;
-    if (target == null) {
+    if (target == null || fix == null) {
       return PointMeState(availability: _availability, hasFix: fix != null);
     }
-    if (fix == null) {
-      return PointMeState(availability: _availability, hasFix: false);
+    final reliable = !fix.isLowAccuracy; // Phase A: >200 m ⇒ unreliable
+    final distance = distanceBetweenMeters(fix.position, target);
+    // Near-target short-circuits direction: bearing is ill-defined at ~0 range,
+    // and a low-accuracy fix must never claim "you're here".
+    if (reliable && distance <= MapConfig.pointMeNearTargetMeters) {
+      return PointMeState(
+        availability: _availability,
+        distanceMeters: distance,
+        nearTarget: true,
+        hasFix: true,
+        locationReliable: true,
+      );
     }
     final bearing = trueBearingDegrees(fix.position, target);
-    final distance = distanceBetweenMeters(fix.position, target);
-    final near = distance <= MapConfig.pointMeNearTargetMeters;
     double? relative;
     if (_magneticHeading != null) {
       final trueHeading = normalizeBearing(
@@ -693,13 +830,14 @@ class PointMeController extends Notifier<PointMeState> {
       trueBearingDegrees: bearing,
       distanceMeters: distance,
       relativeAngleDegrees: relative,
-      nearTarget: near,
+      nearTarget: false,
       hasFix: true,
+      locationReliable: reliable,
     );
   }
 }
 ```
-Needs `import 'package:latlong2/latlong.dart';` (for `LatLng`, `normalizeBearing`). The test overrides `headingServiceProvider`/`locationServiceProvider` with fakes; `main` overrides `headingServiceProvider` with `SensorsHeadingService()` (Task 8). `PointMeScreen` (Task 7) calls `pointMeTargetProvider.notifier).set(target)` in `initState` and `.set(null)` in `dispose` (and on `AppLifecycleState.paused`).
+`unawaited` + `StreamSubscription` come from `dart:async`; `LatLng`/`normalizeBearing` from `latlong2`. The test overrides `headingServiceProvider`/`locationServiceProvider` with fakes; `main` overrides `headingServiceProvider` with `SensorsHeadingService()` (Task 8). `PointMeScreen` (Task 7) sets `pointMeTargetProvider`+`pointMeActiveProvider` on open and clears both on dispose/`paused`.
 
 - [ ] **Step 4: Run to verify it passes** — Run: `flutter test test/unit/point_me_controller_test.dart && flutter analyze` — Expected: PASS; clean.
 
@@ -729,6 +867,8 @@ git commit -m "feat(map): PointMeController fuses location+heading+declination+t
   "@pointMeNearby": { "description": "Shown within the near-target radius" },
   "pointMeNoCompass": "The live arrow needs a phone with a compass sensor. Here's the direction and distance.",
   "@pointMeNoCompass": { "description": "Fallback when heading is unsupported/unavailable" },
+  "pointMeImprovingAccuracy": "Your location is a bit rough right now — here's the rough direction. It'll sharpen as GPS settles.",
+  "@pointMeImprovingAccuracy": { "description": "Shown when the fix is low-accuracy (>200 m)" },
   "pointMeNeedsLocation": "Turn on location to point the way",
   "@pointMeNeedsLocation": { "description": "Shown when there is no location fix" },
   "pointMeUnknownPlace": "We can't find that place",
@@ -753,6 +893,7 @@ git commit -m "feat(map): PointMeController fuses location+heading+declination+t
   "pointMeFindingNorth": "در حال یافتن شمال…",
   "pointMeNearby": "تقریباً رسیدی",
   "pointMeNoCompass": "فلش زنده به گوشی با حسگر قطب‌نما نیاز دارد. جهت و فاصله در اینجاست.",
+  "pointMeImprovingAccuracy": "موقعیت شما اکنون کمی نادقیق است — جهت تقریبی این است و با تثبیت GPS دقیق‌تر می‌شود.",
   "pointMeNeedsLocation": "برای نشان‌دادن مسیر، موقعیت مکانی را روشن کنید",
   "pointMeUnknownPlace": "آن مکان را پیدا نمی‌کنیم",
   "pointMeBearingSentence": "{venue} حدوداً {distance} در {cardinal} شماست",
@@ -779,14 +920,14 @@ git commit -m "feat(map): l10n for Point-me-there (screen, cardinals, sides) (EN
 
 **Files:** Create `lib/screens/point_me_screen.dart`, `test/widget/point_me_screen_test.dart`.
 
-**Interfaces:** `PointMeScreen({required String venueId})` (`ConsumerStatefulWidget`). Looks up `VenuesData.byId(venueId)` (and `ParkingData` if needed); unknown → safe unavailable + Back. Reads `pointMeControllerProvider(target)`. Renders arrow / near / fallback / no-fix states. Motion-aware, a11y-labelled.
+**Interfaces:** `PointMeScreen({required String venueId})` (`ConsumerStatefulWidget`). Resolves target from `VenuesData.byId`/`ParkingData.byId`; unknown → safe message. Sets `pointMeTargetProvider`+`pointMeActiveProvider` on open, clears on dispose/background, locks portrait. Renders unknown / no-fix(+Enable) / near / low-accuracy / arrow / acquiring / fallback states. Motion-aware, non-liveRegion a11y label.
 
 - [ ] **Step 1: Write the failing test** — `test/widget/point_me_screen_test.dart`:
 ```dart
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/heading_service.dart';
@@ -804,58 +945,140 @@ ProviderContainer _c(FakeHeadingService h, FakeLocationService loc) {
     locationServiceProvider.overrideWithValue(loc),
   ]);
   addTearDown(c.dispose);
-  c.read(mapVisibleProvider.notifier).set(true);
   return c;
 }
 
-Widget _app(ProviderContainer c, String venueId, {Locale? locale}) =>
+Widget _app(ProviderContainer c, String venueId,
+        {Locale? locale, bool reduceMotion = false}) =>
     UncontrolledProviderScope(
       container: c,
       child: MaterialApp(
         locale: locale,
         localizationsDelegates: AonL10n.localizationsDelegates,
         supportedLocales: AonL10n.supportedLocales,
+        // Preserve ambient MediaQuery (size, textScaler) and only flip the flag.
+        builder: (context, child) => MediaQuery(
+          data: MediaQuery.of(context).copyWith(disableAnimations: reduceMotion),
+          child: child!,
+        ),
         home: PointMeScreen(venueId: venueId),
       ),
     );
 
-// Pick a real venue id with coordinates from the app's own data.
-const _venueId = 'macquarie-theatre';
+const _venueId = 'macquarie-theatre'; // a real venue id with coordinates
 
-Future<void> _fix(ProviderContainer c, FakeLocationService loc) async {
+Future<void> _fix(ProviderContainer c, FakeLocationService loc,
+    {double acc = 8}) async {
   await c.read(locationControllerProvider.notifier).onLocateTapped();
-  loc.emit(UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: 8));
+  loc.emit(UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: acc));
   await Future<void>.delayed(Duration.zero);
 }
 
+Future<void> _heading(WidgetTester t, FakeHeadingService h, double deg) async {
+  h.emit(HeadingSample(
+      availability: HeadingAvailability.available, magneticHeadingDegrees: deg));
+  await t.pump();
+  await t.pump();
+}
+
 void main() {
-  testWidgets('unknown venue → safe message + Back, no crash', (t) async {
+  testWidgets('unknown venue → safe message, no target claimed, no crash',
+      (t) async {
     final c = _c(FakeHeadingService(), FakeLocationService());
     await t.pumpWidget(_app(c, 'does-not-exist'));
     await t.pump();
     expect(find.textContaining("can't find"), findsOneWidget);
+    expect(c.read(pointMeActiveProvider), isFalse); // no lifecycle claim
     expect(t.takeException(), isNull);
   });
 
-  testWidgets('no fix → needs-location message', (t) async {
+  testWidgets('opening the screen claims pointMeActive; leaving clears it',
+      (t) async {
+    final c = _c(FakeHeadingService(), FakeLocationService());
+    await t.pumpWidget(_app(c, _venueId));
+    await t.pump();
+    expect(c.read(pointMeActiveProvider), isTrue);
+    await t.pumpWidget(const SizedBox()); // dispose the screen
+    await t.pump();
+    expect(c.read(pointMeActiveProvider), isFalse);
+  });
+
+  testWidgets('no fix → needs-location message + Enable button that activates',
+      (t) async {
     final c = _c(FakeHeadingService(), FakeLocationService());
     await t.pumpWidget(_app(c, _venueId));
     await t.pump();
     expect(find.textContaining('Turn on location'), findsOneWidget);
+    await t.tap(find.byKey(const Key('point-me-enable')));
+    await t.pump();
+    expect(c.read(locationControllerProvider).active, isTrue); // onLocateTapped
   });
 
-  testWidgets('heading available → an arrow is shown', (t) async {
+  testWidgets('heading available → arrow shown with a non-liveRegion a11y label',
+      (t) async {
+    final handle = t.ensureSemantics();
     final h = FakeHeadingService();
     final loc = FakeLocationService();
     final c = _c(h, loc);
     await t.pumpWidget(_app(c, _venueId));
     await _fix(c, loc);
-    h.emit(const HeadingSample(
-        availability: HeadingAvailability.available, magneticHeadingDegrees: 0));
-    await t.pump();
-    await t.pump();
+    await _heading(t, h, 0);
     expect(find.byKey(const Key('point-me-arrow')), findsOneWidget);
-    expect(t.takeException(), isNull);
+    final node = t.getSemantics(find.byKey(const Key('point-me-arrow')));
+    final data = node.getSemanticsData();
+    expect(data.hasFlag(SemanticsFlag.isLiveRegion), isFalse); // no announce spam
+    expect(data.label, contains('Macquarie Theatre'));
+    expect(data.label, contains('m')); // distance present
+    handle.dispose();
+  });
+
+  testWidgets('turning the phone updates the a11y label (side follows heading)',
+      (t) async {
+    final handle = t.ensureSemantics();
+    final h = FakeHeadingService();
+    final loc = FakeLocationService();
+    final c = _c(h, loc);
+    await t.pumpWidget(_app(c, _venueId));
+    await _fix(c, loc);
+    await _heading(t, h, 0);
+    final a = t.getSemantics(find.byKey(const Key('point-me-arrow'))).label;
+    await _heading(t, h, 180); // turn around
+    final b = t.getSemantics(find.byKey(const Key('point-me-arrow'))).label;
+    expect(a, isNot(equals(b))); // side/label tracks the sensor
+    handle.dispose();
+  });
+
+  testWidgets('reduced motion: arrow does NOT use an implicit rotation tween',
+      (t) async {
+    final h = FakeHeadingService();
+    final loc = FakeLocationService();
+    final c = _c(h, loc);
+    await t.pumpWidget(_app(c, _venueId, reduceMotion: true));
+    await _fix(c, loc);
+    await _heading(t, h, 30);
+    expect(find.byKey(const Key('point-me-arrow')), findsOneWidget); // still reorients
+    expect(find.byType(AnimatedRotation), findsNothing); // snap, not tween
+  });
+
+  testWidgets('motion on: arrow uses AnimatedRotation', (t) async {
+    final h = FakeHeadingService();
+    final loc = FakeLocationService();
+    final c = _c(h, loc);
+    await t.pumpWidget(_app(c, _venueId));
+    await _fix(c, loc);
+    await _heading(t, h, 30);
+    expect(find.byType(AnimatedRotation), findsOneWidget);
+  });
+
+  testWidgets('low-accuracy fix → improving-accuracy note, no arrow', (t) async {
+    final h = FakeHeadingService();
+    final loc = FakeLocationService();
+    final c = _c(h, loc);
+    await t.pumpWidget(_app(c, _venueId));
+    await _fix(c, loc, acc: 250); // > 200 m ⇒ unreliable
+    await _heading(t, h, 0);
+    expect(find.byKey(const Key('point-me-arrow')), findsNothing);
+    expect(find.textContaining('accuracy'), findsOneWidget);
   });
 
   testWidgets('unsupported → bearing fallback card, no arrow', (t) async {
@@ -883,8 +1106,7 @@ void main() {
     final c = _c(h, loc);
     await t.pumpWidget(_app(c, _venueId));
     await _fix(c, loc);
-    h.emit(const HeadingSample(
-        availability: HeadingAvailability.available, magneticHeadingDegrees: 30));
+    await _heading(t, h, 30);
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
   });
@@ -900,7 +1122,260 @@ void main() {
 
 - [ ] **Step 2: Run to verify it fails** — FAIL.
 
-- [ ] **Step 3: Implement** — `lib/screens/point_me_screen.dart` (`ConsumerStatefulWidget`). Resolve the target from `VenuesData.byId(venueId)` (fall back to `ParkingData.byId`); **if none → the safe "can't find that place" + Back screen, and do NOT set a target.** Otherwise, **lifecycle:** in `initState` (post-frame) call `ref.read(pointMeTargetProvider.notifier).set(targetLatLng)`; in `dispose` call `.set(null)`; add an `AppLifecycleListener` that `.set(null)` on `paused`/`inactive` and re-sets the target on `resumed` while mounted. Body: `ref.watch(pointMeControllerProvider)` and render per state. Key the arrow `const Key('point-me-arrow')`. Use `context.aon` colours, `AonL10n.of(context)`, `MediaQuery.disableAnimationsOf` for reduced motion (snap vs tween), a `Transform.rotate` by `relativeAngleDegrees * pi/180`, and a non-liveRegion `Semantics` label built from the side bucket. Distance formatting: `<1000 → l.pointMeDistanceMeters(round)`, else `l.pointMeDistanceKm((m/1000).toStringAsFixed(1))`. Side bucket from `relativeAngleDegrees`: `|a|<20 → ahead; >160 → behind; a>0 → right; else left`. Cardinal via `cardinalFor(trueBearing)` mapped to the `l.cardinal*` getter. Full widget body follows the states table in the spec (§6); every branch returns a themed, scroll-safe layout.
+- [ ] **Step 3: Implement** — `lib/screens/point_me_screen.dart`:
+```dart
+import 'dart:math' as math;
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'package:aon2026/app/theme/aon_palette.dart';
+import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/data/parking_data.dart';
+import 'package:aon2026/data/venues_data.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/services/heading_service.dart';
+import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/services/point_me_controller.dart';
+import 'package:aon2026/widgets/bearing_math.dart';
+
+class PointMeScreen extends ConsumerStatefulWidget {
+  const PointMeScreen({required this.venueId, super.key});
+  final String venueId;
+  @override
+  ConsumerState<PointMeScreen> createState() => _PointMeScreenState();
+}
+
+class _PointMeScreenState extends ConsumerState<PointMeScreen> {
+  LatLng? _target;
+  String? _placeName;
+  AppLifecycleListener? _lifecycle;
+  // Captured up front so lifecycle callbacks (incl. dispose) never touch `ref`
+  // after the element is deactivated. The providers outlive this widget.
+  PointMeTargetNotifier? _targetNotifier;
+  PointMeActiveNotifier? _activeNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    final v = VenuesData.byId(widget.venueId);
+    if (v != null && v.hasCoordinates) {
+      _target = LatLng(v.latitude!, v.longitude!);
+      _placeName = v.name;
+    } else {
+      final p = ParkingData.byId(widget.venueId);
+      if (p != null && p.hasCoordinates) {
+        _target = LatLng(p.latitude!, p.longitude!);
+        _placeName = p.name;
+      }
+    }
+    if (_target != null) {
+      _targetNotifier = ref.read(pointMeTargetProvider.notifier);
+      _activeNotifier = ref.read(pointMeActiveProvider.notifier);
+      // Heading math assumes portrait (natural == display); hold it here.
+      SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+      WidgetsBinding.instance.addPostFrameCallback((_) => _claim());
+      _lifecycle = AppLifecycleListener(onStateChange: (s) {
+        if (s == AppLifecycleState.resumed) {
+          _claim();
+        } else if (s == AppLifecycleState.paused ||
+            s == AppLifecycleState.inactive) {
+          _release();
+        }
+      });
+    }
+  }
+
+  void _claim() {
+    if (!mounted || _target == null) return;
+    _targetNotifier!.set(_target);
+    _activeNotifier!.set(true);
+  }
+
+  void _release() {
+    _targetNotifier?.set(null);
+    _activeNotifier?.set(false);
+  }
+
+  @override
+  void dispose() {
+    _lifecycle?.dispose();
+    _release(); // uses captured notifiers, not ref
+    SystemChrome.setPreferredOrientations(
+        const [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+    super.dispose();
+  }
+
+  String _distance(AonL10n l, double m) => m < 1000
+      ? l.pointMeDistanceMeters(m.round())
+      : l.pointMeDistanceKm((m / 1000).toStringAsFixed(1));
+
+  String _cardinal(AonL10n l, double trueBearing) =>
+      switch (cardinalFor(trueBearing)) {
+        Cardinal.n => l.cardinalN,
+        Cardinal.ne => l.cardinalNE,
+        Cardinal.e => l.cardinalE,
+        Cardinal.se => l.cardinalSE,
+        Cardinal.s => l.cardinalS,
+        Cardinal.sw => l.cardinalSW,
+        Cardinal.w => l.cardinalW,
+        Cardinal.nw => l.cardinalNW,
+      };
+
+  String _side(AonL10n l, double rel) {
+    final a = rel.abs();
+    if (a < 20) return l.sideAhead;
+    if (a > 160) return l.sideBehind;
+    return rel > 0 ? l.sideRight : l.sideLeft;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
+    if (_target == null) {
+      return _scaffold(l, _message(context, l.pointMeUnknownPlace));
+    }
+    final s = ref.watch(pointMeControllerProvider);
+    final name = _placeName ?? widget.venueId;
+    final reduce = MediaQuery.disableAnimationsOf(context);
+
+    final Widget body;
+    if (!s.hasFix) {
+      body = Column(mainAxisSize: MainAxisSize.min, children: [
+        Text(l.pointMeNeedsLocation,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium),
+        const SizedBox(height: AonSpacing.space4),
+        FilledButton.icon(
+          key: const Key('point-me-enable'),
+          onPressed: () =>
+              ref.read(locationControllerProvider.notifier).onLocateTapped(),
+          icon: const Icon(Icons.my_location_rounded),
+          label: Text(l.locateShow),
+        ),
+      ]);
+    } else if (s.nearTarget) {
+      body = _message(context, l.pointMeNearby, icon: Icons.place_rounded);
+    } else if (!s.locationReliable) {
+      // Fuzzy fix: cardinal + distance, honest note, no precise arrow.
+      body = _bearingCard(context, l,
+          sentence: l.pointMeBearingSentence(
+              name, _distance(l, s.distanceMeters!), _cardinal(l, s.trueBearingDegrees!)),
+          note: l.pointMeImprovingAccuracy);
+    } else if (s.availability == HeadingAvailability.available &&
+        s.relativeAngleDegrees != null) {
+      body = _Arrow(
+        semanticLabel: l.pointMeA11yDirection(
+            name, _side(l, s.relativeAngleDegrees!), _distance(l, s.distanceMeters!)),
+        angleDegrees: s.relativeAngleDegrees!,
+        distance: _distance(l, s.distanceMeters!),
+        cardinal: _cardinal(l, s.trueBearingDegrees!),
+        reduceMotion: reduce,
+      );
+    } else if (s.availability == HeadingAvailability.acquiring) {
+      body = _message(context, l.pointMeFindingNorth,
+          icon: Icons.explore_rounded, dim: true);
+    } else {
+      // unsupported / unavailable → bearing fallback card
+      body = _bearingCard(context, l,
+          sentence: l.pointMeBearingSentence(
+              name, _distance(l, s.distanceMeters!), _cardinal(l, s.trueBearingDegrees!)),
+          note: l.pointMeNoCompass);
+    }
+    return _scaffold(l, body);
+  }
+
+  Widget _scaffold(AonL10n l, Widget child) => Scaffold(
+        appBar: AppBar(title: Text(l.pointMeTitle)),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AonSpacing.space5),
+            child: Center(child: child),
+          ),
+        ),
+      );
+
+  Widget _message(BuildContext context, String text,
+          {IconData icon = Icons.info_outline_rounded, bool dim = false}) =>
+      Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(icon,
+            size: 48,
+            color: dim ? context.aon.contentTertiary : context.aon.accent),
+        const SizedBox(height: AonSpacing.space4),
+        Text(text,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium),
+      ]);
+
+  Widget _bearingCard(BuildContext context, AonL10n l,
+          {required String sentence, required String note}) =>
+      Column(mainAxisSize: MainAxisSize.min, children: [
+        Icon(Icons.explore_outlined, size: 48, color: context.aon.accent),
+        const SizedBox(height: AonSpacing.space4),
+        Text(sentence,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: AonSpacing.space3),
+        Text(note,
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: context.aon.contentSecondary)),
+      ]);
+}
+
+/// The live arrow. The rotation IS essential state, so under reduced motion it
+/// snaps (plain Transform.rotate) rather than easing (AnimatedRotation) — but it
+/// still reorients. One non-liveRegion Semantics node carries the spoken label.
+class _Arrow extends StatelessWidget {
+  const _Arrow({
+    required this.semanticLabel,
+    required this.angleDegrees,
+    required this.distance,
+    required this.cardinal,
+    required this.reduceMotion,
+  });
+  final String semanticLabel;
+  final double angleDegrees;
+  final String distance;
+  final String cardinal;
+  final bool reduceMotion;
+
+  @override
+  Widget build(BuildContext context) {
+    final turns = angleDegrees / 360.0;
+    final icon = Icon(Icons.navigation_rounded,
+        size: 140, color: context.aon.accent);
+    final rotated = reduceMotion
+        ? Transform.rotate(angle: angleDegrees * math.pi / 180, child: icon)
+        : AnimatedRotation(
+            turns: turns,
+            duration: const Duration(milliseconds: 220),
+            child: icon);
+    return Column(mainAxisSize: MainAxisSize.min, children: [
+      // liveRegion:false (default) — do NOT announce on every sensor tick.
+      Semantics(
+        key: const Key('point-me-arrow'),
+        label: semanticLabel,
+        excludeSemantics: true,
+        child: rotated,
+      ),
+      const SizedBox(height: AonSpacing.space5),
+      Text(distance, style: Theme.of(context).textTheme.headlineMedium),
+      const SizedBox(height: AonSpacing.space2),
+      Text(cardinal,
+          style: Theme.of(context)
+              .textTheme
+              .titleMedium
+              ?.copyWith(color: context.aon.contentSecondary)),
+    ]);
+  }
+}
+```
+(`Uri.encodeComponent` on the route id is Task 8. The `_Arrow` keys the Semantics node — `getSemantics(byKey('point-me-arrow'))` reads the label; `excludeSemantics` keeps it a single node; `liveRegion` stays false so screen readers aren't flooded.)
 
 - [ ] **Step 4: Run to verify it passes** — PASS.
 
@@ -924,11 +1399,15 @@ import 'package:aon2026/services/point_me_controller.dart';
     headingServiceProvider.overrideWithValue(SensorsHeadingService()),
 ```
 
-- [ ] **Step 2: Add the route** — in `lib/app/router/app_router.dart`, add `Routes.pointMeTo(String venueId)` → a `GoRoute` (path e.g. `/point-me/:venueId`) building `PointMeScreen(venueId: id)`. Mirror the existing `panoramaFor` route's registration exactly.
+- [ ] **Step 2: Add the route** — in `lib/app/router/app_router.dart`, mirror the existing `panoramaFor` registration. The helper **encodes the id** (the helper owns that boundary, even though today's ids are URL-safe):
+```dart
+static String pointMeTo(String id) => '/point-me/${Uri.encodeComponent(id)}';
+```
+and a `GoRoute(path: '/point-me/:id', builder: (_, state) => PointMeScreen(venueId: state.pathParameters['id']!))`.
 
-- [ ] **Step 3: Write the failing entry test** — `test/widget/point_me_entry_test.dart`: pump `VenueSheet(venueId: 'macquarie-theatre')` inside a `MaterialApp` with a router that records navigation; assert a "Point me there" button is present and tapping it navigates to the point-me route. (Mirror the existing venue-sheet test harness in the repo.)
+- [ ] **Step 3: Write the failing entry test** — `test/widget/point_me_entry_test.dart` (mirror the repo's venue-sheet test harness). Three cases: (a) `VenueSheet(venueId: 'macquarie-theatre')` shows "Point me there" and tapping it pushes the point-me route; (b) `ParkingSheet(parkingId: <a parking id with coords>)` also shows it and navigates; (c) a subject **without** coordinates does **NOT** show the button (`find.text(l.pointMeTitle)` → `findsNothing`).
 
-- [ ] **Step 4: Wire the button** — in `VenueSheet` (and `ParkingSheet`), add a button peer to "Walking directions", shown only when the subject `hasCoordinates`:
+- [ ] **Step 4: Wire the button** — in `VenueSheet` add a button peer to "Walking directions", shown only when `venue.hasCoordinates`:
 ```dart
 OutlinedButton.icon(
   onPressed: () {
@@ -939,6 +1418,7 @@ OutlinedButton.icon(
   label: Text(l.pointMeTitle),
 ),
 ```
+And the same in `ParkingSheet`, gated on `parking.hasCoordinates`, using `Routes.pointMeTo(parking.id)` (PointMeScreen resolves either id via VenuesData→ParkingData).
 
 - [ ] **Step 5: Run tests + web build** — Run: `flutter test test/widget/point_me_entry_test.dart && flutter analyze && flutter build web` — Expected: PASS; clean; web green.
 
@@ -967,7 +1447,9 @@ git commit -m "feat(map): 'Point me there' entry from venue/parking sheets + rou
 [ ] leave the screen → magnetometer/accelerometer streams stop (no battery drain)
 [ ] VoiceOver: focus the arrow → hears side + distance; not spammed on every tick
 ```
-- [ ] **Step 4: Closeout** — append: resolved `sensors_plus` version, the WMM2025 declination receipt (Task 0), all three build results, and the on-device checklist result.
+- [ ] **Step 4: Closeout** — append: resolved `sensors_plus` version, the WMM2025 declination receipt (Task 0), all three build results, the on-device checklist result, and a **split status**:
+  - **IMPLEMENTATION COMPLETE** — analyze/tests green, all three builds green, on-device compass verified (iOS/Android).
+  - **WEB RELEASE READY — NOT claimed.** The web *build* is green, but the web bearing/distance *fallback* is **not runtime-verified**: the app's pre-existing web black-screen (Phase A closeout) means `PointMeScreen` is not reachable on web today. A green `flutter build web` proves compilation, not the web fallback path. This stays blocked on the separate web-black-screen triage.
 - [ ] **Step 5: Final re-gate** — Run: `flutter analyze && flutter test && git diff --check && git status --short`, then a hostile read of `git diff main...HEAD`.
 - [ ] **Step 6: Commit**
 ```bash
@@ -997,18 +1479,22 @@ git commit -m "docs(map): Phase B verification + compass runtime closeout"
 | l10n EN/FA (incl. cardinals/sides) | 6 |
 | §12 tests | every task + 9 |
 
-**2. Placeholder scan** — one intentional fill: `MapConfig.campusMagneticDeclinationDegrees = <VALUE FROM TASK 0>` is replaced with the WMM2025 number Task 0 computes (Task 2 Step 5 says so explicitly). Task 7 Step 3 describes the widget body against the spec's state table rather than pasting the full tree — flag: **when executing Task 7, write every state branch in full before running; the test asserts arrow-key / fallback-text / unknown / no-fix, so each branch is pinned.** Everything else is complete code.
+**2. Placeholder scan** — clean. **One** intentional fill: `MapConfig.campusMagneticDeclinationDegrees = <VALUE FROM TASK 0>`, replaced with the WMM2025 number Task 0 computes (Task 2 Step 5 says so). Task 7's screen is now written in full (all states: unknown / no-fix+Enable / near / low-accuracy / arrow / acquiring / fallback), plus its `_Arrow`. No described-not-written steps remain.
 
-**3. Type consistency** — `Vector3`, `tiltCompensatedHeadingDegrees`, `CircularSmoother`, `HeadingAvailability{acquiring,available,unavailable,unsupported}`, `HeadingSample{availability,magneticHeadingDegrees}`, `HeadingService.watch()`, `headingServiceProvider`, `PointMeState{availability,relativeAngleDegrees,trueBearingDegrees,distanceMeters,nearTarget,hasFix}`, `pointMeTargetProvider` (`NotifierProvider<PointMeTargetNotifier, LatLng?>`, `.set(LatLng?)`), `pointMeControllerProvider` (plain `NotifierProvider<PointMeController, PointMeState>` — **no family/autoDispose**, verified against Riverpod 3.4.2), `trueBearingDegrees`/`relativeAngleDegrees`/`distanceBetweenMeters`/`cardinalFor`/`Cardinal`, `MapConfig.{campusMagneticDeclinationDegrees,pointMeNearTargetMeters}`, `Routes.pointMeTo`, `l.pointMe*`/`l.cardinal*`/`l.side*` — consistent across tasks. Shared fakes: `test/support/fake_heading_service.dart` + Phase A's `fake_location_service.dart`.
+**3. Type consistency** — `Vector3`, `tiltCompensatedHeadingDegrees`, `CircularSmoother`, `HeadingAvailability{acquiring,available,unavailable,unsupported}`, `HeadingSample{availability,magneticHeadingDegrees}`, `HeadingService.watch()`, `headingServiceProvider`, `PointMeState{availability,relativeAngleDegrees,trueBearingDegrees,distanceMeters,nearTarget,hasFix,locationReliable}`, `pointMeTargetProvider` (`.set(LatLng?)`), `pointMeActiveProvider` (`.set(bool)`, in `location_providers.dart`), `pointMeControllerProvider` (plain `NotifierProvider` — no family/autoDispose, verified vs Riverpod 3.4.2), `trueBearingDegrees`/`relativeAngleDegrees`/`distanceBetweenMeters`/`cardinalFor`/`Cardinal`, `MapConfig.{campusMagneticDeclinationDegrees,pointMeNearTargetMeters}`, `Routes.pointMeTo`, `l.pointMe*`/`l.cardinal*`/`l.side*`/`l.pointMeImprovingAccuracy` — consistent across tasks. Shared fakes: `test/support/fake_heading_service.dart` + Phase A's `fake_location_service.dart`.
 
 ---
 
 ## Notes for the executor
 
-- **Web build is a hard gate at Task 1 Step 2 and Task 9 Step 2** — `sensors_plus` claiming web support is exactly the kind of claim that broke `flutter_compass`; prove it the moment the dep lands.
-- **The heading math mirrors Android `getRotationMatrix`/`getOrientation`.** If the flat-phone test's azimuth sign is off for the test's chosen axis convention, fix the *test vectors*, not the algorithm — keep the flat==tilted invariant and the degenerate→null case.
-- **`sensors_plus` 7.x stream names:** prefer `magnetometerEventStream()`/`accelerometerEventStream()` (non-deprecated). Confirm against the installed package before writing Task 4's impl.
-- **Never invent coordinates** — unknown venue id is a safe state, never a campus-centre fallback.
+- **All three builds are the hard gate at Task 1** — `sensors_plus` requires AGP ≥8.12.1 (repo was 8.11.1 → bumped) and its web support is the `flutter_compass` risk; prove web + APK + iOS the moment the dep + AGP bump land, before any feature code.
+- **iOS `NSMotionUsageDescription` is mandatory** (sensors_plus ≥6.0.0) — omission crashes on motion access. It's in Task 1.
+- **The heading math mirrors Android `getRotationMatrix`/`getOrientation`.** The Task 3 test values are hand-verified (north/east/tilt/degenerate); if one fails, the impl deviated from the cross-product order — fix the impl, don't loosen the test.
+- **Orientation:** heading is computed in the device's natural frame; `PointMeScreen` **locks portrait** so natural==display on phones. Landscape-natural/rotated (iPad) axis remap is **IOU-B4** — the arrow isn't trusted there yet.
+- **Location demand:** PointMe is its own route, so the Phase A GPS gate is widened to `active && (mapVisible || pointMeActive)`. Don't skip Task 5 Step 3a or a deep-linked PointMe has frozen distance.
+- **Sensor failure is terminal for the session** (cancel both streams, clear, emit `unavailable`) with acquisition + staleness timeouts — never resurrect the arrow from stale accel. Smoother is per-`watch()`.
+- **`sensors_plus` 7.x stream names:** prefer `magnetometerEventStream({samplingPeriod})`/`accelerometerEventStream(...)` (non-deprecated). Confirm against the installed package before Task 4's impl.
+- **Never invent coordinates** — unknown venue id is a safe state, never a campus-centre fallback. **Never claim `nearTarget` on a low-accuracy fix.**
 - **Reduced motion** drops the arrow's easing tween (snap) but the arrow still reorients — it is essential live state, not decoration.
-- **The pre-existing web runtime black-screen** (Phase A closeout) means `PointMeScreen` is not runtime-reachable on web until that's triaged; Phase B's web *build* gate still applies.
+- **Web runtime is NOT release-ready** — the pre-existing web black-screen (Phase A closeout) means the web fallback path is unverified at runtime; the web *build* gate still applies. Keep IMPLEMENTATION COMPLETE and WEB RELEASE READY split in the closeout.
 - Never weaken an existing test to make Phase B pass.

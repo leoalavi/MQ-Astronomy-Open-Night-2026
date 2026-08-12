@@ -33,6 +33,9 @@ this closes that gap. Pays down **IOU-A2** (heading), on the web-safe sensor pat
 - **IOU-B2** — compass calibration assistance (figure-eight UX).
 - **IOU-B3** — dynamic geomagnetic declination computed from location/date at
   runtime (WMM), replacing the frozen campus value.
+- **IOU-B4** — display/natural-orientation axis remapping, so heading is correct
+  on landscape-natural (tablet) or rotated displays. Phase B locks `PointMeScreen`
+  to portrait instead; on a landscape-natural device the arrow isn't trusted.
 - (IOU-B1 "tilt compensation" is **removed** — it belongs in the minimum
   trustworthy version and is in-scope here.)
 

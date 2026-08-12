@@ -5,6 +5,13 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
+    <!-- Live "you are here" dot on the campus map (Map Parity Phase A).
+         Foreground-only (When-In-Use): GPS runs while the Map tab is visible.
+         Deliberately NO FOREGROUND_SERVICE / FOREGROUND_SERVICE_LOCATION — we
+         never run a background/continuous location service. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+
     <application
         android:label="Astronomy Open Night"
         android:name="${applicationName}"

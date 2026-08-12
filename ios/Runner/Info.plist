@@ -4,6 +4,8 @@
 <dict>
 	<key>NSCameraUsageDescription</key>
 	<string>Used only to scan the QR code on a venue sign for your Astronomy Passport. Camera images are processed on your device and never stored or sent anywhere.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Shows where you are on the campus map so you can find your way between venues at night. Your location stays on your device and is never sent anywhere.</string>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

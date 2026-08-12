@@ -32,7 +32,7 @@
 **Create:** `lib/models/user_location_fix.dart`, `lib/services/location_service.dart`, `lib/services/location_providers.dart`, `lib/widgets/user_location_layer.dart`, `lib/widgets/locate_button.dart`, and mirrored tests.
 **Modify:** `pubspec.yaml`, `lib/widgets/map_config.dart` (campus distance + radius), `lib/widgets/map_control_island.dart` (host the locate button), `lib/screens/map_screen.dart` (layer + button + pan + mapVisible + banner), `ios/Runner/Info.plist`, `android/app/src/main/AndroidManifest.xml`, `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`.
 
-**Task order:** 0 preflight → 1 dep+platform config → 2 model → 3 campus distance → 4 service (interface+fake+impl) → 5 controller+providers → 6 location layer → 7 locate button → 8 l10n strings → 9 map wiring → 10 verification.
+**Task order:** 0 preflight → 1 dep+platform config → 2 model → 3 campus distance → 4 service (interface+impl) + shared fake → 5 controller+providers → 6 location layer (StatelessWidgets) → **7 l10n strings → 8 locate button** (button needs the l10n keys) → 9 map wiring → 10 verification.
 
 ---
 
@@ -219,20 +219,19 @@ git commit -m "feat(map): canonical campus-distance + radius config (Phase A)"
 
 ## Task 4: `LocationService` seam (interface + real impl + fake)
 
-**Files:** Create `lib/services/location_service.dart`, `test/unit/location_service_fake_test.dart`.
+**Files:** Create `lib/services/location_service.dart`, `test/support/fake_location_service.dart` (shared — imported by Tasks 4, 5, 9), `test/unit/location_service_fake_test.dart`.
 
-**Interfaces:** Produces `enum LocationStatus`, `abstract interface class LocationService` (`status`, `request`, `watch`, `serviceEnabledChanges`, `openAppSettings`, `openLocationSettings`), `GeolocatorLocationService` (real), and a test-only `FakeLocationService` (in the test file).
+**Interfaces:** Produces `enum LocationStatus`, `abstract interface class LocationService` (`status`, `request`, `watch`, `serviceEnabledChanges`, `openAppSettings`, `openLocationSettings`), `GeolocatorLocationService` (real), and a shared `FakeLocationService` in `test/support/`.
 
-- [ ] **Step 1: Write the failing test** — `test/unit/location_service_fake_test.dart` (the FAKE contract; the real geolocator impl is exercised on-device in Task 10):
+- [ ] **Step 1: Write the shared fake + a failing contract test.** Put the fake in `test/support/fake_location_service.dart` (not a `_test.dart` file — so other tests import it cleanly) and the test in `test/unit/location_service_fake_test.dart`.
 
+`test/support/fake_location_service.dart` (the fake ONLY — no `main()`, so the runner ignores it and other tests import it cleanly):
 ```dart
 import 'dart:async';
-import 'package:flutter_test/flutter_test.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/location_service.dart';
 
-/// Fake used across all Phase A state tests.
+/// Fake used across all Phase A state/wiring tests.
 class FakeLocationService implements LocationService {
   FakeLocationService({this.grant = LocationStatus.granted});
   LocationStatus grant;
@@ -258,6 +257,14 @@ class FakeLocationService implements LocationService {
   @override
   Future<void> openLocationSettings() async => locationSettingsOpened++;
 }
+```
+
+`test/unit/location_service_fake_test.dart` (the contract test — imports the fake, carries `main()`):
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:aon2026/models/user_location_fix.dart';
+import '../support/fake_location_service.dart';
 
 void main() {
   test('fake streams a fix', () async {
@@ -359,8 +366,8 @@ class GeolocatorLocationService implements LocationService {
 - [ ] **Step 4: Run to verify it passes** — Run: `flutter test test/unit/location_service_fake_test.dart && flutter analyze` — Expected: PASS; clean.
 - [ ] **Step 5: Commit**
 ```bash
-git add lib/services/location_service.dart test/unit/location_service_fake_test.dart
-git commit -m "feat(map): LocationService seam over geolocator + web guards (Phase A)"
+git add lib/services/location_service.dart test/support/fake_location_service.dart test/unit/location_service_fake_test.dart
+git commit -m "feat(map): LocationService seam over geolocator + web guards + shared fake (Phase A)"
 ```
 
 ---
@@ -374,7 +381,7 @@ git commit -m "feat(map): LocationService seam over geolocator + web guards (Pha
 - Providers: `locationServiceProvider` (`Provider<LocationService>`), `mapVisibleProvider` (`StateProvider<bool>`, default false), `locationControllerProvider` (`NotifierProvider<LocationController, LocationSnapshot>`).
 - `LocationController.onLocateTapped()`, `.onUserPan()`.
 
-- [ ] **Step 1: Write the failing test** — `test/unit/location_controller_test.dart` (imports the `FakeLocationService` from Task 4's test file):
+- [ ] **Step 1: Write the failing test** — `test/unit/location_controller_test.dart` (imports the shared `FakeLocationService` from `test/support/`):
 
 ```dart
 import 'package:flutter_test/flutter_test.dart';
@@ -383,7 +390,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/location_service.dart';
 import 'package:aon2026/services/location_providers.dart';
-import 'location_service_fake_test.dart' show FakeLocationService;
+import '../support/fake_location_service.dart';
 
 ProviderContainer _c(FakeLocationService svc, {bool visible = true}) {
   final c = ProviderContainer(overrides: [
@@ -610,19 +617,18 @@ git commit -m "feat(map): LocationController — decoupled active/follow/visible
 
 ---
 
-## Task 6: `UserLocationLayer` (built-in circle + dot, correct order, low-accuracy)
+## Task 6: `UserLocationCircle` + `UserLocationDot` (StatelessWidget layers, correct order, low-accuracy)
 
 **Files:** Create `lib/widgets/user_location_layer.dart`, `test/widget/user_location_layer_test.dart`.
 
-**Interfaces:** `UserLocationLayer.circle(fix)` and `UserLocationLayer.dot(fix)` — two `Widget`s (a `CircleLayer` and a `MarkerLayer`) so the map screen can place them at the right depths (circle below venues, dot above). Circle omitted when `fix.isLowAccuracy`.
+**Interfaces:** two `StatelessWidget`s — `UserLocationCircle({required UserLocationFix fix})` (renders a `CircleLayer`, or an empty `SizedBox` when `fix.isLowAccuracy`) and `UserLocationDot({required UserLocationFix fix})` (renders a `MarkerLayer`). The map screen places the circle below venue pins and the dot above (spec §5.5). Both are flutter_map children — the same pattern as the app's existing `DarkTileLayer` (a `StatelessWidget` returning a `TileLayer`), so they read theme colour from `context.aon` in `build` — **no hardcoded hex, no nullable-context hack** (global constraint: `context.aon` colours only).
 
-- [ ] **Step 1: Write the failing test**:
+- [ ] **Step 1: Write the failing test** — the widgets go straight into `FlutterMap.children` (flutter_map spreads children into a `Stack`, so a `StatelessWidget` that returns a layer works — exactly how `DarkTileLayer` is used today). No `AonTheme` is installed in the harness on purpose: `context.aon` falls back to `AonPalette.dark`, proving the widgets need no theme wiring to render:
 
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/user_location_layer.dart';
@@ -647,19 +653,20 @@ void main() {
     final fix = UserLocationFix(
         position: MapConfig.campusCentre, accuracyMeters: 10);
     await t.pumpWidget(_map([
-      UserLocationLayer.circle(context: null, fix: fix),
-      UserLocationLayer.dot(fix: fix),
+      UserLocationCircle(fix: fix),
+      UserLocationDot(fix: fix),
     ]));
     expect(find.byType(CircleLayer), findsOneWidget);
     expect(find.byType(MarkerLayer), findsOneWidget);
+    expect(t.takeException(), isNull); // context.aon fell back cleanly
   });
 
   testWidgets('low-accuracy fix omits the CircleLayer', (t) async {
     final fix = UserLocationFix(
         position: MapConfig.campusCentre, accuracyMeters: 500);
     await t.pumpWidget(_map([
-      UserLocationLayer.circle(context: null, fix: fix),
-      UserLocationLayer.dot(fix: fix),
+      UserLocationCircle(fix: fix),
+      UserLocationDot(fix: fix),
     ]));
     expect(find.byType(CircleLayer), findsNothing);
     expect(find.byType(MarkerLayer), findsOneWidget); // dot still shows
@@ -667,9 +674,7 @@ void main() {
 }
 ```
 
-(Colours read from `context.aon` in the real build; the test passes `context: null` and the impl falls back to a plain accent — see Step 3. If threading a real context is cleaner, wrap the layer in a `Builder`; keep the test asserting layer presence, not colour.)
-
-- [ ] **Step 2: Run to verify it fails** — FAIL.
+- [ ] **Step 2: Run to verify it fails** — FAIL (undefined).
 
 - [ ] **Step 3: Implement** — `lib/widgets/user_location_layer.dart`:
 
@@ -680,15 +685,18 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 
-/// The "you are here" visuals as two separately-placeable flutter_map layers,
-/// so the accuracy circle sits UNDER venue pins and the dot sits ON TOP
-/// (spec §5.5). Not custom paint — flutter_map built-ins.
-abstract final class UserLocationLayer {
-  /// Accuracy circle (metre radius). Returns an empty box for a low-accuracy
-  /// fix so it never paints a Sydney-sized blob (spec §5.1).
-  static Widget circle({required BuildContext? context, required UserLocationFix fix}) {
+/// Accuracy circle (metre radius) that sits UNDER the venue pins (spec §5.5).
+/// Renders nothing for a low-accuracy fix so it never paints a suburb-sized
+/// blob (spec §5.1). A StatelessWidget wrapping a flutter_map layer — the same
+/// pattern as [DarkTileLayer] — so colour comes from `context.aon`, not a hex.
+class UserLocationCircle extends StatelessWidget {
+  const UserLocationCircle({required this.fix, super.key});
+  final UserLocationFix fix;
+
+  @override
+  Widget build(BuildContext context) {
     if (fix.isLowAccuracy) return const SizedBox.shrink();
-    final accent = context?.aon.accent ?? const Color(0xFFFFB945);
+    final accent = context.aon.accent;
     return CircleLayer(circles: [
       CircleMarker(
         point: fix.position,
@@ -700,26 +708,30 @@ abstract final class UserLocationLayer {
       ),
     ]);
   }
+}
 
-  /// The location dot (a coloured dot on a white ring).
-  static Widget dot({required UserLocationFix fix}) => MarkerLayer(markers: [
+/// The "you are here" dot — an accent dot on a white ring — ON TOP of the pins.
+class UserLocationDot extends StatelessWidget {
+  const UserLocationDot({required this.fix, super.key});
+  final UserLocationFix fix;
+
+  @override
+  Widget build(BuildContext context) => MarkerLayer(markers: [
         Marker(
           point: fix.position,
           width: 22,
           height: 22,
-          child: Builder(
-            builder: (context) => DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                shape: BoxShape.circle,
-                boxShadow: const [BoxShadow(blurRadius: 3, color: Colors.black26)],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(4),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                      color: context.aon.accent, shape: BoxShape.circle),
-                ),
+          child: DecoratedBox(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [BoxShadow(blurRadius: 3, color: Colors.black26)],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                    color: context.aon.accent, shape: BoxShape.circle),
               ),
             ),
           ),
@@ -728,24 +740,62 @@ abstract final class UserLocationLayer {
 }
 ```
 
-(If `SizedBox.shrink()` inside `FlutterMap.children` is rejected by flutter_map's layer contract, return an empty `MarkerLayer(markers: [])` instead — verify at build.)
-
 - [ ] **Step 4: Run to verify it passes** — PASS.
 - [ ] **Step 5: Commit**
 ```bash
 git add lib/widgets/user_location_layer.dart test/widget/user_location_layer_test.dart
-git commit -m "feat(map): user-location layer (circle + dot), low-accuracy aware (Phase A)"
+git commit -m "feat(map): user-location layers (circle + dot) as themed StatelessWidgets (Phase A)"
 ```
 
 ---
 
-## Task 7: `LocateButton` (state-driven, per-state semantics)
+## Task 7: Localised strings (EN + FA)
+
+**Files:** Modify `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`; regenerate. **Do this before the LocateButton (Task 8) so the button references real `l.locate*` getters — never a hardcoded string to swap later.**
+
+- [ ] **Step 1: Add keys to `app_en.arb`** (each with a `@`-description, matching the file's style):
+```json
+  "locateShow": "Show my location",
+  "@locateShow": { "description": "Map locate button, inactive state" },
+  "locateFollow": "Follow my location",
+  "@locateFollow": { "description": "Map locate button, active but not following" },
+  "locateStopFollowing": "Stop following my location",
+  "@locateStopFollowing": { "description": "Map locate button, following" },
+  "locateUnavailable": "Location unavailable",
+  "@locateUnavailable": { "description": "Map locate button, permission denied" },
+  "locateServiceOff": "Turn on Location Services",
+  "@locateServiceOff": { "description": "Map locate button, device location services off" },
+  "mapOffCampus": "You're about {km} km from campus",
+  "@mapOffCampus": { "description": "Banner when the user is outside the campus radius", "placeholders": { "km": { "type": "String" } } },
+```
+
+- [ ] **Step 2: Add the same keys to `app_fa.arb`** (Persian; flagged for a translator, but present so the build doesn't fail):
+```json
+  "locateShow": "موقعیت من",
+  "locateFollow": "دنبال‌کردن موقعیت من",
+  "locateStopFollowing": "توقف دنبال‌کردن موقعیت",
+  "locateUnavailable": "موقعیت در دسترس نیست",
+  "locateServiceOff": "روشن‌کردن سرویس موقعیت",
+  "mapOffCampus": "حدود {km} کیلومتر با پردیس فاصله دارید",
+```
+
+- [ ] **Step 3: Regenerate + verify** — Run: `flutter gen-l10n && flutter analyze` — Expected: `AonL10n.of(context).locateShow` etc. exist; no untranslated-key failure; analyze clean. (If `.locate*` getters are missing, the arb edit or gen-l10n failed — fix before proceeding.)
+
+- [ ] **Step 4: Commit**
+```bash
+git add lib/l10n/app_en.arb lib/l10n/app_fa.arb lib/l10n/generated/
+git commit -m "feat(map): l10n strings for locate control + off-campus banner (EN/FA) (Phase A)"
+```
+
+---
+
+## Task 8: `LocateButton` (state-driven, per-state semantics)
 
 **Files:** Create `lib/widgets/locate_button.dart`, `test/widget/locate_button_test.dart`. Modify `lib/widgets/map_control_island.dart` to host it.
 
-**Interfaces:** `LocateButton` (`ConsumerWidget`) reads `locationControllerProvider`, renders an `IconButton` with per-state icon + semantic label (from l10n, Task 8), calls `onLocateTapped`. `MapControlIsland` gains a `Widget locateButton` slot replacing `onRecenter`.
+**Interfaces:** `LocateButton` (`ConsumerWidget`) reads `locationControllerProvider`, renders an `IconButton` with per-state icon, wrapped in an explicit `Semantics(button: true, label: …, excludeSemantics: true)` so **exactly one** node carries the l10n label (Task 7) — a `tooltip`-as-label is unreliable for `find.bySemanticsLabel`. Calls `onLocateTapped`. `MapControlIsland` gains a `Widget locateButton` slot replacing `onRecenter`.
 
-- [ ] **Step 1: Write the failing test** — `test/widget/locate_button_test.dart` (asserts one button node + label per state; l10n keys land in Task 8, so this test uses the English fallbacks the button will reference — run after Task 8 wires the keys, or stub the labels as constants first and swap to l10n in Task 8):
+- [ ] **Step 1: Write the failing test** — `test/widget/locate_button_test.dart` (one findable labelled node per state; the l10n keys already exist from Task 7):
 
 ```dart
 import 'package:flutter/material.dart';
@@ -793,7 +843,7 @@ void main() {
 
 - [ ] **Step 2: Run to verify it fails** — FAIL.
 
-- [ ] **Step 3: Implement** — `lib/widgets/locate_button.dart` (uses l10n from Task 8; if implementing 7 before 8, temporarily hard-code the English strings and replace with `l.locate*` in Task 8):
+- [ ] **Step 3: Implement** — `lib/widgets/locate_button.dart`:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -825,10 +875,19 @@ class LocateButton extends ConsumerWidget {
       _ => (Icons.my_location_rounded, l.locateShow, context.aon.contentSecondary),
     };
 
-    return IconButton(
-      icon: Icon(icon, color: color),
-      tooltip: label,
-      onPressed: () => ref.read(locationControllerProvider.notifier).onLocateTapped(),
+    // One explicit semantics node with the label — excludeSemantics drops the
+    // IconButton's own (tooltip-derived) node so bySemanticsLabel finds exactly
+    // one. onPressed stays wired in every state (denied/serviceOff re-prompt or
+    // open settings via onLocateTapped).
+    return Semantics(
+      button: true,
+      label: label,
+      excludeSemantics: true,
+      child: IconButton(
+        icon: Icon(icon, color: color),
+        onPressed: () =>
+            ref.read(locationControllerProvider.notifier).onLocateTapped(),
+      ),
     );
   }
 }
@@ -836,53 +895,11 @@ class LocateButton extends ConsumerWidget {
 
 Modify `map_control_island.dart`: replace the `onRecenter` field + its `_button(... Icons.my_location_rounded ... onRecenter)` with a `final Widget locateButton;` field rendered in that slot. (Keep zoom in/out unchanged.)
 
-- [ ] **Step 4: Run to verify it passes** (after Task 8's keys exist) — PASS.
+- [ ] **Step 4: Run to verify it passes** — Run: `flutter test test/widget/locate_button_test.dart` — Expected: PASS.
 - [ ] **Step 5: Commit**
 ```bash
 git add lib/widgets/locate_button.dart lib/widgets/map_control_island.dart test/widget/locate_button_test.dart
-git commit -m "feat(map): state-driven locate button with per-state semantics (Phase A)"
-```
-
----
-
-## Task 8: Localised strings (EN + FA)
-
-**Files:** Modify `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`; regenerate.
-
-- [ ] **Step 1: Add keys to `app_en.arb`** (each with a `@`-description, matching the file's style):
-```json
-  "locateShow": "Show my location",
-  "@locateShow": { "description": "Map locate button, inactive state" },
-  "locateFollow": "Follow my location",
-  "@locateFollow": { "description": "Map locate button, active but not following" },
-  "locateStopFollowing": "Stop following my location",
-  "@locateStopFollowing": { "description": "Map locate button, following" },
-  "locateUnavailable": "Location unavailable",
-  "@locateUnavailable": { "description": "Map locate button, permission denied" },
-  "locateServiceOff": "Turn on Location Services",
-  "@locateServiceOff": { "description": "Map locate button, device location services off" },
-  "mapOffCampus": "You're about {km} km from campus",
-  "@mapOffCampus": { "description": "Banner when the user is outside the campus radius", "placeholders": { "km": { "type": "String" } } },
-```
-
-- [ ] **Step 2: Add the same keys to `app_fa.arb`** (Persian; flagged for a translator, but present so the build doesn't fail):
-```json
-  "locateShow": "موقعیت من",
-  "locateFollow": "دنبال‌کردن موقعیت من",
-  "locateStopFollowing": "توقف دنبال‌کردن موقعیت",
-  "locateUnavailable": "موقعیت در دسترس نیست",
-  "locateServiceOff": "روشن‌کردن سرویس موقعیت",
-  "mapOffCampus": "حدود {km} کیلومتر با پردیس فاصله دارید",
-```
-
-- [ ] **Step 3: Regenerate + verify** — Run: `flutter gen-l10n && flutter analyze` — Expected: `AonL10n.of(context).locateShow` etc. exist; no untranslated-key failure; analyze clean. (If `.locate*` getters are missing, the arb edit or gen-l10n failed — fix before proceeding.)
-
-- [ ] **Step 4: Run the LocateButton test now green** — Run: `flutter test test/widget/locate_button_test.dart` — Expected: PASS.
-
-- [ ] **Step 5: Commit**
-```bash
-git add lib/l10n/app_en.arb lib/l10n/app_fa.arb lib/l10n/generated/
-git commit -m "feat(map): l10n strings for locate control + off-campus banner (EN/FA) (Phase A)"
+git commit -m "feat(map): state-driven locate button with explicit per-state semantics (Phase A)"
 ```
 
 ---
@@ -902,16 +919,104 @@ import 'package:aon2026/services/location_service.dart';
   ],
 ```
 
-- [ ] **Step 2: Write the failing wiring test** — `test/widget/map_location_wiring_test.dart` (drives the map with a fake service; asserts the off-campus banner appears for a far fix and not for a near one, and that a user pan clears follow). Use the `FakeLocationService` from Task 4:
+- [ ] **Step 2: Write the failing wiring test** — `test/widget/map_location_wiring_test.dart`. Four cases: near fix ⇒ circle+dot, no banner; far fix ⇒ off-campus banner; user pan ⇒ follow cleared; **offstage (TickerMode off) ⇒ `mapVisible` false** (the battery-pause proof, so it isn't only runtime-verified). Uses the shared fake and an `UncontrolledProviderScope` for direct container access:
+
 ```dart
-// Pump MapScreen inside a ProviderScope overriding locationServiceProvider with
-// a FakeLocationService and mapVisibleProvider=true; call onLocateTapped via the
-// controller; emit a near fix -> no banner; emit a far fix -> find l.mapOffCampus
-// text; then simulate a gesture -> onUserPan -> following false.
-// (Full body mirrors the Task 5 provider test + a find.textContaining for the
-// localized off-campus string.)
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/models/user_location_fix.dart';
+import 'package:aon2026/services/location_service.dart';
+import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/widgets/map_config.dart';
+import 'package:aon2026/screens/map_screen.dart';
+import '../support/fake_location_service.dart';
+
+ProviderContainer _container(FakeLocationService svc, {bool visible = true}) {
+  final c = ProviderContainer(
+      overrides: [locationServiceProvider.overrideWithValue(svc)]);
+  addTearDown(c.dispose);
+  c.read(mapVisibleProvider.notifier).state = visible;
+  return c;
+}
+
+Widget _app(ProviderContainer c, {Widget home = const MapScreen()}) =>
+    UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: home,
+      ),
+    );
+
+UserLocationFix _near() =>
+    UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: 10);
+UserLocationFix _far() => UserLocationFix(
+    position: LatLng(MapConfig.campusCentre.latitude + 0.05,
+        MapConfig.campusCentre.longitude),
+    accuracyMeters: 10);
+
+void main() {
+  testWidgets('near fix -> circle + dot, no off-campus banner', (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await t.pumpWidget(_app(c));
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emit(_near());
+    await t.pump(); // deliver stream event
+    await t.pump(); // rebuild
+    expect(find.byType(CircleLayer), findsOneWidget);
+    expect(find.byType(MarkerLayer), findsWidgets); // venue pins + user dot
+    expect(find.textContaining('from campus'), findsNothing);
+  });
+
+  testWidgets('far fix -> off-campus banner', (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await t.pumpWidget(_app(c));
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emit(_far());
+    await t.pump();
+    await t.pump();
+    expect(find.textContaining('from campus'), findsOneWidget);
+  });
+
+  testWidgets('user pan clears follow', (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await t.pumpWidget(_app(c));
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    expect(c.read(locationControllerProvider).following, isTrue);
+    await t.drag(find.byType(FlutterMap), const Offset(-60, 0));
+    await t.pump();
+    expect(c.read(locationControllerProvider).following, isFalse);
+  });
+
+  // The battery-pause mechanism, proven pre-runtime: an offstage IndexedStack
+  // child has TickerMode disabled — the same primitive StatefulShellRoute.
+  // indexedStack uses — so MapScreen must push mapVisible=false. If this fails,
+  // TickerMode is the wrong signal and Task 10's fallback (navigationShell
+  // index) is required.
+  testWidgets('offstage (TickerMode off) -> mapVisible false', (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc, visible: true);
+    await t.pumpWidget(_app(c,
+        home: const IndexedStack(
+          index: 1, // MapScreen (index 0) is offstage
+          children: [MapScreen(), SizedBox.shrink()],
+        )));
+    await t.pump(); // run didChangeDependencies' post-frame callback
+    await t.pump();
+    expect(c.read(mapVisibleProvider), isFalse);
+  });
+}
 ```
-Write it concretely following the Task 5 container pattern + `find.textContaining` on the banner; assert `find.byType(CircleLayer)`/dot appear when a near fix is active.
+
+(If flutter_map's gesture arena doesn't fire `onPositionChanged(hasGesture:true)` under `t.drag` in the headless harness, the pan→follow wiring is a reviewed one-liner and the Task 5 unit test already proves `onUserPan`; keep the drag test but the executor may mark it a known-harness-limitation with a receipt rather than weakening it.)
 
 - [ ] **Step 3: Run to verify it fails** — FAIL (no layer/banner/pan wiring yet).
 
@@ -936,17 +1041,16 @@ Write it concretely following the Task 5 container pattern + `find.textContainin
        if (hasGesture) ref.read(locationControllerProvider.notifier).onUserPan();
      },
      ```
-  4. **Layers in order** — watch the snapshot and insert the location layers at the right depths:
+  4. **Layers in order** — watch the snapshot and insert the location layers at the right depths (the new `UserLocationCircle`/`UserLocationDot` StatelessWidgets read their own colour from `context.aon`, so no context is threaded):
      ```dart
      final loc = ref.watch(locationControllerProvider);
      // children:
      const DarkTileLayer(),
-     if (loc.active && loc.fix != null)
-       UserLocationLayer.circle(context: context, fix: loc.fix!),
+     if (loc.active && loc.fix != null) UserLocationCircle(fix: loc.fix!),
      MarkerLayer(markers: markers),
-     if (loc.active && loc.fix != null) UserLocationLayer.dot(fix: loc.fix!),
+     if (loc.active && loc.fix != null) UserLocationDot(fix: loc.fix!),
      ```
-  5. **Follow recenter** — a `ref.listen` in `build` (or an effect) that moves the camera when following near-campus:
+  5. **Follow recenter** — a `ref.listen` that moves the camera when following near-campus. **Call it unconditionally at the very top of `build` (before any early return or `_mode` branch)** — Riverpod requires `ref.listen` to run on every build, so it must not sit inside an `if`/mode branch:
      ```dart
      ref.listen(locationControllerProvider, (_, s) {
        if (s.following && s.fix != null && MapConfig.isNearCampus(s.fix!.position)) {
@@ -1014,19 +1118,19 @@ git commit -m "docs(map): Phase A verification + runtime closeout"
 | §5.2 service seam + web guards | 4 |
 | §5.2.1 web attempt-first | 4 (status/request), 10 (runtime) |
 | §5.3 three decoupled providers | 5 |
-| §5.6 locate control states + semantics | 7 |
+| §5.6 locate control states + semantics | 8 |
 | §5.5 layer order + low-accuracy omit | 6, 9 |
 | §5.7 pan-exits-follow, off-campus, runtime failure | 5, 9 |
 | §6 lifecycle (`active && mapVisible`) | 5, 9 |
 | §8 iOS foreground-only / Android perms | 1 |
 | §D2 lazy permission | 5, 9, 10 |
 | §D5 instant recenter | 9 |
-| l10n EN/FA | 8 |
+| l10n EN/FA | 7 |
 | §9 tests | every task + 10 |
 
-**2. Placeholder scan** — Task 9 Step 2's test body is described rather than fully written (it composes the Task 5 container pattern + a `find.textContaining` on the localized banner); the executor writes it concretely from those pieces. Everything else is complete code. Not ideal — flag: **when executing Task 9, write that test in full before the wiring, following the Task 5 fake-container pattern.**
+**2. Placeholder scan** — clean. Task 9 Step 2's wiring test is now written in full (four cases incl. the TickerMode/mapVisible proof). Every other step carries complete code; no TBD/TODO/"add error handling"/described-not-written steps remain.
 
-**3. Type consistency** — `LocationStatus`, `LocationService` (`status`/`request`/`watch`/`serviceEnabledChanges`/`openAppSettings`/`openLocationSettings`), `UserLocationFix`(`position`/`accuracyMeters`/`isLowAccuracy`), `LocationSnapshot`(`status`/`fix`/`active`/`following`), `locationServiceProvider`/`mapVisibleProvider`/`locationControllerProvider`, `MapConfig.{distanceFromCampusMeters,isNearCampus,locationCampusRadiusMeters}`, `UserLocationLayer.{circle,dot}`, `LocateButton`, `l.locate*`/`l.mapOffCampus` — consistent across tasks.
+**3. Type consistency** — `LocationStatus`, `LocationService` (`status`/`request`/`watch`/`serviceEnabledChanges`/`openAppSettings`/`openLocationSettings`), `UserLocationFix`(`position`/`accuracyMeters`/`isLowAccuracy`), `LocationSnapshot`(`status`/`fix`/`active`/`following`), `locationServiceProvider`/`mapVisibleProvider`/`locationControllerProvider`, `MapConfig.{distanceFromCampusMeters,isNearCampus,locationCampusRadiusMeters}`, `UserLocationCircle`/`UserLocationDot` (both `StatelessWidget`, `fix:` arg), `LocateButton`, `l.locate*`/`l.mapOffCampus` — consistent across tasks. Shared fake lives at `test/support/fake_location_service.dart` (imported by Tasks 4, 5, 9).
 
 ---
 
@@ -1036,5 +1140,6 @@ git commit -m "docs(map): Phase A verification + runtime closeout"
 - **Never treat web `checkPermission()==denied` as authoritative** (§5.2.1) — the web path attempts acquisition.
 - **Web build is a hard gate** (Task 1 Step 2, Task 10 Step 2) — the entire reason heading was cut.
 - Programmatic `MapController.move` fires `onPositionChanged` with `hasGesture:false`; only `hasGesture:true` exits follow — do not cancel follow on a follow-driven move.
+- **Off-campus, the dot is off-screen by design.** The existing `MapOptions.cameraConstraint: CameraConstraint.contain(bounds: MapConfig.campusBounds)` keeps the camera framed on campus, so an off-campus fix never scrolls into view — the localized banner is the *sole* off-campus feedback. This is intended (spec §5.4); don't "fix" it by loosening the camera constraint.
 - Never weaken an existing test to make Phase A pass.
 ```

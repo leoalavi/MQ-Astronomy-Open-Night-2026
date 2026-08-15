@@ -42,6 +42,22 @@ UserLocationFix _far() => UserLocationFix(
         MapConfig.campusCentre.longitude),
     accuracyMeters: 10);
 
+Widget _appL(ProviderContainer c, Locale locale) => UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        locale: locale,
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: const MapScreen(),
+      ),
+    );
+
+// ~523 m from centre (near campus) but NORTH of the calibrated footprint, so it
+// is projectable == false → exercises the off-illustration note.
+const _nearOffFootprint = LatLng(-33.7690, 151.1134);
+UserLocationFix _nearOff() =>
+    UserLocationFix(position: _nearOffFootprint, accuracyMeters: 10);
+
 MapCamera _cam(WidgetTester t) =>
     MapCamera.of(t.element(find.byType(MarkerLayer).first));
 
@@ -109,5 +125,61 @@ void main() {
     await t.pumpAndSettle();
     expect(find.byType(CampusBasemapLayer), findsNothing); // left the map
     expect(t.takeException(), isNull);
+  });
+
+  // ── Task 10: off-illustration note (EN + FA) + viewport matrix ──
+
+  testWidgets('fixture guard: near campus AND off the footprint', (t) async {
+    expect(MapConfig.isNearCampus(_nearOffFootprint), isTrue);
+    expect(_proj.canProject(GpsPoint(_nearOffFootprint)), isFalse);
+  });
+
+  testWidgets('off-illustration note shows (EN), 320x568 / 2.0, no overflow',
+      (t) async {
+    t.view.physicalSize = const Size(320, 568);
+    t.view.devicePixelRatio = 1.0;
+    t.platformDispatcher.textScaleFactorTestValue = 2.0;
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await _activate(t, c, svc, _nearOff());
+    expect(find.byType(UserLocationDot), findsNothing); // not a fake dot
+    expect(find.textContaining('campus map'), findsOneWidget); // EN note
+    await t.pumpAndSettle();
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('off-illustration note renders under FA', (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await t.pumpWidget(_appL(c, const Locale('fa')));
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emit(_nearOff());
+    await t.pump();
+    await t.pump();
+    expect(find.textContaining('یافتن'), findsOneWidget); // FA "locating" (unique)
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('camera viewport matrix: framed + zoom in range', (t) async {
+    addTearDown(t.view.resetPhysicalSize);
+    addTearDown(t.view.resetDevicePixelRatio);
+    for (final size in const [Size(320, 568), Size(1280, 800), Size(390, 844)]) {
+      t.view.physicalSize = size;
+      t.view.devicePixelRatio = 1.0;
+      final svc = FakeLocationService();
+      final c = _container(svc);
+      await t.pumpWidget(_app(c));
+      await t.pump();
+      final cam = _cam(t);
+      expect(cam.zoom,
+          inInclusiveRange(MapConfig.mapMinZoom, MapConfig.mapMaxZoom),
+          reason: 'zoom out of range at $size');
+      expect(MapConfig.mapBounds.contains(cam.center), isTrue,
+          reason: 'camera off the campus map at $size');
+      expect(t.takeException(), isNull);
+    }
   });
 }

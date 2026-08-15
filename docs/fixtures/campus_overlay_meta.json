@@ -1,0 +1,43 @@
+{
+  "imageAsset": "assets/maps/mq-campus.png",
+  "width": 4678,
+  "height": 3307,
+  "pixelBounds": {
+    "south": 0,
+    "west": 0,
+    "north": 3307,
+    "east": 4678
+  },
+  "pixelOffsetX": 0,
+  "buildingPixelOffsetX": 0,
+  "gpsBounds": {
+    "north": -33.769571,
+    "south": -33.778124,
+    "east": 151.122172,
+    "west": 151.103934
+  },
+  "initialFitPadding": 20,
+  "minZoomOffset": 1.5,
+  "maxZoom": 1.5,
+  "gpsProjection": {
+    "method": "gcp_affine",
+    "affine": {
+      "x": [
+        880.374832,
+        3889.927306,
+        12.547607
+      ],
+      "y": [
+        2862.069113,
+        -64.093654,
+        -2349.078357
+      ],
+      "normalization": {
+        "minLat": -33.7772506,
+        "maxLat": -33.7703261,
+        "minLng": 151.1080508,
+        "maxLng": 151.1211352
+      }
+    }
+  }
+}

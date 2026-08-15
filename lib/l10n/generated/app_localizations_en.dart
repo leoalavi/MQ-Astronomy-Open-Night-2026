@@ -468,4 +468,87 @@ class AonL10nEn extends AonL10n {
   String mapOffCampus(String km) {
     return 'You\'re about $km km from campus';
   }
+
+  @override
+  String get pointMeTitle => 'Point me there';
+
+  @override
+  String pointMeDistanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String pointMeDistanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String get pointMeFindingNorth => 'Finding north…';
+
+  @override
+  String get pointMeNearby => 'You\'re basically there';
+
+  @override
+  String get pointMeNoCompass =>
+      'The live arrow needs a phone with a compass sensor. Here\'s the direction and distance.';
+
+  @override
+  String get pointMeImprovingAccuracy =>
+      'Your location is a bit rough right now — here\'s the rough direction. It\'ll sharpen as GPS settles.';
+
+  @override
+  String get pointMeNeedsLocation => 'Turn on location to point the way';
+
+  @override
+  String get pointMeUnknownPlace => 'We can\'t find that place';
+
+  @override
+  String pointMeBearingSentence(
+    String venue,
+    String distance,
+    String cardinal,
+  ) {
+    return '$venue is about $distance $cardinal of you';
+  }
+
+  @override
+  String pointMeA11yDirection(String venue, String side, String distance) {
+    return '$venue is $side, $distance away';
+  }
+
+  @override
+  String get sideAhead => 'ahead of you';
+
+  @override
+  String get sideBehind => 'behind you';
+
+  @override
+  String get sideLeft => 'to your left';
+
+  @override
+  String get sideRight => 'to your right';
+
+  @override
+  String get cardinalN => 'north';
+
+  @override
+  String get cardinalNE => 'north-east';
+
+  @override
+  String get cardinalE => 'east';
+
+  @override
+  String get cardinalSE => 'south-east';
+
+  @override
+  String get cardinalS => 'south';
+
+  @override
+  String get cardinalSW => 'south-west';
+
+  @override
+  String get cardinalW => 'west';
+
+  @override
+  String get cardinalNW => 'north-west';
 }

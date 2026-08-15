@@ -894,6 +894,144 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'You\'re about {km} km from campus'**
   String mapOffCampus(String km);
+
+  /// Heading screen title + venue-sheet button
+  ///
+  /// In en, this message translates to:
+  /// **'Point me there'**
+  String get pointMeTitle;
+
+  /// No description provided for @pointMeDistanceMeters.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m'**
+  String pointMeDistanceMeters(int meters);
+
+  /// No description provided for @pointMeDistanceKm.
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km'**
+  String pointMeDistanceKm(String km);
+
+  /// Heading acquiring state
+  ///
+  /// In en, this message translates to:
+  /// **'Finding north…'**
+  String get pointMeFindingNorth;
+
+  /// Shown within the near-target radius
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re basically there'**
+  String get pointMeNearby;
+
+  /// Fallback when heading is unsupported/unavailable
+  ///
+  /// In en, this message translates to:
+  /// **'The live arrow needs a phone with a compass sensor. Here\'s the direction and distance.'**
+  String get pointMeNoCompass;
+
+  /// Shown when the fix is low-accuracy (>200 m)
+  ///
+  /// In en, this message translates to:
+  /// **'Your location is a bit rough right now — here\'s the rough direction. It\'ll sharpen as GPS settles.'**
+  String get pointMeImprovingAccuracy;
+
+  /// Shown when there is no location fix
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to point the way'**
+  String get pointMeNeedsLocation;
+
+  /// Unknown/removed venue id
+  ///
+  /// In en, this message translates to:
+  /// **'We can\'t find that place'**
+  String get pointMeUnknownPlace;
+
+  /// Fallback bearing card
+  ///
+  /// In en, this message translates to:
+  /// **'{venue} is about {distance} {cardinal} of you'**
+  String pointMeBearingSentence(String venue, String distance, String cardinal);
+
+  /// Live arrow semantic label
+  ///
+  /// In en, this message translates to:
+  /// **'{venue} is {side}, {distance} away'**
+  String pointMeA11yDirection(String venue, String side, String distance);
+
+  /// No description provided for @sideAhead.
+  ///
+  /// In en, this message translates to:
+  /// **'ahead of you'**
+  String get sideAhead;
+
+  /// No description provided for @sideBehind.
+  ///
+  /// In en, this message translates to:
+  /// **'behind you'**
+  String get sideBehind;
+
+  /// No description provided for @sideLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'to your left'**
+  String get sideLeft;
+
+  /// No description provided for @sideRight.
+  ///
+  /// In en, this message translates to:
+  /// **'to your right'**
+  String get sideRight;
+
+  /// No description provided for @cardinalN.
+  ///
+  /// In en, this message translates to:
+  /// **'north'**
+  String get cardinalN;
+
+  /// No description provided for @cardinalNE.
+  ///
+  /// In en, this message translates to:
+  /// **'north-east'**
+  String get cardinalNE;
+
+  /// No description provided for @cardinalE.
+  ///
+  /// In en, this message translates to:
+  /// **'east'**
+  String get cardinalE;
+
+  /// No description provided for @cardinalSE.
+  ///
+  /// In en, this message translates to:
+  /// **'south-east'**
+  String get cardinalSE;
+
+  /// No description provided for @cardinalS.
+  ///
+  /// In en, this message translates to:
+  /// **'south'**
+  String get cardinalS;
+
+  /// No description provided for @cardinalSW.
+  ///
+  /// In en, this message translates to:
+  /// **'south-west'**
+  String get cardinalSW;
+
+  /// No description provided for @cardinalW.
+  ///
+  /// In en, this message translates to:
+  /// **'west'**
+  String get cardinalW;
+
+  /// No description provided for @cardinalNW.
+  ///
+  /// In en, this message translates to:
+  /// **'north-west'**
+  String get cardinalNW;
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

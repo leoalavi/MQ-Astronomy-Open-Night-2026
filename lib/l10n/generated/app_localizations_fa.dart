@@ -468,4 +468,88 @@ class AonL10nFa extends AonL10n {
   String mapOffCampus(String km) {
     return 'حدود $km کیلومتر با پردیس فاصله دارید';
   }
+
+  @override
+  String get pointMeTitle => 'مسیر را نشانم بده';
+
+  @override
+  String pointMeDistanceMeters(int meters) {
+    return '$meters متر';
+  }
+
+  @override
+  String pointMeDistanceKm(String km) {
+    return '$km کیلومتر';
+  }
+
+  @override
+  String get pointMeFindingNorth => 'در حال یافتن شمال…';
+
+  @override
+  String get pointMeNearby => 'تقریباً رسیدی';
+
+  @override
+  String get pointMeNoCompass =>
+      'فلش زنده به گوشی با حسگر قطب‌نما نیاز دارد. جهت و فاصله در اینجاست.';
+
+  @override
+  String get pointMeImprovingAccuracy =>
+      'موقعیت شما اکنون کمی نادقیق است — جهت تقریبی این است و با تثبیت GPS دقیق‌تر می‌شود.';
+
+  @override
+  String get pointMeNeedsLocation =>
+      'برای نشان‌دادن مسیر، موقعیت مکانی را روشن کنید';
+
+  @override
+  String get pointMeUnknownPlace => 'آن مکان را پیدا نمی‌کنیم';
+
+  @override
+  String pointMeBearingSentence(
+    String venue,
+    String distance,
+    String cardinal,
+  ) {
+    return '$venue حدوداً $distance در $cardinal شماست';
+  }
+
+  @override
+  String pointMeA11yDirection(String venue, String side, String distance) {
+    return '$venue $side، در فاصلهٔ $distance';
+  }
+
+  @override
+  String get sideAhead => 'پیش روی شما';
+
+  @override
+  String get sideBehind => 'پشت سر شما';
+
+  @override
+  String get sideLeft => 'سمت چپ شما';
+
+  @override
+  String get sideRight => 'سمت راست شما';
+
+  @override
+  String get cardinalN => 'شمال';
+
+  @override
+  String get cardinalNE => 'شمال‌شرق';
+
+  @override
+  String get cardinalE => 'شرق';
+
+  @override
+  String get cardinalSE => 'جنوب‌شرق';
+
+  @override
+  String get cardinalS => 'جنوب';
+
+  @override
+  String get cardinalSW => 'جنوب‌غرب';
+
+  @override
+  String get cardinalW => 'غرب';
+
+  @override
+  String get cardinalNW => 'شمال‌غرب';
 }

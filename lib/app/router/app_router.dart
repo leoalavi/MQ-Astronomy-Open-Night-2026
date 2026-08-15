@@ -10,6 +10,7 @@ import 'package:aon2026/screens/settings_screen.dart';
 import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/screens/panorama_screen.dart';
+import 'package:aon2026/screens/point_me_screen.dart';
 import 'package:aon2026/screens/passport_reward_screen.dart';
 import 'package:aon2026/screens/passport_scan_screen.dart';
 import 'package:aon2026/screens/passport_screen.dart';
@@ -49,6 +50,11 @@ abstract final class Routes {
   /// Immersive 360° panorama for a venue.
   static String panorama = '/panorama/:venueId';
   static String panoramaFor(String venueId) => '/panorama/$venueId';
+
+  /// "Point me there" heading screen for a venue or parking id. The helper owns
+  /// URL-encoding of the id (Map Parity Phase B).
+  static String pointMe = '/point-me/:id';
+  static String pointMeTo(String id) => '/point-me/${Uri.encodeComponent(id)}';
 }
 
 /// The app's navigator.
@@ -146,6 +152,13 @@ GoRouter buildRouter() {
         path: Routes.panorama,
         builder: (context, state) => PanoramaScreen(
           venueId: state.pathParameters['venueId']!,
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.pointMe,
+        builder: (context, state) => PointMeScreen(
+          venueId: state.pathParameters['id']!,
         ),
       ),
       GoRoute(

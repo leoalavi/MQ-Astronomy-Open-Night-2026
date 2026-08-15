@@ -7,12 +7,11 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
-import 'package:aon2026/data/parking_data.dart';
-import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/heading_service.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/point_me_controller.dart';
+import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/bearing_math.dart';
 
 class PointMeScreen extends ConsumerStatefulWidget {
@@ -34,12 +33,14 @@ class _PointMeScreenState extends ConsumerState<PointMeScreen> {
   @override
   void initState() {
     super.initState();
-    final v = VenuesData.byId(widget.venueId);
+    // Fixtures are reached through providers (the swappable data seam), never
+    // VenuesData/ParkingData directly.
+    final v = ref.read(venueByIdProvider(widget.venueId));
     if (v != null && v.hasCoordinates) {
       _target = LatLng(v.latitude!, v.longitude!);
       _placeName = v.name;
     } else {
-      final p = ParkingData.byId(widget.venueId);
+      final p = ref.read(parkingByIdProvider(widget.venueId));
       if (p != null && p.hasCoordinates) {
         _target = LatLng(p.latitude!, p.longitude!);
         _placeName = p.name;

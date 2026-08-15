@@ -477,6 +477,21 @@ class VenueSheet extends ConsumerWidget {
             ),
           ),
 
+          if (venue.hasCoordinates) ...[
+            const SizedBox(height: AonSpacing.space3),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.push(Routes.pointMeTo(venue.id));
+                },
+                icon: const Icon(Icons.navigation_rounded),
+                label: Text(l.pointMeTitle),
+              ),
+            ),
+          ],
+
           // 360° entry. Present only when Raouf's panorama layer actually has
           // a tour for this venue id — availability comes from
           // `venuesWithPanoramaProvider`, never from guessing an asset path.
@@ -531,6 +546,7 @@ class ParkingSheet extends ConsumerWidget {
     final parking = ref.watch(parkingByIdProvider(parkingId));
     if (parking == null) return const SizedBox.shrink();
 
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final routes = ref.watch(routesFromProvider(parkingId));
 
@@ -589,6 +605,20 @@ class ParkingSheet extends ConsumerWidget {
                     },
                     icon: const Icon(Icons.directions_walk_rounded),
                     label: Text('${routes.length} walking routes from here'),
+                  ),
+                ),
+              ],
+              if (parking.hasCoordinates) ...[
+                const SizedBox(height: AonSpacing.space3),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                      context.push(Routes.pointMeTo(parking.id));
+                    },
+                    icon: const Icon(Icons.navigation_rounded),
+                    label: Text(l.pointMeTitle),
                   ),
                 ),
               ],

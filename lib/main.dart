@@ -9,8 +9,10 @@ import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/app_settings.dart';
+import 'package:aon2026/services/heading_service.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/location_service.dart';
+import 'package:aon2026/services/point_me_controller.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/passport_store.dart';
 
@@ -62,6 +64,7 @@ Future<void> main() async {
         passportSnapshotProvider.overrideWithValue(passportSnapshot),
         passportStoreProvider.overrideWithValue(passportStore),
         locationServiceProvider.overrideWithValue(GeolocatorLocationService()),
+        headingServiceProvider.overrideWithValue(SensorsHeadingService()),
       ],
       child: const AonApp(),
     ),

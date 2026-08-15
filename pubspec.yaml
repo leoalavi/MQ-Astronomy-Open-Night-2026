@@ -56,3 +56,4 @@ flutter:
     - assets/web/indoor_viewer.html
     - assets/web/pannellum/
     - assets/data/indoor/
+    - assets/maps/

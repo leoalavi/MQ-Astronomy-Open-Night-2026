@@ -1,6 +1,8 @@
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:aon2026/services/campus_projection.dart';
+
 /// Map camera and tile configuration.
 ///
 /// Extracted so the map screen and the wayfinding screen share exactly one
@@ -25,6 +27,16 @@ abstract final class MapConfig {
   /// Follow-me only recenters within this radius of campus; beyond it the map
   /// stays framed on campus and shows an "off campus" note (spec §5.4).
   static const double locationCampusRadiusMeters = 2500;
+
+  // ── CrsSimple campus-map units (Map Parity M1). Bounds come straight from
+  //    CampusProjection so they can never drift from the projector — one
+  //    geometry, one source of truth.
+  static final LatLngBounds mapBounds = LatLngBounds(
+    const LatLng(0, 0),
+    LatLng(CampusProjection.mapNorth, CampusProjection.mapEast),
+  );
+  static const double mapMinZoom = -4.0;
+  static const double mapMaxZoom = -2.2;
 
   static const Distance _distance = Distance();
 

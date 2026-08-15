@@ -1,5 +1,8 @@
 # Map Parity Phase C1 — Campus overlay layers + picker (design)
 
+> **⚠ SUPERSEDED (2026-08-15)** by `2026-08-15-aon-map-parity-program-design.md`.
+> This "additive overlays on the dark OSM map" approach was abandoned after measurement showed MQ's overlay PNGs are full ~94%-opaque illustrated basemap flyers (baked English legend, opacity 0.95, rectangular `OverlayImage`), not additive data layers — they read as mud on the dark map. The program instead **replaces** the map with MQ's `CrsSimple` illustrated basemap (night-reskinned), where the overlays drop in coherently. Kept for history.
+
 **Status:** design, pre-gauntlet. Forked from `main` after Phase B (heading) merged.
 
 ## 1. Goal

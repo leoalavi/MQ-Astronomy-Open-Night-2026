@@ -35,13 +35,14 @@ abstract final class MapConfig {
     const LatLng(0, 0),
     const LatLng(CampusProjection.mapNorth, CampusProjection.mapEast),
   );
-  // Zoom range for the CrsSimple campus map. MQ Journey's -4.0/-2.2 do NOT
-  // transfer — under flutter_map's CrsSimple the whole 120×85-unit campus frames
-  // at a small POSITIVE zoom, so those bounds sat below the fit and crashed the
-  // camera (Map Parity M1, gauntlet finding). Empirically bracketed: the fit
-  // lands well inside, and the campus stays centred via CameraConstraint.
-  static const double mapMinZoom = -1;
-  static const double mapMaxZoom = 5;
+  // Zoom range for the CrsSimple campus map. CrsSimple scale = 256·2^zoom, so on
+  // a phone the whole 120×85-unit campus frames at zoom ≈ -6.3 (verified
+  // on-device). minZoom must sit BELOW that or initialCameraFit clamps and the
+  // map opens far too zoomed-in; maxZoom must sit ABOVE the widget-test's
+  // 0-size-viewport fit (0.0) or the camera throws (Map Parity M1, on-device
+  // finding). Bracketed to satisfy both: whole campus at open, room to zoom in.
+  static const double mapMinZoom = -8;
+  static const double mapMaxZoom = 1;
 
   static const Distance _distance = Distance();
 

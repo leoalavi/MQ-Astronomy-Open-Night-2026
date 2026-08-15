@@ -167,6 +167,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     initialCameraFit: CameraFit.bounds(
                       bounds: MapConfig.mapBounds,
                       padding: const EdgeInsets.all(12),
+                      minZoom: MapConfig.mapMinZoom,
+                      maxZoom: MapConfig.mapMaxZoom,
+                    ),
+                    // initialCameraFit runs before the map is laid out (size 0),
+                    // so it under-fits and the map opens zoomed-in. Re-fit once
+                    // the real viewport exists (Map Parity M1, on-device fix).
+                    onMapReady: () => _controller.fitCamera(
+                      CameraFit.bounds(
+                        bounds: MapConfig.mapBounds,
+                        padding: const EdgeInsets.all(12),
+                        minZoom: MapConfig.mapMinZoom,
+                        maxZoom: MapConfig.mapMaxZoom,
+                      ),
                     ),
                     minZoom: MapConfig.mapMinZoom,
                     maxZoom: MapConfig.mapMaxZoom,
@@ -412,7 +425,8 @@ class _MapNote extends StatelessWidget {
   }
 }
 
-/// OpenStreetMap requires visible attribution wherever its tiles are shown.
+/// The campus basemap is Macquarie University's illustrated map (Map Parity M1
+/// replaced the OSM tiles), so it — not OSM — is credited on the map.
 class _MapAttribution extends StatelessWidget {
   const _MapAttribution();
 
@@ -425,7 +439,7 @@ class _MapAttribution extends StatelessWidget {
         borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
       ),
       child: Text(
-        '© OpenStreetMap contributors',
+        'Campus map © Macquarie University',
         style: Theme.of(context)
             .textTheme
             .labelSmall

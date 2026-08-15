@@ -7,7 +7,7 @@ void main() {
     expect(MapConfig.mapBounds.east, closeTo(120.2389, 1e-3));
     expect(MapConfig.mapBounds.south, 0);
     expect(MapConfig.mapBounds.west, 0);
-    expect(MapConfig.mapMinZoom, -1);
-    expect(MapConfig.mapMaxZoom, 5);
+    expect(MapConfig.mapMinZoom, -8);
+    expect(MapConfig.mapMaxZoom, 1);
   });
 }

@@ -1,46 +1,78 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/user_location_fix.dart';
-import 'package:aon2026/widgets/map_config.dart';
+import 'package:aon2026/services/campus_projection.dart';
 import 'package:aon2026/widgets/user_location_layer.dart';
 
-Widget _map(List<Widget> layers) => MaterialApp(
+const _proj = CampusProjection();
+const _gps = LatLng(-33.7737, 151.1134);
+final _centre = _proj.project(const GpsPoint(_gps))!;
+
+// Explicit initialCenter + initialZoom (not initialCameraFit) so zoom is
+// controllable and the accuracy-circle radius can be read at a known zoom.
+Widget _host(Widget child, {required double zoom}) => MaterialApp(
       home: Scaffold(
         body: FlutterMap(
-          options: const MapOptions(initialCenter: MapConfig.campusCentre),
-          children: [const _EmptyTiles(), ...layers],
+          // Unique key per zoom so a second pumpWidget builds a FRESH map state
+          // (initialZoom only applies at init; a reused State ignores it).
+          key: ValueKey(zoom),
+          options: MapOptions(
+            crs: const CrsSimple(),
+            initialCenter: _centre.value,
+            initialZoom: zoom,
+            minZoom: -5, // allow the negative CrsSimple zooms (default clamps at 0)
+            maxZoom: 0,
+          ),
+          children: [child],
         ),
       ),
     );
 
-class _EmptyTiles extends StatelessWidget {
-  const _EmptyTiles();
-  @override
-  Widget build(BuildContext context) => const SizedBox.shrink();
-}
+double _radius(WidgetTester t) =>
+    t.widget<CircleLayer>(find.byType(CircleLayer)).circles.single.radius;
 
 void main() {
-  testWidgets('normal fix renders a CircleLayer + a MarkerLayer', (t) async {
-    final fix =
-        UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: 10);
-    await t.pumpWidget(_map([
-      UserLocationCircle(fix: fix),
-      UserLocationDot(fix: fix),
-    ]));
+  testWidgets('normal fix renders a circle (migrated)', (t) async {
+    final fix = UserLocationFix(position: _gps, accuracyMeters: 15);
+    await t.pumpWidget(
+        _host(UserLocationCircle(center: _centre, fix: fix), zoom: -3.4));
+    await t.pump();
     expect(find.byType(CircleLayer), findsOneWidget);
-    expect(find.byType(MarkerLayer), findsOneWidget);
-    expect(t.takeException(), isNull); // context.aon fell back cleanly
+    expect(t.takeException(), isNull);
   });
 
-  testWidgets('low-accuracy fix omits the CircleLayer', (t) async {
-    final fix =
-        UserLocationFix(position: MapConfig.campusCentre, accuracyMeters: 500);
-    await t.pumpWidget(_map([
-      UserLocationCircle(fix: fix),
-      UserLocationDot(fix: fix),
-    ]));
+  testWidgets('dot renders a MarkerLayer (migrated)', (t) async {
+    await t.pumpWidget(
+        _host(UserLocationDot(center: _centre), zoom: -3.4));
+    await t.pump();
+    expect(find.byType(MarkerLayer), findsOneWidget);
+    expect(t.takeException(), isNull);
+  });
+
+  testWidgets('low-accuracy fix omits the circle (migrated, Phase A §5.1)',
+      (t) async {
+    final fix = UserLocationFix(position: _gps, accuracyMeters: 500);
+    await t.pumpWidget(
+        _host(UserLocationCircle(center: _centre, fix: fix), zoom: -3.4));
+    await t.pump();
     expect(find.byType(CircleLayer), findsNothing);
-    expect(find.byType(MarkerLayer), findsOneWidget); // dot still shows
+  });
+
+  testWidgets('circle radius GROWS with zoom, same footprint (the P0 fix)',
+      (t) async {
+    final fix = UserLocationFix(position: _gps, accuracyMeters: 20);
+    await t.pumpWidget(
+        _host(UserLocationCircle(center: _centre, fix: fix), zoom: -3.8));
+    await t.pump();
+    final rLow = _radius(t);
+    await t.pumpWidget(
+        _host(UserLocationCircle(center: _centre, fix: fix), zoom: -2.8));
+    await t.pump();
+    final rHigh = _radius(t);
+    expect(rLow, greaterThan(0));
+    expect(rHigh, greaterThan(rLow)); // more screen px when zoomed in
   });
 }

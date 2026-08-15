@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/services/campus_projection.dart';
+import 'package:aon2026/widgets/user_location_layer.dart' show accuracyRadiusScale;
 
 const _proj = CampusProjection();
 const _centre = GpsPoint(LatLng(-33.7737, 151.1134)); // Central Courtyard
@@ -42,5 +43,10 @@ void main() {
 
   test('deterministic', () {
     expect(_proj.project(_centre)!.value, _proj.project(_centre)!.value);
+  });
+
+  test('anisotropy ≤5% → average scale; >5% → conservative (larger)', () {
+    expect(accuracyRadiusScale(10.0, 10.2), closeTo(10.1, 1e-9)); // ~2% → average
+    expect(accuracyRadiusScale(10.0, 12.0), 12.0); // 20% → larger
   });
 }

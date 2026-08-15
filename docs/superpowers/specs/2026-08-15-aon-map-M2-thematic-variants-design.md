@@ -4,6 +4,67 @@
 
 **Parent:** `2026-08-15-aon-map-parity-program-design.md` §3 (capability matrix: "thematic layers = exclusive reskinned variants") + §6 M2.
 
+## 0. Gauntlet amendment (post external review) — AUTHORITATIVE
+
+An external review of this design landed six must-fixes. Verified each against
+installed Flutter source (`/opt/homebrew/share/flutter`) and the real M0 assets;
+**where this section conflicts with the body below (§§3–8), this section wins.**
+Verify-before-apply split — all six adopted, receipts inline:
+
+1. **State is a non-null `enum`, not `String?`/`null=base` — ADOPTED (real bug).**
+   `RadioGroup` uses `null` as the framework's *deselect / nothing-selected*
+   sentinel: `radio_group.dart:159` calls `onChanged(null)` when a selected
+   radio is toggled off, and `:71` documents "The value can be null when
+   unselect." So `null=base` overloads the one value the framework already owns.
+   Fix: `enum CampusMapVariant { base, parking, accessibility, water, permits }`;
+   `NotifierProvider<CampusVariantController, CampusMapVariant>` with
+   `build() => CampusMapVariant.base`. Picker is `RadioGroup<CampusMapVariant>`
+   (non-null `groupValue`); `onChanged` maps a stray `null` (framework deselect)
+   back to `base` — `select(v ?? CampusMapVariant.base)` — so base is always an
+   explicit, highlighted row and `select('banana')` is now a compile error.
+   (My earlier self-gauntlet held `String?` as valid — it was wrong; this is the
+   deeper semantic collision it missed.)
+
+2. **Memory numbers now carry receipts — ADOPTED; the estimates were correct.**
+   Measured (`sips`) — every M0 output is **2048×1448**, decoded RGBA **11.3 MiB**
+   each; disk: base 825 KiB, parking 1032, water 1191, permits 1267,
+   accessibility 1450. One on screen = 11.3 MiB; all five in `ImageCache` ≈
+   **56 MiB** (5×11.3), inside the 100 MiB default. §8's numbers stand, verified.
+
+3. **Future eviction API corrected — ADOPTED.** `ImageCache.evict` takes a
+   *resolved key* (`image_cache.dart:244 bool evict(Object key)`), not an
+   `ImageProvider`; the design's `imageCache.evict(AssetImage(prev))` was wrong.
+   Correct (if ever needed): `await AssetImage(prev).evict();`
+   (`image_provider.dart:611 Future<bool> evict(...)`). Still not built
+   pre-emptively — gated behind the §8 on-device measurement.
+
+4. **Swap contract defined — ADOPTED, scoped to bundled reality.** All 5 are
+   **bundled** assets, so "decode failure" is a *missing/renamed asset*, caught
+   at CI by an asset-integrity test (`rootBundle.load` + non-zero dimensions for
+   every asset), not a runtime handler. The layer keeps a `?? base` fallback for
+   an unknown id. "Seamless" means: the swap changes only `OverlayImage.imageProvider`;
+   `MapConfig.mapBounds` is unchanged, so the campus does not move; the picker
+   `precacheImage`s a variant on first build to warm the cache. No loading-state
+   machinery (bundled decode is sub-frame); no full precache-all (would pin 56 MiB).
+
+5. **Camera/zoom/follow preservation regression — ADOPTED.** New wiring test:
+   move the camera off the fit, select a variant, assert `camera.center`,
+   `camera.zoom` and the follow state are byte-identical afterwards and only the
+   asset changed. This is what proves "only its ink changes."
+
+6. **Content-validity gate before `eventVisible` — ADOPTED as a release assert.**
+   A variant may be `eventVisible: true` only once its underlying data is signed
+   off for the event. M2 asserts an inherited receipt (`docs/fixtures/` provenance
+   already gates M0 content); the test fails if a variant is event-visible without
+   a recorded approval. Permits stays `eventVisible: false`.
+
+Tightenings folded in: the note-clearance magic `+56` is exactly
+`AonSpacing.minTapTarget` (verified `aon_spacing.dart:31`) — use the token, and
+size the Layers button to `minTapTarget`; the Layers button exposes **one**
+semantics node (let the `IconButton` own it, no wrapping `Semantics`); persistence
+language is **"session-only, not persisted to storage."** The real-modal 2.0 test
+pumps the actual `MapScreen` → Layers → sheet, not the picker in isolation.
+
 ## 1. Goal
 
 A **single-select** picker that swaps the illustrated basemap between the plain dark campus and one **reskinned thematic variant** — Parking, Accessible routes, Drinking water (Permit areas built but hidden). Because each M0 variant *is* a full reskinned basemap (the whole campus re-inked for one theme, ~94% opaque), a "layer" is just **which single image `CampusBasemapLayer` renders** — one decode at a time. This is the coherent replacement for the abandoned C1's translucent stacking.

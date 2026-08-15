@@ -131,7 +131,7 @@ void main() {
 
   testWidgets('fixture guard: near campus AND off the footprint', (t) async {
     expect(MapConfig.isNearCampus(_nearOffFootprint), isTrue);
-    expect(_proj.canProject(GpsPoint(_nearOffFootprint)), isFalse);
+    expect(_proj.canProject(const GpsPoint(_nearOffFootprint)), isFalse);
   });
 
   testWidgets('off-illustration note shows (EN), 320x568 / 2.0, no overflow',

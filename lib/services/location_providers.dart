@@ -53,6 +53,19 @@ class MapVisibleNotifier extends Notifier<bool> {
   }
 }
 
+/// True while a PointMeScreen is open. GPS must stay alive off the Map tab, so
+/// this is OR'd into the location gate below (Map Parity Phase B).
+final pointMeActiveProvider =
+    NotifierProvider<PointMeActiveNotifier, bool>(PointMeActiveNotifier.new);
+
+class PointMeActiveNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool active) {
+    if (state != active) state = active;
+  }
+}
+
 final locationControllerProvider =
     NotifierProvider<LocationController, LocationSnapshot>(
         LocationController.new);
@@ -67,6 +80,7 @@ class LocationController extends Notifier<LocationSnapshot> {
   LocationSnapshot build() {
     ref.onDispose(_cancel);
     ref.listen(mapVisibleProvider, (_, _) => _sync());
+    ref.listen(pointMeActiveProvider, (_, _) => _sync());
     return const LocationSnapshot();
   }
 
@@ -98,7 +112,8 @@ class LocationController extends Notifier<LocationSnapshot> {
   }
 
   void _sync() {
-    final wantStream = state.active && ref.read(mapVisibleProvider);
+    final wantStream = state.active &&
+        (ref.read(mapVisibleProvider) || ref.read(pointMeActiveProvider));
     if (wantStream && _sub == null) {
       _sub = _svc.watch().listen(_onFix, onError: (_) => _onStreamError());
       _serviceSub = _svc.serviceEnabledChanges().listen((enabled) {

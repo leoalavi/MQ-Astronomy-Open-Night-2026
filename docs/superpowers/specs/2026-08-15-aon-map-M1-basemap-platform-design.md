@@ -16,13 +16,12 @@ Replace AON's WGS84 OSM map with the **`CrsSimple` reskinned illustrated basemap
 
 ## 3. The coordinate contract
 
-### 3.1 Types (M1) — a 3-step typed pipeline
+### 3.1 Types (M1)
 ```dart
 extension type const GpsPoint(LatLng value) {}          // WGS84 degrees (input)
-extension type const CampusPixelPoint(Offset value) {}  // raster pixel space (intermediate)
 extension type const CampusMapPoint(LatLng value) {}    // CrsSimple map-units (output, for flutter_map)
 ```
-Pipeline: `GpsPoint → (affine) → CampusPixelPoint → (scale + Y-flip) → CampusMapPoint`. flutter_map takes a bare `LatLng`, so we **unwrap `.value` only at the final flutter_map call**; everywhere in our code the position is typed. `extension type` = zero runtime cost. **Caveat documented:** a `CampusMapPoint.value` is NOT a valid geographic lat/lng — it must never be fed to `latlong2 Distance`/bearing/Phase B math (§6 has a guard test).
+Pipeline: `GpsPoint → (affine, internal double pixel math) → CampusMapPoint`. (No public `CampusPixelPoint` — the pixel stage is internal doubles; an unused wrapper is YAGNI.) flutter_map takes a bare `LatLng`, so we **unwrap `.value` only at the final flutter_map call**; everywhere in our code the position is typed. `extension type` = zero runtime cost. **Caveat documented:** a `CampusMapPoint.value` is NOT a valid geographic lat/lng — it must never be fed to `latlong2 Distance`/bearing/Phase B math (§6 has a guard test).
 
 ### 3.2 Projection — const, validated, non-clamping, fail-closed, explicit domain
 Calibration is fixed → bundled as **compile-time constants** (no async map-init). Validity is a **build/test invariant**: an invalid constant set fails tests and cannot merge (there is no runtime "degraded calibration" recovery path — that earlier wording is dropped).

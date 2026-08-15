@@ -50,7 +50,6 @@ Expected: `scale 38.905882 mapNorth 85.0 mapEast 120.2389 center 42.5 60.1194`. 
 
 - [ ] **Step 1: Failing test** — in `test/unit/campus_projection_test.dart`:
 ```dart
-import 'package:flutter/painting.dart' show Offset;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/campus_geometry.dart';
@@ -59,23 +58,18 @@ void main() {
   test('geometry wrappers hold their value without conflation', () {
     expect(GpsPoint(const LatLng(-33.77, 151.11)).value.latitude, -33.77);
     expect(CampusMapPoint(const LatLng(42.5, 60.1)).value.longitude, 60.1);
-    expect(const CampusPixelPoint(Offset(880, 2862)).value.dx, 880);
   });
 }
 ```
 - [ ] **Step 2: Run → FAIL** (undefined). `flutter test test/unit/campus_projection_test.dart`.
-- [ ] **Step 3: Implement** — `lib/models/campus_geometry.dart`:
+- [ ] **Step 3: Implement** — `lib/models/campus_geometry.dart`. (No `CampusPixelPoint` — the pixel stage is internal `double` math in the projection; an unused wrapper is YAGNI.)
 ```dart
-import 'package:flutter/painting.dart' show Offset;
 import 'package:latlong2/latlong.dart';
 
 /// WGS84 degrees (projection INPUT). A wrapper so a GPS LatLng cannot be passed
-/// to a map layer un-projected. Note: does not validate range — the projection
+/// to a map layer un-projected. Does not validate range — the projection
 /// validates (extension types guard semantics, not data).
 extension type const GpsPoint(LatLng value) {}
-
-/// Raster pixel space (intermediate).
-extension type const CampusPixelPoint(Offset value) {}
 
 /// CrsSimple map-units (projection OUTPUT, for flutter_map). NOT a geographic
 /// lat/lng — never feed `.value` to latlong2 Distance/bearing/Phase B maths.
@@ -148,15 +142,18 @@ class CampusProjection {
   const CampusProjection();
 
   static const double _pw = 4678, _ph = 3307;
-  static const double _scale = 38.905882;               // max(1,max(_pw/170,_ph/85))
+  // EXACT (no truncation): scale = max(1, max(pw/170, ph/85)); ph/85 is the max,
+  // so scale == 3307/85 exactly and mapNorth == 85.0 exactly. One geometry,
+  // one source of truth — MapConfig consumes these, does not re-hardcode them.
+  static const double _scale = _ph / 85.0;              // 3307/85 = 38.905882…
   static const List<double> _ax = [880.374832, 3889.927306, 12.547607];
   static const List<double> _ay = [2862.069113, -64.093654, -2349.078357];
   static const double _minLat = -33.7772506, _maxLat = -33.7703261;
   static const double _minLng = 151.1080508, _maxLng = 151.1211352;
   static const double _eps = 1e-9;
 
-  static double get mapNorth => _ph / _scale;           // 85.0
-  static double get mapEast => _pw / _scale;            // 120.2389
+  static const double mapNorth = _ph / _scale;          // == 85.0 exactly
+  static const double mapEast = _pw / _scale;           // 4678*85/3307 = 120.2389…
 
   CampusMapPoint? project(GpsPoint gps) {
     final lat = gps.value.latitude, lng = gps.value.longitude;
@@ -187,33 +184,57 @@ class CampusProjection {
 
 **Files:** Create `test/unit/campus_calibration_drift_test.dart`.
 
-- [ ] **Step 1: Write the test** (it should PASS immediately — it locks the constants to the vendored JSON):
+- [ ] **Step 1: Write the test** — it must exercise **`CampusProjection` itself**, not just compare JSON to literals. It recomputes expected map-units **independently from the vendored JSON** and asserts the compiled projector agrees, for several reference vectors. This proves the real chain `vendored JSON → independent calc → CampusProjection` (a silent edit to the private `_ax`/`_scale` now fails here):
 ```dart
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:aon2026/models/campus_geometry.dart';
+import 'package:aon2026/services/campus_projection.dart';
 
 void main() {
-  test('compiled projection constants match docs/fixtures calibration', () {
+  test('CampusProjection agrees with the vendored MQ calibration JSON', () {
     final j = jsonDecode(
         File('docs/fixtures/campus_overlay_meta.json').readAsStringSync());
     final pb = j['pixelBounds'];
-    expect(pb['east'], 4678);
-    expect(pb['north'], 3307);
+    final pw = (pb['east'] as num).toDouble();
+    final ph = (pb['north'] as num).toDouble();
     final aff = j['gpsProjection']['affine'];
-    expect((aff['x'] as List).map((e) => (e as num).toDouble()).toList(),
-        [880.374832, 3889.927306, 12.547607]);
-    expect((aff['y'] as List).map((e) => (e as num).toDouble()).toList(),
-        [2862.069113, -64.093654, -2349.078357]);
+    final ax = (aff['x'] as List).map((e) => (e as num).toDouble()).toList();
+    final ay = (aff['y'] as List).map((e) => (e as num).toDouble()).toList();
     final n = aff['normalization'];
-    expect(n['minLat'], -33.7772506);
-    expect(n['maxLat'], -33.7703261);
-    expect(n['minLng'], 151.1080508);
-    expect(n['maxLng'], 151.1211352);
+    final minLat = n['minLat'] as double, maxLat = n['maxLat'] as double;
+    final minLng = n['minLng'] as double, maxLng = n['maxLng'] as double;
+    final scale = [1.0, pw / 170, ph / 85].reduce((a, b) => a > b ? a : b);
+
+    // independent expectation straight from the JSON
+    LatLng expected(double lat, double lng) {
+      final nLng = (lng - minLng) / (maxLng - minLng);
+      final nLat = (lat - minLat) / (maxLat - minLat);
+      final x = ax[0] + ax[1] * nLng + ax[2] * nLat;
+      final y = ay[0] + ay[1] * nLng + ay[2] * nLat;
+      return LatLng((ph - y) / scale, x / scale);
+    }
+
+    const proj = CampusProjection();
+    for (final gps in const [
+      LatLng(-33.7737, 151.1134),   // centre
+      LatLng(-33.7726489, 151.1105693), // sport/aquatic
+      LatLng(-33.7768086, 151.1175848), // metro
+    ]) {
+      final got = proj.project(GpsPoint(gps))!;
+      final exp = expected(gps.latitude, gps.longitude);
+      expect(got.value.latitude, closeTo(exp.latitude, 1e-9), reason: '$gps');
+      expect(got.value.longitude, closeTo(exp.longitude, 1e-9), reason: '$gps');
+    }
+    // and the compiled map bounds agree with the JSON-derived scale
+    expect(CampusProjection.mapNorth, closeTo(ph / scale, 1e-9));
+    expect(CampusProjection.mapEast, closeTo(pw / scale, 1e-9));
   });
 }
 ```
-- [ ] **Step 2: Run → PASS** (fails loudly if the constants and the vendored JSON ever diverge).
+- [ ] **Step 2: Run → PASS** (fails loudly if `CampusProjection`'s constants ever drift from the vendored JSON).
 - [ ] **Step 3: Commit** — `test(map): calibration drift guard — constants == vendored meta (M1 T3)`
 
 ---
@@ -254,7 +275,7 @@ void main() {
 }
 ```
 (Confirms curated event markers can never silently vanish under the new map.)
-- [ ] **Step 2: Run → PASS.** *If it fails:* a real venue is outside the normbox → apply the design §7-1 decision (loosen domain to pixel-footprint-only, record why) and re-run — do NOT allowlist a legitimate venue.
+- [ ] **Step 2: Run → PASS** (verified: all 19 coords are inside the domain). **If it fails: STOP M1.** Do **not** loosen the projection domain or allowlist a legitimate venue inside this implementation task — that would change a load-bearing coordinate policy to make a test green. Return to the design gate with the failing IDs + coordinates; the domain change (if any) is decided and re-gauntletted there, then this task resumes.
 - [ ] **Step 3: Commit** — `test(map): venue/parking projection integrity gate (M1 T4)`
 
 ---
@@ -280,17 +301,20 @@ void main() {
 }
 ```
 - [ ] **Step 2: Run → FAIL.**
-- [ ] **Step 3: Implement** — add to `map_config.dart` (keep the WGS84 constants; they stay for Phase B/wayfinding):
+- [ ] **Step 3: Implement** — add to `map_config.dart` (keep the WGS84 constants; they stay for Phase B/wayfinding). **Consume `CampusProjection.mapNorth/mapEast` — do NOT re-hardcode the numbers (one geometry, one source of truth):**
 ```dart
-  // ── CrsSimple campus-map units (Map Parity M1). Derived from the Task 0
-  //    receipt: scale = max(1,max(4678/170,3307/85)) = 38.905882.
+import 'package:aon2026/services/campus_projection.dart';
+  // ...
+  // ── CrsSimple campus-map units (Map Parity M1). Bounds come straight from
+  //    CampusProjection so they can never drift from the projector.
   static final LatLngBounds mapBounds = LatLngBounds(
     const LatLng(0, 0),
-    const LatLng(85.0, 120.2389),   // (mapNorth lat, mapEast lng)
+    LatLng(CampusProjection.mapNorth, CampusProjection.mapEast),
   );
   static const double mapMinZoom = -4.0;
   static const double mapMaxZoom = -2.2;
 ```
+(The Task 5 test's `closeTo(85.0, …)` / `closeTo(120.2389, …)` still hold, now sourced from the projector.)
 - [ ] **Step 4: Run → PASS.**
 - [ ] **Step 5: Commit** — `feat(map): CrsSimple map-unit bounds/zooms in MapConfig (M1 T5)`
 
@@ -355,11 +379,20 @@ class CampusBasemapLayer extends StatelessWidget {
 
 ## Task 7: Re-seat the user-location layer (dot + zoom-aware circle)
 
-**Files:** Modify `lib/widgets/user_location_layer.dart`; Create `test/widget/user_location_layer_test.dart`.
+**Files:** Modify `lib/widgets/user_location_layer.dart`; **MIGRATE** the existing `test/widget/user_location_layer_test.dart` (it tests the old `UserLocationCircle(fix:)` signature + a WGS84 `MapOptions`) — update it to the new signature and CrsSimple, **preserving** its two behaviours (normal → circle+marker; low-accuracy → no circle); do not delete them. Also extend `test/unit/campus_projection_test.dart` for the pure anisotropy rule.
 
-**Interfaces:** `UserLocationCircle({required CampusMapPoint center, required UserLocationFix fix})`, `UserLocationDot({required CampusMapPoint center})`.
+**Interfaces:** `UserLocationCircle({required CampusMapPoint center, required UserLocationFix fix})`, `UserLocationDot({required CampusMapPoint center})`, and a pure top-level `double accuracyRadiusScale(double nPx, double ePx)`.
 
-- [ ] **Step 1: Failing tests** — (a) low-accuracy fix → no circle; (b) good fix at higher zoom → larger pixel radius (same footprint):
+- [ ] **Step 1a: Pure anisotropy test** (unit) — add to `campus_projection_test.dart`:
+```dart
+import 'package:aon2026/widgets/user_location_layer.dart' show accuracyRadiusScale;
+
+test('anisotropy ≤5% → average scale; >5% → conservative (larger)', () {
+  expect(accuracyRadiusScale(10.0, 10.2), closeTo(10.1, 1e-9));   // ~2% → average
+  expect(accuracyRadiusScale(10.0, 12.0), 12.0);                  // 20% → larger
+});
+```
+- [ ] **Step 1b: Migrate + zoom the widget test** — rewrite `user_location_layer_test.dart`. The host uses **explicit `initialCenter` + `initialZoom`** (not `initialCameraFit`) so zoom is controllable; it reads the rendered `CircleMarker.radius`:
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -368,43 +401,64 @@ import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/campus_projection.dart';
-import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/user_location_layer.dart';
 
 const _proj = CampusProjection();
-final _centre = _proj.project(const GpsPoint(LatLng(-33.7737, 151.1134)))!;
+const _gps = LatLng(-33.7737, 151.1134);
+final _centre = _proj.project(const GpsPoint(_gps))!;
 
-Widget _host(Widget child, {double zoom = -3.6}) => MaterialApp(
-  home: Scaffold(body: FlutterMap(
-    options: MapOptions(
-      crs: const CrsSimple(),
-      initialCameraFit: CameraFit.bounds(bounds: MapConfig.mapBounds),
-    ),
-    children: [child],
-  )),
-);
+Widget _host(Widget child, {required double zoom}) => MaterialApp(
+      home: Scaffold(body: FlutterMap(
+        options: MapOptions(
+          crs: const CrsSimple(),
+          initialCenter: _centre.value,   // map-units
+          initialZoom: zoom,
+        ),
+        children: [child],
+      )),
+    );
+
+double _radius(WidgetTester t) =>
+    t.widget<CircleLayer>(find.byType(CircleLayer)).circles.single.radius;
 
 void main() {
-  testWidgets('low-accuracy fix paints no circle', (t) async {
-    final fix = UserLocationFix(
-        position: const LatLng(-33.7737, 151.1134), accuracyMeters: 250);
-    await t.pumpWidget(_host(UserLocationCircle(center: _centre, fix: fix)));
-    await t.pump();
-    expect(find.byType(CircleLayer), findsNothing);
-  });
-
-  testWidgets('good fix paints a circle', (t) async {
-    final fix = UserLocationFix(
-        position: const LatLng(-33.7737, 151.1134), accuracyMeters: 15);
-    await t.pumpWidget(_host(UserLocationCircle(center: _centre, fix: fix)));
+  testWidgets('normal fix renders a circle + dot (migrated)', (t) async {
+    final fix = UserLocationFix(position: _gps, accuracyMeters: 15);
+    await t.pumpWidget(_host(
+        Column(children: [UserLocationCircle(center: _centre, fix: fix)]),
+        zoom: -3.4));
     await t.pump();
     expect(find.byType(CircleLayer), findsOneWidget);
     expect(t.takeException(), isNull);
   });
+
+  testWidgets('low-accuracy fix omits the circle (migrated, Phase A §5.1)',
+      (t) async {
+    final fix = UserLocationFix(position: _gps, accuracyMeters: 500);
+    await t.pumpWidget(
+        _host(UserLocationCircle(center: _centre, fix: fix), zoom: -3.4));
+    await t.pump();
+    expect(find.byType(CircleLayer), findsNothing);
+  });
+
+  testWidgets('circle radius GROWS with zoom, same footprint (the P0 fix)',
+      (t) async {
+    final fix = UserLocationFix(position: _gps, accuracyMeters: 20);
+    await t.pumpWidget(
+        _host(UserLocationCircle(center: _centre, fix: fix), zoom: -3.8));
+    await t.pump();
+    final rLow = _radius(t);
+    await t.pumpWidget(
+        _host(UserLocationCircle(center: _centre, fix: fix), zoom: -2.8));
+    await t.pump();
+    final rHigh = _radius(t);
+    expect(rHigh, greaterThan(rLow));         // more screen px when zoomed in
+    expect(rLow, greaterThan(0));
+  });
 }
 ```
 - [ ] **Step 2: Run → FAIL.**
-- [ ] **Step 3: Implement** — rewrite `user_location_layer.dart`. Key change: circle is camera-aware, radius in screen pixels via `MapCamera.projectAtZoom`; keep the `isLowAccuracy` short-circuit; dot takes `center`.
+- [ ] **Step 3: Implement** — rewrite `user_location_layer.dart`. Circle is camera-aware (screen-pixel radius via `MapCamera.projectAtZoom`), keeps the `isLowAccuracy` short-circuit, and uses the **pure** `accuracyRadiusScale` (so the anisotropy rule is unit-testable):
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -413,6 +467,16 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/campus_projection.dart';
+
+/// Pixels-per-metre to use for the accuracy radius given the local north/east
+/// screen-pixel-per-metre scales. ≤5% anisotropy → their average; otherwise the
+/// larger (conservative) — a general affine turns a metric circle into an
+/// ellipse, so we never under-state uncertainty. Pure + unit-tested.
+double accuracyRadiusScale(double nPx, double ePx) {
+  final larger = nPx > ePx ? nPx : ePx;
+  final anisotropy = larger == 0 ? 0 : (nPx - ePx).abs() / larger;
+  return anisotropy <= 0.05 ? (nPx + ePx) / 2 : larger;
+}
 
 /// Accuracy circle — sized in SCREEN PIXELS at the current zoom (CrsSimple has
 /// no real metres), so it keeps a constant campus footprint as you zoom. Renders
@@ -427,25 +491,20 @@ class UserLocationCircle extends StatelessWidget {
   Widget build(BuildContext context) {
     if (fix.isLowAccuracy) return const SizedBox.shrink();
     final camera = MapCamera.of(context);
-    // metres→pixels: project the fix + a 25 m offset N and E, measure both.
     final north = _proj.project(GpsPoint(
-        const Distance().offset(fix.position, 25, 0)));
+        const Distance().offset(fix.position, 25, 0)));   // 25 m north
     final east = _proj.project(GpsPoint(
-        const Distance().offset(fix.position, 25, 90)));
+        const Distance().offset(fix.position, 25, 90)));  // 25 m east
     if (north == null || east == null) return const SizedBox.shrink();
     final c = camera.projectAtZoom(center.value);
     final nPx = (camera.projectAtZoom(north.value) - c).distance / 25.0;
     final ePx = (camera.projectAtZoom(east.value) - c).distance / 25.0;
-    // anisotropy ≤5% → single radius; else the conservative (larger) one.
-    final pxPerM = (nPx - ePx).abs() / (nPx > ePx ? nPx : ePx) <= 0.05
-        ? (nPx + ePx) / 2
-        : (nPx > ePx ? nPx : ePx);
     final accent = context.aon.accent;
     return CircleLayer(circles: [
       CircleMarker(
         point: center.value,
-        radius: fix.accuracyMeters * pxPerM,   // screen pixels (useRadiusInMeter:false)
-        useRadiusInMeter: false,
+        radius: fix.accuracyMeters * accuracyRadiusScale(nPx, ePx),
+        useRadiusInMeter: false,   // radius is SCREEN PIXELS
         color: accent.withValues(alpha: 0.12),
         borderColor: accent.withValues(alpha: 0.4),
         borderStrokeWidth: 1,
@@ -498,7 +557,13 @@ class UserLocationDot extends StatelessWidget {
 
 **Files:** Modify `lib/screens/map_screen.dart`; Create `test/widget/map_platform_wiring_test.dart`.
 
-- [ ] **Step 1: Failing wiring test** — reuse the Phase A `FakeLocationService` container pattern (`map_location_wiring_test.dart`). Cases: (a) projectable fix + active parking category → `CampusBasemapLayer`, `UserLocationDot`, and the parking `MarkerLayer` all present, `takeException()` null; (b) **active + null fix → no crash, no dot**; (c) **off-footprint fix** (e.g. `LatLng(-33.90,151.30)`) → **no `UserLocationDot`** (not a clamped edge dot); (d) panorama toggle still switches to `PanoramaBuildingPicker`. (Do not assert z-order.)
+- [ ] **Step 1: Failing wiring test** — reuse the Phase A `FakeLocationService` container pattern (`map_location_wiring_test.dart`). Cases:
+  - (a) projectable fix + active parking category → `CampusBasemapLayer`, `UserLocationDot`, parking `MarkerLayer` all present, `takeException()` null.
+  - (b) **PIN the marker position** (not just "a MarkerLayer exists" — that passes even if a marker is left at raw WGS84 and stranded off-map): for a known venue, find its `Marker` and assert `marker.point == CampusProjection().project(GpsPoint(venueGps))!.value` **and** `MapConfig.mapBounds.contains(marker.point)`. (Locate it by a `Key` added to `_MarkerPin`, or by matching the projected point among `MarkerLayer.markers`.)
+  - (c) **active + null fix → no crash, no dot.**
+  - (d) **off-footprint fix** (`LatLng(-33.90,151.30)`) → **no `UserLocationDot`** (not a clamped edge dot); and the `mapLocatingOnCampus` note is absent (that fix isn't near campus either).
+  - (e) **follow-me camera**: with `following:true` + a projectable fix, after the `ref.listen` fires, `_controller.camera.center` is **near the projected campus point** (within the map bounds, close to `project(fix).value`), **never** raw `(-33,151)`; with an off-footprint fix, the camera does **not** move. (Drive via the fake controller state; read `mapController.camera.center`.)
+  - (f) panorama toggle still switches to `PanoramaBuildingPicker`. (Do not assert z-order.)
 - [ ] **Step 2: Run → FAIL.**
 - [ ] **Step 3: Wire `map_screen.dart`:**
   1. Add `final _proj = const CampusProjection();` and, in `build`, after `loc` is read:
@@ -532,11 +597,11 @@ class UserLocationDot extends StatelessWidget {
      … Marker(point: pt.value, …)
      ```
      (Refactor `_venueMarker(Venue)` to take/compute the projected point; return `null` and filter if unprojectable.)
-  5. **Follow-me** (`ref.listen`, ~:67-72): project before moving:
+  5. **Follow-me** (`ref.listen`, ~:67-72): project before moving. **Preserve Phase A's inherited `!isLowAccuracy` gate** (verified `map_screen.dart:68` — Phase A already suppresses follow on a fuzzy fix, §5.1; M1 does NOT change that). The old `isNearCampus` check is **subsumed** by `mp != null` (on-footprint ⊂ near-campus), so it's replaced, not dropped:
      ```dart
-     if (s.following && s.fix != null && !s.fix!.isLowAccuracy) {
+     if (s.following && s.fix != null && !s.fix!.isLowAccuracy) {  // !isLowAccuracy inherited
        final mp = _proj.project(GpsPoint(s.fix!.position));
-       if (mp != null) _controller.move(mp.value, _controller.camera.zoom);
+       if (mp != null) _controller.move(mp.value, _controller.camera.zoom); // mp!=null ⊃ isNearCampus
      }
      ```
   6. **Off-illustration note** — where the off-campus/low-accuracy notes are chosen, add: if `loc.active && fix != null && MapConfig.isNearCampus(fix.position) && projected == null` → show `_MapNote(text: l.mapLocatingOnCampus)`.
@@ -550,8 +615,11 @@ class UserLocationDot extends StatelessWidget {
 
 **Files:** extend `test/widget/map_platform_wiring_test.dart`.
 
-- [ ] **Step 1: Tests** — (a) MapScreen at `view.physicalSize = Size(320,568)` + `textScaleFactorTestValue = 2.0`, projectable fix, `pumpAndSettle`, `takeException()` null (base + markers + note + controls + panorama toggle); (b) camera fit at 320×568, a wide size (e.g. 1280×800), and iPhone (390×844) each pumps without exception and the map fills the viewport (no assertion crash from `CameraConstraint`).
-- [ ] **Step 2: Run → PASS** (fix overflows if any).
+- [ ] **Step 1: Tests** —
+  - (a) MapScreen at `view.physicalSize = Size(320,568)` + `textScaleFactorTestValue = 2.0`, projectable fix, `pumpAndSettle`, `takeException()` null (base + markers + controls + panorama toggle).
+  - (b) **The off-illustration note specifically** (the projectable-fix case in (a) can NOT reach it — it needs `projected == null`): a **near-campus but off-footprint** fix (within 2.5 km of campus yet outside the raster, e.g. a point ~1 km from centre but off the illustration) at 320×568 / 2.0, in **EN and FA** → `find.text(l.mapLocatingOnCampus)` (and its FA string) `findsOneWidget`, `takeException()` null (no overflow; RTL renders). Pick the off-footprint coordinate by construction: a `LatLng` with `isNearCampus == true` && `CampusProjection().canProject() == false` (assert both in the test setup so the fixture can't silently stop exercising the note).
+  - (c) camera viewport matrix at 320×568, wide (1280×800), iPhone (390×844): each pumps without exception **and** assert the real invariants — `_controller.camera.zoom` is within `[mapMinZoom, mapMaxZoom]`, and the visible/fitted region intersects `MapConfig.mapBounds` (map is actually framed, not an empty gutter).
+- [ ] **Step 2: Run → PASS** (fix overflows / wrong framing if any).
 - [ ] **Step 3: Commit** — `test(map): 320x568/2.0 + camera viewport matrix (M1 T10)`
 
 ---
@@ -565,8 +633,9 @@ class UserLocationDot extends StatelessWidget {
 - [ ] **Step 3: Web-runtime render (gate, NOT just build)** — serve `build/web`, open the Map tab: dark illustrated base paints, venue/parking pins in place, pan/zoom works within the negative-zoom clamp, panorama toggle switches, **no black screen**. Record PASS/FAIL + a screenshot.
 - [ ] **Step 4: iOS Impeller render** — launch the simulator, open Map: confirm the `OverlayImage` basemap actually paints (not blank/garbled); the dot sits on campus. Record PASS/FAIL.
 - [ ] **Step 5: On-device alignment sanity** — with a fix (or a simulated position), the dot lands on the correct campus location; ≥3 venue pins visually match their buildings on the illustration.
+- [ ] **Step 5b: Raster memory/perf + sharpness gate** — the basemap M1 renders is the **M0-reskinned `assets/maps/mqcampus_dark.png` = 2048×1448 ≈ 11.3 MiB decoded** (NOT the 4678×3307 / ~59 MiB source — M0 already downscaled it). Exercise on device: open Map → pan → max zoom → switch to panorama → back to Map → repeat. Record: no OOM/memory-pressure, no major jank, **and the real open question — is 2048px still sharp at max campus zoom, or does it read soft?** If soft, that's an **M0 revisit** (regenerate the reskin at a higher target width and re-run M0's memory gate), not an M1 hack. Record decoded footprint + the sharpness verdict.
 - [ ] **Step 6: Closeout** — append: the Task 0 calibration receipt, the re-baselined test count, all build + render results, the alignment note, and the split: **M1 CODE COMPLETE** (analyze/tests green, 3 builds green, base renders on web + iOS, dot/markers projected, no Phase A/B regression) vs **release** (rolls up with the program).
-- [ ] **Step 7: Final re-gate** — `flutter analyze && flutter test && git diff --check`, then a hostile read of `git diff` for the phase.
+- [ ] **Step 7: Final re-gate** — `flutter analyze && flutter test && git diff --check && git status --short`, then a hostile read of `git diff` for the phase. **If the web-runtime/iOS checks required any code fix, re-run all three builds (web/iOS/apk) AND the full test suite before declaring code-complete** — a fix invalidates the earlier green.
 - [ ] **Step 8: Commit** — `docs(map): M1 verification + closeout (basemap platform code-complete)`
 
 ---

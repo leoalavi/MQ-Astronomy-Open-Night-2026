@@ -33,10 +33,15 @@ abstract final class MapConfig {
   //    geometry, one source of truth.
   static final LatLngBounds mapBounds = LatLngBounds(
     const LatLng(0, 0),
-    LatLng(CampusProjection.mapNorth, CampusProjection.mapEast),
+    const LatLng(CampusProjection.mapNorth, CampusProjection.mapEast),
   );
-  static const double mapMinZoom = -4.0;
-  static const double mapMaxZoom = -2.2;
+  // Zoom range for the CrsSimple campus map. MQ Journey's -4.0/-2.2 do NOT
+  // transfer — under flutter_map's CrsSimple the whole 120×85-unit campus frames
+  // at a small POSITIVE zoom, so those bounds sat below the fit and crashed the
+  // camera (Map Parity M1, gauntlet finding). Empirically bracketed: the fit
+  // lands well inside, and the campus stays centred via CameraConstraint.
+  static const double mapMinZoom = -1;
+  static const double mapMaxZoom = 5;
 
   static const Distance _distance = Distance();
 

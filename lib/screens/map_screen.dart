@@ -13,13 +13,15 @@ import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/widgets/map_mode_toggle.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/widgets/panorama_building_picker.dart';
+import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/venue.dart';
+import 'package:aon2026/services/campus_projection.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
+import 'package:aon2026/widgets/campus_basemap_layer.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
-import 'package:aon2026/widgets/dark_tile_layer.dart';
 import 'package:aon2026/widgets/map_category_filter_bar.dart';
 import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/map_control_island.dart';
@@ -47,6 +49,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final MapController _controller = MapController();
   final Set<VenueCategory> _visible = {...VenueCategory.values};
   MapMode _mode = MapMode.campusMap;
+  static const CampusProjection _proj = CampusProjection();
 
   @override
   void dispose() {
@@ -61,15 +64,20 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final parking = ref.watch(parkingProvider);
     final loc = ref.watch(locationControllerProvider);
 
+    // Project the current fix ONCE (null off the illustrated footprint — never
+    // clamped). Reused by the dot, the accuracy circle, and the note.
+    final fix = loc.fix;
+    final projected = fix == null ? null : _proj.project(GpsPoint(fix.position));
+
     // Follow-me recenter. Unconditional at the top of build (Riverpod requires
-    // ref.listen every build) — never inside a mode branch. The !isLowAccuracy
-    // guard stops a fuzzy estimate from yanking the camera (Phase A §5.1).
+    // ref.listen every build) — never inside a mode branch. The inherited
+    // !isLowAccuracy guard stops a fuzzy estimate from yanking the camera
+    // (Phase A §5.1). Under CrsSimple the camera moves to the PROJECTED point;
+    // `mp != null` (on-footprint) subsumes the old isNearCampus check.
     ref.listen(locationControllerProvider, (_, s) {
-      if (s.following &&
-          s.fix != null &&
-          !s.fix!.isLowAccuracy &&
-          MapConfig.isNearCampus(s.fix!.position)) {
-        _controller.move(s.fix!.position, _controller.camera.zoom);
+      if (s.following && s.fix != null && !s.fix!.isLowAccuracy) {
+        final mp = _proj.project(GpsPoint(s.fix!.position));
+        if (mp != null) _controller.move(mp.value, _controller.camera.zoom);
       }
     });
 
@@ -97,18 +105,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final markers = <Marker>[
       for (final p in parking)
         if (p.hasCoordinates && _visible.contains(VenueCategory.parking))
-          Marker(
-            point: LatLng(p.latitude!, p.longitude!),
-            width: 44,
-            height: 44,
-            child: _MarkerPin(
-              icon: Icons.local_parking_rounded,
-              color: context.aon.mapParking,
-              semanticLabel: '${p.name}. Parking.',
-              onTap: () => _showParkingSheet(p.id),
+          if (_proj.project(GpsPoint(LatLng(p.latitude!, p.longitude!)))
+              case final CampusMapPoint pt)
+            Marker(
+              point: pt.value,
+              width: 44,
+              height: 44,
+              child: _MarkerPin(
+                icon: Icons.local_parking_rounded,
+                color: context.aon.mapParking,
+                semanticLabel: '${p.name}. Parking.',
+                onTap: () => _showParkingSheet(p.id),
+              ),
             ),
-          ),
-      for (final v in visibleVenues) _venueMarker(v),
+      for (final v in visibleVenues)
+        if (_venueMarker(v) case final Marker m) m,
     ];
 
     return Scaffold(
@@ -149,14 +160,22 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 FlutterMap(
                   mapController: _controller,
                   options: MapOptions(
-                    initialCenter: MapConfig.campusCentre,
-                    initialZoom: MapConfig.initialZoom,
-                    minZoom: MapConfig.minZoom,
-                    maxZoom: MapConfig.maxZoom,
-                    // Keep the user inside campus. Panning off to the Pacific
-                    // and losing every marker is a real way to get lost.
-                    cameraConstraint: CameraConstraint.contain(
-                      bounds: MapConfig.campusBounds,
+                    // CrsSimple illustrated campus basemap (Map Parity M1).
+                    // initialCameraFit is authoritative — it takes precedence
+                    // over initialCenter/initialZoom, so those are dropped.
+                    crs: const CrsSimple(),
+                    initialCameraFit: CameraFit.bounds(
+                      bounds: MapConfig.mapBounds,
+                      padding: const EdgeInsets.all(12),
+                    ),
+                    minZoom: MapConfig.mapMinZoom,
+                    maxZoom: MapConfig.mapMaxZoom,
+                    // Keep the campus centred. containCenter (not contain) —
+                    // the whole campus is smaller than the viewport at fit
+                    // zoom, so `contain` is unsatisfiable; containCenter keeps
+                    // the map from being panned away.
+                    cameraConstraint: CameraConstraint.containCenter(
+                      bounds: MapConfig.mapBounds,
                     ),
                     backgroundColor: context.aon.surfaceBase,
                     // A deliberate user pan exits follow but keeps the dot; a
@@ -171,13 +190,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     },
                   ),
                   children: [
-                    const DarkTileLayer(),
+                    const CampusBasemapLayer(),
                     // Accuracy circle UNDER the venue pins; dot ON TOP (§5.5).
-                    if (loc.active && loc.fix != null)
-                      UserLocationCircle(fix: loc.fix!),
+                    if (loc.active && projected != null)
+                      UserLocationCircle(center: projected, fix: fix!),
                     MarkerLayer(markers: markers),
-                    if (loc.active && loc.fix != null)
-                      UserLocationDot(fix: loc.fix!),
+                    if (loc.active && projected != null)
+                      UserLocationDot(center: projected),
                   ],
                 ),
                 // One status note: off-campus takes priority over low-accuracy.
@@ -202,6 +221,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       left: AonSpacing.space4,
                       right: AonSpacing.space4 + 56,
                       child: _MapNote(text: l.mapLowAccuracy),
+                    )
+                  // Near campus but off the illustrated footprint: honest note,
+                  // never a fake dot at a clamped edge.
+                  else if (projected == null)
+                    Positioned(
+                      top: AonSpacing.space4,
+                      left: AonSpacing.space4,
+                      right: AonSpacing.space4 + 56,
+                      child: _MapNote(text: l.mapLocatingOnCampus),
                     ),
                 Positioned(
                   left: AonSpacing.space2,
@@ -220,8 +248,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       clampZoom(
                         _controller.camera.zoom,
                         1,
-                        min: MapConfig.minZoom,
-                        max: MapConfig.maxZoom,
+                        min: MapConfig.mapMinZoom,
+                        max: MapConfig.mapMaxZoom,
                       ),
                     ),
                     onZoomOut: () => _controller.move(
@@ -229,8 +257,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       clampZoom(
                         _controller.camera.zoom,
                         -1,
-                        min: MapConfig.minZoom,
-                        max: MapConfig.maxZoom,
+                        min: MapConfig.mapMinZoom,
+                        max: MapConfig.mapMaxZoom,
                       ),
                     ),
                     locateButton: const LocateButton(),
@@ -259,9 +287,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Marker _venueMarker(Venue v) {
+  Marker? _venueMarker(Venue v) {
+    final pt = _proj.project(GpsPoint(LatLng(v.latitude!, v.longitude!)));
+    if (pt == null) return null; // off the illustrated footprint (integrity-gated)
     return Marker(
-      point: LatLng(v.latitude!, v.longitude!),
+      point: pt.value,
       width: 44,
       height: 44,
       child: _MarkerPin(

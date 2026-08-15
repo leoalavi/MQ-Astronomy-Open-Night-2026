@@ -214,6 +214,8 @@
   "@mapLowAccuracy": { "description": "Banner note shown when the current fix is low-accuracy" },
   "mapOffCampus": "You're about {km} km from campus",
   "@mapOffCampus": { "description": "Banner when the user is outside the campus radius", "placeholders": { "km": { "type": "String" } } },
+  "mapLocatingOnCampus": "Locating you on the campus map…",
+  "@mapLocatingOnCampus": { "description": "Shown when a near-campus GPS fix can't be placed on the illustrated map yet" },
   "pointMeTitle": "Point me there",
   "@pointMeTitle": { "description": "Heading screen title + venue-sheet button" },
   "pointMeDistanceMeters": "{meters} m",

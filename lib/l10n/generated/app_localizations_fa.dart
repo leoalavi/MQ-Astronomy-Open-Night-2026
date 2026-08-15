@@ -470,6 +470,9 @@ class AonL10nFa extends AonL10n {
   }
 
   @override
+  String get mapLocatingOnCampus => 'در حال یافتن موقعیت شما روی نقشه…';
+
+  @override
   String get pointMeTitle => 'مسیر را نشانم بده';
 
   @override

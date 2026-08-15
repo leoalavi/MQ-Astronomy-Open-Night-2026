@@ -470,6 +470,9 @@ class AonL10nEn extends AonL10n {
   }
 
   @override
+  String get mapLocatingOnCampus => 'Locating you on the campus map…';
+
+  @override
   String get pointMeTitle => 'Point me there';
 
   @override

@@ -895,6 +895,12 @@ abstract class AonL10n {
   /// **'You\'re about {km} km from campus'**
   String mapOffCampus(String km);
 
+  /// Shown when a near-campus GPS fix can't be placed on the illustrated map yet
+  ///
+  /// In en, this message translates to:
+  /// **'Locating you on the campus map…'**
+  String get mapLocatingOnCampus;
+
   /// Heading screen title + venue-sheet button
   ///
   /// In en, this message translates to:

@@ -149,6 +149,7 @@
   "locateServiceOff": "روشن‌کردن سرویس موقعیت",
   "mapLowAccuracy": "دقت موقعیت پایین است",
   "mapOffCampus": "حدود {km} کیلومتر با پردیس فاصله دارید",
+  "mapLocatingOnCampus": "در حال یافتن موقعیت شما روی نقشه…",
   "pointMeTitle": "مسیر را نشانم بده",
   "pointMeDistanceMeters": "{meters} متر",
   "pointMeDistanceKm": "{km} کیلومتر",

@@ -36,6 +36,16 @@ abstract final class MapConfig {
           {double radiusMeters = locationCampusRadiusMeters}) =>
       distanceFromCampusMeters(p) <= radiusMeters;
 
+  /// Magnetic declination at campus (east-positive), so magnetic heading + this
+  /// = true heading. Preflight-verified (Map Parity Phase B, Task 0 receipt):
+  ///   WMM2025 @ -33.7737,151.1134 @ 2026-09-19 = 12.752° E
+  ///   (BGS geomagnetic web service, retrieved 2026-08-13).
+  static const double campusMagneticDeclinationDegrees = 12.752;
+
+  /// Below this range the arrow twitches (accuracy > remaining distance) and a
+  /// bearing is less useful — show the "you're basically there" state instead.
+  static const double pointMeNearTargetMeters = 20;
+
   /// Standard OpenStreetMap raster tiles.
   ///
   /// **No API key.** That is the point — see `docs/architecture.md`. Usage is

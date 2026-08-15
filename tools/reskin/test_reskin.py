@@ -32,6 +32,21 @@ def test_style_b_inverts_luminance():
     assert sum(dark_ground[:3]) < 240, dark_ground
 
 
+def test_array_matches_pixel():
+    # the vectorised driver path must equal the pure function, pixel-for-pixel
+    import numpy as np
+    from reskin import reskin_array
+    vals = [0, 24, 48, 96, 128, 144, 192, 216, 246, 255]
+    pixels = [(r, g, b, a) for r in vals for g in (0, 128, 216)
+              for b in vals for a in (0, 255)]
+    arr = np.array(pixels, dtype=np.uint8).reshape(1, -1, 4)
+    for style in ('c', 'b'):
+        out = reskin_array(arr, style=style)
+        for j, (r, g, b, a) in enumerate(pixels):
+            assert tuple(int(x) for x in out[0, j]) == \
+                reskin_pixel(r, g, b, a, style=style), (style, (r, g, b, a))
+
+
 if __name__ == '__main__':
     fns = [v for k, v in sorted(globals().items())
            if k.startswith('test_') and callable(v)]

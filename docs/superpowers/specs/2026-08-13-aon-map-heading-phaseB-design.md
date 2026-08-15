@@ -294,3 +294,43 @@ WMM2025 declination. TDD order: dep → pure heading_math → pure bearing_math 
 HeadingService + fake → PointMeController → PointMeScreen → sheet entry + route →
 l10n → verification (web build + on-device compass). No implementation before the
 plan is written and gauntletted.
+
+---
+
+## Closeout — Map Parity Phase B (2026-08-13)
+
+Implemented via the TDD plan (`docs/superpowers/plans/2026-08-13-aon-map-heading-phaseB.md`), 10 tasks, one commit each on `feature/map-heading-phaseB`.
+
+**Static + tests:** `flutter analyze` clean; **527 tests pass** (491 baseline + 36 new). Phase A's `location_providers` gate was widened (`active && (mapVisible || pointMeActive)`) with no Phase A regression. The data-seam guard (`integration_seams_test`) holds — `PointMeScreen` resolves the target via `venueByIdProvider`/`parkingByIdProvider`, not `VenuesData`/`ParkingData`.
+
+**Builds (all green, on-branch):**
+- `flutter build web` — ✅ (`sensors_plus` web support; the reason `flutter_compass` was cut)
+- `flutter build ios --simulator --debug` — ✅ (Pod install fine with the motion key)
+- `flutter build apk --debug` — ✅ (**AGP 8.11.1 → 8.12.1** for the `sensors_plus` 7.x floor)
+
+**Resolved dependency:** `sensors_plus` **7.1.0** (`magnetometerEventStream`/`accelerometerEventStream({samplingPeriod})` API confirmed against the installed package). AGP bumped to **8.12.1**; Gradle 9.1.0 / Kotlin 2.3.20 / Java 17 already met the floor.
+
+**Declination receipt (preflight, Task 0):**
+```
+model:        WMM2025
+coordinate:   -33.7737, 151.1134
+date:         2026-09-19
+declination:  12.752° E
+source:       BGS geomagnetic web service
+              https://geomag.bgs.ac.uk/web_service/GMModels/wmm/2025/ (retrieved 2026-08-13)
+```
+
+**iOS simulator runtime pass (iPhone 17 Pro).** The simulator has no magnetometer, so it exercises the degradation path deterministically:
+- [x] open venue sheet → **"Point me there"** present → tap → screen opens — PASS
+- [x] no location fix → **"Turn on location"** + a working **Show my location** button that activates GPS (finding #7) — PASS
+- [x] location active on the PointMe route even though Map isn't the front tab (finding #6, `pointMeActive` demand) — PASS
+- [x] no magnetometer → after the acquisition timeout, degrades to the **bearing + distance card** ("Macquarie Theatre is about 269 m south-west of you"), **no frozen arrow** — PASS
+- [x] bearing is geometrically correct (sim set north of campus; venue is genuinely SW) — PASS
+- [x] no crash on motion access (`NSMotionUsageDescription` present) (finding #1) — PASS
+- [~] live arrow tracks phone rotation / walk-in near-target — **NOT testable on a simulator** (no magnetometer); needs a real compass device. Logic is covered by `point_me_screen_test` / `point_me_controller_test` (arrow render, side-follows-heading, near-target, declination applied).
+
+**Orientation (IOU-B4):** `PointMeScreen` locks portrait; heading is trusted on portrait-natural phones only. Landscape-natural/rotated (iPad) axis remap is deferred.
+
+**Status — split, honest:**
+- **IMPLEMENTATION COMPLETE (iOS/Android):** analyze/tests green, all three builds green, on-device runtime verified for every simulator-testable path; the live-compass path is unit/widget-covered and awaits a real-device pass.
+- **WEB RELEASE READY — NOT claimed.** The web *build* is green, but the web bearing/distance *fallback* is not runtime-verified: the app's pre-existing web black-screen (Phase A closeout) means `PointMeScreen` is unreachable on web today. Blocked on the separate web-black-screen triage.

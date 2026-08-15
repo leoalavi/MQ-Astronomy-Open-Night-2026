@@ -41,7 +41,7 @@ CampusVariantPicker (radio sheet) ── opened by ── a "Layers" button on t
 
 ## 5. State — single-select, not persisted
 
-`campusVariantProvider = NotifierProvider<CampusVariantController, String?>` (default `null` = base). `CampusVariantController.select(String? id)` sets the state (`null` clears to base); `.toggle(String id)` selects it, or clears to base if it's already active (radio-with-deselect). **Non-persistent** — transient viewing state (matches M1's overlay stance; persistence is a program IOU if a need appears). Only valid ids take effect: `select` ignores an id not in the registry (guard, like M1's projection domain).
+`campusVariantProvider = NotifierProvider<CampusVariantController, String?>` (default `null` = base; `Notifier<String?>` with `build() => null` — plain Notifier, valid in Riverpod 3.4.2). `CampusVariantController.select(String? id)` sets the state (`null` clears to base). **No separate `toggle`** — the picker is a radio group whose base is an explicit `select(null)` row, so a single `select` covers every transition (YAGNI; drop the method). **Non-persistent** — transient viewing state (matches M1's overlay stance; persistence is a program IOU if a need appears). Only valid ids take effect: `select(id)` with an unknown non-null id is ignored (`CampusVariantsData.byId(id) == null` → no-op), so state is always `null` or a real variant.
 
 ## 6. Rendering — one image swap
 
@@ -59,8 +59,21 @@ Full opacity (the variant *is* the basemap — no translucency). The M1 dot/accu
 
 ## 7. Picker + Layers button
 
-- **`CampusVariantPicker`** (`ConsumerWidget`, bottom sheet): a **radio group** — "Campus map" (base, `value == null`) + the 3 `eventVisible` variants, each a `RadioListTile`/equivalent with a source-colour swatch, localised label + description. Selecting sets `campusVariantProvider`; the active row is checked. `SafeArea` + scroll-safe for 320×568/2.0. a11y: single radio group, each option labelled; the *selected* state is announced. Permits never listed.
-- **Layers button** (`map_screen`): a `Positioned(top-left)` themed glass icon button (`Icons.layers_rounded`), `Semantics(button, label: l.mapVariantsTitle)`, **only in `MapMode.campusMap`** (hidden in panorama). Mirrors M1's top-right control island on the opposite corner. Opens the picker via `showModalBottomSheet(isScrollControlled, useSafeArea)`.
+- **`CampusVariantPicker`** (`ConsumerWidget`, bottom sheet): a **`RadioGroup<String?>`** — **not** `RadioListTile.groupValue`/`.onChanged`, which are **`@Deprecated` in Flutter 3.44** (verified: `radio_list_tile.dart:164,169` — "use a RadioGroup ancestor"; the deprecation would fail `flutter analyze`, which `check.sh` blocks on). Shape:
+  ```dart
+  RadioGroup<String?>(
+    groupValue: ref.watch(campusVariantProvider),
+    onChanged: (id) => ref.read(campusVariantProvider.notifier).select(id),
+    child: Column(children: [
+      RadioListTile<String?>(value: null, title: Text(l.mapVariantBase), ...),   // "Campus map"
+      for (final v in CampusVariantsData.eventVisible)
+        RadioListTile<String?>(value: v.id, title: Text(_label(l, v.id)),
+            subtitle: Text(_desc(l, v.id)), secondary: _swatch(v.swatch)),
+    ]),
+  )
+  ```
+  `SafeArea` + `SingleChildScrollView` for 320×568/2.0. a11y: one radio group, each option labelled; the selected state is announced by the framework. Permits never listed.
+- **Layers button** (`map_screen`): a `Positioned(top-left)` themed glass icon button (`Icons.layers_rounded`), `Semantics(button, label: l.mapVariantsTitle)`, **only in `MapMode.campusMap`** (hidden in panorama). Mirrors M1's top-right control island on the opposite corner. Opens the picker via `showModalBottomSheet(isScrollControlled, useSafeArea)`. **Collision fix:** the map status notes (off-campus / low-accuracy / locating) are `Positioned(left: space4, right: space4+56)` — the `+56` clears M1's right-hand island but NOT a new left button; M2 must widen the notes to `left: space4+56` so they clear the Layers button too (verified against `map_screen.dart` — the notes currently start at `left: space4`).
 
 ## 8. Memory — one on screen, cache-bounded
 
@@ -79,7 +92,7 @@ Only one variant renders at a time (11.3 MiB decoded — M0 gate). But Flutter's
 ## 10. Testing
 
 - **Registry:** exactly `{parking, accessibility, water, permits}`; `eventVisible` = the first three; `byId` works; every `assetPath` under `assets/maps/` and ends `_dark.png`.
-- **Controller:** default `null`; `select('parking')` → `'parking'`; `select(null)` → base; `toggle` selects then clears; exclusive (selecting a second replaces, never accumulates); unknown id ignored.
+- **Controller:** default `null`; `select('parking')` → `'parking'`; `select(null)` → base; exclusive (selecting a second variant replaces the first, never accumulates); unknown non-null id → no-op (state stays as it was).
 - **`CampusBasemapLayer`:** `null` → renders the base asset; `'water'` → renders `overlay_water_dark.png` (assert the `OverlayImage.imageProvider` `AssetImage.assetName`); one image only.
 - **Picker:** lists "Campus map" + Parking + Accessible routes + Drinking water (NOT Permit areas); selecting Parking sets the controller and checks that row; a11y radio semantics; 320×568/2.0 no overflow; renders under FA.
 - **Wiring (regression):** the Layers button opens the picker; selecting a variant swaps the basemap asset while the user dot + venue markers still render (M1 intact); panorama toggle still switches; Layers button hidden in panorama.
@@ -97,8 +110,8 @@ Only one variant renders at a time (11.3 MiB decoded — M0 gate). But Flutter's
 
 ## 12. Open questions
 
-1. **Deselect UX** — tapping the active variant returns to base (radio-with-deselect), or is "Campus map" the only way back? (Design: both — base is an explicit row AND `toggle` deselects.)
-2. **Layers-button corner** — top-left confirmed (opposite M1's top-right island); re-check at 2.0 for collision with the mode toggle / filter bar.
+1. **Deselect UX** — RESOLVED: the "Campus map" (`value: null`) radio row is the way back to base; no `toggle` (radios don't self-deselect, and an explicit base row is clearer).
+2. **Layers-button corner** — top-left (opposite M1's top-right island); notes widened to clear it (§7); re-check at 2.0 for collision with the mode toggle / filter bar above.
 3. **Permits reveal** — stays hidden (`eventVisible=false`) unless operations asks; one-line data flip.
 
 ## 13. Next step

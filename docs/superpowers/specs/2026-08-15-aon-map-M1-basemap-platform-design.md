@@ -153,3 +153,24 @@ CircleMarker(point: center.value, radius: radiusPx, useRadiusInMeter: false, …
 ## 9. Next step
 
 Design is gauntlet-clean. Next → write the M1 TDD plan (Task 0 baseline/re-count + **the calibration receipt** → geometry types → projection (pure, TDD, incl. validation/domain) → drift + venue-integrity tests → basemap layer → map_config map-units → user-location re-seat + zoom-aware circle → map_screen wiring + markers + follow-me → l10n note → verification incl. web-runtime + iOS + viewport). No code before the plan is gauntletted.
+
+---
+
+## 10. Closeout (2026-08-15) — **M1 CODE COMPLETE**
+
+Executed inline, TDD, on `feature/map-parity-program`. 15 commits (T0–T11 + on-device fixes).
+
+**Receipts**
+- **Calibration receipt (T0):** `scale = 38.905882`, `mapNorth = 85.0`, `mapEast = 120.2389`, centre `(42.5, 60.1194)`. Constants derived from this, guarded by the drift test.
+- **Test floor:** baseline **527** → **549** green (22 new). `flutter analyze` clean.
+- **Builds:** web ✓, Android apk ✓, iOS simulator ✓.
+- **iOS Impeller render (§ program §11):** **PASS** — the reskinned `CrsSimple` basemap paints (not blank/garbled); the whole campus frames; venue markers (G/F/E/D/A/I/H) and parking (P) land on their real buildings via the affine. Screenshot on file.
+- **Alignment sanity:** venues sit on the central-courtyard cluster, parking to the west — visually correct.
+- **Raster memory:** M1 renders M0's **2048×1448 / ~11.3 MiB** reskinned asset (not the 59 MiB source); sharp enough at the whole-campus fit. Higher-res only if max-zoom detail proves soft (M0 revisit) — not needed at current framing.
+
+**Honest gaps**
+- **Web-runtime render: FAIL — pre-existing, not M1.** The web build throws at **bootstrap** (no UI renders at all, home included); M1 only touched the Map tab, which never executes. This is the documented Phase A/B global web black-screen. Not re-confirmed against `main` this session, but the failure precedes any M1 code path.
+- **Zoom range corrected during on-device verification:** the design's `mapMinZoom/mapMaxZoom = -4.0/-2.2` were wrong (MQ's numbers don't transfer). Real: **`-8 / 1`**, and `CameraFit.bounds` needs its own `minZoom` passed (its default 0 clamped the −6.3 whole-campus fit) + an `onMapReady` re-fit (initialCameraFit runs at size 0). This is the load-bearing on-device finding — a green build/test hid it.
+- **Attribution:** on-map credit fixed to "Campus map © Macquarie University"; the broader OSM→MQ cleanup (settings/info/l10n) is spawned as a follow-up task.
+
+**Release:** rolls up with the program (MQ artwork attribution gate at M0). M1 itself is code-complete and on-device verified.

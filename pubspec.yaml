@@ -36,6 +36,7 @@ dependencies:
   confetti: ^0.8.0
   mobile_scanner: ^7.4.0
   geolocator: ^14.0.3
+  sensors_plus: ^7.1.0
 
 
 dev_dependencies:

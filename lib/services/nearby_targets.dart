@@ -1,9 +1,11 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/search_entry.dart';
 import 'package:aon2026/services/building_search.dart' show normalizeMapSearch;
-import 'package:aon2026/services/search_providers.dart' show scoreEntry;
+import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/services/search_providers.dart' show scoreEntry, searchIndexProvider;
 import 'package:aon2026/widgets/bearing_math.dart';
 import 'package:aon2026/widgets/map_config.dart';
 
@@ -97,3 +99,23 @@ List<NearbyTarget> nearestTargets(
 List<SearchEntry> unlocatableVenues(List<SearchEntry> index) => index
     .where((e) => e.kind == PlaceKind.venue && routingLatLngOf(e) == null)
     .toList();
+
+/// The compass filter string (M3 vocabulary). Notifier method; no external set.
+final compassFilterProvider =
+    NotifierProvider<CompassFilter, String>(CompassFilter.new);
+
+class CompassFilter extends Notifier<String> {
+  @override
+  String build() => '';
+  void set(String q) => state = q;
+}
+
+/// Venue-biased nearest targets for the current fix + filter. `const []` when no
+/// fix (§0.6 empty). Watches only fix/index/filter — NOT heading (§0R-12).
+final nearbyTargetsProvider = Provider<List<NearbyTarget>>((ref) {
+  final fix = ref.watch(locationControllerProvider.select((s) => s.fix));
+  if (fix == null) return const <NearbyTarget>[];
+  final index = ref.watch(searchIndexProvider);
+  final filter = ref.watch(compassFilterProvider);
+  return nearestTargets(fix.position, index, filter: filter);
+});

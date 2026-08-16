@@ -66,6 +66,19 @@ class PointMeActiveNotifier extends Notifier<bool> {
   }
 }
 
+/// True while the compass mode (M5) is on-screen. OR'd into the location gate so
+/// GPS stays alive in compass mode (§0.1/B4). Same tiny-notifier shape.
+final compassVisibleProvider =
+    NotifierProvider<CompassVisibleNotifier, bool>(CompassVisibleNotifier.new);
+
+class CompassVisibleNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool visible) {
+    if (state != visible) state = visible;
+  }
+}
+
 final locationControllerProvider =
     NotifierProvider<LocationController, LocationSnapshot>(
         LocationController.new);
@@ -81,7 +94,23 @@ class LocationController extends Notifier<LocationSnapshot> {
     ref.onDispose(_cancel);
     ref.listen(mapVisibleProvider, (_, _) => _sync());
     ref.listen(pointMeActiveProvider, (_, _) => _sync());
+    ref.listen(compassVisibleProvider, (_, _) => _sync());
     return const LocationSnapshot();
+  }
+
+  /// Activate location for a consumer (compass, §0R-11) that needs the position
+  /// stream but NOT map-follow/camera semantics. No-op if already active;
+  /// requests permission when inactive. Deliberately never sets `following`
+  /// (that is [onLocateTapped]'s map behaviour, and its 2nd-call follow toggle
+  /// would misfire on compass re-entry).
+  Future<void> ensureLocationActive() async {
+    if (state.active) return;
+    final s = await _svc.request();
+    state = state.copyWith(status: s);
+    if (s == LocationStatus.granted) {
+      state = state.copyWith(active: true);
+      _sync();
+    }
   }
 
   /// The locate button's single action.
@@ -113,7 +142,9 @@ class LocationController extends Notifier<LocationSnapshot> {
 
   void _sync() {
     final wantStream = state.active &&
-        (ref.read(mapVisibleProvider) || ref.read(pointMeActiveProvider));
+        (ref.read(mapVisibleProvider) ||
+            ref.read(pointMeActiveProvider) ||
+            ref.read(compassVisibleProvider));
     if (wantStream && _sub == null) {
       _sub = _svc.watch().listen(_onFix, onError: (_) => _onStreamError());
       _serviceSub = _svc.serviceEnabledChanges().listen((enabled) {

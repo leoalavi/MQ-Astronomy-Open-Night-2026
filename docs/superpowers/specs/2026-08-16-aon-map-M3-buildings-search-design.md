@@ -4,6 +4,22 @@
 
 **Parent:** `2026-08-15-aon-map-parity-program-design.md` — M3 row (§capability matrix), §8 hybrid authority split, IOU-P4/P6, open question #3. This spec discharges those.
 
+## 0. Gauntlet amendment — AUTHORITATIVE
+
+Self-gauntlet against the real data + M1 projection. **Where this conflicts with §4/§6/§12 below, this wins.** Verify-before-apply, receipts inline:
+
+1. **Pixel-exact building placement — CONFIRMED viable *and necessary* (my §4 hedge was backwards).** MQ's `campusX/Y` are in **M1's exact calibration pixel space** — `campus_projection.dart:13` declares `_pw=4678, _ph=3307`, and the 170 buildings' `campusX/Y` span `218..4678 × 0..3307`. The M0 2048px downscale is irrelevant (the `OverlayImage` stretches to fixed map-bounds). The transform is pure existing constants:
+   `projectPixel(x,y) = CampusMapPoint(LatLng((_ph - y)/_scale, x/_scale))`, `_scale = _ph/85 = 38.905882`, bounds-checked to `[0,_pw]×[0,_ph]`, null on the `(0,0)` sentinel (no building hits it — min `campusX` is 218).
+   Decisive receipt: **21 of 170 buildings fall OUTSIDE the GPS-affine domain** (`project()` → null), so GPS placement would silently **drop 21 buildings**; `projectPixel` places all 170. And affine residual is real — **18WW: GPS-affine (40.55,57.63) vs pixel (36.63,57.63) = 4.04 map-units apart** (~4.7% of the 85-unit height); pixel is the position that matches the illustration. **Decision: buildings ALWAYS use `projectPixel`. No GPS-affine fallback for buildings.**
+
+2. **§8 render-placement authority, applied to linked venues too.** A curated `Venue.buildingId` link → semantic content from the **venue** (label/event-status/`DataConfidence`), but **placement from the linked building's `campusX/Y` via `projectPixel`** (pixel-exact, the §8 render-authority winner). Unlinked venues keep their **verified GPS-affine** `project()` placement (M1/M2, confirmed on-device). This slightly moves the *few* linked venue pins to a more-accurate spot → **re-verify those on-device at closeout.** (Re-resolves IOU-P6: no persistent `campusX/Y` backfill onto venue *data*; placement is computed at render from the link.)
+
+3. **Method names (real M1 API):** the projection method is `CampusProjection.project(GpsPoint) → CampusMapPoint?` — **not** `gpsToCampusPoint` (which does not exist). M3 **adds** `CampusMapPoint? projectPixel(double x, double y)` to `CampusProjection` (formula above), unit-tested against `campus_overlay_meta.json`.
+
+4. **Data shape:** the vendored `buildings.json` is **flat** (`latitude`/`longitude`/`campusX`/`campusY` at top level), all 170 carry both GPS and `campusX/Y`, plus MQ-only fields we drop (`levels`, `wheelchair`, `studentServicesGroups`, `campusHubGroups`). `Building.fromJson` stays nested-tolerant (harmless) but the asset is flat.
+
+5. **`shared_preferences` on web — no gate risk:** it already ships (`^2.5.5`) and is used by `passport_store`/`saved_events`; the M2 `check.sh full` web build is green with it. Favorites add no new platform surface.
+
 ## 1. Goal
 
 Give the campus map a **searchable building registry** — port MQ Journey's 170-building dataset + its ranked search — reconciled with AON's 21 curated event venues, plus a **local favorites** list. An attendee can find *any* campus building ("where's 14SCO / the Library?"), not just the 21 event venues, and bookmark places for the night.
@@ -92,9 +108,7 @@ class Building {
 }
 ```
 
-Render placement: `campusX/Y` (pixel-exact) → map-units via the **same M1 calibration** used for the basemap (`CampusProjection.buildingPixelToMapPoint`, added in M3 if not present — a pure pixel→map-unit transform, unit-tested against the vendored `campus_overlay_meta.json`). Buildings without campus coords fall back to `gpsToCampusPoint` (affine), else are **search-listable but not map-placeable** (honest — no fake pin).
-
-> **⚠ Gauntlet-critical (pixel-space scale):** MQ's `campusX/Y` are in MQ's *original* overlay pixel space, but M0 downscaled the reskinned asset to ≤2048 px and the M1 calibration (`campus_overlay_meta.json`) may be in a *different* resolution again. Before trusting pixel-exact placement, the plan's Task 0 MUST verify the scale relationship empirically (project a few known buildings, compare to their GPS-affine position and to the on-device pin) — and if the spaces don't align cleanly, **fall back to GPS-affine placement for buildings too** (still correct, just less exact). Do not assume the pixel spaces match.
+Render placement (see §0.1–0.2, authoritative): buildings ALWAYS place via the **new** `CampusProjection.projectPixel(campusX, campusY)` — pixel-exact, aligns with the illustration, and places all 170 (21 of which fall outside the GPS-affine domain and would otherwise be dropped). A curated-linked venue also places via its building's `projectPixel`; unlinked venues keep verified GPS-affine `project()`. The `(0,0)` sentinel / out-of-range → null (no fake pin); no building hits it.
 
 ## 5. Search — ported scorer + unified index
 
@@ -166,7 +180,7 @@ class BuildingEntry extends SearchEntry { final Building b; ... } // title=b.nam
 ## 12. Open questions / IOUs discharged
 
 1. **IOU-P4 (merge policy):** resolved — semantic authority = curated `Venue.buildingId` link (venue wins), render-placement = each source's own best coordinate.
-2. **IOU-P6 (backfill campusX/Y onto venues):** resolved — **no backfill**; venues keep verified GPS-affine placement, buildings use pixel-exact. Revisit only if a venue pin visibly drifts.
+2. **IOU-P6 (backfill campusX/Y onto venues):** resolved (§0.2) — no persistent data backfill; buildings + curated-linked venues place via `projectPixel` (pixel-exact) computed at render, unlinked venues keep verified GPS-affine. Pixel-exact is necessary, not just nicer: 21/170 buildings are outside the GPS-affine domain.
 3. **Open Q#3 (hybrid conflict specifics):** resolved by §5 dedup + §4 placement.
 4. **New (M3):** which of the 21 venues get curated `buildingId` links — enumerated in the plan (a short hand-authored table, each verified against `buildings.json`).
 

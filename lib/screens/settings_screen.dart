@@ -8,6 +8,8 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/app_settings.dart';
+import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/widgets/section_header.dart';
 
@@ -114,8 +116,12 @@ class SettingsScreen extends ConsumerWidget {
                 'There is no account and no sign-in. Your saved activities are '
                 'stored on this device only. The app collects no analytics and '
                 'tracks no location.\n\n'
-                'The only thing it fetches from the internet is map imagery.',
+                'The only thing it fetches from the internet is map imagery — '
+                'unless you choose Google Maps walking directions (below).',
           ),
+          // M4: the one exception to "nothing leaves your phone" — surfaced
+          // honestly, with a revoke control once consent has been given.
+          const _GoogleMapsPrivacyCard(),
 
           // ── Credits ──
           SectionHeader(
@@ -179,6 +185,56 @@ class _AppearanceCard extends ConsumerWidget {
                   vertical: AonSpacing.space1,
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Google Maps privacy notice + revoke control. The ToS/privacy notice is
+/// always shown; the "Revoke" action appears only once consent has been given
+/// (there's nothing to revoke otherwise). Revoking resets consent to unknown, so
+/// the next Google-nav tap re-asks (T8A / #17).
+class _GoogleMapsPrivacyCard extends ConsumerWidget {
+  const _GoogleMapsPrivacyCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    final theme = Theme.of(context);
+    final consent = ref.watch(mapsConsentProvider);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AonSpacing.space4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(Icons.map_outlined, size: AonSpacing.iconMd, color: context.aon.accent),
+                const SizedBox(width: AonSpacing.space3),
+                Expanded(
+                  child: Text(
+                    l.settingsGoogleMapsNotice,
+                    style: theme.textTheme.bodySmall
+                        ?.copyWith(color: context.aon.contentSecondary),
+                  ),
+                ),
+              ],
+            ),
+            if (consent == MapsConsent.accepted) ...[
+              const SizedBox(height: AonSpacing.space2),
+              Align(
+                alignment: AlignmentDirectional.centerEnd,
+                child: TextButton(
+                  onPressed: () => ref.read(mapsConsentProvider.notifier).revoke(),
+                  child: Text(l.settingsRevokeGoogleConsent),
+                ),
+              ),
+            ],
           ],
         ),
       ),

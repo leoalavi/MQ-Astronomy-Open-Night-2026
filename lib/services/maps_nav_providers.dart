@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
 import 'google_routes_service.dart';
+import 'location_providers.dart';
+import 'location_service.dart';
 import 'routes_client_identity.dart';
 import 'routes_service.dart';
 
@@ -89,4 +91,23 @@ final navRouteProvider = FutureProvider.autoDispose
     .family<RouteResult, ((double, double), (double, double))>((ref, args) async {
   final service = await ref.watch(routesServiceProvider.future);
   return service.walkingRoute(origin: args.$1, destination: args.$2);
+});
+
+/// The origin GPS for a nav session, captured ONCE (a snapshot — the route is
+/// not re-computed as the attendee walks). Ensures permission, then takes the
+/// first fix. Returns null when permission is refused or no fix arrives, so the
+/// screen can offer a curated/external fallback. Overridable in tests.
+final navOriginProvider = FutureProvider.autoDispose<(double, double)?>((ref) async {
+  final svc = ref.watch(locationServiceProvider);
+  var status = await svc.status();
+  if (status != LocationStatus.granted) {
+    status = await svc.request();
+  }
+  if (status != LocationStatus.granted) return null;
+  try {
+    final fix = await svc.watch().first.timeout(const Duration(seconds: 12));
+    return (fix.position.latitude, fix.position.longitude);
+  } catch (_) {
+    return null;
+  }
 });

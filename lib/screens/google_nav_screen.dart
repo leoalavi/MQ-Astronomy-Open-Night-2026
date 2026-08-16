@@ -1,0 +1,293 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
+import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/models/search_entry.dart';
+import 'package:aon2026/services/external_maps_launcher.dart';
+import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/maps_nav_providers.dart';
+import 'package:aon2026/services/maps_url.dart';
+import 'package:aon2026/services/nav_format.dart';
+import 'package:aon2026/services/routes_service.dart';
+import 'package:aon2026/services/search_providers.dart';
+import 'package:aon2026/widgets/embedded_map.dart';
+import 'package:aon2026/widgets/maps_nav_disclosure.dart';
+
+/// Embedded Google walking-navigation for an M3 place key. Runs the strict
+/// sequence: capability → resolve destination → consent → location (snapshot) →
+/// route → map. Every failure lands on a standalone AON panel, never a blank
+/// Google-tiles view. Renders the Google-mandated walking warning on success.
+class GoogleNavScreen extends ConsumerStatefulWidget {
+  const GoogleNavScreen({
+    super.key,
+    required this.placeKey,
+    this.surface = const GoogleEmbeddedMapSurface(),
+  });
+
+  final String placeKey;
+
+  /// Injectable so widget tests build without a real Google platform view.
+  final EmbeddedMapSurface surface;
+
+  @override
+  ConsumerState<GoogleNavScreen> createState() => _GoogleNavScreenState();
+}
+
+class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
+  bool _disclosureRequested = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
+    final resolved = ref.watch(placeResolverProvider(widget.placeKey));
+
+    // (1) Capability guard — feature disabled → unavailable panel (with an
+    // optional external-Maps button if we can resolve a destination).
+    if (!ref.watch(googleNavEnabledProvider)) {
+      final dest = _destOf(resolved.asData?.value);
+      return _scaffold(
+        l,
+        title: resolved.asData?.value?.title,
+        body: _panel(
+          context,
+          icon: Icons.map_outlined,
+          message: l.mapNavUnavailable,
+          actions: [if (dest != null) _externalButton(context, l, dest)],
+        ),
+      );
+    }
+
+    // (2) Resolve the local destination (no location, no Google contact yet).
+    return resolved.when(
+      loading: () => _scaffold(l, title: null, body: _spinner(context)),
+      error: (_, _) => _scaffold(l, title: null, body: _errorBack(context, l)),
+      data: (place) {
+        final dest = _destOf(place);
+        if (place == null || dest == null) {
+          return _scaffold(l, title: place?.title, body: _errorBack(context, l));
+        }
+
+        // (3) Consent gate — only `accepted` proceeds; unknown/declined show the
+        // disclosure before any location read or Google call.
+        final consent = ref.watch(mapsConsentProvider);
+        if (consentNeedsDisclosure(consent)) {
+          _ensureDisclosure();
+          // Static placeholder (NOT an animating spinner) — the modal disclosure
+          // is shown over it; a spinner here would never let tests settle and
+          // burns frames behind a blocking dialog.
+          return _scaffold(l, title: place.title, body: const SizedBox.shrink());
+        }
+
+        // (4) Location origin, captured once (snapshot).
+        final originAsync = ref.watch(navOriginProvider);
+        return originAsync.when(
+          loading: () => _scaffold(l, title: place.title, body: _spinner(context)),
+          error: (_, _) => _scaffold(
+              l, title: place.title, body: _needLocation(context, l, dest)),
+          data: (origin) {
+            if (origin == null) {
+              return _scaffold(
+                  l, title: place.title, body: _needLocation(context, l, dest));
+            }
+
+            // (5) Route request → (6) map / typed error panels.
+            final routeAsync = ref.watch(navRouteProvider((origin, dest)));
+            return routeAsync.when(
+              loading: () => _scaffold(l, title: place.title, body: _spinner(context)),
+              error: (_, _) => _scaffold(
+                  l, title: place.title, body: _routeError(context, l, dest, origin)),
+              data: (result) => _scaffold(
+                l,
+                title: place.title,
+                body: _resultBody(context, l, result, origin, dest),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  (double, double)? _destOf(ResolvedPlace? place) {
+    if (place?.routingLat == null || place?.routingLng == null) return null;
+    // Geographic WGS84 (entrance ?? latitude) — NEVER renderPoint (map-units).
+    return (place!.routingLat!, place.routingLng!);
+  }
+
+  void _ensureDisclosure() {
+    if (_disclosureRequested) return;
+    _disclosureRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final accepted = await showMapsNavDisclosure(context);
+      if (!mounted) return;
+      final notifier = ref.read(mapsConsentProvider.notifier);
+      if (accepted) {
+        notifier.accept(); // rebuild proceeds (consent now accepted)
+      } else {
+        notifier.decline();
+        await Navigator.of(context).maybePop();
+      }
+    });
+  }
+
+  Widget _resultBody(BuildContext context, AonL10n l, RouteResult result,
+      (double, double) origin, (double, double) dest) {
+    return switch (result) {
+      RouteSuccess(:final route) => Column(
+          children: [
+            Expanded(
+              child: EmbeddedMap(
+                origin: origin,
+                destination: dest,
+                route: route.polyline,
+                surface: widget.surface,
+              ),
+            ),
+            _successPanel(context, l, route, dest),
+          ],
+        ),
+      RouteNoRoute() => _panel(
+          context,
+          icon: Icons.directions_off_outlined,
+          message: l.mapNavNoRoute,
+          actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
+        ),
+      RouteNetworkFailure() => _panel(
+          context,
+          icon: Icons.wifi_off_rounded,
+          message: l.mapNavOffline,
+          actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
+        ),
+      RouteApiFailure() || RouteMalformed() => _routeError(context, l, dest, origin),
+    };
+  }
+
+  Widget _routeError(BuildContext context, AonL10n l, (double, double) dest,
+          (double, double) origin) =>
+      _panel(
+        context,
+        icon: Icons.error_outline_rounded,
+        message: l.mapNavError,
+        actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
+      );
+
+  Widget _needLocation(BuildContext context, AonL10n l, (double, double) dest) => _panel(
+        context,
+        icon: Icons.location_off_outlined,
+        message: l.mapNavNeedLocation,
+        actions: [_externalButton(context, l, dest)],
+      );
+
+  Widget _errorBack(BuildContext context, AonL10n l) => _panel(
+        context,
+        icon: Icons.error_outline_rounded,
+        message: l.mapNavError,
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).maybePop(),
+            child: Text(MaterialLocalizations.of(context).backButtonTooltip),
+          ),
+        ],
+      );
+
+  Widget _successPanel(
+      BuildContext context, AonL10n l, NavRoute route, (double, double) dest) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      color: context.aon.surface,
+      padding: const EdgeInsets.all(AonSpacing.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '${formatNavDistance(l, route.distanceMeters)} · ${formatNavEta(l, route.eta)}',
+            style: theme.textTheme.titleMedium?.copyWith(color: context.aon.contentPrimary),
+          ),
+          const SizedBox(height: AonSpacing.space2),
+          // Google-mandated baseline walking caution (WALK is beta) — always shown.
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(Icons.info_outline_rounded, size: 18, color: context.aon.contentTertiary),
+              const SizedBox(width: AonSpacing.space2),
+              Expanded(
+                child: Text(
+                  l.mapNavWalkingWarning,
+                  style: theme.textTheme.bodySmall?.copyWith(color: context.aon.contentTertiary),
+                ),
+              ),
+            ],
+          ),
+          // Google-supplied route warnings, if any.
+          if (route.warnings.isNotEmpty) ...[
+            const SizedBox(height: AonSpacing.space2),
+            Text(l.mapNavWarningsTitle,
+                style: theme.textTheme.labelMedium?.copyWith(color: context.aon.contentSecondary)),
+            for (final w in route.warnings)
+              Text('• $w',
+                  style: theme.textTheme.bodySmall?.copyWith(color: context.aon.contentTertiary)),
+          ],
+          const SizedBox(height: AonSpacing.space3),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: _externalButton(context, l, dest),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _retryButton(
+          BuildContext context, AonL10n l, (double, double) origin, (double, double) dest) =>
+      FilledButton.tonal(
+        onPressed: () => ref.invalidate(navRouteProvider((origin, dest))),
+        child: Text(l.mapNavRetry),
+      );
+
+  Widget _externalButton(BuildContext context, AonL10n l, (double, double) dest) => TextButton.icon(
+        icon: const Icon(Icons.open_in_new_rounded, size: 18),
+        onPressed: () => ref
+            .read(externalMapsLauncherProvider)
+            .open(buildWalkingMapsUrl(destLat: dest.$1, destLng: dest.$2)),
+        label: Text(l.mapNavOpenExternal),
+      );
+
+  Widget _spinner(BuildContext context) =>
+      Center(child: CircularProgressIndicator(color: context.aon.accent));
+
+  Widget _panel(BuildContext context,
+      {required IconData icon, required String message, List<Widget> actions = const []}) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(AonSpacing.space4),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 40, color: context.aon.contentTertiary),
+            const SizedBox(height: AonSpacing.space3),
+            Text(message,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyLarge?.copyWith(color: context.aon.contentSecondary)),
+            if (actions.isNotEmpty) ...[
+              const SizedBox(height: AonSpacing.space3),
+              Wrap(spacing: AonSpacing.space2, alignment: WrapAlignment.center, children: actions),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _scaffold(AonL10n l, {required String? title, required Widget body}) => Scaffold(
+        backgroundColor: context.aon.surfaceBase,
+        appBar: AppBar(title: Text(title ?? l.mapNavGoogle)),
+        body: SafeArea(child: body),
+      );
+}

@@ -11,6 +11,7 @@ import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/screens/panorama_screen.dart';
 import 'package:aon2026/screens/point_me_screen.dart';
+import 'package:aon2026/screens/google_nav_screen.dart';
 import 'package:aon2026/screens/passport_reward_screen.dart';
 import 'package:aon2026/screens/passport_scan_screen.dart';
 import 'package:aon2026/screens/passport_screen.dart';
@@ -55,6 +56,11 @@ abstract final class Routes {
   /// URL-encoding of the id (Map Parity Phase B).
   static String pointMe = '/point-me/:id';
   static String pointMeTo(String id) => '/point-me/${Uri.encodeComponent(id)}';
+
+  /// Embedded Google walking-nav for a M3 place key ("venue:x" / "building:y").
+  /// The helper URL-encodes the key (it contains a colon). M4.
+  static String googleNav = '/google-nav/:placeKey';
+  static String googleNavTo(String placeKey) => '/google-nav/${Uri.encodeComponent(placeKey)}';
 }
 
 /// The app's navigator.
@@ -159,6 +165,13 @@ GoRouter buildRouter() {
         path: Routes.pointMe,
         builder: (context, state) => PointMeScreen(
           venueId: state.pathParameters['id']!,
+        ),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.googleNav,
+        builder: (context, state) => GoogleNavScreen(
+          placeKey: state.pathParameters['placeKey']!,
         ),
       ),
       GoRoute(

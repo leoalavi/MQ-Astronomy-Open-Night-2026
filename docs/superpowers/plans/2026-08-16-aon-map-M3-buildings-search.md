@@ -64,11 +64,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/services/campus_projection.dart';
-import 'package:crypto/crypto.dart'; // transitive via flutter_test? if not, hash in-test with a simple check
 
+// NOTE: the asset uses 'teaching' (13 distinct categories), which MQ's own enum
+// lacked → MQ silently maps it to 'other'. We add 'teaching' so no data is lost
+// (finding #14). Keep this set in lock-step with BuildingCategory.
 const _known = {
   'academic','services','health','food','sports','venue','research',
-  'residential','parking','transport','smoking','other',
+  'residential','parking','transport','smoking','teaching','other',
 };
 
 List<Map<String, dynamic>> _load() {
@@ -117,16 +119,18 @@ void main() {
           LatLng((b['latitude'] as num).toDouble(), (b['longitude'] as num).toDouble())));
       if (p == null) misses++;
     }
-    expect(misses, 21);
+    expect(misses, greaterThan(0)); // hard requirement: pixel path is NECESSARY
+    expect(misses, 21);             // receipt (python-derived); if the Dart eps
+    // shifts it by 1, update to the real count — the >0 assertion is the contract.
   });
 }
 ```
-(If `crypto` isn't already a dep, drop the import — the SHA is asserted via a shell step in Step 4, not in-Dart.)
+The SHA-256 provenance match is the shell step in Step 4, not an in-Dart assertion — no `crypto` import.
 
 - [ ] **Step 3: Run tests to verify they fail, then pass**
 
 Run: `flutter test test/unit/buildings_asset_integrity_test.dart`
-Expected: FAILS first only if the asset/pubspec isn't wired; once Steps 1 are done, PASSES. (If `flutter analyze` complains about the `crypto` import, remove it.)
+Expected: FAILS if the asset/pubspec isn't wired; once Step 1 is done, PASSES.
 
 - [ ] **Step 4: Provenance SHA drift check + gate + commit**
 
@@ -144,7 +148,9 @@ git commit -m "feat(map): M3 T0 — vendor buildings.json (170) + provenance + d
 **Files:** Create `lib/models/building.dart`; Test `test/unit/building_model_test.dart`.
 
 **Interfaces:**
-- Produces: `enum BuildingCategory { academic, services, health, food, sports, venue, research, residential, parking, transport, smoking, other }` with `static BuildingCategory fromString(String?)` (→ other); `class Building` (fields per design §4) with `factory Building.fromJson(Map<String,dynamic>)`, getters `routingLatitude/Longitude` (entrance ?? centre), `hasCampusCoordinates`, `hasGeographicCoordinates`, `==`/`hashCode` by `id`.
+- Produces: `enum BuildingCategory { academic, services, health, food, sports, venue, research, residential, parking, transport, smoking, teaching, other }
+// 'teaching' IS present in buildings.json (13 distinct categories); include it so
+// no building silently degrades to `other` (finding #14).` with `static BuildingCategory fromString(String?)` (→ other); `class Building` (fields per design §4) with `factory Building.fromJson(Map<String,dynamic>)`, getters `routingLatitude/Longitude` (entrance ?? centre), `hasCampusCoordinates`, `hasGeographicCoordinates`, `==`/`hashCode` by `id`.
 
 - [ ] **Step 1: Write the failing model test**
 
@@ -207,7 +213,7 @@ import 'package:flutter/foundation.dart';
 
 enum BuildingCategory {
   academic, services, health, food, sports, venue, research,
-  residential, parking, transport, smoking, other;
+  residential, parking, transport, smoking, teaching, other;  // 'teaching' is in the asset (#14)
 
   static BuildingCategory fromString(String? s) =>
       BuildingCategory.values.firstWhere((c) => c.name == s,
@@ -350,14 +356,14 @@ import 'package:aon2026/data/buildings_asset.dart';
 import 'package:aon2026/services/building_providers.dart';
 
 void main() {
-  TestWidgetsFlutterBinding.ensureInitialized();
-
-  test('loadBuildings parses the bundled asset to 170', () async {
+  // testWidgets (not plain test) so rootBundle is backed by the test asset
+  // bundle — the pattern proven by M2's campus_variant_assets_test.
+  testWidgets('loadBuildings parses the bundled asset to 170', (t) async {
     final list = await loadBuildings(rootBundle);
     expect(list.length, 170);
   });
 
-  test('buildingsProvider resolves to 170', () async {
+  testWidgets('buildingsProvider resolves to 170', (t) async {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     final list = await c.read(buildingsProvider.future);
@@ -434,7 +440,7 @@ void main() {
     expect(scoreBuildingMatch(lib, 'library'), 100);    // field exact
     expect(scoreBuildingMatch(lib, 'li'), 90);          // id prefix
     expect(scoreBuildingMatch(lib, 'boo'), 80);         // alias prefix
-    expect(scoreBuildingMatch(lib, 'libr'), 90);        // id prefix wins over field prefix
+    expect(scoreBuildingMatch(lib, 'libr'), 70);        // 'lib' can't prefix 'libr'; 'library' field-prefix → 70
     expect(scoreBuildingMatch(lib, 'rary'), 50);        // contains
     expect(scoreBuildingMatch(lib, 'zzz'), 0);          // miss
   });
@@ -556,7 +562,7 @@ void main() {
 **Files:** Create `lib/models/search_entry.dart`, `lib/services/search_providers.dart`; Test `test/unit/search_index_test.dart`.
 
 **Interfaces:**
-- Produces: `sealed class SearchEntry { String get placeKey; String get title; String? get subtitle; }`, `VenueEntry`, `BuildingEntry`; `int scoreEntry(SearchEntry, String q, {Building? linkedBuilding})`; providers `mapSearchQueryProvider` (`NotifierProvider<MapSearchQuery, String>`), `searchIndexProvider` (`Provider<AsyncValue<List<SearchEntry>>>`), `mapSearchResultsProvider` (`Provider<List<SearchEntry>>`).
+- Produces: `sealed class SearchEntry { String get placeKey; String get title; String? get subtitle; }`, `VenueEntry`, `BuildingEntry`; `int scoreEntry(SearchEntry, String q, {Building? linkedBuilding})`; providers `mapSearchQueryProvider` (`NotifierProvider<MapSearchQuery, String>` with `void setQuery(String)` — a method, matching AON's `EventFilterNotifier.setQuery`/`SelectedIdNotifier.select` idiom; do NOT set `.state` externally), `searchIndexProvider` (`Provider<AsyncValue<List<SearchEntry>>>`), `mapSearchResultsProvider` (`Provider<List<SearchEntry>>`).
 
 **Design notes for the implementer:**
 - `placeKey` = `venue:<id>` / `building:<id>`.
@@ -594,7 +600,7 @@ void main() {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     await c.read(buildingsProvider.future);
-    c.read(mapSearchQueryProvider.notifier).state = 'OBS'; // building code for observatory
+    c.read(mapSearchQueryProvider.notifier).setQuery('OBS'); // building code for observatory
     final results = c.read(mapSearchResultsProvider);
     // no BuildingEntry with id OBS (deduped); the venue entry surfaces instead
     expect(results.whereType<BuildingEntry>().any((e) => e.placeKey == 'building:OBS'), isFalse);
@@ -605,14 +611,14 @@ void main() {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     await c.read(buildingsProvider.future);
-    c.read(mapSearchQueryProvider.notifier).state = '';
+    c.read(mapSearchQueryProvider.notifier).setQuery('');
     expect(c.read(mapSearchResultsProvider).length, 15);
-    c.read(mapSearchQueryProvider.notifier).state = 'zzzznomatch';
+    c.read(mapSearchQueryProvider.notifier).setQuery('zzzznomatch');
     expect(c.read(mapSearchResultsProvider), isEmpty);
   });
 }
 ```
-Note: `mapSearchQueryProvider.notifier).state = …` assumes a `Notifier<String>` exposing `state`; if you model it with a `set(String)` method, adjust the test to match — keep them consistent.
+Note: tests drive the query via the `setQuery(String)` method (AON idiom — `EventFilterNotifier.setQuery`/`SelectedIdNotifier.select`), never by setting `.state` externally.
 
 - [ ] **Step 2–4:** Run → fail; implement `search_entry.dart` + `search_providers.dart` per the design notes; run → pass. (The `mapSearchResultsProvider` watches `mapSearchQueryProvider` + `searchIndexProvider`, applies score/sort/cap; vocab-inherit uses the venue's `buildingId` to fetch the linked `Building` from `buildingsProvider`'s value.)
 - [ ] **Step 5: `./scripts/check.sh && git commit -m "feat(map): M3 T6 — unified search index (dedup + vocab inherit) + split providers"`**

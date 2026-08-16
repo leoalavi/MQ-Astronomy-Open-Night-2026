@@ -22,21 +22,33 @@ Verify-before-apply split — all six adopted, receipts inline:
    (non-null `groupValue`); `onChanged` maps a stray `null` (framework deselect)
    back to `base` — `select(v ?? CampusMapVariant.base)` — so base is always an
    explicit, highlighted row and `select('banana')` is now a compile error.
+   Precision (review #12): `RadioListTile.toggleable` defaults to `false`, so the
+   UI does not *normally* emit `null` — `select(null)→base` is defensive, and the
+   decisive reason for the enum is eliminating stringly-typed state and the dual
+   meaning of `null` in *state*, not a bug the current UI triggers.
    (My earlier self-gauntlet held `String?` as valid — it was wrong; this is the
    deeper semantic collision it missed.)
 
 2. **Memory numbers now carry receipts — ADOPTED; the estimates were correct.**
    Measured (`sips`) — every M0 output is **2048×1448**, decoded RGBA **11.3 MiB**
    each; disk: base 825 KiB, parking 1032, water 1191, permits 1267,
-   accessibility 1450. One on screen = 11.3 MiB; all five in `ImageCache` ≈
-   **56 MiB** (5×11.3), inside the 100 MiB default. §8's numbers stand, verified.
+   accessibility 1450. One on screen = 11.3 MiB; five decoded = ~**56 MiB** of
+   *raw pixels* (5×11.3). That is a raw decoded footprint, **not** a hard
+   `ImageCache` or process-memory ceiling (review #7): the cache defaults to
+   100 MiB / 1000 entries and separately tracks live refs, so the true cache/RSS
+   behaviour is *measured* on-device (T7 step 2), not assumed. The asset test
+   also decodes each PNG and pins 2048×1448 (review #1), so these dimensions are
+   executable, not asserted from `sips` alone.
 
-3. **Future eviction API corrected — ADOPTED.** `ImageCache.evict` takes a
-   *resolved key* (`image_cache.dart:244 bool evict(Object key)`), not an
-   `ImageProvider`; the design's `imageCache.evict(AssetImage(prev))` was wrong.
-   Correct (if ever needed): `await AssetImage(prev).evict();`
-   (`image_provider.dart:611 Future<bool> evict(...)`). Still not built
-   pre-emptively — gated behind the §8 on-device measurement.
+3. **Future eviction API corrected — ADOPTED, twice.** `ImageCache.evict` takes a
+   *resolved key* (`image_cache.dart:244 bool evict(Object key, {bool includeLive
+   = true})`), not an `ImageProvider`; the design's `imageCache.evict(AssetImage(prev))`
+   was wrong. And `ImageProvider.evict()` (`image_provider.dart:611`) exposes **no**
+   `includeLive` param — it calls `cache.evict(key)` at the default
+   `includeLive: true`, which for memory-pressure eviction can force reloads
+   (review #8). Correct form (if ever needed): resolve the key and call
+   `imageCache.evict(key, includeLive: false)`. Still not built pre-emptively —
+   gated behind the §8 measurement.
 
 4. **Swap contract defined — ADOPTED, scoped to bundled reality.** All 5 are
    **bundled** assets, so "decode failure" is a *missing/renamed asset*, caught

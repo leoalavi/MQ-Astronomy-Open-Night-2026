@@ -15,7 +15,7 @@
 - **State is `enum CampusMapVariant`, never `String?`/`null`.** `RadioGroup` reserves `null` for its deselect sentinel (`radio_group.dart:159` `onChanged(null)`); a null arriving at the controller maps to `CampusMapVariant.base`.
 - **No new dependency, no new asset.** M0 shipped all 5 PNGs (`assets/maps/{mqcampus,overlay_parking,overlay_accessibility,overlay_water,overlay_permits}_dark.png`, each 2048×1448, 11.3 MiB decoded).
 - **Exactly one image on screen.** The variant *is* the basemap (full opacity, no translucent stacking).
-- **`context.aon` for all picker chrome;** swatches are the only exemption — source-legend ink colours, documented in the design.
+- **AON theming for picker chrome** — `context.aon` tokens *or* the AON-derived `Theme.of(context).textTheme` (the app's `ThemeData` is built from AON tokens, so `titleLarge`/`RadioListTile` default theming are already AON; this is why Task 5 uses `Theme.of` for text and `context.aon` for the swatch ring). Swatches are the only *raw*-colour exemption — source-legend ink, documented in the design. (If the app `ThemeData` turns out not to derive text styles from AON tokens, theme the sheet text explicitly via `context.aon` instead.)
 - **EN + FA both required** for every new key. `flutter gen-l10n` fails the build on any FA key missing (`untranslated-messages-file`), which `./scripts/check.sh` blocks on.
 - **320×568 / 2.0** must not overflow for the picker or the new Layers button.
 - **TDD; never weaken an existing test.** M1's `campus_basemap_layer_test` is *migrated* (add `ProviderScope`), not deleted; the full suite stays green.
@@ -51,6 +51,18 @@ void main() {
       CampusMapVariant.permits,
     });
     expect(CampusMapVariant.base, isNot(isIn(CampusVariantsData.all.map((v) => v.variant))));
+  });
+
+  test('registry covers every non-base enum value (no silent drift)', () {
+    // assetFor() falls back to base for an unmatched enum. If someone adds a
+    // CampusMapVariant and forgets the registry, that new value would quietly
+    // render the base map. This makes the omission fail LOUDLY instead.
+    final registered = CampusVariantsData.all.map((v) => v.variant).toSet();
+    final expected = CampusMapVariant.values
+        .where((v) => v != CampusMapVariant.base)
+        .toSet();
+    expect(registered, expected,
+        reason: 'a CampusMapVariant has no registry row → assetFor silently uses base');
   });
 
   test('eventVisible is the three public variants (permits hidden)', () {
@@ -94,21 +106,30 @@ void main() {
 
 ```dart
 // test/widget/campus_variant_assets_test.dart
+import 'package:flutter/painting.dart'; // decodeImageFromList
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/data/campus_variants_data.dart';
 
 void main() {
-  // Must-fix #4: bundled-asset integrity is the "decode failure" guard —
-  // a renamed/missing PNG fails HERE at CI, not as a blank map at runtime.
-  testWidgets('every base + variant asset is bundled and non-empty', (t) async {
+  // Real decode guard (design §0 must-fix #4): a renamed/missing PNG *and* a
+  // truncated/corrupt one both fail HERE at CI, not as a blank map at runtime.
+  // lengthInBytes>0 is NOT enough — a corrupt PNG can be non-empty. decode it,
+  // and asserting the exact 2048x1448 also pins the projection-critical
+  // dimensions and the §0 memory receipt.
+  testWidgets('every base + variant asset decodes at 2048x1448', (t) async {
     final paths = [
       CampusVariantsData.baseAsset,
       for (final v in CampusVariantsData.all) v.assetPath,
     ];
     for (final p in paths) {
-      final bytes = await rootBundle.load(p);
-      expect(bytes.lengthInBytes, greaterThan(0), reason: 'missing/empty asset: $p');
+      final data = await rootBundle.load(p);
+      final image = await decodeImageFromList(
+        data.buffer.asUint8List(data.offsetInBytes, data.lengthInBytes),
+      );
+      expect(image.width, 2048, reason: 'wrong width: $p');
+      expect(image.height, 1448, reason: 'wrong height: $p');
+      image.dispose();
     }
   });
 }
@@ -213,10 +234,12 @@ abstract final class CampusVariantsData {
 Run: `flutter test test/unit/campus_variants_data_test.dart test/widget/campus_variant_assets_test.dart`
 Expected: PASS (all).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Per-task gate, then commit**
 
+`./scripts/check.sh` must be green (analyze + l10n + full suite + reskin) — this is the mandated per-task gate; the `&&` chain will not commit if it fails.
 ```bash
-git add lib/data/campus_variants_data.dart test/unit/campus_variants_data_test.dart test/widget/campus_variant_assets_test.dart
+./scripts/check.sh && \
+git add lib/data/campus_variants_data.dart test/unit/campus_variants_data_test.dart test/widget/campus_variant_assets_test.dart && \
 git commit -m "feat(map): M2 T1 — CampusMapVariant enum + registry + integrity/content gates"
 ```
 
@@ -320,10 +343,11 @@ final campusVariantProvider =
 Run: `flutter test test/unit/campus_variant_providers_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Per-task gate, then commit**
 
 ```bash
-git add lib/services/campus_variant_providers.dart test/unit/campus_variant_providers_test.dart
+./scripts/check.sh && \
+git add lib/services/campus_variant_providers.dart test/unit/campus_variant_providers_test.dart && \
 git commit -m "feat(map): M2 T2 — single-select CampusVariantController (null→base)"
 ```
 
@@ -341,8 +365,10 @@ git commit -m "feat(map): M2 T2 — single-select CampusVariantController (null�
 
 - [ ] **Step 1: Migrate the M1 test (add ProviderScope) and add a variant-render assertion — expect it to fail**
 
+**Before editing, open the existing `test/widget/campus_basemap_layer_test.dart` and confirm its only substantive assertions are `overlayImages.length == 1` and `takeException() == null`.** The rewrite below MUST preserve both (it does — the "base" test keeps `length == 1` and adds the asset check). Do not drop an existing assertion while migrating; if the current file asserts anything not carried below, add it back.
+
 ```dart
-// test/widget/campus_basemap_layer_test.dart  (REPLACE the file)
+// test/widget/campus_basemap_layer_test.dart  (migrate in place — preserve every existing assertion)
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -445,10 +471,11 @@ class CampusBasemapLayer extends ConsumerWidget {
 Run: `flutter test test/widget/campus_basemap_layer_test.dart`
 Expected: PASS (both).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Per-task gate, then commit**
 
 ```bash
-git add lib/widgets/campus_basemap_layer.dart test/widget/campus_basemap_layer_test.dart
+./scripts/check.sh && \
+git add lib/widgets/campus_basemap_layer.dart test/widget/campus_basemap_layer_test.dart && \
 git commit -m "feat(map): M2 T3 — CampusBasemapLayer swaps variant image (ConsumerWidget)"
 ```
 
@@ -502,10 +529,11 @@ Expected: prints `L10N COMPLETE` (no untranslated keys — every EN key has a FA
 Run: `grep -c "mapVariantWaterDesc" lib/l10n/generated/app_localizations.dart`
 Expected: `1` or more (getter generated).
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Per-task gate, then commit**
 
 ```bash
-git add lib/l10n/app_en.arb lib/l10n/app_fa.arb lib/l10n/generated
+./scripts/check.sh && \
+git add lib/l10n/app_en.arb lib/l10n/app_fa.arb lib/l10n/generated && \
 git commit -m "feat(map): M2 T4 — EN+FA strings for the layers picker"
 ```
 
@@ -575,7 +603,8 @@ void main() {
     expect(find.byType(RadioGroup<CampusMapVariant>), findsOneWidget);
   });
 
-  testWidgets('320x568 / 2.0: all rows reachable, no overflow', (t) async {
+  testWidgets('320x568 / 2.0: last row scrolls into view AND is tappable',
+      (t) async {
     t.view.physicalSize = const Size(320, 568);
     t.view.devicePixelRatio = 1.0;
     t.platformDispatcher.textScaleFactorTestValue = 2.0;
@@ -586,8 +615,17 @@ void main() {
     addTearDown(c.dispose);
     await t.pumpWidget(_host(c));
     await t.pumpAndSettle();
-    expect(t.takeException(), isNull); // no RenderFlex overflow
-    expect(find.text('Drinking water'), findsOneWidget);
+    // find.text alone matches an OFF-SCREEN widget inside a SingleChildScrollView
+    // (and a scroll view never RenderFlex-overflows, so takeException is vacuous
+    // here). Scroll the last row in, then TAP it — that proves hit-testability.
+    final target = find.text('Drinking water');
+    await t.scrollUntilVisible(target, 100,
+        scrollable: find.byType(Scrollable).first);
+    await t.pumpAndSettle();
+    await t.tap(target);
+    await t.pump();
+    expect(c.read(campusVariantProvider), CampusMapVariant.water);
+    expect(t.takeException(), isNull);
   });
 
   testWidgets('renders under FA without exception', (t) async {
@@ -702,10 +740,11 @@ class _Swatch extends StatelessWidget {
 Run: `flutter test test/widget/campus_variant_picker_test.dart`
 Expected: PASS (all). If `RadioListTile` asserts on a missing `groupValue`/`onChanged` under a `RadioGroup` ancestor, that is a real API mismatch — stop and re-check the installed `radio_list_tile.dart` signature rather than re-adding the deprecated params.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Per-task gate, then commit**
 
 ```bash
-git add lib/widgets/campus_variant_picker.dart test/widget/campus_variant_picker_test.dart
+./scripts/check.sh && \
+git add lib/widgets/campus_variant_picker.dart test/widget/campus_variant_picker_test.dart && \
 git commit -m "feat(map): M2 T5 — CampusVariantPicker (RadioGroup sheet, EN+FA, 2.0)"
 ```
 
@@ -726,6 +765,7 @@ git commit -m "feat(map): M2 T5 — CampusVariantPicker (RadioGroup sheet, EN+FA
 ```dart
 // test/widget/map_variant_wiring_test.dart
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -779,6 +819,15 @@ String _basemapAsset(WidgetTester t) {
   return (img.imageProvider as AssetImage).assetName;
 }
 
+// Total markers across every MarkerLayer (venue pins + the dot's own layer).
+int _markerCount(WidgetTester t) => t
+    .widgetList<MarkerLayer>(find.byType(MarkerLayer))
+    .fold(0, (sum, l) => sum + l.markers.length);
+
+// The picker's own scrollable (not the map's or filter bar's).
+Finder _sheetScroll() => find.descendant(
+    of: find.byType(CampusVariantPicker), matching: find.byType(Scrollable));
+
 void main() {
   testWidgets('Layers button opens the picker sheet', (t) async {
     final c = _container(FakeLocationService());
@@ -789,7 +838,7 @@ void main() {
     expect(find.byType(CampusVariantPicker), findsOneWidget);
   });
 
-  testWidgets('selecting a variant swaps the basemap; dot + markers survive',
+  testWidgets('variant swap keeps the dot, accuracy circle AND every marker',
       (t) async {
     final svc = FakeLocationService();
     final c = _container(svc);
@@ -798,33 +847,61 @@ void main() {
     svc.emit(_near());
     await t.pump();
     await t.pump();
-    expect(find.byType(UserLocationDot), findsOneWidget); // dot present pre-swap
+    expect(find.byType(UserLocationDot), findsOneWidget);    // dot pre-swap
+    expect(find.byType(UserLocationCircle), findsOneWidget); // accuracy circle pre-swap
     expect(_basemapAsset(t), CampusVariantsData.baseAsset);
-    final dotsBefore = find.byType(UserLocationDot).evaluate().length;
+    final markersBefore = _markerCount(t);
+    expect(markersBefore, greaterThan(0)); // non-vacuous: markers actually exist
     c.read(campusVariantProvider.notifier).select(CampusMapVariant.parking);
     await t.pump();
-    expect(_basemapAsset(t), 'assets/maps/overlay_parking_dark.png');
-    expect(find.byType(UserLocationDot).evaluate().length, dotsBefore); // intact
-    expect(find.byType(MarkerLayer), findsWidgets); // venue markers intact
+    expect(_basemapAsset(t), 'assets/maps/overlay_parking_dark.png'); // ink changed
+    expect(find.byType(UserLocationDot), findsOneWidget);            // dot survived
+    expect(find.byType(UserLocationCircle), findsOneWidget);         // circle survived
+    expect(_markerCount(t), markersBefore);       // same COUNT — not just "a layer"
     expect(t.takeException(), isNull);
   });
 
-  testWidgets('variant swap preserves camera center + zoom (must-fix #5)',
+  testWidgets('variant swap preserves camera + zoom + FOLLOW + accuracy circle',
       (t) async {
-    final c = _container(FakeLocationService());
+    final svc = FakeLocationService();
+    final c = _container(svc);
     await t.pumpWidget(_app(c));
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emit(_near()); // active + following, on-footprint → dot + circle
     await t.pump();
-    // Move OFF the fit so "unchanged" is a real assertion, not fit==fit.
+    await t.pump();
+    // Move OFF the fit so "unchanged" is a real assertion, not fit==fit. A
+    // programmatic move fires onPositionChanged with hasGesture:false, so it
+    // does NOT cancel follow.
     await t.tap(find.byTooltip('Zoom in'));
     await t.pump();
     final before = _cam(t);
+    final followBefore = c.read(locationControllerProvider).following;
+    expect(followBefore, isTrue); // precondition: we ARE following
+    expect(find.byType(UserLocationCircle), findsOneWidget);
     c.read(campusVariantProvider.notifier).select(CampusMapVariant.water);
     await t.pump();
     final after = _cam(t);
     expect(after.zoom, before.zoom); // no re-fit on variant change
     expect(after.center.latitude, before.center.latitude);
     expect(after.center.longitude, before.center.longitude);
-    expect(_basemapAsset(t), 'assets/maps/overlay_water_dark.png'); // only ink changed
+    expect(c.read(locationControllerProvider).following, followBefore); // follow intact
+    expect(find.byType(UserLocationCircle), findsOneWidget);            // circle intact
+    expect(_basemapAsset(t), 'assets/maps/overlay_water_dark.png');     // only ink changed
+  });
+
+  testWidgets('Layers button is exactly one "Map layers" button semantics node',
+      (t) async {
+    final handle = t.ensureSemantics();
+    final c = _container(FakeLocationService());
+    await t.pumpWidget(_app(c));
+    await t.pump();
+    // Duplicate-node regression: if a wrapping Semantics AND the IconButton both
+    // labelled it, this would be findsNWidgets(2).
+    expect(find.bySemanticsLabel('Map layers'), findsOneWidget);
+    final node = t.getSemantics(find.byTooltip('Map layers'));
+    expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
+    handle.dispose();
   });
 
   testWidgets('Layers button hidden in panorama mode', (t) async {
@@ -835,7 +912,7 @@ void main() {
     expect(find.byTooltip('Map layers'), findsNothing);
   });
 
-  testWidgets('real modal at 320x568 / 2.0: open, select, no overflow',
+  testWidgets('real modal at 320x568 / 2.0: open → scroll to last → select → LAYER swaps',
       (t) async {
     t.view.physicalSize = const Size(320, 568);
     t.view.devicePixelRatio = 1.0;
@@ -848,9 +925,16 @@ void main() {
     await t.pump();
     await t.tap(find.byTooltip('Map layers'));
     await t.pumpAndSettle();
-    await t.tap(find.text('Parking'));
+    // Drinking water is the BOTTOM row — Parking sits near the top and would
+    // pass even if the sheet were clipped at 320×568/2.0.
+    final target = find.text('Drinking water');
+    await t.scrollUntilVisible(target, 100, scrollable: _sheetScroll());
+    await t.pumpAndSettle();
+    await t.tap(target);
     await t.pump();
-    expect(c.read(campusVariantProvider), CampusMapVariant.parking);
+    // Full path in ONE test: button → sheet → controller → basemap layer.
+    expect(c.read(campusVariantProvider), CampusMapVariant.water);
+    expect(_basemapAsset(t), 'assets/maps/overlay_water_dark.png');
     expect(t.takeException(), isNull);
   });
 }
@@ -936,10 +1020,11 @@ Expected: PASS (all five). Then run the migrated M1 wiring suite to prove nothin
 Run: `flutter test test/widget/map_platform_wiring_test.dart test/widget/map_location_wiring_test.dart`
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Per-task gate, then commit**
 
 ```bash
-git add lib/screens/map_screen.dart test/widget/map_variant_wiring_test.dart
+./scripts/check.sh && \
+git add lib/screens/map_screen.dart test/widget/map_variant_wiring_test.dart && \
 git commit -m "feat(map): M2 T6 — Layers button + picker wiring; camera-preserving swap"
 ```
 
@@ -955,16 +1040,19 @@ git commit -m "feat(map): M2 T6 — Layers button + picker wiring; camera-preser
 Run: `./scripts/check.sh full`
 Expected: all gates green (analyze, l10n EN+FA, full `flutter test`, reskin tests, web build, apk build, iOS build). Read the full output; if any gate is red, fix the *right* side (code/fixture/doc) — never loosen the gate.
 
-- [ ] **Step 2: On-device variant swap (iOS) + memory/jank check (design §8)**
+- [ ] **Step 2: iOS *Simulator* smoke test + measured memory (design §8)**
 
-- `mcp__Claude_Code_iOS_Simulator__control` `attach`, then build+`launch`.
-- Open the map, tap Layers, cycle base → Parking → Accessible routes → Drinking water → base, several times.
-- Confirm: each swap repaints the whole basemap (ink changes), the user dot / markers / camera stay put, and there is no memory-pressure warning or visible jank. Record whether `ImageCache` growth stays bounded (≈56 MiB ceiling per §0 must-fix #2). If it grows unbounded or janks, open the eviction IOU (`await AssetImage(prev).evict()` on swap) — do not build it pre-emptively.
-- Capture a screenshot of a variant selected for the closeout note.
+This is a **simulator smoke test, not a physical-device test** — label it as such in the closeout. flutter_map has documented `OverlayImage`/Impeller rendering issues, so the simulator run does not by itself close the rendering/memory requirement (Step 3 records the physical-device IOU).
+- `mcp__Claude_Code_iOS_Simulator__control` `attach`, then build + `launch`.
+- Open the map, tap Layers, cycle base → Parking → Accessible routes → Drinking water → base several times.
+- Confirm each swap repaints the whole basemap (ink changes) and the dot / accuracy circle / markers / camera stay put; no visible jank.
+- **Memory — measured, not asserted:** record a BASELINE (before opening the picker) and the DELTA after cycling all five — `PaintingBinding.instance.imageCache.currentSize` (entry count), `.currentSizeBytes`, and DevTools process RSS. Five 2048×1448 RGBA images are ~56 MiB of *raw decoded pixels* — a raw footprint, **not** a hard `ImageCache` or process ceiling (the cache defaults to 100 MiB / 1000 entries and separately tracks live refs). Report the real numbers, not the estimate.
+- Only if cache bytes / RSS climb without bound across cycles, open the eviction IOU: resolve the previous asset's key and call `PaintingBinding.instance.imageCache.evict(key, includeLive: false)` — `includeLive: false` is the correct memory-pressure policy (`ImageProvider.evict()` uses the default `includeLive: true`, which can force reloads). Do not build it pre-emptively.
+- Capture a screenshot of a selected variant for the closeout note.
 
-- [ ] **Step 3: Re-score and record the result**
+- [ ] **Step 3: Re-score, record the result, log the release IOU**
 
-Update the design §11 scorecard with post-build scores (scores may go *down* — explain why), and replace §8's memory estimate with the on-device observation. Commit:
+Update the design §11 scorecard with post-build scores (scores may go *down* — explain why), and replace §8's memory estimate with the measured simulator numbers. **Log a release-gate IOU:** "M2 rendering/memory confirmed on the iOS Simulator only; a physical iOS device (release/profile) smoke test — and an Android runtime smoke test — remain before the requirement is closed" (builds alone don't exercise the image swap). Commit:
 ```bash
 git add docs/superpowers/specs/2026-08-15-aon-map-M2-thematic-variants-design.md
 git commit -m "docs(map): M2 verification + closeout — scorecard re-score, memory result"
@@ -978,7 +1066,21 @@ Use the `superpowers:finishing-a-development-branch` skill: verify the full suit
 
 ## Self-Review
 
-**Spec coverage** (design §0 must-fixes + §10 testing): enum state (T1/T2), memory receipts (verified in §0; on-device confirm T7 step 2), evict API (documented §0, not built — correct), swap contract / asset-integrity (T1 integrity test + T3 single-image + T6 camera-preservation), camera/zoom/follow regression (T6 step 1 test 3), content-validity gate (T1 gate test), real-modal 2.0 (T6 step 1 test 5), single-semantics Layers button (T5 group test + T6 tooltip), note-clearance token (T6 step 3b), session-only wording (T2 doc comment). Registry / controller / layer / picker / wiring all covered. **No gaps.**
+**Every claimed guarantee has executable evidence** (design §0 must-fixes + §10 testing) — each claim below names the test that actually proves it, not a proxy:
+- **enum state** → T1/T2 (incl. registry-vs-enum drift test, `select(null)→base`).
+- **asset integrity / decode** → T1 *decodes* each PNG and asserts 2048×1448 (not `lengthInBytes>0`).
+- **one image, correct image** → T3 (`overlayImages.length==1` + asserted `assetName`, migrated with `ProviderScope`, existing assertions preserved).
+- **camera + zoom + follow + accuracy circle preserved** → T6 test 3 asserts all four (zoom moved off-fit first; `following` and `UserLocationCircle` checked before/after).
+- **dot + every marker survive** → T6 test 2 asserts a non-zero marker COUNT is unchanged (not merely "a MarkerLayer exists").
+- **single "Map layers" semantics node** → T6 dedicated test: `find.bySemanticsLabel` findsOneWidget + `isButton` flag.
+- **real button→sheet→controller→layer path at 320×568/2.0** → T6 real-modal test scrolls to the BOTTOM row and asserts the basemap asset swapped.
+- **picker reachable at 320×568/2.0** → T5 scrolls the last row in and TAPS it (a scroll view never RenderFlex-overflows, so `takeException` alone was vacuous).
+- **content-validity gate** → T1 (`eventVisible ⇒ contentApproved`).
+- **memory** → measured (baseline+delta, entry count, cache bytes, RSS) at T7 step 2; ~56 MiB documented as raw footprint, not a ceiling.
+- **eviction IOU** → correct policy documented (`imageCache.evict(key, includeLive:false)`), not built.
+- **note-clearance token / session-only** → T6 step 3b (`AonSpacing.minTapTarget`) / T2 doc comment.
+
+Registry / controller / layer / picker / wiring all covered with real receipts. The one honest limitation: **the on-screen render is closed on the iOS *Simulator* only** — physical iOS + Android smoke tests are a logged release-gate IOU (T7 step 3), not a silent gap.
 
 **Placeholder scan:** every code step carries complete, compilable code; no TBD/TODO. Persian strings are real (flagged for native review, per `l10n.yaml`).
 

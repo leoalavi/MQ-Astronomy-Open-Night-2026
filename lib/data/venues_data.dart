@@ -24,6 +24,7 @@ abstract final class VenuesData {
     // ── Event venues (map legend A–I) ────────────────────
     Venue(
       id: 'macquarie-theatre',
+      buildingId: 'MQTH', campusX: 2140, campusY: 1954,
       name: 'Macquarie Theatre',
       category: VenueCategory.eventVenue,
       building: '21 Wally’s Walk',
@@ -69,6 +70,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '14-sir-christopher-ondaatje-avenue',
+      buildingId: '14SCO', campusX: 2766, campusY: 1761,
       shortName: '14 Sir Christopher Ondaatje Ave',
       name: '14 Sir Christopher Ondaatje Avenue',
       category: VenueCategory.eventVenue,
@@ -93,6 +95,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '1-central-courtyard',
+      buildingId: '1CC', campusX: 2547, campusY: 1618,
       name: '1 Central Courtyard',
       category: VenueCategory.eventVenue,
       building: '1 Central Courtyard',
@@ -108,6 +111,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'sport-and-aquatic-centre',
+      buildingId: 'SPORT', campusX: 1637, campusY: 1289,
       shortName: 'Sport & Aquatic Centre',
       name: 'Macquarie University Sport and Aquatic Centre',
       category: VenueCategory.eventVenue,
@@ -121,6 +125,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'astronomical-observatory',
+      buildingId: 'OBS', campusX: 1745, campusY: 480,
       shortName: 'Observatory',
       name: 'Macquarie University Astronomical Observatory',
       category: VenueCategory.eventVenue,
@@ -137,6 +142,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '11-wallys-walk',
+      buildingId: '11WW', campusX: 2987, campusY: 1937,
       name: '11 Wally’s Walk',
       category: VenueCategory.eventVenue,
       building: '11 Wally’s Walk',
@@ -149,6 +155,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '17-wallys-walk',
+      buildingId: '17WW', campusX: 2516, campusY: 1883,
       name: '17 Wally’s Walk',
       category: VenueCategory.eventVenue,
       building: '17 Wally’s Walk',

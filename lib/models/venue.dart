@@ -33,6 +33,9 @@ class Venue {
     this.aliases = const [],
     this.accessibilityNotes,
     this.notes,
+    this.buildingId,
+    this.campusX,
+    this.campusY,
   });
 
   final String id;
@@ -77,14 +80,29 @@ class Venue {
   /// Free-text operational note shown on the venue sheet.
   final String? notes;
 
+  /// Map Parity M3: when this venue *is* a registry building, its id (semantic
+  /// authority stays with the venue; render placement comes from the building).
+  final String? buildingId;
+
+  /// Baked pixel-exact overlay coords copied from the linked building
+  /// (drift-tested against buildings.json). Present iff [buildingId] is set.
+  final double? campusX, campusY;
+
   /// The label to use anywhere horizontal space is constrained.
   String get chipLabel => shortName ?? name;
 
   bool get hasCoordinates => latitude != null && longitude != null;
+  bool get hasCampusCoordinates =>
+      campusX != null && campusY != null && !(campusX == 0 && campusY == 0);
 
-  /// Best coordinate to route *to*. Prefers the entrance.
-  double? get routingLatitude => entranceLatitude ?? latitude;
-  double? get routingLongitude => entranceLongitude ?? longitude;
+  // G2: entrance is used only when the PAIR is present, else the centre pair —
+  // never mix entrance-lat with centre-lng (a coordinate that never existed).
+  bool get hasEntranceCoordinates =>
+      entranceLatitude != null && entranceLongitude != null;
+
+  /// Best coordinate to route *to*. Prefers the entrance (as a pair).
+  double? get routingLatitude => hasEntranceCoordinates ? entranceLatitude : latitude;
+  double? get routingLongitude => hasEntranceCoordinates ? entranceLongitude : longitude;
 
   /// Case-insensitive match across name, building, address and aliases.
   /// Simpler than MQ Journey's 0–120 ranked scorer, which that app needs

@@ -4,6 +4,20 @@
 
 **Parent:** `2026-08-15-aon-map-parity-program-design.md` — M4 row + §P0 (Google Routes must NOT render on the CrsSimple illustrated map). This spec **discharges that P0 by not touching the illustrated map at all**: navigation renders on a *real embedded Google map* (Google route on Google's own tiles = ToS-compliant).
 
+## 0. Gauntlet amendment — AUTHORITATIVE (self-gauntlet; supersedes the body where it conflicts)
+
+Verified against the repo + installed patterns. Where this conflicts with §§2–11, this wins.
+
+1. **THREE new dependencies, not one (§10 corrected).** None of `google_maps_flutter`, `http`, `url_launcher` are in `pubspec.yaml`. M4 needs: **`google_maps_flutter`** (embed), **`http`** (the Routes API call — package:http's `Client` is the clean injectable for TDD; a fake `Client` in tests), **`url_launcher`** (the "Open in Google Maps app" deep link — droppable if we cut that handoff). Honest count: **3**. The program's "no new dependency" rule never applied to M4 (it *is* the routing subsystem), but state it as 3.
+
+2. **The SDK key is NATIVE — reuse AON's existing secrets scaffolding.** `google_maps_flutter`'s map key CANNOT come from `--dart-define`; it is set natively: Android `AndroidManifest.xml` `<meta-data android:name="com.google.android.geo.API_KEY" .../>` via a `manifestPlaceholder` sourced from **`android/secrets.properties`** (already git-ignored, `.gitignore:69`), and iOS `GMSServices.provideAPIKey(...)` in `AppDelegate.swift` sourced from **`ios/Flutter/Secrets.xcconfig`** (already git-ignored, `.gitignore:70`). MQ never did this (it never embedded a Google map — no native key in its repo), so there is no MQ pattern to copy; the AON secrets files are the mechanism. The **Dart-side Routes API** key is separate: `--dart-define=GOOGLE_MAPS_API_KEY` (`String.fromEnvironment`), same value, different delivery. `mapsNavEnabledProvider` keys off the dart-define value being non-empty.
+
+3. **Feature flag must be web-SAFE (§4 corrected).** `dart:io Platform.isAndroid` throws `UnsupportedError` on web — AON already guards every `Platform.is*` with `kIsWeb` (`location_service.dart:24,33`). Use `flutter/foundation`: `mapsNavEnabledProvider = apiKey.isNotEmpty && !kIsWeb && (defaultTargetPlatform == TargetPlatform.android || defaultTargetPlatform == TargetPlatform.iOS)` — **no `dart:io`**.
+
+4. **🔴 Web-build gate is gauntlet-critical (Task 0).** Adding `google_maps_flutter` pulls the endorsed `google_maps_flutter_web` federated impl, which at runtime wants a `<script>` Maps-JS tag in `web/index.html`. The `check.sh full` **web build is a hard gate** — Task 0 MUST add the dep and immediately run `flutter build web` to confirm it stays green (compile-time should be fine; the JS lib is a runtime concern, and our feature is flag-gated off web). If the web build breaks, mitigate (omit the script tag / `dependency_overrides` / confirm the web impl compiles without a key) BEFORE building any feature on top. Do not assume it's green.
+
+5. **Routes API response quirks (§5).** `computeRoutes` returns `routes[].duration` as a **string with a trailing `s`** (e.g. `"351s"`) — parse `int.parse(d.replaceAll('s','')) ` → `Duration(seconds:)`. `distanceMeters` is an int. `polyline.encodedPolyline` is Google's encoded format → the ported `decodePolyline`. Request body nests coords as `origin.location.latLng.{latitude,longitude}`. Field mask header is required or the response is empty.
+
 ## 0. Decisions (user, 2026-08-16)
 
 1. **Approach: embedded Google Map** (`google_maps_flutter`) in-app — not an in-app browser, not a non-Google provider. Dissolves the P0.

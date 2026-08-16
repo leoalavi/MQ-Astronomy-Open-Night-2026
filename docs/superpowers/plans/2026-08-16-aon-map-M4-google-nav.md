@@ -339,7 +339,9 @@ The consent machine (T5) has `revoke()` and T10 requires "Settings revoke → ne
 
 ### Task 10: Verification & closeout
 
-- [ ] **check.sh full** — all gates green **with no secrets present** (no-key web/apk/iOS builds all executed, T0 Step 4).
+> **CLOSEOUT RECORD (2026-08-16).** T0–T9 + T8A executed on `feature/map-M4-google-nav`, 11 exit-gated commits (T0 `919c43d` · T1 `12b4bb5` · T2 `f233c14` · T3 `f4edee0` · T4 `c30cf2f` · T8 l10n `db25c53` · T5 `6d9c0c6` · T6 `dbc515a` · T7 `fc6b13b` · T8A `4f48b79` · T9 `a9aa488`). Resolved deps: **google_maps_flutter 2.18.0** (android 2.19.12 / ios 2.18.4 / web 0.6.3), http 1.6.0, url_launcher 6.3.2. iOS deployment target bumped **13.0 → 14.0** (google_maps_flutter_ios requirement, surfaced by pod install). Two deviations from plan order, both sound: **T8 (l10n) pulled before the UI tasks** (every UI task consumes the strings and each commit must compile); **maps_url + external_maps_launcher pulled into T7** (T7's success/error panels need them; T9 only wires them into the sheets). **CODE-COMPLETE, on-device BLOCKED on the user's 4 GCP keys.**
+
+- [x] **check.sh full** — all gates green **with no secrets present** (no-key web/apk/iOS builds all executed, T0 Step 4). *(Verified at closeout.)*
 - [ ] **On-device WITH real keys, BOTH platforms** (#38): provision the 4 GCP keys (restricted), put SDK keys in `secrets.properties`/`Secrets.xcconfig`, and build **WITH THE FEATURE FLAG ON (#26)** — the native-configured flag is required or `googleNavEnabled` stays false and NO CTA appears:
   ```bash
   # Android
@@ -350,7 +352,7 @@ The consent machine (T5) has `revoke()` and T10 requires "Settings revoke → ne
   Verify: consent dialog → live location → walking polyline + ETA + **walking-warning text visible (#13)** to a **building** and a **venue**; "Open in Google Maps" handoff; airplane-mode → AON error panel (not blank Google view); Settings revoke (T8A) → next nav re-asks. iOS **and** Android (credential paths differ; Android sends both identity headers — T3).
 - [ ] **🔴 Restriction-rejection proof (#27):** don't just read the Console restrictions — prove they bite. Confirm a request with the CORRECT identity is accepted and one with a WRONG identity is REJECTED: wrong `X-Android-Package`/`X-Android-Cert` → rejected; wrong `X-Ios-Bundle-Identifier` → rejected; correct → accepted. (Google explicitly recommends verifying incorrect identifiers are rejected.)
 - [ ] **🔴 Pre-live gate (#4):** confirm all four keys are GCP-restricted (app + API). ToS notices present in Settings/Info (T8A/#24). Record in closeout.
-- [ ] Re-score design §12; `superpowers:finishing-a-development-branch` → present merge/PR/keep for `feature/map-M4-google-nav`.
+- [x] Re-score design §12 → see design **§12b** (closeout re-score: Additive 9, A11y 9, Credential 8, Privacy 8 — the two 8s held pending on-device proofs). `superpowers:finishing-a-development-branch` → present merge/PR/keep for `feature/map-M4-google-nav`.
 
 ---
 

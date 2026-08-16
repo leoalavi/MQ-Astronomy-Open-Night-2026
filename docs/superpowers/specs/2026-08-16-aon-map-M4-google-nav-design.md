@@ -201,6 +201,21 @@ Google nav opts into location *and* sends it to Google — a boundary the rest o
 | Privacy | **6/10** (→9 after §0b.E) | GPS-free curated path preserved; but consent state machine (accepted/declined/revoked) + before-location sequencing + deep-link self-guard + ToS notices are §0b.E work, not yet built. |
 | A11y / 2.0 / FA | 8/10 | Panel/disclosure labelled + 2.0 + EN/FA (the Google map itself is Google's a11y). |
 
+## 12b. Scorecard — CLOSEOUT re-score (post-build, 2026-08-16)
+
+Built across T0–T9+T8A (11 commits), all exit-gated; no-key web/apk/iOS builds green. **CODE-COMPLETE, not RELEASE-READY** — the live Google render + restriction-rejection are on-device gates blocked on the user's four GCP keys.
+
+| Axis | Pre-build | Now | Why it moved / what still caps it |
+|---|---:|---:|---|
+| Parity coverage | 6/10 | 7/10 | Embedded Google walking nav BUILT (screen, route service, embedded map, wiring); AR (M5) remains; live render on-device-unverified. |
+| ToS / correctness | 9/10 | 9/10 | Google route renders on Google's own map (`EmbeddedMap`→`GoogleMap`); WALK warning now MANDATORY-compliant (Google-verified) — held, not raised, until seen live. |
+| Additive safety | 8/10 | **9/10** | Every entry flag-gated (`googleNavEnabled`); ships-dark now EXECUTABLE-verified (no-key web+apk+iOS green); curated wayfinding + parking untouched (regression-tested). |
+| Credential safety | 4→9 | **8/10** | Four-key model + header MAP + Android package+cert via MethodChannel BUILT + unit-tested (request-contract test asserts both Android headers). Caps at 8: restriction-**rejection** is a live gate (T10), not yet proven. |
+| Privacy | 6→9 | **8/10** | Consent machine (`accepted/declined/revoked`, declined-defined) + before-location sequencing + enumerated deep-link guard + Settings revoke/notice ALL BUILT + widget-tested. Caps at 8: the consent→location→Google order is unit-proven but not on-device-observed. |
+| A11y / 2.0 / FA | 8/10 | **9/10** | Disclosure + Settings revoke proven at 320×568/textScale 2.0 (scroll-reach + tap); every string EN+FA (real Persian); gate's l10n completeness green. |
+
+**Honest caveat:** two axes (Credential, Privacy) are deliberately held at 8, not 9 — the mechanisms are built and unit-tested but their *live* proofs (restriction rejects a wrong cert; consent gates a real GPS read before any Google call) are the on-device closeout gate, still owed. Raising them requires the keys, not more code.
+
 ## 13. Open questions / IOUs
 
 1. **Key restriction** (bundle id/SHA + API scoping) — release checklist IOU.

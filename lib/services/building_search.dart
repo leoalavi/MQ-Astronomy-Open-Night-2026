@@ -1,31 +1,57 @@
 import 'package:aon2026/models/building.dart';
+import 'package:aon2026/models/venue.dart';
 
 String normalizeMapSearch(String value) => value.toLowerCase().trim();
 
-/// Ranked substring match, ported from MQ Journey. Bands: id-exact 120,
+/// The ranked band ladder, ported from MQ Journey. Bands: id-exact 120,
 /// alias-exact 110, field-exact 100, id-prefix 90, alias-prefix 80,
-/// field-prefix 70, contains 50, miss 0. Normalizes internally (G4) — no
-/// "caller must pre-normalize" footgun. `searchCampusBuildings` was NOT ported
-/// (unused: the unified results provider ranks SearchEntries directly).
-int scoreBuildingMatch(Building b, String rawQuery) {
+/// field-prefix 70, contains 50, miss 0. Normalizes internally (G4).
+int scoreTokens({
+  required String id,
+  required List<String> aliases,
+  required List<String> fields,
+  required String rawQuery,
+}) {
   final q = normalizeMapSearch(rawQuery);
   if (q.isEmpty) return 0;
-  final fields = <String>[
-    b.id, b.code, b.name,
-    if (b.description != null) b.description!,
-    if (b.gridRef != null) b.gridRef!,
-    if (b.address != null) b.address!,
-    ...b.aliases, ...b.searchTokens, ...b.tags,
-  ].map((s) => s.toLowerCase()).toList();
-  final aliases = [...b.aliases, ...b.searchTokens].map((s) => s.toLowerCase()).toList();
-  final id = b.id.toLowerCase();
+  final f = fields.map((s) => s.toLowerCase()).toList();
+  final a = aliases.map((s) => s.toLowerCase()).toList();
+  final lid = id.toLowerCase();
 
-  if (id == q) return 120;
-  if (aliases.any((a) => a == q)) return 110;
-  if (fields.any((f) => f == q)) return 100;
-  if (id.startsWith(q)) return 90;
-  if (aliases.any((a) => a.startsWith(q))) return 80;
-  if (fields.any((f) => f.startsWith(q))) return 70;
-  if (fields.any((f) => f.contains(q))) return 50;
+  if (lid == q) return 120;
+  if (a.any((x) => x == q)) return 110;
+  if (f.any((x) => x == q)) return 100;
+  if (lid.startsWith(q)) return 90;
+  if (a.any((x) => x.startsWith(q))) return 80;
+  if (f.any((x) => x.startsWith(q))) return 70;
+  if (f.any((x) => x.contains(q))) return 50;
   return 0;
 }
+
+int scoreBuildingMatch(Building b, String rawQuery) => scoreTokens(
+      id: b.id,
+      aliases: [...b.aliases, ...b.searchTokens],
+      fields: [
+        b.id, b.code, b.name,
+        if (b.description != null) b.description!,
+        if (b.gridRef != null) b.gridRef!,
+        if (b.address != null) b.address!,
+        ...b.aliases, ...b.searchTokens, ...b.tags,
+      ],
+      rawQuery: rawQuery,
+    );
+
+/// Venue field scoring — same bands over the venue's own vocabulary. A linked
+/// venue additionally inherits its building's score (max), computed in T6.
+int scoreVenue(Venue v, String rawQuery) => scoreTokens(
+      id: v.id,
+      aliases: v.aliases,
+      fields: [
+        v.id, v.name,
+        if (v.building != null) v.building!,
+        if (v.address != null) v.address!,
+        if (v.mapReference != null) v.mapReference!,
+        ...v.aliases,
+      ],
+      rawQuery: rawQuery,
+    );

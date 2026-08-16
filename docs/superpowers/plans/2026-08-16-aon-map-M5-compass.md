@@ -107,6 +107,91 @@ The gauntlet converted "reuse" optimism into concrete work: the rose+list compos
 
 ---
 
+## 0R. External design-review amendments (AUTHORITATIVE — supersede §0 and task bodies)
+
+Applied 2026-08-16 after an external line-by-line design review (verdict: FAIL WITH BLOCKERS). 20 findings, **0 rejected**; ~9 were design-stale-vs-plan (already correct here), ~9 needed real changes. This block is the newest truth: it supersedes §0 and the task bodies. The single biggest catch — the **coordinate-frame mismatch (0R-1)** — slipped both prior gauntlets and is a genuine correctness bug.
+
+### 0R-1 [BLOCKER] N-up coordinate coherence — locked marker uses ABSOLUTE bearing, not relative
+On an N-up rose, blips sit at absolute `trueBearingDegrees`; the locked marker MUST use the **same frame** or the arrow and its own blip disagree. **Changes:**
+- `CompassState` (T3): **remove `lockedRelativeAngle` from the rose contract.** Add `double? lockedTrueBearingDegrees` (= `locked.trueBearingDegrees`, absolute) and an OPTIONAL `double? lockedTurnDegrees` (= `relativeAngleDegrees(bearing, trueHeading)`) used ONLY for a textual "turn X° left/right" cue, never the rose arrow.
+- `CompassRadarView` (T7): the locked target renders as a **highlighted blip + a center→bearing line at `lockedTrueBearingDegrees`** (same frame as every blip). The **facing indicator** sits at `trueHeadingDegrees`; the user rotates until the facing indicator overlaps the locked blip. No relative-angle arrow on the rose.
+- Consequence for 0R-9/0R-12: with N-up, blips + locked marker are **heading-independent**; only the facing indicator moves with heading.
+
+### 0R-2 [BLOCKER] Rename the cap + make the default set explicit
+`MapConfig.compassMaxTargets` → **`compassMaxBuildingTargets` = 12** (bounds ONLY the building fill). `nearestTargets` param `maxBuildings` reads it. Explicit contract:
+```
+default (empty query)  = ALL locatable venues + nearest compassMaxBuildingTargets buildings
+filtered (non-empty)   = nearest compassMaxBuildingTargets of the SCORED matches (0R-3)
+```
+Update every reference (T1 impl + tests, §0-M, scorecard). Expect ~17 venues + 12 buildings ≈ 29 default blips — intended (venues are the event); clutter handled by clustering (0R-8) + the list.
+
+### 0R-3 [BLOCKER] Filter reuses M3 search vocabulary, not `title.contains`
+`nearestTargets` filter predicate becomes `scoreEntry(e, normalizeMapSearch(q)) > 0` (import `scoreEntry` from `search_providers.dart:56`, `normalizeMapSearch` from `building_search.dart:4`) so building **codes/aliases/tokens** ("18WW", "LIB", "14SCO") match. Then distance-sort + cap. (T1)
+
+### 0R-4 [BLOCKER] Unlocatable places are a SEPARATE representation (already in plan; pin it)
+`NearbyTarget` requires coords, so unlocatable safety venues CANNOT be `NearbyTarget`s. They flow via `unlocatableVenues(index) → List<SearchEntry>` (T1) and render as **disabled** rows in `NearbyList` (T6) — a distinct code path from located targets. No T1/T6 code change; pins the contract the review flagged unclear.
+
+### 0R-5 [BLOCKER] `NearbyTarget.confidence` (already in plan T1)
+Confirmed present: `final DataConfidence confidence` + `confidenceOf` (venue→its confidence, building→confirmed). No change; the design body was stale, the plan is correct.
+
+### 0R-6 [BLOCKER] Near-target certainty requires CONFIRMED coords (tighten §0-B)
+"You're here" is a strong claim, so tighten §0-B from `isReliable` to **`== DataConfidence.confirmed`** (also excludes `derived`):
+```dart
+final reliable = !fix.isLowAccuracy && locked.confidence == DataConfidence.confirmed;
+near = reliable && locked.distanceMeters <= MapConfig.pointMeNearTargetMeters;
+```
+Buildings are all `confirmed` so unaffected; only non-confirmed venues lose the "you're here" flourish (they still show distance + `compassApproximate`). (T3)
+
+### 0R-7 [BLOCKER] Radius formula uses nearClamp (already correct in plan T7)
+`blipRadiusFraction` = `((meters - compassNearClampMeters) / (compassFarClampMeters - compassNearClampMeters)).clamp(0,1)`. Plan T7 already wrote this; the **design** §0.6 `lerp(..., distance/farClamp)` form was buggy. No plan change; noted for the design reconcile.
+
+### 0R-8 [MAJOR] De-collision by CLUSTERING, not by falsifying angle or radius
+Angular offset lies about bearing; radial offset lies about distance (radius encodes distance). Replace `deCollide` with **`clusterByBearing(List<NearbyTarget>, minSepDeg) → List<BlipCluster>`**: targets whose true bearings fall within `compassMinAngularSepDegrees` (circular/wrap-aware) merge into one cluster marker at the group's true bearing with a **count badge**; the list disambiguates. Preserves both bearing and distance truth. **T7 tests:** two near-collinear → one cluster; **wrap `[359, 1]` → clustered** (2° apart, not 358°); separated → distinct markers.
+
+### 0R-9 [MAJOR] Blips `ExcludeSemantics`; the list is the canonical a11y path
+Rose blip/cluster hitboxes are `ExcludeSemantics` (sighted tap convenience only) so screen readers don't get duplicate items. `NearbyList` rows are the semantic buttons (56px, labels). (T7 removes blip Semantics labels; §0-A/0-K unchanged.)
+
+### 0R-10 [MAJOR] Explicit state precedence in `CompassModeView` (T8, supersedes §0-A/§0-L order)
+```
+1. location not active (off/denied)       → Locate/Retry (_EnableLocation)
+2. active && fix == null (acquiring GPS)  → "finding your location" (spinner-free)
+3. heading available/acquiring            → N-up radar + NearbyList
+4. heading unavailable/unsupported        → NearbyList only
+```
+Location precedes heading, so `unsupported heading + null fix` shows Locate/Retry, not an empty list.
+
+### 0R-11 [MAJOR] `ensureLocationActive()` — not `onLocateTapped()`
+`onLocateTapped` toggles map-**follow** on a 2nd call (`location_providers.dart:106`) — wrong for compass re-entry. Add to `LocationController`:
+```dart
+/// Activate location for a consumer that needs the stream but NOT map-follow
+/// semantics (compass). No-op if already active; requests permission if not.
+Future<void> ensureLocationActive() async {
+  if (state.active) return;
+  final s = await _svc.request();
+  state = state.copyWith(status: s);
+  if (s == LocationStatus.granted) { state = state.copyWith(active: true); _sync(); }
+}
+```
+Compass `initState` post-frame + `_EnableLocation` retry call this (no `following: true`). (T2 adds method + test; T8 uses it.)
+
+### 0R-12 [MAJOR] Provider-watch split to avoid 20 Hz rebuilds
+Only the facing-indicator sub-widget watches `compassControllerProvider.select((s) => s.trueHeadingDegrees)`. Blips/clusters + `NearbyList` watch `nearbyTargetsProvider` (fix/filter, not heading). Locked marker watches `select((s) => s.lockedTrueBearingDegrees)`. A 20 Hz tick repaints only the facing indicator, not 29 blips + list + semantics. (T7/T8)
+
+### 0R-13 [MAJOR] Scotopic palette accessibility floor
+State (venue vs building vs approximate vs unlocatable) encoded by **icon/shape/label**, never red hue alone; `NearbyList` text meets AA contrast on near-black. (T6/T7 note + keep list legibility in the 320/2.0 test.)
+
+### 0R-14 [MED] Test-matrix expansion + named real-entry regression
+- **T1** adds: empty-query venue-survival + building-cap; non-empty filters full index before cull; a match ranked 13th-overall survives when the query selects it; tie → distance then placeKey; **filtered set capped** to N; `scoreEntry` matches a building CODE not in the title; a `placeholder` venue returned but flagged approximate.
+- **T8** names the regression `fresh state (Locate never tapped) → enter compass → Locate/Retry shows → tap → ensureLocationActive → fake fix → targets appear` (the exact B4 bug).
+
+### 0R-15 [MED, doc] Body reconcile (design)
+The design body (§4.1 NearbyTarget, §4.2 CompassState, §4.3 rose, §0.6 radius/tooltip/56px-blips, §6 null-only exclusion) is revised to match this block so no stale sentence survives (review #20). Executor follows THIS plan's §0R/§0; the design edit is the human record.
+
+### 0R-16 Readiness
+Blockers 0R-1 (coord frame), 0R-8 (honest de-collision), 0R-11 (activation semantics), 0R-3 (filter vocabulary) are real behavior changes; the rest reconcile documents already ahead in the plan. Task count still T1–T9; T1/T3/T7/T8 grow. Geometry axis 6.5 → target 8 once clustering + coord-frame land with tests.
+
+---
+
 ## File Structure
 
 **Create:**

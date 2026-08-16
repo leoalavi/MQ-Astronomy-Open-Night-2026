@@ -16,6 +16,22 @@ sensors.**
 
 ## 0. Gauntlet amendments (AUTHORITATIVE — supersede the body where they conflict)
 
+> **FINAL AUTHORITY:** the implementation plan's **`## 0R`** section
+> (`docs/superpowers/plans/2026-08-16-aon-map-M5-compass.md`) supersedes BOTH this
+> §0 and the body below, after an external design review (2026-08-16, 20 findings,
+> 0 rejected). Where this document and §0R conflict, **§0R wins.** Corrected
+> contracts a reader must know: (1) **N-up rose ⇒ the locked marker uses the
+> ABSOLUTE `trueBearingDegrees`, same frame as the blips** — `lockedRelativeAngle`
+> is NOT rendered on the rose (0R-1); (2) `NearbyTarget` carries
+> `DataConfidence confidence` (0R-5); (3) blip radius = `((m − nearClamp)/(farClamp
+> − nearClamp)).clamp(0,1)` (0R-7); (4) filter uses M3 `scoreEntry`, not
+> `title.contains` (0R-3); (5) the cap is `compassMaxBuildingTargets` bounding the
+> building fill only, default = all locatable venues + nearest-N buildings (0R-2);
+> (6) de-collision is **clustering** (never angular/radial falsification) (0R-8);
+> (7) blips are `ExcludeSemantics`, the list is the canonical a11y path (0R-9);
+> (8) "you're here" requires `confidence == confirmed` (0R-6); (9) compass entry
+> calls `ensureLocationActive()`, not `onLocateTapped()` (0R-11).
+
 Applied 2026-08-16 after a 3-reviewer + self gauntlet (Riverpod/lifecycle ·
 geometry/data/honesty · testing/a11y/integration). **19 findings, all verified
 against the artifact, 0 rejected** (4 blockers, 9 major, 6 minor). Where §1–§13

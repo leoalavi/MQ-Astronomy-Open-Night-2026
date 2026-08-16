@@ -15,6 +15,8 @@ import 'package:aon2026/services/location_service.dart';
 import 'package:aon2026/services/point_me_controller.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/passport_store.dart';
+import 'package:aon2026/services/favorites_providers.dart';
+import 'package:aon2026/services/favorites_store.dart';
 
 import 'package:aon2026/widgets/glass_shader.dart';
 import 'package:aon2026/app/text_scale.dart';
@@ -24,6 +26,24 @@ import 'package:aon2026/app/text_scale.dart';
 /// production passes nothing.
 Future<(Set<String>, PassportStore)> loadPassport({PassportStore? store}) async {
   final s = store ?? SharedPrefsPassportStore(SharedPreferencesAsync());
+  Set<String> snapshot;
+  try {
+    snapshot = await s.loadSnapshot();
+  } catch (_) {
+    snapshot = <String>{};
+  }
+  return (snapshot, s);
+}
+
+/// Best-effort favorites hydration (passport-parallel). NEVER throws. Event id
+/// comes from the same source `eventConfigProvider` uses, so the venue-scoped
+/// key matches. [store] is injectable for tests only.
+Future<(Set<String>, FavoritesStore)> loadFavorites({FavoritesStore? store}) async {
+  final s = store ??
+      SharedPrefsFavoritesStore(
+        prefs: SharedPreferencesAsync(),
+        eventId: EventConfig.astronomyOpenNight.id,
+      );
   Set<String> snapshot;
   try {
     snapshot = await s.loadSnapshot();
@@ -57,12 +77,15 @@ Future<void> main() async {
   await GlassShaderCache.ensureLoaded();
 
   final (passportSnapshot, passportStore) = await loadPassport();
+  final (favoritesSnapshot, favoritesStore) = await loadFavorites();
 
   runApp(
     ProviderScope(
       overrides: [
         passportSnapshotProvider.overrideWithValue(passportSnapshot),
         passportStoreProvider.overrideWithValue(passportStore),
+        favoritesSnapshotProvider.overrideWithValue(favoritesSnapshot),
+        favoritesStoreProvider.overrideWithValue(favoritesStore),
         locationServiceProvider.overrideWithValue(GeolocatorLocationService()),
         headingServiceProvider.overrideWithValue(SensorsHeadingService()),
       ],

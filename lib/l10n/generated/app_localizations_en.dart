@@ -658,4 +658,77 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get cardinalNW => 'north-west';
+
+  @override
+  String get mapNavGoogle => 'Navigate with Google Maps';
+
+  @override
+  String get mapNavOpenExternal => 'Open in Google Maps';
+
+  @override
+  String mapNavDistanceMeters(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String mapNavDistanceKm(String km) {
+    return '$km km';
+  }
+
+  @override
+  String mapNavEtaMin(int mins) {
+    return '$mins min';
+  }
+
+  @override
+  String mapNavEtaHourMin(int hours, int mins) {
+    return '$hours hr $mins min';
+  }
+
+  @override
+  String get mapNavNoRoute => 'No walking route found to here.';
+
+  @override
+  String get mapNavOffline => 'You\'re offline — can\'t fetch the route.';
+
+  @override
+  String get mapNavError => 'Couldn\'t load the route. Please try again.';
+
+  @override
+  String get mapNavNeedLocation =>
+      'Turn on location to get walking directions.';
+
+  @override
+  String get mapNavUnavailable =>
+      'Google navigation isn\'t available in this build.';
+
+  @override
+  String get mapNavRetry => 'Retry';
+
+  @override
+  String get mapNavWalkingWarning =>
+      'Walking routes are in beta — sidewalks and paths may be missing, so use caution.';
+
+  @override
+  String get mapNavWarningsTitle => 'Route notices';
+
+  @override
+  String get mapNavDisclosureTitle => 'Use Google Maps for directions?';
+
+  @override
+  String get mapNavDisclosureBody =>
+      'To show a walking route, your current location is sent to Google Maps. Otherwise your location stays on your device and isn\'t shared.';
+
+  @override
+  String get mapNavDisclosureAccept => 'Use Google Maps';
+
+  @override
+  String get mapNavDisclosureDecline => 'Not now';
+
+  @override
+  String get settingsRevokeGoogleConsent => 'Revoke Google Maps access';
+
+  @override
+  String get settingsGoogleMapsNotice =>
+      'When you use Google Maps directions, your location is sent to Google. Google\'s terms and privacy policy apply.';
 }

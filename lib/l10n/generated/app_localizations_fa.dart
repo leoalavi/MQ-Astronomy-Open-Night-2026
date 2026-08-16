@@ -659,4 +659,77 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get cardinalNW => 'شمال‌غرب';
+
+  @override
+  String get mapNavGoogle => 'مسیریابی با نقشهٔ گوگل';
+
+  @override
+  String get mapNavOpenExternal => 'باز کردن در نقشهٔ گوگل';
+
+  @override
+  String mapNavDistanceMeters(int meters) {
+    return '$meters متر';
+  }
+
+  @override
+  String mapNavDistanceKm(String km) {
+    return '$km کیلومتر';
+  }
+
+  @override
+  String mapNavEtaMin(int mins) {
+    return '$mins دقیقه';
+  }
+
+  @override
+  String mapNavEtaHourMin(int hours, int mins) {
+    return '$hours ساعت $mins دقیقه';
+  }
+
+  @override
+  String get mapNavNoRoute => 'مسیر پیاده‌روی به اینجا پیدا نشد.';
+
+  @override
+  String get mapNavOffline => 'آفلاین هستید — دریافت مسیر ممکن نیست.';
+
+  @override
+  String get mapNavError => 'بارگیری مسیر ممکن نشد. دوباره تلاش کنید.';
+
+  @override
+  String get mapNavNeedLocation =>
+      'برای دریافت مسیر پیاده‌روی، موقعیت مکانی را روشن کنید.';
+
+  @override
+  String get mapNavUnavailable => 'مسیریابی گوگل در این نسخه در دسترس نیست.';
+
+  @override
+  String get mapNavRetry => 'تلاش دوباره';
+
+  @override
+  String get mapNavWalkingWarning =>
+      'مسیرهای پیاده‌روی آزمایشی‌اند — ممکن است پیاده‌رو یا مسیر مشخصی نداشته باشند؛ با احتیاط حرکت کنید.';
+
+  @override
+  String get mapNavWarningsTitle => 'نکات مسیر';
+
+  @override
+  String get mapNavDisclosureTitle =>
+      'برای مسیریابی از نقشهٔ گوگل استفاده شود؟';
+
+  @override
+  String get mapNavDisclosureBody =>
+      'برای نمایش مسیر پیاده‌روی، موقعیت فعلی شما به نقشهٔ گوگل ارسال می‌شود. در غیر این صورت موقعیت شما روی دستگاه می‌ماند و به اشتراک گذاشته نمی‌شود.';
+
+  @override
+  String get mapNavDisclosureAccept => 'استفاده از نقشهٔ گوگل';
+
+  @override
+  String get mapNavDisclosureDecline => 'الان نه';
+
+  @override
+  String get settingsRevokeGoogleConsent => 'لغو دسترسی نقشهٔ گوگل';
+
+  @override
+  String get settingsGoogleMapsNotice =>
+      'هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود.';
 }

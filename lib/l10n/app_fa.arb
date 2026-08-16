@@ -207,5 +207,26 @@
   "cardinalS": "جنوب",
   "cardinalSW": "جنوب‌غرب",
   "cardinalW": "غرب",
-  "cardinalNW": "شمال‌غرب"
+  "cardinalNW": "شمال‌غرب",
+
+  "mapNavGoogle": "مسیریابی با نقشهٔ گوگل",
+  "mapNavOpenExternal": "باز کردن در نقشهٔ گوگل",
+  "mapNavDistanceMeters": "{meters} متر",
+  "mapNavDistanceKm": "{km} کیلومتر",
+  "mapNavEtaMin": "{mins} دقیقه",
+  "mapNavEtaHourMin": "{hours} ساعت {mins} دقیقه",
+  "mapNavNoRoute": "مسیر پیاده‌روی به اینجا پیدا نشد.",
+  "mapNavOffline": "آفلاین هستید — دریافت مسیر ممکن نیست.",
+  "mapNavError": "بارگیری مسیر ممکن نشد. دوباره تلاش کنید.",
+  "mapNavNeedLocation": "برای دریافت مسیر پیاده‌روی، موقعیت مکانی را روشن کنید.",
+  "mapNavUnavailable": "مسیریابی گوگل در این نسخه در دسترس نیست.",
+  "mapNavRetry": "تلاش دوباره",
+  "mapNavWalkingWarning": "مسیرهای پیاده‌روی آزمایشی‌اند — ممکن است پیاده‌رو یا مسیر مشخصی نداشته باشند؛ با احتیاط حرکت کنید.",
+  "mapNavWarningsTitle": "نکات مسیر",
+  "mapNavDisclosureTitle": "برای مسیریابی از نقشهٔ گوگل استفاده شود؟",
+  "mapNavDisclosureBody": "برای نمایش مسیر پیاده‌روی، موقعیت فعلی شما به نقشهٔ گوگل ارسال می‌شود. در غیر این صورت موقعیت شما روی دستگاه می‌ماند و به اشتراک گذاشته نمی‌شود.",
+  "mapNavDisclosureAccept": "استفاده از نقشهٔ گوگل",
+  "mapNavDisclosureDecline": "الان نه",
+  "settingsRevokeGoogleConsent": "لغو دسترسی نقشهٔ گوگل",
+  "settingsGoogleMapsNotice": "هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود."
 }

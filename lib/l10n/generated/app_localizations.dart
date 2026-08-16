@@ -1236,6 +1236,126 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'north-west'**
   String get cardinalNW;
+
+  /// CTA to open the embedded Google walking-nav screen
+  ///
+  /// In en, this message translates to:
+  /// **'Navigate with Google Maps'**
+  String get mapNavGoogle;
+
+  /// Hand off to the Google Maps app / keyless directions URL
+  ///
+  /// In en, this message translates to:
+  /// **'Open in Google Maps'**
+  String get mapNavOpenExternal;
+
+  /// Route distance under 1 km
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m'**
+  String mapNavDistanceMeters(int meters);
+
+  /// Route distance 1 km or more (km pre-formatted, one decimal)
+  ///
+  /// In en, this message translates to:
+  /// **'{km} km'**
+  String mapNavDistanceKm(String km);
+
+  /// Walking ETA under an hour
+  ///
+  /// In en, this message translates to:
+  /// **'{mins} min'**
+  String mapNavEtaMin(int mins);
+
+  /// Walking ETA an hour or more
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hr {mins} min'**
+  String mapNavEtaHourMin(int hours, int mins);
+
+  /// 200 response with zero routes
+  ///
+  /// In en, this message translates to:
+  /// **'No walking route found to here.'**
+  String get mapNavNoRoute;
+
+  /// Network failure fetching the route
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re offline — can\'t fetch the route.'**
+  String get mapNavOffline;
+
+  /// API/malformed error fetching the route
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load the route. Please try again.'**
+  String get mapNavError;
+
+  /// No location permission/fix for Google nav
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to get walking directions.'**
+  String get mapNavNeedLocation;
+
+  /// Capability flag off (no keys) — deep-link landed here
+  ///
+  /// In en, this message translates to:
+  /// **'Google navigation isn\'t available in this build.'**
+  String get mapNavUnavailable;
+
+  /// Retry a failed route fetch
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get mapNavRetry;
+
+  /// Google-mandated baseline caution for WALK routes
+  ///
+  /// In en, this message translates to:
+  /// **'Walking routes are in beta — sidewalks and paths may be missing, so use caution.'**
+  String get mapNavWalkingWarning;
+
+  /// Header above Google-supplied route warnings
+  ///
+  /// In en, this message translates to:
+  /// **'Route notices'**
+  String get mapNavWarningsTitle;
+
+  /// Consent dialog title before sharing location with Google
+  ///
+  /// In en, this message translates to:
+  /// **'Use Google Maps for directions?'**
+  String get mapNavDisclosureTitle;
+
+  /// Consent dialog body
+  ///
+  /// In en, this message translates to:
+  /// **'To show a walking route, your current location is sent to Google Maps. Otherwise your location stays on your device and isn\'t shared.'**
+  String get mapNavDisclosureBody;
+
+  /// Consent accept button
+  ///
+  /// In en, this message translates to:
+  /// **'Use Google Maps'**
+  String get mapNavDisclosureAccept;
+
+  /// Consent decline button
+  ///
+  /// In en, this message translates to:
+  /// **'Not now'**
+  String get mapNavDisclosureDecline;
+
+  /// Settings control to reset Google-nav consent to unknown
+  ///
+  /// In en, this message translates to:
+  /// **'Revoke Google Maps access'**
+  String get settingsRevokeGoogleConsent;
+
+  /// Settings/Info notice about Google Maps usage + ToS
+  ///
+  /// In en, this message translates to:
+  /// **'When you use Google Maps directions, your location is sent to Google. Google\'s terms and privacy policy apply.'**
+  String get settingsGoogleMapsNotice;
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

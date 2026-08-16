@@ -20,9 +20,14 @@ import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
+import 'package:aon2026/services/map_placement.dart';
+import 'package:aon2026/services/search_providers.dart';
+import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_basemap_layer.dart';
+import 'package:aon2026/widgets/campus_search_sheet.dart';
 import 'package:aon2026/widgets/campus_variant_picker.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
+import 'package:aon2026/widgets/favorites_sheet.dart';
 import 'package:aon2026/widgets/map_category_filter_bar.dart';
 import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/map_control_island.dart';
@@ -69,6 +74,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // clamped). Reused by the dot, the accuracy circle, and the note.
     final fix = loc.fix;
     final projected = fix == null ? null : _proj.project(GpsPoint(fix.position));
+
+    // Current search/favorites selection (a stable PlaceKey). A selected venue
+    // decorates its existing pin; a selected building gets a transient marker.
+    final selectedKey = ref.watch(selectedPlaceKeyProvider);
+    final selectedBuilding = (selectedKey != null && selectedKey.startsWith('building:'))
+        ? ref.watch(placeResolverProvider(selectedKey)).asData?.value
+        : null;
 
     // Follow-me recenter. Unconditional at the top of build (Riverpod requires
     // ref.listen every build) — never inside a mode branch. The inherited
@@ -120,8 +132,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             ),
       for (final v in visibleVenues)
-        if (_venueMarker(v) case final Marker m) m,
+        if (_venueMarker(v, selectedKey) case final Marker m) m,
     ];
+
+    // G8: transient marker for a selected BUILDING (buildings aren't on the
+    // always-on layer). Placed via the resolver's renderPoint (pixel-exact).
+    final selectedBuildingMarker = (selectedBuilding?.renderPoint != null)
+        ? Marker(
+            point: selectedBuilding!.renderPoint!.value,
+            width: 56,
+            height: 56,
+            child: _MarkerPin(
+              icon: Icons.business_rounded,
+              color: context.aon.accent,
+              semanticLabel: selectedBuilding.title,
+              onTap: () => _openDetail(selectedBuilding.placeKey),
+              selected: true,
+            ),
+          )
+        : null;
 
     return Scaffold(
       // Content-page AppBar stays opaque (governance rule 4). Recentre moved to
@@ -209,6 +238,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     if (loc.active && projected != null)
                       UserLocationCircle(center: projected, fix: fix!),
                     MarkerLayer(markers: markers),
+                    if (selectedBuildingMarker != null)
+                      MarkerLayer(markers: [selectedBuildingMarker]),
                     if (loc.active && projected != null)
                       UserLocationDot(center: projected),
                   ],
@@ -280,19 +311,38 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     locateButton: const LocateButton(),
                   ),
                 ),
-                // Thematic-variant picker (Map Parity M2). Top-left, mirroring
-                // the top-right control island. This whole Stack only builds in
-                // MapMode.campusMap, so the button is campus-map-only.
+                // Top-left control column (G18): Layers (M2), Search, Favorites.
+                // One minTapTarget-wide stack, mirroring the top-right island;
+                // the status notes clear it via `left: space4 + minTapTarget`.
+                // This whole Stack only builds in MapMode.campusMap.
                 Positioned(
                   top: AonSpacing.space4,
                   left: AonSpacing.space4,
-                  child: _LayersButton(
-                    onTap: () => showModalBottomSheet<void>(
-                      context: context,
-                      isScrollControlled: true,
-                      useSafeArea: true,
-                      builder: (_) => const CampusVariantPicker(),
-                    ),
+                  child: Column(
+                    children: [
+                      _GlassMapButton(
+                        icon: Icons.layers_rounded,
+                        tooltip: l.mapLayersTitle,
+                        onTap: () => showModalBottomSheet<void>(
+                          context: context,
+                          isScrollControlled: true,
+                          useSafeArea: true,
+                          builder: (_) => const CampusVariantPicker(),
+                        ),
+                      ),
+                      const SizedBox(height: AonSpacing.space2),
+                      _GlassMapButton(
+                        icon: Icons.search_rounded,
+                        tooltip: l.mapSearchTooltip,
+                        onTap: _openSearch,
+                      ),
+                      const SizedBox(height: AonSpacing.space2),
+                      _GlassMapButton(
+                        icon: Icons.favorite_rounded,
+                        tooltip: l.mapFavoritesTooltip,
+                        onTap: _openFavorites,
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -318,19 +368,26 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Marker? _venueMarker(Venue v) {
-    final pt = _proj.project(GpsPoint(LatLng(v.latitude!, v.longitude!)));
+  Marker? _venueMarker(Venue v, String? selectedKey) {
+    // G14: linked venues place pixel-exact; unlinked keep GPS-affine — via the
+    // single shared placement helper (also used by placeResolver).
+    final pt = placeVenue(v, _proj);
     if (pt == null) return null; // off the illustrated footprint (integrity-gated)
+    // G8: a selected venue decorates its EXISTING pin (bigger ring), never adds
+    // a second marker.
+    final selected = selectedKey == 'venue:${v.id}';
+    final size = selected ? 56.0 : 44.0;
     return Marker(
       point: pt.value,
-      width: 44,
-      height: 44,
+      width: size,
+      height: size,
       child: _MarkerPin(
         icon: VenueStyle.iconFor(v.category),
         color: VenueStyle.colorFor(context, v.category),
         label: v.mapReference,
         semanticLabel: '${v.name}. ${v.category.label}.',
         onTap: () => _showVenueSheet(v.id),
+        selected: selected,
       ),
     );
   }
@@ -349,6 +406,46 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       builder: (_) => ParkingSheet(parkingId: parkingId),
     );
   }
+
+  // ── Search / Favorites orchestration (§0b.F pop→orchestrate) ──
+
+  Future<void> _openSearch() async {
+    final key = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const CampusSearchSheet(),
+    );
+    ref.read(mapSearchQueryProvider.notifier).setQuery(''); // G16: fresh next open
+    if (key != null && mounted) await _onPlaceSelected(key);
+  }
+
+  Future<void> _openFavorites() async {
+    final key = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (_) => const FavoritesSheet(),
+    );
+    if (key != null && mounted) await _onPlaceSelected(key);
+  }
+
+  Future<void> _onPlaceSelected(String key) async {
+    ref.read(selectedPlaceKeyProvider.notifier).select(key);
+    final rp = ref.read(placeResolverProvider(key)).asData?.value?.renderPoint;
+    if (rp != null) _controller.move(rp.value, _controller.camera.zoom);
+    await _openDetail(key);
+    if (mounted) ref.read(selectedPlaceKeyProvider.notifier).clear(); // G15
+  }
+
+  Future<void> _openDetail(String key) => showModalBottomSheet<void>(
+        context: context,
+        isScrollControlled: true,
+        useSafeArea: true,
+        builder: (_) => key.startsWith('building:')
+            ? BuildingSheet(buildingId: key.substring('building:'.length))
+            : VenueSheet(venueId: key.substring('venue:'.length)),
+      );
 }
 
 class _MarkerPin extends StatelessWidget {
@@ -358,11 +455,15 @@ class _MarkerPin extends StatelessWidget {
     required this.onTap,
     required this.semanticLabel,
     this.label,
+    this.selected = false,
   });
 
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+
+  /// Whether this pin is the current selection (decorated, not duplicated — G8).
+  final bool selected;
 
   /// Spoken description for screen readers. The map itself is a raster image,
   /// so without this each pin is an unlabelled tap target to VoiceOver/TalkBack.
@@ -384,9 +485,10 @@ class _MarkerPin extends StatelessWidget {
           decoration: BoxDecoration(
             color: context.aon.surfaceBase,
             shape: BoxShape.circle,
-            border: Border.all(color: color, width: 2.5),
-            boxShadow: const [
-              BoxShadow(color: Color(0x8805070F), blurRadius: 6),
+            border: Border.all(color: color, width: selected ? 4.0 : 2.5),
+            boxShadow: [
+              const BoxShadow(color: Color(0x8805070F), blurRadius: 6),
+              if (selected) BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12),
             ],
           ),
           alignment: Alignment.center,
@@ -405,17 +507,21 @@ class _MarkerPin extends StatelessWidget {
   }
 }
 
-/// Glass Layers button (top-left, campus-map only) — mirrors the top-right
-/// control island. `minTapTarget`-sized; the note pills clear it via the same
-/// token. The IconButton owns the sole semantics node (its `tooltip` provides
-/// both the "Map layers" label and button role — no wrapping Semantics).
-class _LayersButton extends StatelessWidget {
-  const _LayersButton({required this.onTap});
+/// A glass map-control button in the top-left control column (G18) — Layers,
+/// Search, Favorites. `minTapTarget`-sized; the IconButton owns the sole
+/// semantics node (its `tooltip` is the accessible name + button role).
+class _GlassMapButton extends StatelessWidget {
+  const _GlassMapButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String tooltip;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l = AonL10n.of(context);
     return Container(
       width: AonSpacing.minTapTarget,
       height: AonSpacing.minTapTarget,
@@ -426,8 +532,8 @@ class _LayersButton extends StatelessWidget {
       ),
       child: IconButton(
         onPressed: onTap,
-        tooltip: l.mapLayersTitle,
-        icon: Icon(Icons.layers_rounded, color: context.aon.contentSecondary),
+        tooltip: tooltip,
+        icon: Icon(icon, color: context.aon.contentSecondary),
       ),
     );
   }

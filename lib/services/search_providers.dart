@@ -22,6 +22,18 @@ class MapSearchQuery extends Notifier<String> {
 final mapSearchQueryProvider =
     NotifierProvider<MapSearchQuery, String>(MapSearchQuery.new);
 
+/// The currently-selected place, as a stable `PlaceKey` (never a live entry).
+/// Set on selection, cleared when the detail sheet closes (G15).
+class SelectedPlaceKey extends Notifier<String?> {
+  @override
+  String? build() => null;
+  void select(String? key) => state = key;
+  void clear() => state = null;
+}
+
+final selectedPlaceKeyProvider =
+    NotifierProvider<SelectedPlaceKey, String?>(SelectedPlaceKey.new);
+
 /// Unified index over venues ⊕ buildings, deduped on the curated identity link.
 /// Venues are always present; buildings fold in when `buildingsProvider` loads
 /// (venues-only meanwhile). A linked venue drops the matching building and

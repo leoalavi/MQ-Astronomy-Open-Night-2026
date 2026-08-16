@@ -1,0 +1,110 @@
+import 'dart:convert';
+
+import 'package:http/http.dart' as http;
+
+import 'polyline_codec.dart';
+import 'routes_service.dart';
+
+/// Calls the Google Routes API `computeRoutes` for a WALK route and maps the
+/// response into a typed [RouteResult].
+///
+/// Security headers are a MAP, not a single name/value pair: Android's
+/// app-restricted key needs BOTH `X-Android-Package` AND `X-Android-Cert`
+/// (iOS needs the one `X-Ios-Bundle-Identifier`). The caller supplies the map
+/// via [platformHeaders] (assembled by `routesClientIdentityProvider`).
+class GoogleRoutesService implements RoutesService {
+  GoogleRoutesService({
+    required this.client,
+    required this.apiKey,
+    required this.platformHeaders,
+  });
+
+  final http.Client client;
+  final String apiKey;
+  final Map<String, String> platformHeaders;
+
+  static final Uri _endpoint =
+      Uri.parse('https://routes.googleapis.com/directions/v2:computeRoutes');
+
+  /// Includes `routes.warnings` — required so the mandated walking warning can
+  /// be displayed when Google supplies one.
+  static const String _fieldMask =
+      'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration,routes.warnings';
+
+  @override
+  Future<RouteResult> walkingRoute({
+    required (double lat, double lng) origin,
+    required (double lat, double lng) destination,
+  }) async {
+    // Scope 1: the network call ONLY. A throw here is a network failure and
+    // must never be confused with a parse failure below (#12).
+    http.Response resp;
+    try {
+      resp = await client.post(
+        _endpoint,
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Goog-Api-Key': apiKey,
+          'X-Goog-FieldMask': _fieldMask,
+          ...platformHeaders,
+        },
+        body: jsonEncode({
+          'origin': {
+            'location': {
+              'latLng': {'latitude': origin.$1, 'longitude': origin.$2}
+            }
+          },
+          'destination': {
+            'location': {
+              'latLng': {'latitude': destination.$1, 'longitude': destination.$2}
+            }
+          },
+          'travelMode': 'WALK',
+        }),
+      );
+    } catch (_) {
+      return const RouteNetworkFailure();
+    }
+
+    if (resp.statusCode != 200) {
+      return RouteApiFailure(resp.statusCode);
+    }
+
+    // Scope 2: decode + validate. Any throw or missing required field here is
+    // malformed, NOT a network failure and NOT "no route".
+    try {
+      final decoded = jsonDecode(resp.body);
+      if (decoded is! Map<String, dynamic>) return const RouteMalformed();
+      final routes = decoded['routes'];
+      if (routes is! List) return const RouteMalformed();
+      if (routes.isEmpty) return const RouteNoRoute();
+
+      final route = routes.first;
+      if (route is! Map<String, dynamic>) return const RouteMalformed();
+      final distance = route['distanceMeters'];
+      final durationStr = route['duration'];
+      final encoded = (route['polyline'] as Map?)?['encodedPolyline'];
+      if (distance is! int || durationStr is! String || encoded is! String) {
+        return const RouteMalformed();
+      }
+
+      final warnings = (route['warnings'] as List?)?.cast<String>() ?? const <String>[];
+      return RouteSuccess(NavRoute(
+        polyline: decodePolyline(encoded),
+        distanceMeters: distance,
+        eta: _parseDuration(durationStr),
+        warnings: warnings,
+      ));
+    } catch (_) {
+      return const RouteMalformed();
+    }
+  }
+
+  /// Google durations are seconds with an `s` suffix and MAY be fractional,
+  /// e.g. `"3.5s"`, `"351s"`, `"0.125s"`. Parse as double → milliseconds so a
+  /// fractional value never crashes an int parse.
+  Duration _parseDuration(String v) {
+    final seconds = double.parse(v.substring(0, v.length - 1));
+    return Duration(milliseconds: (seconds * 1000).round());
+  }
+}

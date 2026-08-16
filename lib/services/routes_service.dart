@@ -1,0 +1,65 @@
+/// A decoded walking route: the polyline (geographic degree pairs), total
+/// distance, estimated time, and any Google-supplied warnings.
+///
+/// `warnings` carries the Routes API's `routes.warnings[]`. Google MANDATES
+/// displaying a warning for walking routes (WALK is beta), so this field is
+/// first-class, not optional metadata — the UI renders it plus a baseline
+/// caution regardless.
+class NavRoute {
+  final List<(double lat, double lng)> polyline;
+  final int distanceMeters;
+  final Duration eta;
+  final List<String> warnings;
+
+  const NavRoute({
+    required this.polyline,
+    required this.distanceMeters,
+    required this.eta,
+    this.warnings = const [],
+  });
+}
+
+/// The typed outcome of a route request. Auth/quota/network/no-route/malformed
+/// are DISTINCT — collapsing them into a nullable would hide "your key is
+/// misconfigured" behind "no walking route exists".
+sealed class RouteResult {
+  const RouteResult();
+}
+
+class RouteSuccess extends RouteResult {
+  final NavRoute route;
+  const RouteSuccess(this.route);
+}
+
+/// HTTP 200 but zero routes — genuinely no walking route between the points.
+class RouteNoRoute extends RouteResult {
+  const RouteNoRoute();
+}
+
+/// The request threw before a response (offline, DNS, TLS…).
+class RouteNetworkFailure extends RouteResult {
+  const RouteNetworkFailure();
+}
+
+/// A non-200 response — auth (401/403), quota (429), server (5xx). `status`
+/// preserved so the UI/logs can distinguish "fix your key" from "try later".
+class RouteApiFailure extends RouteResult {
+  final int status;
+  const RouteApiFailure(this.status);
+}
+
+/// A 200 response whose body could not be parsed OR was missing required
+/// fields. NEVER conflated with [RouteNoRoute] (a route object that lacks a
+/// distance/polyline is malformed, not an absence of route).
+class RouteMalformed extends RouteResult {
+  const RouteMalformed();
+}
+
+/// The seam the rest of M4 depends on. [GoogleRoutesService] is one
+/// implementation; tests and `routesServiceProvider` inject fakes against this.
+abstract interface class RoutesService {
+  Future<RouteResult> walkingRoute({
+    required (double lat, double lng) origin,
+    required (double lat, double lng) destination,
+  });
+}

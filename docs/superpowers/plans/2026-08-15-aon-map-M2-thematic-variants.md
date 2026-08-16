@@ -770,7 +770,6 @@ git commit -m "feat(map): M2 T5 — CampusVariantPicker (RadioGroup sheet, EN+FA
 ```dart
 // test/widget/map_variant_wiring_test.dart
 import 'package:flutter/material.dart';
-import 'package:flutter/semantics.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -901,11 +900,15 @@ void main() {
     final c = _container(FakeLocationService());
     await t.pumpWidget(_app(c));
     await t.pump();
-    // Duplicate-node regression: if a wrapping Semantics AND the IconButton both
-    // labelled it, this would be findsNWidgets(2).
-    expect(find.bySemanticsLabel('Map layers'), findsOneWidget);
+    // Exactly one control (no duplicate wrapping Semantics — it's a bare
+    // IconButton). getSemantics() itself throws if the finder resolves to
+    // ambiguous/duplicate semantics nodes, so this IS the single-node guard.
+    expect(find.byTooltip('Map layers'), findsOneWidget);
     final node = t.getSemantics(find.byTooltip('Map layers'));
-    expect(node.hasFlag(SemanticsFlag.isButton), isTrue);
+    expect(node.flagsCollection.isButton, isTrue); // hasFlag is @Deprecated (analyze)
+    // Flutter exposes an icon-only button's tooltip as the semantics `tooltip`
+    // (announced by TalkBack/VoiceOver); the localised name lives there, not label.
+    expect(node.tooltip, 'Map layers');
     handle.dispose();
   });
 

@@ -21,6 +21,7 @@ import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/campus_basemap_layer.dart';
+import 'package:aon2026/widgets/campus_variant_picker.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/map_category_filter_bar.dart';
 import 'package:aon2026/widgets/map_config.dart';
@@ -217,8 +218,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   if (!MapConfig.isNearCampus(loc.fix!.position))
                     Positioned(
                       top: AonSpacing.space4,
-                      left: AonSpacing.space4,
-                      right: AonSpacing.space4 + 56, // clear the control island
+                      // Clear the top-left Layers button AND the top-right
+                      // control island — both are minTapTarget wide.
+                      left: AonSpacing.space4 + AonSpacing.minTapTarget,
+                      right: AonSpacing.space4 + AonSpacing.minTapTarget,
                       child: _MapNote(
                         text: l.mapOffCampus(
                           (MapConfig.distanceFromCampusMeters(
@@ -231,8 +234,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   else if (loc.fix!.isLowAccuracy)
                     Positioned(
                       top: AonSpacing.space4,
-                      left: AonSpacing.space4,
-                      right: AonSpacing.space4 + 56,
+                      left: AonSpacing.space4 + AonSpacing.minTapTarget,
+                      right: AonSpacing.space4 + AonSpacing.minTapTarget,
                       child: _MapNote(text: l.mapLowAccuracy),
                     )
                   // Near campus but off the illustrated footprint: honest note,
@@ -240,8 +243,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   else if (projected == null)
                     Positioned(
                       top: AonSpacing.space4,
-                      left: AonSpacing.space4,
-                      right: AonSpacing.space4 + 56,
+                      left: AonSpacing.space4 + AonSpacing.minTapTarget,
+                      right: AonSpacing.space4 + AonSpacing.minTapTarget,
                       child: _MapNote(text: l.mapLocatingOnCampus),
                     ),
                 Positioned(
@@ -275,6 +278,21 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       ),
                     ),
                     locateButton: const LocateButton(),
+                  ),
+                ),
+                // Thematic-variant picker (Map Parity M2). Top-left, mirroring
+                // the top-right control island. This whole Stack only builds in
+                // MapMode.campusMap, so the button is campus-map-only.
+                Positioned(
+                  top: AonSpacing.space4,
+                  left: AonSpacing.space4,
+                  child: _LayersButton(
+                    onTap: () => showModalBottomSheet<void>(
+                      context: context,
+                      isScrollControlled: true,
+                      useSafeArea: true,
+                      builder: (_) => const CampusVariantPicker(),
+                    ),
                   ),
                 ),
               ],
@@ -382,6 +400,34 @@ class _MarkerPin extends StatelessWidget {
                 )
               : Icon(icon, size: AonSpacing.iconMd, color: color),
         ),
+      ),
+    );
+  }
+}
+
+/// Glass Layers button (top-left, campus-map only) — mirrors the top-right
+/// control island. `minTapTarget`-sized; the note pills clear it via the same
+/// token. The IconButton owns the sole semantics node (its `tooltip` provides
+/// both the "Map layers" label and button role — no wrapping Semantics).
+class _LayersButton extends StatelessWidget {
+  const _LayersButton({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
+    return Container(
+      width: AonSpacing.minTapTarget,
+      height: AonSpacing.minTapTarget,
+      decoration: BoxDecoration(
+        color: context.aon.surfaceBase.withValues(alpha: 0.75),
+        borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+        boxShadow: const [BoxShadow(color: Color(0x8805070F), blurRadius: 6)],
+      ),
+      child: IconButton(
+        onPressed: onTap,
+        tooltip: l.mapLayersTitle,
+        icon: Icon(Icons.layers_rounded, color: context.aon.contentSecondary),
       ),
     );
   }

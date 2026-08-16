@@ -14,6 +14,189 @@ sensors.**
 
 ---
 
+## 0. Gauntlet amendments (AUTHORITATIVE — supersede the body where they conflict)
+
+Applied 2026-08-16 after a 3-reviewer + self gauntlet (Riverpod/lifecycle ·
+geometry/data/honesty · testing/a11y/integration). **19 findings, all verified
+against the artifact, 0 rejected** (4 blockers, 9 major, 6 minor). Where §1–§13
+below disagree with this section, **this section wins**. Receipts table at §0.9.
+
+### 0.1 Location-fix path — the compass MUST be able to acquire a fix (was: absent) [B4]
+
+The body never wired location. Verified defect: `location_providers.dart:115-116`
+gates the stream on `state.active && (mapVisible || pointMeActive)`, and `active`
+only flips in `onLocateTapped()` (`:88-95`) — the campus-map LocateButton. So
+`Map → compass` without first tapping Locate on the map yields `fix == null`
+forever → `nearbyTargetsProvider → []` → dead compass; and the `FakeLocationService`
+harness (`map_platform_wiring_test.dart:64-71`) pre-seeds a fix, so tests pass
+green over a dead feature. **Fix (all three):**
+1. Add `compassVisibleProvider` to the location gate: `wantStream = state.active &&
+   (mapVisible || pointMeActive || compassVisible)`. (Modifies `location_providers.dart`
+   — add to §3's modified-files list.)
+2. On compass entry, trigger location activation via the existing permission-aware
+   path (call the equivalent of `onLocateTapped()` so denial/permission is handled
+   identically to the map). Compass also renders a **locate/retry affordance** for
+   the denied path (reuse `LocateButton` semantics), not a dead "location needed".
+3. **Mandatory test:** a compass widget test that does **NOT** pre-activate location
+   and asserts the locate affordance appears (proves the real entry path, not the
+   pre-seeded one).
+
+### 0.2 Default target set + filter order — venue-biased, filter-then-cull (was: cull-then-filter) [B3]
+
+The body's "nearest-12 then filter within the located set" is a double defect:
+(a) a place ranked 13th-nearest is unfilterable/unreachable; (b) the index is
+**~90% buildings** (170 buildings all located vs 21 venues, ~17 locatable, ~184
+deduped) so nearest-12 on a dense campus is almost all generic buildings and
+**buries the event venues the finder exists to find**. **Fix:**
+- **Filter runs over the FULL index first**, then cull to nearest-N of the filtered
+  set. `nearbyTargetsProvider` takes the active filter string; empty filter → the
+  default set below.
+- **Default set is venue-biased:** always include **all locatable venues**, then
+  fill the remaining slots up to N with the nearest buildings. Venues are never
+  culled out by distance in the default view. (`compassMaxTargets` now bounds the
+  *building* fill, not the whole set.)
+- Sort: within each group, distance asc, `placeKey` tiebreak.
+
+### 0.3 Provider lifecycle & mutation safety (supersedes §4.2 / §4.5 wiring) [B1,M1,M2,M3,M8]
+
+- **[B1] Never mutate providers in `build()`/`dispose()` via `ref`** — it throws.
+  Follow the repo's proven pattern exactly (`point_me_screen.dart:50-88`,
+  `app_shell.dart:76-82`): the mode container is a `ConsumerStatefulWidget` that in
+  `initState` **captures** `compassVisibleProvider.notifier` + `compassLockedProvider.notifier`
+  and sets visible=true via `WidgetsBinding.instance.addPostFrameCallback`; in
+  `dispose` it calls `.set(false)`/`.set(null)` on the **captured** notifiers inside
+  a `try/catch` (container-teardown guard).
+- **[M1] Reads use `.select`:** `ref.watch(compassControllerProvider.select((s) =>
+  s.availability))` for the radar/list branch (else it rebuilds at the 20 Hz heading
+  rate, `heading_service.dart:27`). Same for any `locationControllerProvider.select
+  ((s) => s.fix)`.
+- **[M2] `compassVisible→false` is the SOLE cancellation authority.** The provider
+  is plain (non-autoDispose, like `pointMeControllerProvider`), so `ref.onDispose`
+  effectively never fires in normal use. `CompassController.build()` does
+  `ref.listen(compassVisibleProvider, (_, v) => v ? _subscribe() : _cancel())` plus
+  an initial `_subscribe()` iff `ref.read(compassVisibleProvider)`. The
+  generation-token guard is retained **only** for the visible-toggle resubscribe
+  race (rapid enter/exit before the old `StreamController.onCancel` async completes,
+  `heading_service.dart:88-94`).
+- **[M3] Locked target survives the cull.** `compassLockedProvider` holds a
+  `placeKey`; `CompassController` resolves it against the **full** located index
+  (not the culled/filtered N) and carries the resolved `NearbyTarget` in
+  `CompassState.locked`. If the locked place becomes unlocatable (null fix / null
+  coords), show an explicit "can't locate <name> right now" state — never let the
+  arrow blink out silently.
+- **[M8] Explicit terminal latch.** The generation token does NOT make `unavailable`
+  terminal within a session (`point_me_controller.dart:79` overwrites availability
+  unconditionally; terminal-ness lived in the real service's `fail()`). `CompassController`
+  MUST latch: once `unavailable`/`unsupported` in a subscription session, ignore any
+  later `available` until the next `_subscribe()`. Test by feeding a fake
+  `available → unavailable → available` and asserting it stays unavailable.
+
+### 0.4 map_screen integration — a real 3-way refactor (supersedes §3's one-liner) [B2,M7]
+
+`map_screen.dart` is a **binary** `if (_mode == panorama) {…} else …[ campus map ]`
+(`:173-353`); `compass` would fall into `else` and render the map. Concrete edits:
+- **`:173`** → 3-way: `panorama → picker`; `compass → CompassModeView` (full
+  `Expanded`, no `MapCategoryFilterBar`, no `FlutterMap` Stack, no control column);
+  `else → campus map`.
+- **`:355`** FAB → `_mode == MapMode.campusMap ? <wayfinding FAB> : null` (null for
+  panorama **and** compass; compass is itself a wayfinding tool).
+- **`map_mode_toggle.dart`**: `enum MapMode` gains `compass`; `_Segment` label is
+  chosen per-mode (replace the `campusMap ? 'Map' : '360°'` ternary at `:29` with a
+  lookup) and **l10n'd for all three segments** (§8 keys `mapModeMap`,
+  `mapModePanorama`, `mapModeCompass`).
+- **[M7] a11y assertion corrected:** `_Segment` uses `Semantics(button, selected,
+  label)` with **no `Tooltip`** (`:50-54`) — assert with `find.bySemanticsLabel`
+  (NOT `find.byTooltip`; the CLAUDE.md tooltip rule is for icon buttons only).
+- **Tests to update (l10n breaks literal-string taps):** `map_platform_wiring_test.dart:124`
+  (`find.text('360°')`), `map_variant_wiring_test.dart:147`, `panorama_responsive_test.dart:27`.
+
+### 0.5 Data honesty — placeholder coords + unlocatable safety venues (supersedes §4.1/§6 "null-only") [M4,M5,m3]
+
+The body's honesty guard excludes only **null** coords. Two real holes:
+- **[M4] Non-null placeholder coords.** Verified `DataConfidence.placeholder` venues
+  with real lat/lng: `registration-point`, `information-point-2`, `information-point-3`
+  (the three share the identical guess `-33.7733531,151.1133796`), `metro-station`
+  (`venues_data.dart`; `venue.dart:70` `coordinateConfidence`). `NearbyTarget` carries
+  `DataConfidence confidence`; placeholder/derived blips render **dimmed + a
+  ConfidenceNote-style "approximate" marker**, and the locked panel suppresses the
+  crisp near-target/"you're here" certainty for them (mirrors PointMe low-accuracy
+  honesty). Buildings have **no** confidence field → treated as `confirmed` (survey
+  registry), noted as an accepted limitation.
+- **[M5] Known-but-unlocatable safety venues.** Null-coord venues `first-aid`,
+  `shuttle-stop`, `bus-stop`, `gymnasium-road` are currently deleted from existence.
+  For a night event, a finder that silently can't find **First Aid** is a safety
+  gap. Surface them as a **disabled "location unknown — see printed map" row** in the
+  list (never a blip, never a bearing), not an omission.
+- **[m3] Scorecard honesty:** the null-exclusion guard fires on **zero** buildings
+  (all 170 located); the building-side honesty story is "trust the MQ survey
+  registry", not the exclusion guard. Reflected in the re-score (§0.8).
+
+### 0.6 Rose layout & accessible tap path (supersedes §4.3/§7 hand-waving) [M6,M9]
+
+- **[M6] Radius transfer function + clamps, pinned:** blip radius =
+  `lerp(rMin, rMax, clamp(distance / compassFarClampMeters, 0, 1))` with named
+  constants (`compassNearClampMeters`, `compassFarClampMeters`, `rMin`, `rMax` in
+  `MapConfig`); a widget test asserts a near vs far target land at the expected radii.
+- **[M6] Angular de-collision:** targets within `compassMinAngularSepDegrees` of each
+  other are stacked/offset by a deterministic rule; a widget test asserts no two
+  blips overlap at a fixture with two near-collinear bearings.
+- **[M6] Accessible tap path = the list, not the blips.** 56 px non-overlapping hit
+  areas are unsatisfiable for clustered bearings, so the **rose is the visual layer**
+  and a **scrollable list of the same targets** (always present below/beside the rose,
+  reusing the `NearbyList` rows) is the accessible, 56 px-tappable, `scrollUntilVisible`
+  -reachable affordance. Tapping a list row locks the same target as tapping its blip.
+- **[M6] Rose diameter** = `min(availW, availH − chrome)` with a floor; filter field +
+  list live in a `SingleChildScrollView` (like `point_me_screen.dart:175`) so 320×568
+  @ 2.0 cannot overflow.
+- **[M9] `acquiring` render = static Icon + Text, NEVER a `CircularProgressIndicator`**
+  (copy `point_me_screen.dart:159-161` `_message(icon: Icons.explore_rounded, dim:true)`),
+  so the view is not an infinite spinner. Test the acquiring branch with `pump()`
+  (not `pumpAndSettle()`); boundedness (≤4 s) is the service's property
+  (`heading_service.dart:28,67`), asserted at the service layer, not the view.
+
+### 0.7 Reuse corrections [m1,m2,m4,m5] + §9 gate note
+
+- **[m1]** `formatNavDistance(l, target.distanceMeters.round())` — it takes an `int`
+  (`nav_format.dart:5`); it's a widget-layer call (needs `AonL10n`), used in the list.
+- **[m2]** `CompassController`/helpers **import `package:latlong2/latlong.dart`** for
+  `normalizeBearing` — it is latlong2's, only *used* (not re-exported) by
+  `bearing_math.dart:1`.
+- **[m4]** Cardinals **reuse the existing long-form keys** `cardinalN…cardinalNW`
+  ("north-east", `app_en.arb:284-291`, FA present) — **no new short-form keys**. §4.3/§4.4
+  examples showing "NE" are corrected to the long form.
+- **[m5]** Every compass widget test overrides `headingServiceProvider` with a
+  `FakeHeadingService` (the controller subscribes on visible, **before** any lock —
+  unlike PointMe); the fake must emit **after** the controller subscribes (broadcast
+  drops pre-subscription emits). Reduced-motion reuses the proven
+  `MediaQuery.disableAnimationsOf` pattern (`point_me_screen.dart:124,234`).
+- **§9 correction:** there is **no web *runtime* render gate** — `check.sh:132` runs
+  `flutter build web` (build only). Web can't be runtime-verified (pre-existing
+  black-screen IOU); heading→`unsupported` correctly routes to the list. Do not
+  claim a web-runtime proof.
+
+### 0.8 Re-scored scorecard (honesty; some axes DOWN post-gauntlet)
+
+| Axis | Was | Now | Why moved |
+|---|---|---|---|
+| Event fit | 8 | 8 | Unchanged; venue-bias (§0.2) protects the core job, still owes the night trial. |
+| Reuse / low-risk | 9 | **7** | The gauntlet exposed genuinely new work billed as "free reuse": location-gate wiring, terminal latch, de-collision, venue-bias. Honest down-score. |
+| Honesty | 8 | **6** | Two real holes found (placeholder blips, silent First-Aid drop) + a guard that no-ops on 91% of targets. Rises as §0.5 lands and is proven. |
+| A11y | 7 | **6** | 56 px-per-blip was unsatisfiable; the honest path (list-as-tap-target) is new work, unproven until tested. |
+| Clutter control | 7 | 7 | Angular de-collision now specified (§0.6); still owes the non-overlap test + on-rose legibility trial. |
+
+### 0.9 Receipts (adopt / refine / reject)
+
+19 findings: **4 blockers, 9 major, 6 minor — 19 adopted, 0 rejected.** 5 were
+also caught by the self-gauntlet (filter order, placeholder honesty, map_screen
+3-way, formatNavDistance, routingLatLngOf-survives). 3 claims the reviewers
+themselves **verified correct/no-defect** and are retained unchanged:
+`routingLatLngOf` mirrors `placeResolver` (`venue.dart:104`/`building.dart:45`),
+declination `+12.752`E sign (`map_config.dart:61`), and WGS84 coord space
+(`bearing_math.dart:10,18`). Blockers B1/B2/B4 and majors M4/M5/M8 were structural
+holes the body missed; the plan is generated from §0, not the pre-gauntlet body.
+
+---
+
 ## 1. Context & the parity-matrix reconciliation (honesty first)
 
 The umbrella spec's capability matrix lists two M5 rows as **"ported"** from MQ

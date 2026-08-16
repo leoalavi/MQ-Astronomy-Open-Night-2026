@@ -23,7 +23,17 @@ A second external gauntlet found 31 plan-level issues (13 red). Verified each ag
 - **G4 — drop `searchCampusBuildings` (T4).** It's unused: T6 ranks `SearchEntry`s directly. Keep only `scoreBuildingMatch`, and **normalize inside it** (`q = q.toLowerCase().trim()` at the top; empty → 0) so it has no "caller must pre-normalize" footgun. Remove T4's ordering test (ordering is proven in T6); keep the band-ladder test.
 
 **Missing seams — define these (they were consumed but never produced):**
-- **G5 — `placeResolverProvider` (NEW, define in T6).** `final placeResolverProvider = Provider.family<AsyncValue<ResolvedPlace?>, String>((ref, key) …)` where `class ResolvedPlace { PlaceKind kind; String title; String? subtitle; CampusMapPoint? renderPoint; double? routingLat, routingLng; }`. Contract: `venue:<id>` → `AsyncData(resolved)` synchronously (venues are const); `building:<id>` → follows `buildingsProvider` (`AsyncLoading` → `AsyncData(place)` or `AsyncData(null)` if the id is absent after load); malformed/unknown key → `AsyncData(null)`. `renderPoint` = pixel for building/linked-venue else GPS-affine; `routingLat/Lng` per §0b.E. T9/T10 consume this.
+- **G5 — `placeResolverProvider` (NEW, define in T6) + ONE shared placement helper.** `enum PlaceKind { venue, building }`; `class ResolvedPlace { PlaceKind kind; String placeKey; String title; String? subtitle; CampusMapPoint? renderPoint; double? routingLat, routingLng; }`. `final placeResolverProvider = Provider.family<AsyncValue<ResolvedPlace?>, String>((ref, key) …)`. Contract: `venue:<id>` → `AsyncData(resolved)` synchronously (venues are const); `building:<id>` → follows `buildingsProvider` (`AsyncLoading` → `AsyncData(place)` or `AsyncData(null)` if absent after load); malformed/unknown key → `AsyncData(null)`.
+  - **G5a — single source of placement truth (fixes a drift risk):** both `placeResolver.renderPoint` (G5) AND the idle marker builder (G14) MUST use one helper, `lib/services/map_placement.dart`:
+    ```dart
+    CampusMapPoint? placeVenue(Venue v, CampusProjection p) =>
+        (v.buildingId != null && v.campusX != null && v.campusY != null)
+            ? p.projectPixel(v.campusX!, v.campusY!)                        // linked → pixel-exact
+            : (v.hasCoordinates ? p.project(GpsPoint(LatLng(v.latitude!, v.longitude!))) : null);
+    CampusMapPoint? placeBuilding(Building b, CampusProjection p) =>
+        b.hasCampusCoordinates ? p.projectPixel(b.campusX!, b.campusY!) : null;
+    ```
+    Unit-test the helper directly (linked→pixel, unlinked→affine, no-coord→null); G14's map test then just asserts the rendered marker uses it. `routingLat/Lng` per §0b.E (M4 consumes; M3 only populates). T9/T10 consume `placeResolverProvider`.
 - **G6 — buildings bundle seam (T3).** Add `final buildingsBundleProvider = Provider<AssetBundle>((_) => rootBundle);`; `buildingsProvider` reads `ref.watch(buildingsBundleProvider)`. Failure test overrides it with a bundle returning malformed JSON → asserts `buildingsProvider` value is `[]`, does not throw, and venue search still works.
 - **G7 — favorites `eventId` (T7).** `SharedPrefsFavoritesStore({required SharedPreferencesAsync prefs, required String eventId})`; `eventId` comes from `ref.watch(eventConfigProvider).id` (= `'aon-2026'`, the `saved_events` pattern). Keys: `map_favorites.buildings.v1` (global) + `map_favorites.venues.$eventId`.
 
@@ -33,7 +43,7 @@ A second external gauntlet found 31 plan-level issues (13 red). Verified each ag
 - **G11 — ordering test actually asserts order (T6).** Equal-score Venue/Building tie → assert `placeKey`-lexical order; assert a band-interleaving sequence. **G12 — exact links (T5):** assert the full 7-entry `venue→building` map AND `linked.length == 7` (not `>= 7`). **G13 — non-match contract (T4):** `scoreBuildingMatch(anything, 'zzznomatch') == 0` (explicit).
 
 **Lifecycle & UI (define + test):**
-- **G14 — linked-venue IDLE placement is wired + tested (T10).** The always-on venue marker builder MUST branch: `v.buildingId != null ? proj.projectPixel(v.campusX!, v.campusY!) : proj.project(GpsPoint(gps))`. Regression: the `astronomical-observatory` marker point `== projectPixel(1745,480)`; an unlinked venue's `== project(GPS)`.
+- **G14 — linked-venue IDLE placement is wired + tested (T10).** The always-on venue marker builder MUST place each venue via `placeVenue(v, _proj)` (the G5a shared helper) — not an inline branch. Regression: the `astronomical-observatory` marker point `== projectPixel(1745,480)`; an unlinked venue's `== project(GPS)`.
 - **G15 — selection clears on detail-sheet close (T10).** Orchestration: `set selectedPlaceKey → center → await showModalBottomSheet(...) → clear selectedPlaceKey`. Test: after the sheet closes, the transient building marker / venue decoration is gone.
 - **G16 — search query clears on sheet close (T9).** The `TextField` seeds from `mapSearchQueryProvider`; closing the sheet resets the query to `''`. Test open→type→close→reopen shows empty.
 - **G17 — `context.mounted` guard (T10).** After `final key = await showModalBottomSheet<String>(...)`, `if (key == null || !context.mounted) return;` — else `use_build_context_synchronously` reddens `flutter analyze` (a `check.sh` gate).

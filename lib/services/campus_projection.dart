@@ -42,4 +42,14 @@ class CampusProjection {
   }
 
   bool canProject(GpsPoint gps) => project(gps) != null;
+
+  /// Pixel-exact placement for MQ building `campusX/Y`, which live in the same
+  /// 4678x3307 calibration space as [project]'s internal pixel step. STRICT
+  /// raster bounds (no `_eps` slack — a fixed integer raster, not a float
+  /// affine); null on the `(0,0)` "no campus coords" sentinel. NEVER clamps.
+  CampusMapPoint? projectPixel(double x, double y) {
+    if (x == 0 && y == 0) return null;
+    if (x < 0 || x > _pw || y < 0 || y > _ph) return null;
+    return CampusMapPoint(LatLng((_ph - y) / _scale, x / _scale)); // Y-flip, as project
+  }
 }

@@ -63,7 +63,8 @@ Expected: all GREEN ("ships dark" is now executable, #6/#32).
 
 **Interfaces:**
 - `enum MapsNavPlatform { unsupported, android, ios }`; `mapsNavPlatformProvider` (default from `kIsWeb`/`defaultTargetPlatform`, overridable in tests).
-- `androidRoutesKeyProvider`/`iosRoutesKeyProvider` (`String.fromEnvironment`), `routesConfiguredProvider`, `embeddedMapConfiguredProvider` (a `bool.fromEnvironment('MAPS_NATIVE_CONFIGURED')` build flag set by the native config, or a const surfaced from Task 0), `googleNavEnabledProvider`.
+- `androidRoutesKeyProvider`/`iosRoutesKeyProvider` (`String.fromEnvironment`), `routesConfiguredProvider` (a Routes key non-empty), `embeddedMapConfiguredProvider`, `googleNavEnabledProvider`.
+- **`embeddedMapConfigured` is a BUILD-TIME assertion, not runtime detection.** There is no clean way for Dart to query whether iOS `GMSServices.provideAPIKey` / the Android manifest key were actually set. So `embeddedMapConfiguredProvider = bool.fromEnvironment('MAPS_NATIVE_CONFIGURED', defaultValue: false)` — the build that provides the native secret files ALSO passes `--dart-define=MAPS_NATIVE_CONFIGURED=true`. Document this coupling; the two-flag split (vs one all-configured flag) is what lets the matrix test prove the #5 trap (routes-present-but-native-absent → disabled) is closed.
 
 - [ ] **Step 1: Failing matrix test (#31)**
 ```dart
@@ -219,7 +220,8 @@ void main() {
 ### Task 7: `GoogleNavScreen` + router self-guard (#20,#21,#22,#28)
 
 **Files:** Create `lib/screens/google_nav_screen.dart`; Modify `lib/app/router/app_router.dart` (add `Routes.googleNav(placeKey)` with a guard). Test `test/widget/google_nav_screen_test.dart`.
-- Sequence (strict): guard (`googleNavEnabled ∧ consent==accepted ∧ dest resolvable`, else redirect/handoff) → resolve dest via `placeResolverProvider` (routing coords) → obtain location → `navRouteProvider` → states:
+- **🔴 Coordinate space (gauntlet):** the destination MUST be `ResolvedPlace.routingLat/routingLng` (**geographic WGS84 GPS** — `entrance ?? latitude`). **NEVER `renderPoint`** — that is `CampusMapPoint` in **CrsSimple map-units** (e.g. `(36.6, 58.6)`); sent to Google Maps it's mid-ocean. Origin is the geolocator GPS. Both are geographic; the CrsSimple projection is not involved in M4 at all.
+- Sequence (strict): guard (`googleNavEnabled ∧ consent==accepted ∧ dest resolvable`, else redirect/handoff) → resolve dest via `placeResolverProvider` → take its **`routingLat/routingLng`** → obtain location (origin, captured ONCE = snapshot) → `navRouteProvider((origin,dest))` → states:
   - success → `EmbeddedMap` + panel (distance/ETA) + "Open in Google Maps" (url_launcher, #26) — **snapshot route** (#20).
   - `RouteNoRoute`/`RouteApiFailure`/`RouteNetworkFailure`/malformed → **standalone AON error panel** (Retry + curated/external fallback) — NOT a Google-tiles-dependent view (#28).
   - no permission / no fix → offer curated wayfinding (venues) / external Maps URL (buildings).

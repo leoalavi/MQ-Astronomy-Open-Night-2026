@@ -1,5 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:http/http.dart' as http;
+
+import 'google_routes_service.dart';
+import 'routes_client_identity.dart';
+import 'routes_service.dart';
 
 /// Which native surface the app is running on, for Google-nav capability.
 /// `unsupported` covers web and desktop — the embedded Google map + direct
@@ -58,4 +63,30 @@ final googleNavEnabledProvider = Provider<bool>((ref) {
   return ref.watch(embeddedMapConfiguredProvider) &&
       ref.watch(routesConfiguredProvider) &&
       ref.watch(mapsNavPlatformProvider) != MapsNavPlatform.unsupported;
+});
+
+/// The production [RoutesService], built from the active-platform Routes key +
+/// the assembled identity headers (async because the Android cert is read
+/// natively). Tests override this with a fake. The `http.Client` is closed when
+/// the provider is disposed.
+final routesServiceProvider = FutureProvider<RoutesService>((ref) async {
+  final identity = await ref.watch(routesClientIdentityProvider.future);
+  final key = ref.watch(activeRoutesKeyProvider);
+  final client = http.Client();
+  ref.onDispose(client.close);
+  return GoogleRoutesService(
+    client: client,
+    apiKey: key,
+    platformHeaders: identity.headers,
+  );
+});
+
+/// One walking-route request per (origin, destination). `autoDispose` frees it
+/// when the nav screen closes; the family key dedups simultaneous consumers so
+/// a single (origin,dest) bills a single Routes call. Retry = invalidate on an
+/// explicit user action, never an automatic re-fetch.
+final navRouteProvider = FutureProvider.autoDispose
+    .family<RouteResult, ((double, double), (double, double))>((ref, args) async {
+  final service = await ref.watch(routesServiceProvider.future);
+  return service.walkingRoute(origin: args.$1, destination: args.$2);
 });

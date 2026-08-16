@@ -315,6 +315,85 @@ class AonL10nFa extends AonL10n {
   String get mapVariantWaterDesc => 'ایستگاه‌های پرکردن آب در پردیس';
 
   @override
+  String get mapSearchTitle => 'یافتن مکان';
+
+  @override
+  String get mapSearchHint => 'جست‌وجوی ساختمان‌ها و مکان‌ها';
+
+  @override
+  String get mapSearchTooltip => 'جست‌وجو';
+
+  @override
+  String mapSearchEmpty(String query) {
+    return 'نتیجه‌ای برای «$query» یافت نشد';
+  }
+
+  @override
+  String get mapFavoritesTitle => 'علاقه‌مندی‌ها';
+
+  @override
+  String get mapFavoritesTooltip => 'علاقه‌مندی‌ها';
+
+  @override
+  String get mapFavoritesEmpty => 'هنوز علاقه‌مندی‌ای ندارید';
+
+  @override
+  String get mapFavoritesLoading => 'در حال بارگذاری…';
+
+  @override
+  String get mapFavoriteUnavailable => 'در دسترس نیست';
+
+  @override
+  String get mapFavoriteAdd => 'افزودن به علاقه‌مندی‌ها';
+
+  @override
+  String get mapFavoriteRemove => 'حذف از علاقه‌مندی‌ها';
+
+  @override
+  String mapBuildingGridRef(String ref) {
+    return 'شبکهٔ $ref';
+  }
+
+  @override
+  String get mapCatAcademic => 'آموزشی';
+
+  @override
+  String get mapCatServices => 'خدمات';
+
+  @override
+  String get mapCatHealth => 'بهداشت و درمان';
+
+  @override
+  String get mapCatFood => 'غذا و نوشیدنی';
+
+  @override
+  String get mapCatSports => 'ورزشی';
+
+  @override
+  String get mapCatVenue => 'سالن رویداد';
+
+  @override
+  String get mapCatResearch => 'پژوهشی';
+
+  @override
+  String get mapCatResidential => 'مسکونی';
+
+  @override
+  String get mapCatParking => 'پارکینگ';
+
+  @override
+  String get mapCatTransport => 'حمل‌ونقل';
+
+  @override
+  String get mapCatSmoking => 'محل سیگار';
+
+  @override
+  String get mapCatTeaching => 'تدریس';
+
+  @override
+  String get mapCatOther => 'دیگر';
+
+  @override
   String get panorama360Unavailable =>
       'نمای سه‌بعدی برای این مکان در دسترس نیست.';
 

@@ -625,6 +625,156 @@ abstract class AonL10n {
   /// **'Water refill points across campus'**
   String get mapVariantWaterDesc;
 
+  /// No description provided for @mapSearchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Find a place'**
+  String get mapSearchTitle;
+
+  /// No description provided for @mapSearchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search buildings and venues'**
+  String get mapSearchHint;
+
+  /// No description provided for @mapSearchTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Search'**
+  String get mapSearchTooltip;
+
+  /// No description provided for @mapSearchEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No results for \"{query}\"'**
+  String mapSearchEmpty(String query);
+
+  /// No description provided for @mapFavoritesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourites'**
+  String get mapFavoritesTitle;
+
+  /// No description provided for @mapFavoritesTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Favourites'**
+  String get mapFavoritesTooltip;
+
+  /// No description provided for @mapFavoritesEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No favourites yet'**
+  String get mapFavoritesEmpty;
+
+  /// No description provided for @mapFavoritesLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading…'**
+  String get mapFavoritesLoading;
+
+  /// No description provided for @mapFavoriteUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Unavailable'**
+  String get mapFavoriteUnavailable;
+
+  /// No description provided for @mapFavoriteAdd.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to favourites'**
+  String get mapFavoriteAdd;
+
+  /// No description provided for @mapFavoriteRemove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove from favourites'**
+  String get mapFavoriteRemove;
+
+  /// No description provided for @mapBuildingGridRef.
+  ///
+  /// In en, this message translates to:
+  /// **'Grid {ref}'**
+  String mapBuildingGridRef(String ref);
+
+  /// No description provided for @mapCatAcademic.
+  ///
+  /// In en, this message translates to:
+  /// **'Academic'**
+  String get mapCatAcademic;
+
+  /// No description provided for @mapCatServices.
+  ///
+  /// In en, this message translates to:
+  /// **'Services'**
+  String get mapCatServices;
+
+  /// No description provided for @mapCatHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get mapCatHealth;
+
+  /// No description provided for @mapCatFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Food & drink'**
+  String get mapCatFood;
+
+  /// No description provided for @mapCatSports.
+  ///
+  /// In en, this message translates to:
+  /// **'Sports'**
+  String get mapCatSports;
+
+  /// No description provided for @mapCatVenue.
+  ///
+  /// In en, this message translates to:
+  /// **'Venue'**
+  String get mapCatVenue;
+
+  /// No description provided for @mapCatResearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Research'**
+  String get mapCatResearch;
+
+  /// No description provided for @mapCatResidential.
+  ///
+  /// In en, this message translates to:
+  /// **'Residential'**
+  String get mapCatResidential;
+
+  /// No description provided for @mapCatParking.
+  ///
+  /// In en, this message translates to:
+  /// **'Parking'**
+  String get mapCatParking;
+
+  /// No description provided for @mapCatTransport.
+  ///
+  /// In en, this message translates to:
+  /// **'Transport'**
+  String get mapCatTransport;
+
+  /// No description provided for @mapCatSmoking.
+  ///
+  /// In en, this message translates to:
+  /// **'Smoking area'**
+  String get mapCatSmoking;
+
+  /// No description provided for @mapCatTeaching.
+  ///
+  /// In en, this message translates to:
+  /// **'Teaching'**
+  String get mapCatTeaching;
+
+  /// No description provided for @mapCatOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get mapCatOther;
+
   /// Shown when a venue has no 360 tour. Never expose scene ids or 'not found' errors.
   ///
   /// In en, this message translates to:

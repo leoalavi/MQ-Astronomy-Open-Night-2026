@@ -315,6 +315,85 @@ class AonL10nEn extends AonL10n {
   String get mapVariantWaterDesc => 'Water refill points across campus';
 
   @override
+  String get mapSearchTitle => 'Find a place';
+
+  @override
+  String get mapSearchHint => 'Search buildings and venues';
+
+  @override
+  String get mapSearchTooltip => 'Search';
+
+  @override
+  String mapSearchEmpty(String query) {
+    return 'No results for \"$query\"';
+  }
+
+  @override
+  String get mapFavoritesTitle => 'Favourites';
+
+  @override
+  String get mapFavoritesTooltip => 'Favourites';
+
+  @override
+  String get mapFavoritesEmpty => 'No favourites yet';
+
+  @override
+  String get mapFavoritesLoading => 'Loading…';
+
+  @override
+  String get mapFavoriteUnavailable => 'Unavailable';
+
+  @override
+  String get mapFavoriteAdd => 'Add to favourites';
+
+  @override
+  String get mapFavoriteRemove => 'Remove from favourites';
+
+  @override
+  String mapBuildingGridRef(String ref) {
+    return 'Grid $ref';
+  }
+
+  @override
+  String get mapCatAcademic => 'Academic';
+
+  @override
+  String get mapCatServices => 'Services';
+
+  @override
+  String get mapCatHealth => 'Health';
+
+  @override
+  String get mapCatFood => 'Food & drink';
+
+  @override
+  String get mapCatSports => 'Sports';
+
+  @override
+  String get mapCatVenue => 'Venue';
+
+  @override
+  String get mapCatResearch => 'Research';
+
+  @override
+  String get mapCatResidential => 'Residential';
+
+  @override
+  String get mapCatParking => 'Parking';
+
+  @override
+  String get mapCatTransport => 'Transport';
+
+  @override
+  String get mapCatSmoking => 'Smoking area';
+
+  @override
+  String get mapCatTeaching => 'Teaching';
+
+  @override
+  String get mapCatOther => 'Other';
+
+  @override
   String get panorama360Unavailable =>
       '3D view is not available for this location.';
 

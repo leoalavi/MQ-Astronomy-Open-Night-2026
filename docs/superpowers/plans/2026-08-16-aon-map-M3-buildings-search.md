@@ -10,10 +10,49 @@
 
 **Design:** `docs/superpowers/specs/2026-08-16-aon-map-M3-buildings-search-design.md` — **read §0b (external-review amendment) and §0 first; both are authoritative and supersede the body where they conflict.**
 
+## Gauntlet-2 amendment — AUTHORITATIVE (read before any task; supersedes the task bodies where they conflict)
+
+A second external gauntlet found 31 plan-level issues (13 red). Verified each against the code; **all adopted**. The design is unchanged — these are implementation seams, false-positive tests, two real logic bugs, and lifecycle rules. Where this conflicts with a task below, **this wins.**
+
+**Concrete logic bugs (fix in the task code):**
+- **G1 — `projectPixel` uses STRICT bounds, no `_eps` (T2).** `_eps` on a fixed raster lets `x=-_eps/2` through → negative longitude. Use `if (x < 0 || x > _pw || y < 0 || y > _ph) return null;` (keep the `(0,0)` sentinel guard). Add exact-edge tests: `(0,1)` valid, `(_pw,0)` valid, `(0,_ph)` valid, `(-0.001,100)`/`(_pw+0.001,100)` null.
+- **G2 — routing coords must be chosen as a PAIR (T1 Building AND T5 Venue).** `entranceLat ?? lat` mixed with `entranceLng ?? lng` can fabricate a coordinate that never existed. Both models: `bool get hasEntranceCoordinates => entranceLatitude != null && entranceLongitude != null;` then `routingLatitude => hasEntranceCoordinates ? entranceLatitude : latitude;` (same for lng). Fixes the *existing* `venue.dart:86` bug too. Add a partial-entrance regression test.
+- **G3 — immutable lists (T1).** Wrap `aliases`/`searchTokens`/`tags` in `List.unmodifiable(...)` inside `fromJson`.
+
+**Drop / simplify:**
+- **G4 — drop `searchCampusBuildings` (T4).** It's unused: T6 ranks `SearchEntry`s directly. Keep only `scoreBuildingMatch`, and **normalize inside it** (`q = q.toLowerCase().trim()` at the top; empty → 0) so it has no "caller must pre-normalize" footgun. Remove T4's ordering test (ordering is proven in T6); keep the band-ladder test.
+
+**Missing seams — define these (they were consumed but never produced):**
+- **G5 — `placeResolverProvider` (NEW, define in T6).** `final placeResolverProvider = Provider.family<AsyncValue<ResolvedPlace?>, String>((ref, key) …)` where `class ResolvedPlace { PlaceKind kind; String title; String? subtitle; CampusMapPoint? renderPoint; double? routingLat, routingLng; }`. Contract: `venue:<id>` → `AsyncData(resolved)` synchronously (venues are const); `building:<id>` → follows `buildingsProvider` (`AsyncLoading` → `AsyncData(place)` or `AsyncData(null)` if the id is absent after load); malformed/unknown key → `AsyncData(null)`. `renderPoint` = pixel for building/linked-venue else GPS-affine; `routingLat/Lng` per §0b.E. T9/T10 consume this.
+- **G6 — buildings bundle seam (T3).** Add `final buildingsBundleProvider = Provider<AssetBundle>((_) => rootBundle);`; `buildingsProvider` reads `ref.watch(buildingsBundleProvider)`. Failure test overrides it with a bundle returning malformed JSON → asserts `buildingsProvider` value is `[]`, does not throw, and venue search still works.
+- **G7 — favorites `eventId` (T7).** `SharedPrefsFavoritesStore({required SharedPreferencesAsync prefs, required String eventId})`; `eventId` comes from `ref.watch(eventConfigProvider).id` (= `'aon-2026'`, the `saved_events` pattern). Keys: `map_favorites.buildings.v1` (global) + `map_favorites.venues.$eventId`.
+
+**False-positive tests — make them real:**
+- **G8 — favorites race (T7) uses `Completer`s, not `sleep`.** Store `save` blocks on a test-controlled `Completer`; request 3 toggles; release; **`await controller.flush()`**; assert persisted `{venue:b}`. Add **G9 — `Future<void> flush()`** on the controller (awaits the serialized save chain) so tests are deterministic — no `Future.delayed`.
+- **G10 — async search (T6) is deterministic.** Override `buildingsProvider` with a `Completer<List<Building>>`; assert: query `OBS` while incomplete → no building vocab / building entry absent; complete the registry (query unchanged) → `venue:astronomical-observatory` appears. No reliance on real-asset timing.
+- **G11 — ordering test actually asserts order (T6).** Equal-score Venue/Building tie → assert `placeKey`-lexical order; assert a band-interleaving sequence. **G12 — exact links (T5):** assert the full 7-entry `venue→building` map AND `linked.length == 7` (not `>= 7`). **G13 — non-match contract (T4):** `scoreBuildingMatch(anything, 'zzznomatch') == 0` (explicit).
+
+**Lifecycle & UI (define + test):**
+- **G14 — linked-venue IDLE placement is wired + tested (T10).** The always-on venue marker builder MUST branch: `v.buildingId != null ? proj.projectPixel(v.campusX!, v.campusY!) : proj.project(GpsPoint(gps))`. Regression: the `astronomical-observatory` marker point `== projectPixel(1745,480)`; an unlinked venue's `== project(GPS)`.
+- **G15 — selection clears on detail-sheet close (T10).** Orchestration: `set selectedPlaceKey → center → await showModalBottomSheet(...) → clear selectedPlaceKey`. Test: after the sheet closes, the transient building marker / venue decoration is gone.
+- **G16 — search query clears on sheet close (T9).** The `TextField` seeds from `mapSearchQueryProvider`; closing the sheet resets the query to `''`. Test open→type→close→reopen shows empty.
+- **G17 — `context.mounted` guard (T10).** After `final key = await showModalBottomSheet<String>(...)`, `if (key == null || !context.mounted) return;` — else `use_build_context_synchronously` reddens `flutter analyze` (a `check.sh` gate).
+- **G18 — concrete control geometry (T10).** One **top-left vertical control column** stacking, top→down: Layers (M2), Search, Favorites — each `minTapTarget`, spaced `space2`, wrapped in the same glass style as the M2 Layers button. Status notes clear it via `left: space4 + minTapTarget` (already so). No new independent magic positions.
+- **G19 — nested-scroll fix (T9).** Search/Favorites sheets: `SafeArea > Column(header, Expanded(ListView(...)))` — NOT `ListView` inside `SingleChildScrollView`. Building sheet (small) keeps `SingleChildScrollView`.
+
+**Process / provenance / claims:**
+- **G20 — T0 is a vendoring precondition, split red/green (T0).** T0a: write an **asset-registration test** (`rootBundle.loadString(buildingsAssetPath)` succeeds + parses to 170) → run RED (before pubspec declares it) → vendor + declare → GREEN. The `File(...)` invariant tests are data checks that run after. (The `File` test does NOT prove pubspec registration; the `rootBundle` one does.)
+- **G21 — provenance actually gates + is permanent.** Chain the SHA check with `&&` into the commit (`test … && ./scripts/check.sh && git add … && git commit …`), AND add a provenance step to `scripts/check.sh` (recompute `shasum -a 256 assets/data/buildings.json`, compare to `docs/fixtures/buildings_provenance.json`) so every later task + closeout revalidates it.
+- **G22 — no literal placeholders in the asset (T0).** Generate `buildings_provenance.json` via heredoc substituting `$SHA`/`$SRCCOMMIT` (not `<SHA>`). Soften the licence line to an honest IOU: *"vendored from the MQ_Journey sibling project; confirm redistribution permission before any public/store release"* — do not assert permission we can't evidence.
+- **G23 — the `21` invariant is authoritative (T0).** Remove the "update if eps shifts" self-permission. `misses == 21` is a regression receipt; a failure means investigate, not edit.
+- **G24 — l10n enumerated (T8).** Add all **13** `BuildingCategory` label keys (`mapCat<Name>`), plus `mapFavoritesLoading`, `mapFavoriteUnavailable`, `mapSearchTooltip`, `mapFavoritesTooltip`, and (only if `saveFailed` is surfaced) `mapFavoritesSaveFailed` — with **real Persian** in the plan, like M2.
+- **G25 — `saveFailed` semantics (T7):** set `true` when a `save` throws; reset to `false` on the next successful save; a load failure yields empty favorites + `saveFailed=false` (load ≠ save). `FavoritesStore.save` wraps `SharedPreferencesAsync.setStringList` (returns `Future<void>`) in try/catch → `Future<bool>`. M3 does not surface `saveFailed` in UI (favorites are non-critical) unless G24's key is added.
+- **G26 — headings + self-review honesty.** T11 heading → "**iOS Simulator smoke test**". Self-review: drop "**No gap**" and "every code step complete" — state instead that G5/G7/G15/G16 seams are now defined, and that vendoring/`Step 2–4 implement` steps are engineering notes, not literal code. **Routing authority is M4's**, not M3's: M3 exposes `routingLatitude/Longitude` on the models (G2) but does NOT wire/test the Directions target — remove routing from M3's "covered" list; the authority *rule* + test live in M4.
+
 ## Global Constraints
 
 - **Async registry, synchronous placement.** `buildingsProvider` is `FutureProvider`; the 21 venue markers + any linked-venue placement must NOT wait on it (linked venues carry curated `campusX/Y` baked onto the Venue). Registry drives search vocab + dedup only.
-- **Three authority axes (§0b.E):** semantic = curated venue wins on link; render = `projectPixel` (pixel-exact) for buildings + linked venues, GPS-affine `project()` for unlinked venues; routing = entrance GPS (`routingLatitude/Longitude`) of the semantic+precision winner.
+- **Authority axes (§0b.E):** semantic = curated venue wins on link; render = `projectPixel` (pixel-exact) for buildings + linked venues, GPS-affine `project()` for unlinked venues. **Routing authority is M4's** — M3 only exposes paired `routingLatitude/Longitude` (G2) on the models; it does not wire/test a Directions target.
 - **Selection identity is a `PlaceKey` string** (`venue:<id>` / `building:<id>`), never a long-lived `SearchEntry`.
 - **Search providers are split:** `mapSearchQueryProvider` (Notifier<String>) / `searchIndexProvider` (derived, AsyncValue) / `mapSearchResultsProvider` (derived).
 - **Favorites:** passport idiom (injected snapshot + `SharedPreferencesAsync`), serialized latest-state writes, never prune keys on transient loading, **event-scoped venue namespace** vs **global building namespace**.
@@ -236,8 +275,12 @@ class Building {
   final double? latitude, longitude, entranceLatitude, entranceLongitude, campusX, campusY;
   final List<String> aliases, searchTokens, tags;
 
-  double? get routingLatitude => entranceLatitude ?? latitude;
-  double? get routingLongitude => entranceLongitude ?? longitude;
+  // G2: entrance is used ONLY when the PAIR is present, else fall back to the
+  // centre pair — never mix entrance-lat with centre-lng (fabricated coordinate).
+  bool get hasEntranceCoordinates =>
+      entranceLatitude != null && entranceLongitude != null;
+  double? get routingLatitude => hasEntranceCoordinates ? entranceLatitude : latitude;
+  double? get routingLongitude => hasEntranceCoordinates ? entranceLongitude : longitude;
   bool get hasGeographicCoordinates => latitude != null && longitude != null;
   bool get hasCampusCoordinates =>
       campusX != null && campusY != null && !(campusX == 0 && campusY == 0);
@@ -247,7 +290,8 @@ class Building {
     final loc = j['location'] as Map<String, dynamic>?;
     final ent = j['entranceLocation'] as Map<String, dynamic>?;
     final camp = j['campusLocation'] as Map<String, dynamic>?;
-    List<String> ls(Object? v) => (v as List?)?.cast<String>() ?? const [];
+    List<String> ls(Object? v) =>
+        List.unmodifiable((v as List?)?.cast<String>() ?? const []); // G3
     return Building(
       id: j['id'] as String, code: j['code'] as String, name: j['name'] as String,
       description: j['description'] as String?, address: j['address'] as String?,
@@ -302,10 +346,13 @@ void main() {
     expect(m.value.longitude, closeTo(58.63, 0.05));
   });
 
-  test('(0,0) sentinel and out-of-range → null', () {
-    expect(p.projectPixel(0, 0), isNull);
-    expect(p.projectPixel(-1, 100), isNull);
-    expect(p.projectPixel(5000, 100), isNull);
+  test('(0,0) sentinel and out-of-range → null; exact edges valid (G1 strict)', () {
+    expect(p.projectPixel(0, 0), isNull);       // sentinel
+    expect(p.projectPixel(-0.001, 100), isNull); // just under 0 → null (no _eps slack)
+    expect(p.projectPixel(4678.001, 100), isNull);
+    expect(p.projectPixel(0, 1), isNotNull);    // exact edges valid
+    expect(p.projectPixel(4678, 0), isNotNull);
+    expect(p.projectPixel(0, 3307), isNotNull);
   });
 
   test('ALL 170 buildings projectPixel successfully (necessity of pixel path)', () {
@@ -327,8 +374,8 @@ void main() {
   /// 4678x3307 calibration space as [project]'s internal pixel step. NEVER
   /// clamps: null outside the raster or on the (0,0) "no campus coords" sentinel.
   CampusMapPoint? projectPixel(double x, double y) {
-    if (x == 0 && y == 0) return null;
-    if (x < -_eps || x > _pw + _eps || y < -_eps || y > _ph + _eps) return null;
+    if (x == 0 && y == 0) return null;             // "no campus coords" sentinel
+    if (x < 0 || x > _pw || y < 0 || y > _ph) return null; // STRICT raster bounds (G1: no _eps)
     return CampusMapPoint(LatLng((_ph - y) / _scale, x / _scale)); // Y-flip, same as project
   }
 ```
@@ -419,7 +466,7 @@ final buildingsProvider = FutureProvider<List<Building>>((ref) async {
 **Files:** Create `lib/services/building_search.dart`; Test `test/unit/building_search_test.dart`.
 
 **Interfaces:**
-- Produces: `String normalizeMapSearch(String)`; `int scoreBuildingMatch(Building, String normalizedQuery)` (bands 120/110/100/90/80/70/50/0); `List<Building> searchCampusBuildings(List<Building>, String query)` (score desc, `id` asc; empty query → all sorted by `id`). Pure — no Flutter import beyond the model.
+- Produces: `String normalizeMapSearch(String)`; `int scoreBuildingMatch(Building, String rawQuery)` (bands 120/110/100/90/80/70/50/0; **normalizes internally**, G4). Pure — no Flutter import beyond the model. (`searchCampusBuildings` is NOT produced — dropped as unused; T6 ranks entries.)
 
 - [ ] **Step 1: Failing test** (ported band vectors)
 
@@ -442,15 +489,13 @@ void main() {
     expect(scoreBuildingMatch(lib, 'boo'), 80);         // alias prefix
     expect(scoreBuildingMatch(lib, 'libr'), 70);        // 'lib' can't prefix 'libr'; 'library' field-prefix → 70
     expect(scoreBuildingMatch(lib, 'rary'), 50);        // contains
-    expect(scoreBuildingMatch(lib, 'zzz'), 0);          // miss
+    expect(scoreBuildingMatch(lib, 'zzznomatch'), 0);   // G13: explicit non-match → 0
   });
 
-  test('ordering: score desc, id asc tiebreak; empty query → all by id', () {
-    final a = _b('AAA', name: 'Zeta'); final b = _b('BBB', name: 'Alpha');
-    expect(searchCampusBuildings([b, a], '').map((x) => x.id), ['AAA', 'BBB']);
-    final r = searchCampusBuildings([a, b], 'al'); // both prefix 'al'? only Alpha
-    expect(r.first.id, 'BBB');
+  test('G4: normalizes internally — raw "  LIB  " scores like "lib"', () {
+    expect(scoreBuildingMatch(_b('LIB', name: 'Library'), '  LIB  '), 120);
   });
+  // Ranked ORDERING is proven in T6 (mapSearchResultsProvider), not here.
 }
 ```
 
@@ -463,7 +508,10 @@ import 'package:aon2026/models/building.dart';
 
 String normalizeMapSearch(String value) => value.toLowerCase().trim();
 
-int scoreBuildingMatch(Building b, String q) {
+// G4: normalizes internally (no "caller must pre-normalize" footgun). searchCampus-
+// Buildings dropped — T6's results provider ranks SearchEntries directly.
+int scoreBuildingMatch(Building b, String rawQuery) {
+  final q = normalizeMapSearch(rawQuery);
   if (q.isEmpty) return 0;
   final fields = <String>[
     b.id, b.code, b.name,
@@ -483,16 +531,6 @@ int scoreBuildingMatch(Building b, String q) {
   if (fields.any((f) => f.startsWith(q))) return 70;
   if (fields.any((f) => f.contains(q))) return 50;
   return 0;
-}
-
-List<Building> searchCampusBuildings(List<Building> buildings, String query) {
-  final q = normalizeMapSearch(query);
-  final scored = [for (final b in buildings) (b: b, s: q.isEmpty ? 0 : scoreBuildingMatch(b, q))];
-  scored.sort((a, c) {
-    final byScore = c.s.compareTo(a.s);
-    return byScore != 0 ? byScore : a.b.id.compareTo(c.b.id);
-  });
-  return [for (final e in scored) e.b];
 }
 ```
 
@@ -733,7 +771,7 @@ void main() {
 ### Task 11: Verification & closeout
 
 - [ ] **Step 1:** `./scripts/check.sh full` — all 8 gates green (incl. web/apk/iOS builds with the new 127 KB asset).
-- [ ] **Step 2: On-device (iOS Simulator smoke test):** search "library"/"OBS"/"18WW" → ranked results → select a building → transient pin lands on the illustration + `BuildingSheet` → favorite it → open Favorites → it's there. **Re-verify the 7 linked venue pins** moved to their pixel-exact spot correctly (they shifted from GPS-affine). Confirm no dup pin on venue-select. Label it a **simulator** smoke test; physical-device + Android remain the standing release IOU.
+- [ ] **Step 2: iOS Simulator smoke test:** search "library"/"OBS"/"18WW" → ranked results → select a building → transient pin lands on the illustration + `BuildingSheet` → favorite it → open Favorites → it's there. **Re-verify the 7 linked venue pins** moved to their pixel-exact spot correctly (they shifted from GPS-affine), and that closing a detail sheet clears the transient pin/decoration (G15). Confirm no dup pin on venue-select. Simulator only; physical iOS + Android remain the standing release IOU.
 - [ ] **Step 3:** Re-score the design §11 scorecard against shipped code (scores may move; explain); note any residual IOU.
 - [ ] **Step 4:** `superpowers:finishing-a-development-branch` → verify full suite green on the branch, present merge/PR/keep for `feature/map-M3-buildings-search` → `main`.
 
@@ -741,8 +779,10 @@ void main() {
 
 ## Self-Review
 
-**Spec coverage (§0b findings → tasks):** #1 linked-venue cold-start → T5 baked `campusX/Y` (synchronous) + drift test; #2 vocab inherit → T6 `scoreEntry` max; #3 split providers → T6; #4 favorites async init → T7 passport idiom; #5 serialized writes → T7 race test; #6 no transient prune → T9 pending rows; #7 namespacing → T7 keys; #8 no dup pin → T10; #9 executable invariants → T0/T1/T2; #10 link integrity → T5; #11 routing authority → design §0b.E (M4 consumes; building `routingLatitude` exists); #12 pop contract → T9; #13 comparator → T6; #14 category assertion → T0; #15 a11y → T9; #16 provenance → T0. **No gap.**
+**Coverage (§0b + Gauntlet-2 → tasks):** §0b #1 cold-start → T5 baked `campusX/Y` + drift; #2 vocab inherit → T6; #3 split providers → T6; #4 favorites init → T7; #5 serialized writes → T7 (**G8 Completer race**, not sleep); #6 no transient prune → T9 pending rows; #7 namespacing → T7 (**G7 eventId**); #8 no dup pin → T10; #9 invariants → T0/T1/T2; #10 links → T5 (**G12 exact 7**); #12 pop contract → T9; #13 comparator → T6 (**G11 real ordering test**); #14 category → T0 (`teaching` added); #15 a11y → T9; #16 provenance → T0 (**G21 permanent gate**). New seams: **G5 `placeResolverProvider`** (T6), **G6 bundle seam** (T3), **G14 linked-idle placement + test** (T10), **G15/G16 selection/query lifecycle** (T10/T9).
 
-**Placeholder scan:** curated links (T5) are 7 concrete seed values, drift-tested; sheet/wiring tasks (T9/T10) reference the concrete in-repo M2 test harness rather than restating it — every code step elsewhere is complete.
+**Known scope boundary (not a gap — stated honestly):** **routing authority is M4's**, not M3's. M3 exposes `routingLatitude/Longitude` on both models (G2, paired) but does NOT wire or test the Directions target — the authority *rule* + test live in M4. M3's Directions CTA routes to the existing wayfinding entry unchanged.
 
-**Type consistency:** `projectPixel(double,double)→CampusMapPoint?` (T2) used in T5/T10; `buildingsProvider` (T3) consumed T6/T9/T10; `PlaceKey` string (`venue:`/`building:`) consistent T6→T10; `favoritesProvider`/`toggle(String)` consistent T7→T10; `scoreBuildingMatch` (T4) reused by T6.
+**Concreteness:** the two real logic bugs (G1 `projectPixel` bounds, G2 routing pair) and G3/G4 are fixed inline in the task code. Vendoring shell (T0) and the `Step 2–4: implement …` notes for the UI/index tasks (T6/T7/T9/T10) are **engineering notes with defined interfaces + concrete test cases (G5–G19)**, not literal line-by-line code — an executor implements them against those contracts and the in-repo M2 harness. This is NOT a placeholder-free copy-paste script; it is a contract-complete plan.
+
+**Type consistency:** `projectPixel(double,double)→CampusMapPoint?` (T2) used in T5/T10/G5; `buildingsProvider`/`buildingsBundleProvider` (T3) consumed T6/G5; `PlaceKey` string consistent T6→T10; `placeResolverProvider` (G5) consumed T9/T10; `favoritesProvider`/`toggle(String)`/`flush()` (G9) consistent T7→T10; `scoreBuildingMatch` (T4) reused by T6.

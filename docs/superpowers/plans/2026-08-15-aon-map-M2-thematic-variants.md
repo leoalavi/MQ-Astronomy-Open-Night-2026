@@ -38,6 +38,7 @@
 
 ```dart
 // test/unit/campus_variants_data_test.dart
+import 'package:flutter/painting.dart' show Color;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/data/campus_variants_data.dart';
 
@@ -82,7 +83,10 @@ void main() {
   });
 
   test('byVariant returns the row, null for base', () {
-    expect(CampusVariantsData.byVariant(CampusMapVariant.parking)!.swatch.value, 0xFF3B82F6);
+    // Compare Color objects directly — Color.value is @Deprecated (would flag
+    // `flutter analyze`, which check.sh gates on). Color(int) ctor is fine.
+    expect(CampusVariantsData.byVariant(CampusMapVariant.parking)!.swatch,
+        const Color(0xFF3B82F6));
     expect(CampusVariantsData.byVariant(CampusMapVariant.base), isNull);
   });
 }
@@ -350,7 +354,9 @@ import 'package:aon2026/widgets/map_config.dart';
 
 String _asset(WidgetTester t) {
   final layer = t.widget<OverlayImageLayer>(find.byType(OverlayImageLayer));
-  final img = layer.overlayImages.single as OverlayImage;
+  // imageProvider is declared on BaseOverlayImage (overlay_image.dart:10), so
+  // no cast to the OverlayImage subtype is needed.
+  final img = layer.overlayImages.single;
   return (img.imageProvider as AssetImage).assetName;
 }
 
@@ -723,12 +729,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/data/campus_variants_data.dart';
 import 'package:aon2026/services/campus_variant_providers.dart';
+import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/widgets/campus_basemap_layer.dart';
 import 'package:aon2026/widgets/campus_variant_picker.dart';
+import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/user_location_layer.dart';
 import 'package:aon2026/screens/map_screen.dart';
 import '../support/fake_location_service.dart';
@@ -740,6 +749,13 @@ ProviderContainer _container(FakeLocationService svc) {
   c.read(mapVisibleProvider.notifier).set(true);
   return c;
 }
+
+// A near, on-footprint fix — the M1 suite proves this renders a dot, so the
+// "dot survives" assertion below is non-vacuous.
+UserLocationFix _near() => UserLocationFix(
+    position: LatLng(MapConfig.campusCentre.latitude + 0.001,
+        MapConfig.campusCentre.longitude),
+    accuracyMeters: 10);
 
 Widget _app(ProviderContainer c) => UncontrolledProviderScope(
       container: c,
@@ -757,7 +773,9 @@ String _basemapAsset(WidgetTester t) {
   final layer = t.widget<OverlayImageLayer>(find.descendant(
       of: find.byType(CampusBasemapLayer),
       matching: find.byType(OverlayImageLayer)));
-  final img = layer.overlayImages.single as OverlayImage;
+  // imageProvider is declared on BaseOverlayImage (overlay_image.dart:10), so
+  // no cast to the OverlayImage subtype is needed.
+  final img = layer.overlayImages.single;
   return (img.imageProvider as AssetImage).assetName;
 }
 
@@ -777,10 +795,10 @@ void main() {
     final c = _container(svc);
     await t.pumpWidget(_app(c));
     await c.read(locationControllerProvider.notifier).onLocateTapped();
-    svc.emit(UserLocationFix(
-        position: MapConfig.campusCentre, accuracyMeters: 10));
+    svc.emit(_near());
     await t.pump();
     await t.pump();
+    expect(find.byType(UserLocationDot), findsOneWidget); // dot present pre-swap
     expect(_basemapAsset(t), CampusVariantsData.baseAsset);
     final dotsBefore = find.byType(UserLocationDot).evaluate().length;
     c.read(campusVariantProvider.notifier).select(CampusMapVariant.parking);
@@ -837,8 +855,6 @@ void main() {
   });
 }
 ```
-
-Note: `MapConfig` and `UserLocationFix` are pulled in transitively; add explicit imports (`package:aon2026/widgets/map_config.dart`, `package:aon2026/models/user_location_fix.dart`, `package:latlong2/latlong.dart`) if the analyzer flags them.
 
 - [ ] **Step 2: Run tests to verify they fail**
 

@@ -150,7 +150,9 @@ Full opacity (the variant *is* the basemap — no translucency). The M1 dot/accu
 
 ## 8. Memory — one on screen, cache-bounded
 
-Only one variant renders at a time (11.3 MiB decoded — M0 gate). But Flutter's `ImageCache` retains recently-decoded images, so cycling all 5 could hold ~56 MiB in cache (5 × 11.3). That's within the default 100 MiB cache but non-trivial. **Verification gate (Task N):** switch through all variants + base repeatedly on-device; confirm no memory-pressure/jank and that the cache doesn't grow unbounded. If it does, evict the previous variant on swap (`imageCache.evict(AssetImage(prev))`) — not built pre-emptively.
+Only one variant renders at a time (11.3 MiB decoded — M0 gate). Flutter's `ImageCache` retains recently-decoded images; five cached would be ~56 MiB of raw pixels — a raw footprint, not a hard cache/process ceiling (§0 review #7).
+
+**On-device (iOS Simulator, iPhone 17) result — PASS (qualitative):** cycled base → Parking → Drinking Water; each swap repainted the whole basemap while every venue marker stayed pinned and the camera held (matches the T6 marker-count + camera-preservation regressions); no jank, no memory-pressure warning. Host `ps` RSS rose 8.1 → 30.9 MiB across three swaps — **bounded, no runaway** (consistent with a few 11.3 MiB decodes under LRU), though host `ps` is unreliable for simulator apps in absolute terms. Eviction was **not** needed and stays an IOU (`imageCache.evict(key, includeLive: false)` if ever required). **Release-gate IOU:** a rigorous absolute measurement (Flutter DevTools memory view) on a *physical* iOS device + an Android runtime smoke test remain before the render/memory requirement is fully closed — builds alone don't exercise the swap.
 
 ## 9. Global constraints (inherited)
 
@@ -171,15 +173,17 @@ Only one variant renders at a time (11.3 MiB decoded — M0 gate). But Flutter's
 - **Wiring (regression):** the Layers button opens the picker; selecting a variant swaps the basemap asset while the user dot + venue markers still render (M1 intact); panorama toggle still switches; Layers button hidden in panorama.
 - **Verification:** `check.sh full`; on-device **variant swap repaints** (iOS) + the memory/jank gate (§8).
 
-## 11. Scorecard (M2, pre-build)
+## 11. Scorecard (M2, post-build)
+
+Re-scored at closeout against the shipped code (design §0 pre-build scores in git history). Two moved:
 
 | Axis | Score | Raises it |
 |---|---:|---|
 | Parity coverage | 4/10 | Overlay-variant system closed (M2); buildings/search (M3), routing (M4), AR (M5) remain. |
-| Additive safety | 8/10 | Only the basemap image changes; M1 dot/markers/projection untouched; proven by the wiring regression. |
-| Night legibility | 7/10 | Variants are the M0 reskin (already gated); full opacity, no muddy stacking. |
-| Memory | 7/10 | One decode on screen; cache bound verified on-device (§8). |
-| A11y / 2.0 / FA | 8/10 | Radio group labelled + 2.0 + EN/FA; baked-legend limitation named. |
+| Additive safety | 9/10 | ↑ from 8 — only the basemap image changes; marker-COUNT + camera + follow + accuracy-circle preservation each proven by a dedicated T6 regression, and confirmed on-device (markers pinned through 3 swaps). |
+| Night legibility | 7/10 | Variants are the M0 reskin (already gated); full opacity, no muddy stacking; three distinct reskins verified on-device. |
+| Memory | 6/10 | ↓ from 7 — on-device growth is bounded (§8) but absolute footprint is only measured via unreliable simulator `ps`; a physical-device DevTools measurement is still owed (honest down-score). |
+| A11y / 2.0 / FA | 8/10 | Radio group + single-node Layers button (semantics test) + real scroll/tap at 320×568/2.0 + EN/FA; baked-legend limitation named. |
 
 ## 12. Open questions
 

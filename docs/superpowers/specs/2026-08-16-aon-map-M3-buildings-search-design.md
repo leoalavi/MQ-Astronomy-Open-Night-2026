@@ -208,6 +208,10 @@ class BuildingEntry extends SearchEntry { final Building b; ... } // title=b.nam
 - **Projection:** `buildingPixelToMapPoint` matches the vendored calibration; a no-coord building shows no pin.
 - **Verification:** `check.sh full`; on-device search → select a building → sheet → favorite → favorites list.
 
+## 11b. Closeout — on-device verification (iOS Simulator)
+
+**CODE COMPLETE, iOS-Simulator-verified.** `check.sh full` 9/9 green (analyze, provenance gate, l10n EN+FA, full suite, reskin, web+apk+iOS builds). On-device smoke test PASS: control column (Layers/Search/Favorites) renders; search over the 170-building registry ranks correctly ("library" → Waranara Library **LIB** first, then Library Cafe, Bike Rack — Library); selecting a building centres the camera + opens `BuildingSheet` ("LIB · Academic", "Grid Q17", Walking directions); the heart favourites it; closing the sheet clears the selection (transient pin gone, G15); the Favourites list resolves the favourite ("Waranara Library / LIB"). Two execution surprises the TDD gate caught (not paper review): the `runAsync` gotcha on `rootBundle` (T0), and a masking-pipe in my own gate shell that let two commits land red — corrected to exit-gated. **Release IOU:** physical iOS + Android smoke, and confirm `buildings.json` redistribution permission before any public release.
+
 ## 11. Scorecard (M3, post-gauntlet target — pre-build)
 
 Re-scored after the external gauntlet's fixes (§0b). Targets the design must hold to at closeout:

@@ -2,36 +2,48 @@ import 'package:flutter/material.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
-enum MapMode { campusMap, panorama }
+enum MapMode { campusMap, panorama, compass }
 
-/// A glass segmented control switching the Map tab between the campus map and
-/// the 360° panorama picker.
+/// A glass segmented control switching the Map tab between the campus map, the
+/// 360° panorama picker, and the compass/radar finder (M5).
 class MapModeToggle extends StatelessWidget {
   const MapModeToggle({super.key, required this.value, required this.onChanged});
 
   final MapMode value;
   final ValueChanged<MapMode> onChanged;
 
+  static String _label(AonL10n l, MapMode m) => switch (m) {
+        MapMode.campusMap => l.mapModeMap,
+        MapMode.panorama => l.mapModePanorama,
+        MapMode.compass => l.mapModeCompass,
+      };
+
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     return GlassSurface(
       variant: GlassVariant.control,
       borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
       padding: const EdgeInsets.all(4),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          for (final mode in MapMode.values) ...[
-            if (mode != MapMode.values.first) const SizedBox(width: 2),
-            _Segment(
-              label: mode == MapMode.campusMap ? 'Map' : '360°',
-              selected: value == mode,
-              onTap: () => onChanged(mode),
-            ),
+      // §0-D: scale the 3-segment row down rather than overflow at 320/2.0.
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (final mode in MapMode.values) ...[
+              if (mode != MapMode.values.first) const SizedBox(width: 2),
+              _Segment(
+                label: _label(l, mode),
+                selected: value == mode,
+                onTap: () => onChanged(mode),
+              ),
+            ],
           ],
-        ],
+        ),
       ),
     );
   }
@@ -51,6 +63,8 @@ class _Segment extends StatelessWidget {
       button: true,
       selected: selected,
       label: label,
+      container: true, // §0-E: one node…
+      excludeSemantics: true, // …not two (drop the child Text's implicit label)
       child: Material(
         color: selected ? context.aon.accent : Colors.transparent,
         borderRadius: BorderRadius.circular(AonSpacing.radiusFull),

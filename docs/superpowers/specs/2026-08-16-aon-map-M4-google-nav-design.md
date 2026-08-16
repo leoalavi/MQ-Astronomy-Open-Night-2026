@@ -24,6 +24,64 @@ Verified against the repo + installed patterns. Where this conflicts with §§2�
 2. **Augment, not replace.** AON's existing `WayfindingScreen` is a *deliberate* design (parking→venue, organiser-authored curated routes, written-instructions-primary, **no GPS**, offline — because ±20 m GPS between buildings is worse than useless and curated routes encode lit paths / open gates / marshals). M4 **keeps that primary** and adds Google nav as an *option*, chiefly for the M3 registry buildings (which have no curated route) and as a live alternative for venues.
 3. **Walking route line (parity).** Fetch a walking route and draw the polyline + distance/ETA on the embedded map (not pins-only).
 
+## 0b. External-review amendment — AUTHORITATIVE (supersedes §0 + body where they conflict)
+
+An expert, Google-primary-source review found 40 issues (~12 blockers). Verified the repo-level ones directly; adopted **all 40**. The architecture survives (embedded Google map, augment, walking route); the credential/error/privacy/fallback models are hardened. **This section wins over §0 and §§2–13.** The dragon: *native Maps SDK auth and Routes REST auth look alike ("a Google API key") but are different security surfaces.*
+
+### A. Credentials — separate restricted keys, extractable-key posture (findings #1–4, #38)
+- **My "same key, different delivery" model was wrong.** A single key cannot be application-restricted for Android *and* iOS *and* web-service traffic. Secure model = **FOUR credentials**, each restricted in GCP:
+  - **Android Maps SDK key** — restricted to the Android package + SHA-1, Maps SDK for Android only (native `AndroidManifest` meta-data, from `android/secrets.properties`).
+  - **iOS Maps SDK key** — restricted to the iOS bundle id, Maps SDK for iOS only (native `GMSServices.provideAPIKey`, from `ios/Flutter/Secrets.xcconfig`).
+  - **Android Routes key** — restricted to Android + Routes API; the Dart HTTP call sends `X-Android-Package` + `X-Android-Cert` headers.
+  - **iOS Routes key** — restricted to iOS + Routes API; the call sends `X-Ios-Bundle-Identifier`.
+- **Security posture (reframed):** an API key compiled into a client **is extractable** — `--dart-define`/native config is *configuration, not secrecy*. **Restrictions ARE the security boundary**, not "the key isn't committed."
+- **Proxy vs direct:** DECISION — **direct-client with the restriction headers above** (AON has no backend; a Supabase-style proxy for a one-night event isn't worth standing up/maintaining). The proxy alternative (2 native SDK keys in-app + a server credential) is noted but declined. The §2 reasoning "no proxy needed because the SDK key is already client-side" is **deleted** — it conflated the two security surfaces.
+- **Key restriction is a PRE-LIVE CLOSEOUT GATE, not an IOU** — an unrestricted billed key is direct abuse/billing exposure (developer is financially liable). Closeout verifies all four keys are restricted, on **both** platforms (their credential paths differ).
+
+### B. Capability flag — both surfaces, injectable (findings #5, #6, #10, #31)
+- The flag must not be "Routes key present ∧ mobile" — that shows the CTA while the **native Maps SDK** may be unconfigured (iOS needs `GMSServices.provideAPIKey` before any Maps object). Model TWO capabilities:
+  ```
+  embeddedMapConfigured  — native SDK key present (a compile/build-time contract surfaced to Dart)
+  routesConfigured       — Routes Dart key present
+  googleNavEnabled       — embeddedMapConfigured ∧ routesConfigured ∧ !kIsWeb ∧ mobile
+  ```
+- **Injectable platform:** `mapsNavPlatformProvider → enum {unsupported, android, ios}` (overridable in tests), instead of reading `defaultTargetPlatform` globally.
+- **No-key builds must be provably safe (#6, #32):** Android manifest placeholder + iOS config must tolerate the secret files being **absent**; `AppDelegate` calls `provideAPIKey` only when non-empty. Task 0 gates `flutter build web|apk|ios` **with no secrets present** — "ships dark" becomes executable, not prose.
+
+### C. Routes API correctness — typed outcome + fractional duration (findings #11, #14–17)
+- **🔴 duration parse bug:** Routes `duration` is a protobuf Duration string with **up to 9 fractional digits** (e.g. `"3.5s"`, `"0.125s"`) — my `int.parse(d.replaceAll('s',''))` crashes. Use `Duration(milliseconds: (double.parse(v.substring(0, v.length-1)) * 1000).round())`. Test `"351s"`, `"3.5s"`, `"0.125s"`.
+- **Headers:** add `Content-Type: application/json` (plus `X-Goog-Api-Key`, `X-Goog-FieldMask`, and the platform-restriction header from §A). Field mask + coord nesting from §5 are **confirmed correct** by the review.
+- **🔴 `NavRoute?` cannot express the promised states.** Replace with a typed **`sealed class RouteResult { RouteSuccess(NavRoute) | RouteNoRoute | RouteNetworkFailure | RouteApiFailure(int status) | RouteMalformed }`**. Auth/quota (401/403/429) → `RouteApiFailure` (an operational incident, NOT "no pedestrian route"), with the status/body logged safely (never the key). 200-with-zero-routes → `RouteNoRoute`. Add malformed-parse tests (missing duration, fractional duration, missing/invalid polyline, wrong distance type, invalid JSON).
+
+### D. Nav screen (findings #18–20, #28, #30)
+- **Camera fit** must include **every decoded polyline point** (a walking route bends well outside the origin→dest box) + bottom padding for the panel.
+- **Attribution:** Google's required attribution must stay visible (ToS) — the panel uses explicit map padding so it never covers route content or Google's attribution.
+- **Contract = SNAPSHOT route** (name it): one route computed from the origin at open; the native blue dot keeps moving but the route does **not** auto-recalculate — "Retry" re-fetches. (No live rerouting; matches the "not turn-by-turn" scope + billing.)
+- **Offline is NOT "Google map with pins"** — Google tiles are network-backed, so an outage yields a blank platform view. Failure → a **standalone AON error panel** (Retry + fallbacks), not a reliance on Google tiles.
+- **🔴 Widget-test map seam:** do not assume `google_maps_flutter` auto-stubs. Abstract the map behind a thin `EmbeddedMap` widget seam (or inject a fake `GoogleMapsFlutterPlatform`) so `GoogleNavScreen` states are testable without a real platform view.
+
+### E. Privacy — sequence, consent state machine, self-guarding (findings #21–24)
+- **🔴 Deep-link/router guard:** UI CTAs are flag-gated, but `Routes.googleNav(placeKey)` can be entered directly. `GoogleNavScreen`/router MUST independently enforce: `googleNavEnabled? ∧ consent==accepted ∧ destination resolvable` — never rely on hiding a button.
+- **🔴 Consent BEFORE location:** strict sequence — `tap → consent (or stored accepted) → THEN obtain location → THEN instantiate Google map / send Routes request`. (Google terms require prior, express, revocable consent for end-user location use.)
+- **🔴 Consent state machine:** `MapsConsent { unknown, accepted, declined }` persisted (passport idiom); Settings gets a **"Revoke Google Maps location consent"** control. Not `dialogShown=true`.
+- **ToS notices (#24):** Settings/Info must state Google Maps is included and reference Google's terms/privacy — a **closeout checklist** item, not "one dialog covers it."
+
+### F. Fallbacks — corrected (findings #25, #26, #29, #37, #28)
+- **🔴 BuildingSheet no-key fallback was invalid** — `WalkingRoute`s are curated **parking→venue** (verified: `wayfinding_screen.dart` → `WalkingRoute fromLabel→toLabel` + `EmptyState`), so pushing a building id shows an empty screen. Corrected no-key building path = **external Google Maps URL** (`/maps/dir/?api=1&destination=…&travelmode=walking` — **no API key required**, opens the Maps app or browser). This also gives *graceful degradation*: even with zero credentials, buildings get useful directions.
+- **Point-Me is NOT a no-permission fallback** (verified: it imports `locationControllerProvider`, gates on `locationReliable`). No-permission/offline fallback = the **curated GPS-free `WayfindingScreen`** (for venues) or the **external Maps URL** (for buildings, which Maps resolves without an app-supplied origin).
+- **Rename** "Open in Google Maps app" → **"Open in Google Maps"** (may open a browser). Consider `dir_action=navigate` for a nav handoff.
+
+### G. Billing rule now, not IOU (finding #36)
+`navRouteProvider` is a `.family.autoDispose`; **one in-flight request per (origin≈,destination)**; retry only on explicit user action; no re-fetch on rebuild/reopen within a session. A UI lifecycle bug must not become a billing feature.
+
+### H. Housekeeping (findings #33, #34, #35)
+- Delete the superseded §4 body text (`local.properties`/"same env") — §A is authoritative.
+- Reconcile §10: **three** new deps (§0.1), not one.
+- Task 0 re-runs `flutter build web` **again** after `GoogleNavScreen`+router imports exist (tests the real transitive graph, not just the bare dep).
+
+### I. Re-score (findings #39, #40) — honest pre-build
+Credential safety **7→4** (unrestricted extractable single-key model was the flaw; →9 after §A's separate restricted keys). Privacy **7→6** (consent state machine + ToS notices not yet built; →9 after §E). Testing **6→**stays until §D's map seam + §B's build gates land.
+
 ## 1. Goal
 
 A "Navigate with Google Maps" experience embedded in the app: a real Google map showing the attendee's live location, the destination, and the **walking route** to it — for any M3 building or event venue. Renders Google data on Google's map (compliant), leaves the curated parking→venue wayfinding untouched, and **ships dark until a Google Maps API key is supplied**.
@@ -139,8 +197,8 @@ Google nav opts into location *and* sends it to Google — a boundary the rest o
 | Parity coverage | 6/10 | Embedded Google walking nav closes routing; AR (M5) remains. |
 | ToS / correctness | 9/10 | Google route on Google's own map — the P0 dissolved, not worked around. |
 | Additive safety | 8/10 | Augments (curated wayfinding untouched); every entry flag-gated; ships dark without a key. |
-| Credential safety | 7/10 | dart-define + platform config, not committed; key restriction is a release IOU. |
-| Privacy | 7/10 | First-use disclosure + GPS-free curated path preserved; Google receives location (disclosed). |
+| Credential safety | **4/10** (→9 after §0b.A) | Original single-extractable-key model was the flaw (review #1–4). §0b.A: FOUR separate GCP-restricted keys (Android/iOS × SDK/Routes) + restriction headers; restriction is a PRE-LIVE gate, not IOU. |
+| Privacy | **6/10** (→9 after §0b.E) | GPS-free curated path preserved; but consent state machine (accepted/declined/revoked) + before-location sequencing + deep-link self-guard + ToS notices are §0b.E work, not yet built. |
 | A11y / 2.0 / FA | 8/10 | Panel/disclosure labelled + 2.0 + EN/FA (the Google map itself is Google's a11y). |
 
 ## 13. Open questions / IOUs

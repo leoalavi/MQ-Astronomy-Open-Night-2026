@@ -1,8 +1,49 @@
 # M3 — Buildings + Search + Favorites (design)
 
-**Status:** design, pre-gauntlet. Phase M3 of the map-parity program. Branches off `main` (post M0+M1+M2).
+**Status:** design, gauntletted (self §0 + external §0b). Phase M3 of the map-parity program. On `feature/map-M3-buildings-search` off `main` (post M0+M1+M2).
 
 **Parent:** `2026-08-15-aon-map-parity-program-design.md` — M3 row (§capability matrix), §8 hybrid authority split, IOU-P4/P6, open question #3. This spec discharges those.
+
+## 0b. External-review amendment — AUTHORITATIVE (supersedes §0 + body where they conflict)
+
+An external gauntlet found 16 issues (7 red). Verified each against the recon facts + installed patterns; **all 16 adopted**. The spine (async registry, pixel placement, search-only building pins, local favorites) is unchanged — these make async state and canonical identity explicit. Where this conflicts with §0/§3–§12, **this wins**.
+
+### A. Async/state model (findings #3, #1, #4)
+- **Split query from derived results (#3).** Replace the `mapSearchProvider = Notifier<String>` (query + derived results conflated) with three composed providers so results react to the registry loading→data:
+  ```
+  mapSearchQueryProvider    -> Notifier<String>                     (mutable user input)
+  searchIndexProvider       -> Provider<AsyncValue<List<SearchEntry>>>  (venues ⊕ buildings, deduped)
+  mapSearchResultsProvider  -> Provider<List<SearchEntry>>  watches (query, index)
+  ```
+  Test: type `LIB` while buildings load → query stays `LIB` → the building result appears automatically when the asset finishes.
+- **Selection identity is a stable key, not a live object (architecture note).** `selectedPlaceKeyProvider = Notifier<String?>` holding a namespaced `PlaceKey` string (`venue:<id>` / `building:<id>`), resolved to an entry via a `placeResolverProvider`. No long-lived rebuilt `SearchEntry` as map state (uses AON's `SelectedIdNotifier` idiom).
+- **Linked-venue cold-start (#1, BLOCKER).** `buildingsProvider` is async but the 21 venue markers render immediately, so a linked venue cannot depend on the async registry for its position. **Fix: linked venues carry curated `campusX`/`campusY` baked onto the Venue record** (const data, so placement is fully synchronous), copied from the linked building and **drift-tested against `buildings.json`**. The async registry is used only for *search vocab + dedup*, never for placement timing. No GPS-bootstrap-then-snap.
+
+### B. Canonical identity & search (findings #2, #10, #13)
+- **Linked venue inherits the building's search vocabulary (#2, BLOCKER).** Dedup must not make search worse: searching `LIB` must still find the Library after it's curated as a venue. The canonical linked `VenueEntry` scores as **max(score over venue fields, score over the linked building's id/code/aliases/searchTokens/tags)** while its *displayed* row stays the venue. So the entry inherits the building's tokens for ranking.
+- **Deterministic mixed comparator (#13).** Order = **score desc, then `PlaceKey` asc** (stable). Empty trimmed query → first 15 default entries (`PlaceKey`-asc); non-empty → `score>0` filtered, score desc, `PlaceKey`-asc tiebreak. `searchIndexProvider` count invariant: `venues + buildings − linkedIdentities`.
+- **Linked-identity integrity tests (#10).** Because `buildingId` drives dedup+placement+favorites, each link is load-bearing. Gate: every non-null `Venue.buildingId` resolves to exactly one `Building`; no duplicate `Building.id`; no two venues link the same building; index count == `venues + buildings − links`.
+
+### C. Selection markers (finding #8)
+- **No duplicate pin (#8).** A selected **building** gets a transient single marker (it has none when idle). A selected **venue** is already on the always-on layer → **highlight/decorate the existing marker** (enlarge + badge), never add a second pin. Both center the camera + open the detail sheet.
+
+### D. Favorites (findings #4, #5, #6, #7)
+- **Async init, explicit (#4).** Use the **passport idiom**: `main.dart` loads a snapshot via `SharedPreferencesAsync` (recommended over legacy `SharedPreferences` for new code), injected through `ProviderScope` overrides; `favoritesProvider = NotifierProvider<FavoritesController, FavoritesState>` seeds from the injected snapshot (synchronous state, empty default for tests). Not the legacy `saved_events` `AsyncNotifier`.
+- **Serialized writes (#5).** Writes go through a single serialized `Future` chain (passport `_scheduleSave`), always persisting the *latest* state; a failed save flips a `saveFailed` flag, never throws. Test: add A → add B → remove A rapidly → restart store → persisted == `{B}`.
+- **Never prune on transient loading (#6).** A `building:LIB` favorite is *temporarily unresolved* while the registry loads — keep it. The favorites **store** retains all keys; the favorites **list** resolves what it can and shows the rest as pending during `AsyncLoading`, classifying a key orphaned **only after** a successful registry load proves the id absent (and even then keeps it in the store).
+- **Namespaced scope (#7).** Buildings are permanent → **global** key `map_favorites.buildings.v1`. AON venues are event records (e.g. `registration-point`) → **event-scoped** key `map_favorites.venues.<eventId>` (the `saved_events` keyFor pattern), so a venue favorite doesn't leak to a future event.
+
+### E. Routing authority — the third axis (finding #11)
+Placement authority ≠ routing authority. The Directions CTA (wired by M4) targets **entrance GPS if present, else centre GPS**, taken from the **semantic-plus-precision winner**: for a **linked venue**, use the **building's** `routingLatitude/Longitude` (entrance ?? centre — the real-world nav target); for an **unlinked venue**, the venue's `routingLatitude/Longitude`; for a **building**, the building's. So a pin and its Directions target are defined from one rule, never divergent by accident.
+
+### F. Sheet→sheet navigation contract (finding #12)
+Search/Favorites sheets **never stack another modal from their own context**. They `Navigator.pop(selectedPlaceKey)`; `MapScreen` receives it and orchestrates: set `selectedPlaceKeyProvider` → move camera → open the detail sheet. Mirrors MQ's `BuildingSearchSheet` (`Navigator.pop(building)`). Same for `FavoritesSheet`.
+
+### G. Executable invariants + provenance (findings #9, #14, #16)
+Turn the §0 prose receipts into **Task-0 test gates** (not prose): exactly **170** records; ids unique + non-empty; every `name`/`code` non-empty; every `campusX/Y` within `[0,_pw]×[0,_ph]`; **all 170 `projectPixel` succeed**; no `(0,0)` sentinel; **exactly 21** GPS-affine-domain misses (guards the pixel-necessity claim); the **18WW** pixel-vs-affine fixture (`4.04` map-units); and **every raw `category` string in `buildings.json` is a known enum value** (a typo like `"residental"` fails CI, not silently → `other`). **Provenance (#16):** record `buildings.json` source repo/path + source commit + licence/permission + **SHA-256** in a vendored `docs/fixtures/buildings_provenance.json`, drift-tested (mirrors the M1 `campus_overlay_meta.json` vendoring).
+
+### H. A11y — executable, not promised (finding #15)
+Same rigor as the M2 gauntlet fixes: **semantics-tree assertions** (search field labelled; each result row is a button with a spoken label; favorite toggle has a state-aware label announcing selected/not). For 320×568 / 2.0: **scroll the last actionable row into view and TAP it** (not just "no overflow"), including the search sheet under keyboard/view-inset pressure.
 
 ## 0. Gauntlet amendment — AUTHORITATIVE
 
@@ -167,15 +208,18 @@ class BuildingEntry extends SearchEntry { final Building b; ... } // title=b.nam
 - **Projection:** `buildingPixelToMapPoint` matches the vendored calibration; a no-coord building shows no pin.
 - **Verification:** `check.sh full`; on-device search → select a building → sheet → favorite → favorites list.
 
-## 11. Scorecard (M3, pre-build)
+## 11. Scorecard (M3, post-gauntlet target — pre-build)
+
+Re-scored after the external gauntlet's fixes (§0b). Targets the design must hold to at closeout:
 
 | Axis | Score | Raises it |
 |---|---:|---|
-| Parity coverage | 6/10 | Registry + ranked search + favorites closed; browse drill-downs intentionally out; routing is M4, AR M5. |
-| Hybrid correctness | 7/10 | Two-axis authority honoured (venue semantic-wins on link; each source own-coordinate); curated links are the risk surface. |
-| Additive safety | 8/10 | Buildings are search-only; idle map + M1/M2 untouched; proven by the wiring regression. |
-| Search quality | 7/10 | MQ's ranked scorer ported verbatim + venue adapter; no fuzzy/edit-distance (parity, not beyond). |
-| A11y / 2.0 / FA | 8/10 | Labelled search + result buttons + favorites, EN/FA, 2.0. |
+| Parity coverage | 7/10 | Registry + ranked search + favorites closed; browse drill-downs intentionally out; routing M4, AR M5. |
+| Hybrid correctness | 9/10 | Three axes now explicit — semantic (venue), render (pixel `projectPixel`), routing (entrance GPS); linked venues carry drift-tested curated `campusX/Y` (no cold-start hole); integrity tests gate every link. |
+| Additive safety | 9/10 | Buildings search-only; selected venue decorates its existing pin (no dup); idle map + M1/M2 untouched; wiring regression. |
+| Search quality | 8.5/10 | Ported scorer + venue adapter; linked venue inherits building vocab (dedup can't worsen search); deterministic mixed comparator. |
+| Persistence correctness | 8.5/10 | Passport-idiom async init (injected snapshot), serialized latest-state writes, transient-loading keys never pruned, event-scoped venue vs global building namespaces. |
+| A11y / 2.0 / FA | 9/10 | Semantics-tree assertions + scroll-and-tap last row + EN/FA; not just "no overflow". |
 
 ## 12. Open questions / IOUs discharged
 

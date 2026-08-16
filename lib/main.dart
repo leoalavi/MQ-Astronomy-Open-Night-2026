@@ -17,6 +17,8 @@ import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/passport_store.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/favorites_store.dart';
+import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
 
 import 'package:aon2026/widgets/glass_shader.dart';
 import 'package:aon2026/app/text_scale.dart';
@@ -53,6 +55,19 @@ Future<(Set<String>, FavoritesStore)> loadFavorites({FavoritesStore? store}) asy
   return (snapshot, s);
 }
 
+/// Best-effort Google-nav consent hydration (passport-parallel). NEVER throws;
+/// a load failure defaults to `unknown` (re-ask). [store] is injectable for tests.
+Future<(MapsConsent, MapsConsentStore)> loadMapsConsent({MapsConsentStore? store}) async {
+  final s = store ?? SharedPrefsMapsConsentStore(prefs: SharedPreferencesAsync());
+  MapsConsent snapshot;
+  try {
+    snapshot = await s.loadSnapshot();
+  } catch (_) {
+    snapshot = MapsConsent.unknown;
+  }
+  return (snapshot, s);
+}
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -78,6 +93,7 @@ Future<void> main() async {
 
   final (passportSnapshot, passportStore) = await loadPassport();
   final (favoritesSnapshot, favoritesStore) = await loadFavorites();
+  final (mapsConsentSnapshot, mapsConsentStore) = await loadMapsConsent();
 
   runApp(
     ProviderScope(
@@ -86,6 +102,8 @@ Future<void> main() async {
         passportStoreProvider.overrideWithValue(passportStore),
         favoritesSnapshotProvider.overrideWithValue(favoritesSnapshot),
         favoritesStoreProvider.overrideWithValue(favoritesStore),
+        mapsConsentSnapshotProvider.overrideWithValue(mapsConsentSnapshot),
+        mapsConsentStoreProvider.overrideWithValue(mapsConsentStore),
         locationServiceProvider.overrideWithValue(GeolocatorLocationService()),
         headingServiceProvider.overrideWithValue(SensorsHeadingService()),
       ],

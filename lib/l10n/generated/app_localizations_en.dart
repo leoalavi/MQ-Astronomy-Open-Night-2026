@@ -290,6 +290,31 @@ class AonL10nEn extends AonL10n {
   String get mapZoomOut => 'Zoom out';
 
   @override
+  String get mapLayersTitle => 'Map layers';
+
+  @override
+  String get mapVariantBase => 'Campus map';
+
+  @override
+  String get mapVariantParking => 'Parking';
+
+  @override
+  String get mapVariantParkingDesc => 'Visitor and event parking areas';
+
+  @override
+  String get mapVariantAccessibility => 'Accessible routes';
+
+  @override
+  String get mapVariantAccessibilityDesc =>
+      'Step-free paths and accessible entrances';
+
+  @override
+  String get mapVariantWater => 'Drinking water';
+
+  @override
+  String get mapVariantWaterDesc => 'Water refill points across campus';
+
+  @override
   String get panorama360Unavailable =>
       '3D view is not available for this location.';
 

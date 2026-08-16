@@ -92,6 +92,15 @@
   "mapZoomIn": "بزرگ‌نمایی",
   "mapZoomOut": "کوچک‌نمایی",
 
+  "mapLayersTitle": "لایه‌های نقشه",
+  "mapVariantBase": "نقشهٔ پردیس",
+  "mapVariantParking": "پارکینگ",
+  "mapVariantParkingDesc": "پارکینگ بازدیدکنندگان و رویداد",
+  "mapVariantAccessibility": "مسیرهای دسترس‌پذیر",
+  "mapVariantAccessibilityDesc": "مسیرهای بدون پله و ورودی‌های دسترس‌پذیر",
+  "mapVariantWater": "آب آشامیدنی",
+  "mapVariantWaterDesc": "ایستگاه‌های پرکردن آب در پردیس",
+
   "panorama360Unavailable": "نمای سه‌بعدی برای این مکان در دسترس نیست.",
   "panorama360Loading": "در حال بارگذاری نمای ۳۶۰ درجه…",
   "panorama360Title": "پیش‌نمای ۳۶۰ درجه",

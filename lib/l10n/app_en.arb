@@ -143,6 +143,17 @@
   "mapZoomIn": "Zoom in",
   "mapZoomOut": "Zoom out",
 
+  "mapLayersTitle": "Map layers",
+  "@mapLayersTitle": { "description": "Title of the thematic-variant picker sheet; label of the Layers button" },
+  "mapVariantBase": "Campus map",
+  "@mapVariantBase": { "description": "Picker row for the plain illustrated campus basemap (no theme)" },
+  "mapVariantParking": "Parking",
+  "mapVariantParkingDesc": "Visitor and event parking areas",
+  "mapVariantAccessibility": "Accessible routes",
+  "mapVariantAccessibilityDesc": "Step-free paths and accessible entrances",
+  "mapVariantWater": "Drinking water",
+  "mapVariantWaterDesc": "Water refill points across campus",
+
   "panorama360Unavailable": "3D view is not available for this location.",
   "@panorama360Unavailable": { "description": "Shown when a venue has no 360 tour. Never expose scene ids or 'not found' errors." },
   "panorama360Loading": "Loading the 360° view…",

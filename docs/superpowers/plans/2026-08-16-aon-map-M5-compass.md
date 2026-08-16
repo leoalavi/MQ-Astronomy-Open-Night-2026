@@ -26,6 +26,87 @@
 
 ---
 
+## 0. Plan gauntlet amendments (AUTHORITATIVE — supersede the task bodies where they conflict)
+
+Applied 2026-08-16 after a 3-reviewer + self plan-gauntlet (compile/API · test-validity · §0-coverage/integration). **17 findings verified against the code, 0 rejected** (4 high, 7 medium, 6 low/minor); several plan tests were verified *sound* (subscribe-before-emit, T2 isolation, T8 dispose). Where a task below conflicts, **this section wins.**
+
+### 0-A [HIGH, F1/F2] Rose and `NearbyList` COEXIST in every fix-acquired branch
+The body made them mutually exclusive — violating §0.6 (list is the accessible tap path) and re-opening the §0.5 First-Aid safety gap on any working-magnetometer device. **`CompassModeView.build` (T8) renders, when `fix != null`:**
+```dart
+final avail = ref.watch(compassControllerProvider.select((s) => s.availability));
+final body = switch (avail) {
+  HeadingAvailability.available || HeadingAvailability.acquiring =>
+    Column(children: [
+      Expanded(flex: 3, child: CompassRadarView()),   // visual layer
+      const Divider(height: 1),
+      Expanded(flex: 2, child: NearbyList()),          // accessible 56px tap path + safety rows
+    ]),
+  HeadingAvailability.unavailable || HeadingAvailability.unsupported =>
+    const NearbyList(),                                 // list only (no rose)
+};
+return Column(children: [_FilterField(...), Expanded(child: body)]);
+```
+- **T8 test:** in `available` mode assert `find.byType(NearbyList)` present AND `find.byType(CompassRadarView)` present.
+- **T6 test:** the unlocatable First-Aid safety row is asserted in `NearbyList` regardless of heading (it already is; keep).
+
+### 0-B [HIGH, F3] Locked-panel honesty — suppress crisp certainty for placeholder coords
+`CompassController._compute` (T3) must consult the locked target's confidence. Change the `near` computation to:
+```dart
+reliable = !fix.isLowAccuracy && locked.confidence.isReliable; // isReliable => != placeholder
+near = reliable && locked.distanceMeters <= MapConfig.pointMeNearTargetMeters;
+```
+`CompassState` gains `bool lockedApproximate` = `locked != null && !locked!.confidence.isReliable`. **T7** renders `l.compassApproximate` on the locked panel and **suppresses `l.compassYouAreHere`** when `lockedApproximate`. **T3 test:** lock a `DataConfidence.placeholder` target at ~0 m → assert `lockedNearTarget == false` and `lockedApproximate == true`.
+
+### 0-C [HIGH, PT-7] Test the `acquiring` rose (null heading) + null-guard the painter
+`acquiring` is the default first-paint (≤4 s) and routes to `CompassRadarView` with `trueHeadingDegrees == null`, `locked == null`. **The painter MUST null-guard** (`final h = state.trueHeadingDegrees; if (h != null) drawFacingWedge(h);`) and render a **static Icon+Text** acquiring hint (copy `point_me_screen.dart:159-161`), never a `CircularProgressIndicator`/`AnimationController`. **T7 test:** override the controller to `availability: acquiring, trueHeadingDegrees: null, locked: null`, non-null fix, render `CompassRadarView`, assert `find.byType(CircularProgressIndicator)` `findsNothing`, `takeException()` null, and no pending timers (test the frame with `pump()`).
+
+### 0-D [HIGH, F6/PT-6] Toggle must not overflow at 320×568 / textScale 2.0
+`_Segment` is a `mainAxisSize.min` Row with no `Flexible`; a 3rd "Compass"/FA "قطب‌نما" segment can RenderFlex-overflow the EXISTING test `panorama_responsive_test.dart:27` (renders `MapModeToggle` at 320/2.0, asserts `takeException() isNull`). **T5 fix (widget change, not a test edit):** wrap the toggle's `Row` in `FittedBox(fit: BoxFit.scaleDown)` inside the `GlassSurface` so it scales down only when it would overflow. **T5 test:** add a 320×568/2.0 `no-overflow` case for the 3-segment toggle; verify `panorama_responsive_test.dart` (its `'toggle @ 320x568 / 2.0'` case now exercises 3 segments) stays green.
+
+### 0-E [MED, CA-2] `_Segment` Semantics = single labeled node
+So `find.bySemanticsLabel(...)` `findsOneWidget` (T5) does not double-match the `Semantics(label:)` + descendant `Text(label)`. Set the `_Segment` Semantics to `Semantics(button: true, selected: selected, label: label, container: true, excludeSemantics: true, child: …)`. (Gesture + `find.text` still work; only the a11y tree collapses to one node.)
+
+### 0-F [MED, CA-1] `nav_format` import path
+T6 imports `package:aon2026/services/nav_format.dart` (it is in `lib/services/`, not `lib/widgets/`). Call site: `formatNavDistance(l, t.distanceMeters.round())`.
+
+### 0-G [MED, PT-2/PT-3] T3 harness: override `searchIndexProvider` directly, use plain `test()`
+T3's `_c` overrides **`searchIndexProvider.overrideWithValue([BuildingEntry(Building(id:'T', code:'T', name:'Tower', category: BuildingCategory.academic, latitude:-33.7700, longitude:151.1134, campusX:1, campusY:1))])`** — NOT `buildingsProvider` (avoids the async FutureProvider race; the locked target resolves synchronously). Convert the three T3 cases from `testWidgets`+`runAsync` to plain `test(...) async` with `await Future<void>.delayed(Duration.zero)` between emits (broadcast delivery drains on the microtask; no widget pumped).
+
+### 0-H [MED, PT-4] Cover the real `nearbyTargetsProvider` end-to-end (T2)
+Add a T2 test that does NOT override `nearbyTargetsProvider`: real `searchIndexProvider` (override with a small `[BuildingEntry, VenueEntry]`), `FakeLocationService` emits a fix, assert (a) with no fix → `[]`; (b) with fix → nearest target present; (c) setting `compassFilterProvider` narrows the result. Proves the null-fix-empty branch + filter passthrough the widget tests mock away.
+
+### 0-I [MED, F4] "Nothing nearby" empty state
+When `fix != null` and `nearbyTargetsProvider` is empty AND `unlocatableVenues` is empty, `NearbyList` renders `l.compassNothingNearby` (centered) instead of a blank `ListView`. **T6 test:** empty index → the message shows.
+
+### 0-J [MED, F9] `_FilterField` is a real widget + tested
+`_FilterField` is a `TextField` (hint `l.compassFilterHint`) whose `onChanged` calls `ref.read(compassFilterProvider.notifier).set(value)`. **T8 test:** type into it → `compassFilterProvider` updates → the visible target set narrows (pump a fix + a 2-entry index; type a query matching one; assert the other row is gone).
+
+### 0-K [MED, F10] Compass a11y reachability proof
+**T8 test** at 320×568 / textScale 2.0 (fix present, heading `available` so both rose and list render): `scrollUntilVisible` + `ensureVisible` + `tap` the LAST `NearbyList` row; assert it locks (`compassLockedProvider` set) and `takeException()` null. This is the "reachable+tappable, not just no-overflow" proof the global A11y constraint requires.
+
+### 0-L [MED, §0.1 honesty] `_EnableLocation` distinguishes OFF from ACQUIRING; test denied retry
+`CompassModeView.build`: show `_EnableLocation` only when location is **not active** (`ref.watch(locationControllerProvider.select((s) => !s.active))`); when active-but-no-fix-yet (granted, acquiring) show an acquiring affordance (spinner-free `l.compassFindingNorth`-style text), NOT `l.compassLocationNeeded`. **T8 test:** `FakeLocationService(grant: LocationStatus.denied)` → tapping `l.compassEnableLocation` calls `onLocateTapped` again (assert `svc` request count increments) — a working retry, not a dead end.
+
+### 0-M [LOW, F5] Cap the filtered set to N
+`nearestTargets`: the `if (q.isNotEmpty) return located;` branch becomes `return located.take(MapConfig.compassMaxTargets).toList();` (nearest-N of the filtered matches, per §0.2). The existing T1 filter test (single match `lib0`) still passes; add a case where >N match → capped to N.
+
+### 0-N [LOW, F7] Guard the FAB invert
+**T8 test:** pump `map_screen` (or assert on the mode) in `MapMode.compass` → `find.byType(FloatingActionButton)` `findsNothing` (the wayfinding FAB is `campusMap`-only). No existing test covers this, so the invert is otherwise silent.
+
+### 0-O [LOW, F11] Radar test overrides a fake `CompassController`
+`NotifierProvider` can't `overrideWithValue`. Define a `test/support/fake_compass_controller.dart` `class FakeCompassController extends CompassController { FakeCompassController(this._s); final CompassState _s; @override CompassState build() => _s; }` and use `compassControllerProvider.overrideWith(() => FakeCompassController(fixedState))` in T7's radar/acquiring/locked tests.
+
+### 0-P [MINOR, CA-3/4/5/6] Tidy
+- **Drop** the dead l10n key `compassDistanceAway` (EN+FA) — never consumed.
+- `compassVisibleProvider` is defined ONCE, in `location_providers.dart` (T2); the File-Structure line grouping it under `compass_controller.dart` is descriptive of its *consumer*, not a second definition.
+- Cite fix: `pointMeActiveProvider` is `location_providers.dart:58-67`.
+- T6 helper: drop the misplaced `// ignore: prefer_const_constructors` (the fixture compiles without it).
+
+### 0-Q Re-scored plan-readiness
+The gauntlet converted "reuse" optimism into concrete work: the rose+list composition (0-A), locked-panel honesty (0-B), acquiring safety (0-C), and the overflow/semantics toggle fixes (0-D/0-E) are real additions. Task count unchanged (T1–T9); T7 and T8 grow. No blocker remains that would ship a green-but-broken feature.
+
+---
+
 ## File Structure
 
 **Create:**
@@ -615,8 +696,6 @@ class CompassController extends Notifier<CompassState> {
   "compassYouAreHere": "You're basically there",
   "compassApproximate": "Approximate location",
   "compassUnlocatable": "Location unknown — see the printed map",
-  "compassDistanceAway": "{distance} away",
-  "@compassDistanceAway": { "placeholders": { "distance": {"type": "String"} } },
 ```
 
 - [ ] **Step 2: Add FA keys** (real Persian) to `app_fa.arb`:
@@ -635,7 +714,6 @@ class CompassController extends Notifier<CompassState> {
   "compassYouAreHere": "تقریباً رسیده‌اید",
   "compassApproximate": "موقعیت تقریبی",
   "compassUnlocatable": "موقعیت نامشخص — نقشهٔ چاپی را ببینید",
-  "compassDistanceAway": "{distance} فاصله",
 ```
 
 - [ ] **Step 3: Regenerate + verify completeness:**

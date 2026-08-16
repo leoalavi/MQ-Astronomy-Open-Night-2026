@@ -10,6 +10,7 @@ import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/widgets/compass_mode_view.dart';
 import 'package:aon2026/widgets/map_mode_toggle.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/widgets/panorama_building_picker.dart';
@@ -176,6 +177,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 onOpen: (id) => context.push(Routes.panoramaFor(id)),
               ),
             )
+          else if (_mode == MapMode.compass)
+            const Expanded(child: CompassModeView()) // M5 (§0-A/§0.4)
           else ...[
           MapCategoryFilterBar(
             selected: _visible,
@@ -352,7 +355,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           ],
         ],
       ),
-      floatingActionButton: _mode == MapMode.panorama
+      // Wayfinding FAB is campus-map only — panorama and compass are their own
+      // finders and must not overlay a walk-route FAB (§0.4/§0-N).
+      floatingActionButton: _mode != MapMode.campusMap
           ? null
           : Padding(
         padding: EdgeInsets.only(

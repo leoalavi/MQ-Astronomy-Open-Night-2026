@@ -1205,3 +1205,33 @@ Expected: analyze clean, full `flutter test` green, provenance SHA ok, l10n EN+F
 - **Placeholder scan:** the T6/T7/T8 widget bodies are described-with-real-signatures rather than full pixel code; every load-bearing contract (providers, math, lifecycle, tests) is concrete. No `TBD`/`TODO`.
 - **Type consistency:** `NearbyTarget.distanceMeters` double → `formatNavDistance(..., .round())`; `routingLatLngOf` returns `(double,double)?`; `compassLockedProvider` is `String?`; `CompassController.build` returns `_compute()` (never assigns state in build); `headingServiceProvider` imported from `point_me_controller.dart:30`.
 - **Order:** each task compiles+tests independently; l10n (T4) precedes UI (T5–T8); enum change (T5) precedes `map_screen` wiring (T8).
+
+---
+
+## Closeout record (executed 2026-08-16)
+
+**Status: CODE-COMPLETE — full gate green; on-device verification is the standing IOU.**
+
+TDD, exit-gated, 8 exec commits on `feature/map-M5-compass`:
+- T1 `dd7895c` · T2 `66ea571` · T3 `95e340f` · T4 `e20458c` · T5 `0253f76` · T6 `c7776b4` · T7 `4582e6b` · T8 `2a6c63b`
+
+**Gate:** `./scripts/check.sh full` GREEN — analyze clean, full `flutter test`, buildings.json provenance, l10n EN+FA complete, reskin py, AND web + apk + iOS-simulator builds. Ships dark, no key.
+
+**34 compass tests** across 8 files. Every §0R/§0 blocker landed WITH a test: coord-frame (0R-1, absolute-bearing lock test), clustering incl. 359°/1° wrap (0R-8), scoreEntry filter (0R-3), confirmed-only "you're here" (0R-6), terminal latch (M8), B4 no-preseed regression, denied-retry (0-L), rose+list coexist (0-A), acquiring-no-spinner (0R-C), 320/2.0 a11y reachability (0-K), FAB campusMap-only (0-N), toggle overflow (0-D).
+
+**Gate caught in execution what paper couldn't:** 5 red gates fixed (unused import + const hints in tests ×3; a broadcast-emit-before-subscribe timing bug in the mode-view test; the Scaffold FAB exit-animation still-in-tree under bare `pump()`).
+
+### Re-scored scorecard (vs §0.8 / §0R-16)
+| Axis | Pre-exec | Closeout | Note |
+|---|---|---|---|
+| Event fit | 8 | 8 | Venue-bias + red palette shipped; owes the night trial. |
+| Reuse / low-risk | 7 | 8 | Landed clean on Phase B + M3; the "new work" was real but contained. |
+| Honesty | 6 | 8 | Placeholder dimming, confirmed-only certainty, First-Aid safety rows all shipped + tested. |
+| A11y | 6 | 7 | List-as-tap-path + 320/2.0 reachability proven; owes a real TalkBack/VoiceOver pass. |
+| Geometry | 6.5 | 8 | Coord-frame coherence + honest clustering + radius clamps, all test-locked. |
+| Clutter control | 7 | 7 | Clustering + venue-bias + filter shipped; owes on-rose legibility trial with the full ~29-blip set. |
+
+### IOUs (owed, not blocking)
+- **On-device heading proof** (physical Android + iOS): arrow tracks true bearing w/ declination; list-fallback on a magnetometer-off device; red palette legible in the dark; denied-permission retry. Simulator has no magnetometer → it exercises the `unavailable`→list path (a real proof of the honest degradation), captured by the widget suite.
+- On-rose legibility trial with the full venue+building set (clutter axis).
+- TalkBack/VoiceOver pass (a11y axis).

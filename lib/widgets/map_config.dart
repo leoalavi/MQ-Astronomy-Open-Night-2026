@@ -64,6 +64,20 @@ abstract final class MapConfig {
   /// bearing is less useful — show the "you're basically there" state instead.
   static const double pointMeNearTargetMeters = 20;
 
+  /// Compass mode (M5). Max NEAREST buildings in the default (unfiltered) rose;
+  /// venues are never culled by this — it bounds only the building fill (§0R-2).
+  static const int compassMaxBuildingTargets = 12;
+
+  /// Blip radius transfer clamps (metres): distance ≤ near ⇒ centre, ≥ far ⇒ rim
+  /// (§0R-7). Radius fraction = ((m − near)/(far − near)).clamp(0,1).
+  static const double compassNearClampMeters = 25;
+  static const double compassFarClampMeters = 800;
+
+  /// Targets whose true bearings fall within this gap are CLUSTERED into one
+  /// marker (§0R-8) — never angularly/radially displaced (that would lie about
+  /// bearing/distance).
+  static const double compassMinAngularSepDegrees = 8;
+
   /// Standard OpenStreetMap raster tiles.
   ///
   /// **No API key.** That is the point — see `docs/architecture.md`. Usage is

@@ -17,6 +17,7 @@ import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/campus_projection.dart';
 import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
@@ -672,6 +673,23 @@ class VenueSheet extends ConsumerWidget {
               label: Text(l.mapWalkingDirections),
             ),
           ),
+
+          // M4 augment: an embedded Google walking route, in ADDITION to the
+          // curated wayfinding above — only when Google nav is configured.
+          if (ref.watch(googleNavEnabledProvider)) ...[
+            const SizedBox(height: AonSpacing.space3),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  context.push(Routes.googleNavTo('venue:${venue.id}'));
+                },
+                icon: const Icon(Icons.map_outlined),
+                label: Text(l.mapNavGoogle),
+              ),
+            ),
+          ],
 
           if (venue.hasCoordinates) ...[
             const SizedBox(height: AonSpacing.space3),

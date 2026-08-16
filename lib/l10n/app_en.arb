@@ -329,5 +329,20 @@
   "settingsRevokeGoogleConsent": "Revoke Google Maps access",
   "@settingsRevokeGoogleConsent": { "description": "Settings control to reset Google-nav consent to unknown" },
   "settingsGoogleMapsNotice": "When you use Google Maps directions, your location is sent to Google. Google's terms and privacy policy apply.",
-  "@settingsGoogleMapsNotice": { "description": "Settings/Info notice about Google Maps usage + ToS" }
+  "@settingsGoogleMapsNotice": { "description": "Settings/Info notice about Google Maps usage + ToS" },
+  "mapModeMap": "Map",
+  "mapModePanorama": "360°",
+  "mapModeCompass": "Compass",
+  "compassFindingNorth": "Finding north…",
+  "compassFindingYourLocation": "Finding your location…",
+  "compassUnavailable": "Compass unavailable on this device",
+  "compassUnavailableBody": "Showing what's nearby with directions instead.",
+  "compassNearbyTitle": "Nearby",
+  "compassFilterHint": "Filter places",
+  "compassNothingNearby": "Nothing nearby to point to yet.",
+  "compassLocationNeeded": "Turn on location to find your way",
+  "compassEnableLocation": "Enable location",
+  "compassYouAreHere": "You're basically there",
+  "compassApproximate": "Approximate location",
+  "compassUnlocatable": "Location unknown — see the printed map"
 }

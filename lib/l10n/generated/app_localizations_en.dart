@@ -731,4 +731,50 @@ class AonL10nEn extends AonL10n {
   @override
   String get settingsGoogleMapsNotice =>
       'When you use Google Maps directions, your location is sent to Google. Google\'s terms and privacy policy apply.';
+
+  @override
+  String get mapModeMap => 'Map';
+
+  @override
+  String get mapModePanorama => '360°';
+
+  @override
+  String get mapModeCompass => 'Compass';
+
+  @override
+  String get compassFindingNorth => 'Finding north…';
+
+  @override
+  String get compassFindingYourLocation => 'Finding your location…';
+
+  @override
+  String get compassUnavailable => 'Compass unavailable on this device';
+
+  @override
+  String get compassUnavailableBody =>
+      'Showing what\'s nearby with directions instead.';
+
+  @override
+  String get compassNearbyTitle => 'Nearby';
+
+  @override
+  String get compassFilterHint => 'Filter places';
+
+  @override
+  String get compassNothingNearby => 'Nothing nearby to point to yet.';
+
+  @override
+  String get compassLocationNeeded => 'Turn on location to find your way';
+
+  @override
+  String get compassEnableLocation => 'Enable location';
+
+  @override
+  String get compassYouAreHere => 'You\'re basically there';
+
+  @override
+  String get compassApproximate => 'Approximate location';
+
+  @override
+  String get compassUnlocatable => 'Location unknown — see the printed map';
 }

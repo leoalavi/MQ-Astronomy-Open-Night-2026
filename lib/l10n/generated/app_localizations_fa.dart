@@ -732,4 +732,51 @@ class AonL10nFa extends AonL10n {
   @override
   String get settingsGoogleMapsNotice =>
       'هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود.';
+
+  @override
+  String get mapModeMap => 'نقشه';
+
+  @override
+  String get mapModePanorama => '۳۶۰°';
+
+  @override
+  String get mapModeCompass => 'قطب‌نما';
+
+  @override
+  String get compassFindingNorth => 'در حال یافتن شمال…';
+
+  @override
+  String get compassFindingYourLocation => 'در حال یافتن موقعیت شما…';
+
+  @override
+  String get compassUnavailable => 'قطب‌نما روی این دستگاه در دسترس نیست';
+
+  @override
+  String get compassUnavailableBody =>
+      'در عوض مکان‌های نزدیک به همراه جهت نشان داده می‌شود.';
+
+  @override
+  String get compassNearbyTitle => 'نزدیک شما';
+
+  @override
+  String get compassFilterHint => 'فیلتر مکان‌ها';
+
+  @override
+  String get compassNothingNearby => 'هنوز جایی برای نشان‌دادن نزدیک نیست.';
+
+  @override
+  String get compassLocationNeeded =>
+      'برای مسیریابی، موقعیت مکانی را روشن کنید';
+
+  @override
+  String get compassEnableLocation => 'روشن‌کردن موقعیت مکانی';
+
+  @override
+  String get compassYouAreHere => 'تقریباً رسیده‌اید';
+
+  @override
+  String get compassApproximate => 'موقعیت تقریبی';
+
+  @override
+  String get compassUnlocatable => 'موقعیت نامشخص — نقشهٔ چاپی را ببینید';
 }

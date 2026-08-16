@@ -228,5 +228,20 @@
   "mapNavDisclosureAccept": "استفاده از نقشهٔ گوگل",
   "mapNavDisclosureDecline": "الان نه",
   "settingsRevokeGoogleConsent": "لغو دسترسی نقشهٔ گوگل",
-  "settingsGoogleMapsNotice": "هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود."
+  "settingsGoogleMapsNotice": "هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود.",
+  "mapModeMap": "نقشه",
+  "mapModePanorama": "۳۶۰°",
+  "mapModeCompass": "قطب‌نما",
+  "compassFindingNorth": "در حال یافتن شمال…",
+  "compassFindingYourLocation": "در حال یافتن موقعیت شما…",
+  "compassUnavailable": "قطب‌نما روی این دستگاه در دسترس نیست",
+  "compassUnavailableBody": "در عوض مکان‌های نزدیک به همراه جهت نشان داده می‌شود.",
+  "compassNearbyTitle": "نزدیک شما",
+  "compassFilterHint": "فیلتر مکان‌ها",
+  "compassNothingNearby": "هنوز جایی برای نشان‌دادن نزدیک نیست.",
+  "compassLocationNeeded": "برای مسیریابی، موقعیت مکانی را روشن کنید",
+  "compassEnableLocation": "روشن‌کردن موقعیت مکانی",
+  "compassYouAreHere": "تقریباً رسیده‌اید",
+  "compassApproximate": "موقعیت تقریبی",
+  "compassUnlocatable": "موقعیت نامشخص — نقشهٔ چاپی را ببینید"
 }

@@ -1356,6 +1356,96 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'When you use Google Maps directions, your location is sent to Google. Google\'s terms and privacy policy apply.'**
   String get settingsGoogleMapsNotice;
+
+  /// No description provided for @mapModeMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get mapModeMap;
+
+  /// No description provided for @mapModePanorama.
+  ///
+  /// In en, this message translates to:
+  /// **'360°'**
+  String get mapModePanorama;
+
+  /// No description provided for @mapModeCompass.
+  ///
+  /// In en, this message translates to:
+  /// **'Compass'**
+  String get mapModeCompass;
+
+  /// No description provided for @compassFindingNorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding north…'**
+  String get compassFindingNorth;
+
+  /// No description provided for @compassFindingYourLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your location…'**
+  String get compassFindingYourLocation;
+
+  /// No description provided for @compassUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Compass unavailable on this device'**
+  String get compassUnavailable;
+
+  /// No description provided for @compassUnavailableBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Showing what\'s nearby with directions instead.'**
+  String get compassUnavailableBody;
+
+  /// No description provided for @compassNearbyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby'**
+  String get compassNearbyTitle;
+
+  /// No description provided for @compassFilterHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter places'**
+  String get compassFilterHint;
+
+  /// No description provided for @compassNothingNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing nearby to point to yet.'**
+  String get compassNothingNearby;
+
+  /// No description provided for @compassLocationNeeded.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to find your way'**
+  String get compassLocationNeeded;
+
+  /// No description provided for @compassEnableLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable location'**
+  String get compassEnableLocation;
+
+  /// No description provided for @compassYouAreHere.
+  ///
+  /// In en, this message translates to:
+  /// **'You\'re basically there'**
+  String get compassYouAreHere;
+
+  /// No description provided for @compassApproximate.
+  ///
+  /// In en, this message translates to:
+  /// **'Approximate location'**
+  String get compassApproximate;
+
+  /// No description provided for @compassUnlocatable.
+  ///
+  /// In en, this message translates to:
+  /// **'Location unknown — see the printed map'**
+  String get compassUnlocatable;
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

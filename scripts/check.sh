@@ -74,6 +74,21 @@ run_gate "pub get" flutter pub get
 # ── 2. static analysis (must be clean) ──────────────────────────────────────
 run_gate "flutter analyze" flutter analyze
 
+# ── 2b. vendored-asset provenance (buildings.json SHA-256 must not drift) ────
+provenance_gate() {
+  local asset="assets/data/buildings.json"
+  local prov="docs/fixtures/buildings_provenance.json"
+  [ -f "$asset" ] && [ -f "$prov" ] || return 0  # feature not present yet → skip
+  local have want
+  have="$(shasum -a 256 "$asset" | awk '{print $1}')"
+  want="$(python3 -c "import json,sys;print(json.load(open('$prov'))['sha256'])")"
+  if [ "$have" != "$want" ]; then
+    echo "buildings.json SHA drift: asset=$have provenance=$want"; return 1
+  fi
+  return 0
+}
+run_gate "buildings.json provenance" provenance_gate
+
 # ── 3. l10n: regenerate + assert EN/FA completeness ─────────────────────────
 # gen-l10n writes any missing non-template keys to untranslated-messages-file
 # instead of failing, so the real gate is: that file must be empty/absent.

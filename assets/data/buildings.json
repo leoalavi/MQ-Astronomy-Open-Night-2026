@@ -1,0 +1,5731 @@
+[
+  {
+    "id": "18WW",
+    "code": "18WW",
+    "name": "18 Wally's Walk (Service Connect / IT / Learning Support)",
+    "description": "Main student services building housing Service Connect, IT, HR, Financial Services, and administration offices.",
+    "address": "18 Wally's Walk",
+    "category": "services",
+    "latitude": -33.7739781,
+    "longitude": 151.1126116,
+    "entranceLatitude": -33.77388,
+    "entranceLongitude": 151.11275,
+    "campusX": 2281,
+    "campusY": 1882,
+    "aliases": [
+      "Tech Bar",
+      "Service Connect",
+      "Admissions and Scholarships",
+      "Financial Services",
+      "Human Resources",
+      "Information Technology",
+      "Campus Life",
+      "Property",
+      "Group Marketing",
+      "IT Service Desk",
+      "Learning Connect",
+      "Career and Employment Service",
+      "Careers Service",
+      "Student Advocacy",
+      "Enrolment Support",
+      "TechBar",
+      "Writing Centre",
+      "Computer Lab",
+      "First Aid Room",
+      "Corporate Engagement & Advancement",
+      "Business Intelligence Reporting",
+      "Wally's Coffee and Toasties"
+    ],
+    "tags": [
+      "services",
+      "administration",
+      "study",
+      "student services"
+    ],
+    "searchTokens": [
+      "student admin",
+      "student admin help",
+      "admin help",
+      "enrolment",
+      "enrolment help",
+      "enrol",
+      "transcript",
+      "transcript help",
+      "usi",
+      "usi enquiries",
+      "student advocacy",
+      "advocacy",
+      "it help",
+      "it support",
+      "tech support",
+      "wifi help",
+      "careers",
+      "careers support",
+      "employability",
+      "employability support",
+      "learning connect",
+      "learning support",
+      "computer lab",
+      "computers",
+      "tech bar",
+      "service connect",
+      "student services",
+      "academic standing",
+      "course progression",
+      "course transfer",
+      "first aid",
+      "admissions",
+      "scholarships",
+      "property",
+      "campus life",
+      "human resources",
+      "hr",
+      "group marketing",
+      "wallys coffee",
+      "corporate engagement",
+      "advancement"
+    ],
+    "gridRef": "N16",
+    "levels": 4,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "admin",
+      "academic",
+      "it",
+      "careers",
+      "security"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "LIB",
+    "code": "LIB",
+    "name": "Waranara Library",
+    "description": "Main campus library with extensive collections, study spaces, Library Cafe, and the Lachlan Macquarie Room.",
+    "address": "16 Macquarie Walk",
+    "category": "academic",
+    "latitude": -33.7756994,
+    "longitude": 151.1131306,
+    "entranceLatitude": -33.7754,
+    "entranceLongitude": 151.11325,
+    "campusX": 2393,
+    "campusY": 2311,
+    "aliases": [
+      "16 Macquarie Walk",
+      "16 Macquarie Walk (Waranara Library)",
+      "Campus Security",
+      "Campus Security Office",
+      "Lachlan Macquarie Room",
+      "Library Café",
+      "Library Information Desk"
+    ],
+    "tags": [
+      "academic",
+      "study",
+      "resources",
+      "campus hub",
+      "student services"
+    ],
+    "searchTokens": [
+      "after-hours security",
+      "campus security",
+      "campus shuttle",
+      "emergency 9999",
+      "library information desk",
+      "lost and found",
+      "security escort",
+      "security office",
+      "library",
+      "16 macquarie walk",
+      "lachlan macquarie room",
+      "study spaces",
+      "library cafe",
+      "after hours study"
+    ],
+    "gridRef": "Q17",
+    "levels": 8,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "study"
+    ],
+    "studentServicesGroups": [
+      "academic"
+    ]
+  },
+  {
+    "id": "SEC",
+    "code": "SEC",
+    "name": "Security & Emergency (24/7)",
+    "description": "Campus security headquarters and emergency first aid services. Available 24/7.",
+    "address": "4 Link Road",
+    "category": "services",
+    "latitude": -33.775252,
+    "longitude": 151.1061672,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 324,
+    "campusY": 2193,
+    "aliases": [
+      "Security & Information",
+      "Emergency & First Aid",
+      "Campus Security"
+    ],
+    "tags": [
+      "services",
+      "safety",
+      "emergency",
+      "student services"
+    ],
+    "searchTokens": [
+      "security and information",
+      "4 link road",
+      "help point",
+      "emergency help point",
+      "blue help point",
+      "first aid",
+      "campus security",
+      "security building",
+      "help point hub",
+      "first aid room",
+      "after hours security"
+    ],
+    "gridRef": "P2",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "security"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "25BWW",
+    "code": "25BWW",
+    "name": "25B Wally's Walk (Arts Faculty)",
+    "description": "Faculty of Arts administration, Education, Social Sciences, Indigenous Studies, History, and the Gale History Museum.",
+    "address": "25B Wally's Walk",
+    "category": "academic",
+    "latitude": -33.7745332,
+    "longitude": 151.1112771,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1844,
+    "campusY": 1924,
+    "aliases": [
+      "Faculty of Arts",
+      "Department of History and Archaeology",
+      "Department of Critical Indigenous Studies",
+      "Macquarie School of Education",
+      "Macquarie School of Social Sciences",
+      "Department of Security Studies & Criminology",
+      "25 Wally's Walk",
+      "25 WW",
+      "25WW",
+      "25A Wally's Walk",
+      "25C Wally's Walk",
+      "25WWA",
+      "25WWB",
+      "25WWC",
+      "Arts Precinct",
+      "Arts Precinct Building",
+      "Faculty of Arts Offices",
+      "FOA",
+      "Cult Café",
+      "Cult Eatery",
+      "The Gale History Museum"
+    ],
+    "tags": [
+      "academic",
+      "arts",
+      "teaching",
+      "faculty"
+    ],
+    "searchTokens": [
+      "arts precinct",
+      "arts",
+      "faculty of arts",
+      "foa",
+      "tutorial rooms",
+      "tutorials",
+      "faculty offices",
+      "staff offices",
+      "student study spaces",
+      "study spaces",
+      "25ww",
+      "25 ww",
+      "25 wally",
+      "museum of history",
+      "critical indigenous studies",
+      "history and archaeology",
+      "security studies and criminology",
+      "school of education",
+      "school of social sciences",
+      "cult eatery"
+    ],
+    "gridRef": "O13",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "arts",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "17WW",
+    "code": "17WW",
+    "name": "17 Wally's Walk (Law & Media)",
+    "description": "Macquarie Law School, Media & Communication, Michael Kirby Law Building.",
+    "address": "17 Wally's Walk, Macquarie Park, NSW",
+    "category": "academic",
+    "latitude": -33.7748805,
+    "longitude": 151.1133652,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2516,
+    "campusY": 1883,
+    "aliases": [
+      "Macquarie Law School",
+      "Department of Philosophy",
+      "Department of Media, Communication, Creative Arts",
+      "17 Wally's Walk",
+      "17 WW",
+      "17WW",
+      "Michael Kirby Building",
+      "Michael Kirby",
+      "Law School",
+      "Law Building",
+      "Law Commons",
+      "Moot Courts",
+      "Moot Court"
+    ],
+    "tags": [
+      "academic",
+      "law",
+      "media",
+      "faculty"
+    ],
+    "searchTokens": [
+      "law",
+      "law school",
+      "law commons",
+      "moot",
+      "moot courts",
+      "moot court",
+      "main law offices",
+      "law offices",
+      "teaching facilities",
+      "teaching",
+      "michael kirby",
+      "kirby",
+      "17ww",
+      "17 ww",
+      "17 wally",
+      "department of philosophy",
+      "philosophy"
+    ],
+    "gridRef": "O19",
+    "levels": 3,
+    "wheelchair": false,
+    "facultyGroup": "arts",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "4ER",
+    "code": "4ER",
+    "name": "4 Eastern Road (Business School)",
+    "description": "Macquarie Business School - Accounting, Finance, Management, Marketing, Actuarial Studies.",
+    "address": "4 Eastern Road",
+    "category": "academic",
+    "latitude": -33.775787,
+    "longitude": 151.1160258,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3146,
+    "campusY": 2352,
+    "aliases": [
+      "Faculty of Macquarie Business School",
+      "Department of Accounting & Corporate Governance",
+      "Department of Actuarial Studies",
+      "Department of Economics",
+      "Department of Applied Finance",
+      "Department of Management",
+      "Department of Marketing",
+      "Department of Actuarial Studies & Business Analytics"
+    ],
+    "tags": [
+      "academic",
+      "business",
+      "teaching",
+      "faculty"
+    ],
+    "searchTokens": [
+      "accounting",
+      "corporate governance",
+      "actuarial studies",
+      "business analytics",
+      "economics",
+      "applied finance",
+      "management",
+      "marketing",
+      "macquarie business school",
+      "mbs"
+    ],
+    "gridRef": "Q22",
+    "levels": 8,
+    "wheelchair": false,
+    "facultyGroup": "business",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "75TAL",
+    "code": "75TAL",
+    "name": "75 Talavera Road (Health Sciences)",
+    "description": "Faculty of Medicine, Health Sciences, Medical School, Australian Institute of Health Innovation, Chiropractic.",
+    "address": "75 Talavera Road, Macquarie Park, NSW",
+    "category": "academic",
+    "latitude": -33.7741652,
+    "longitude": 151.1186167,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 4027,
+    "campusY": 1764,
+    "aliases": [
+      "Mindspot",
+      "Macquarie Medical School",
+      "Australian Institute of Health Innovation",
+      "Faculty Administration FMHHS",
+      "Department of Chiropractic",
+      "Department of Health Sciences",
+      "Chiropractic Clinic"
+    ],
+    "tags": [
+      "academic",
+      "health",
+      "research",
+      "faculty"
+    ],
+    "searchTokens": [
+      "australian institute of health innovation",
+      "aihi",
+      "macquarie medical school",
+      "mindspot",
+      "department of chiropractic",
+      "chiropractic clinic",
+      "health sciences",
+      "75 talavera"
+    ],
+    "gridRef": "M28",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "mhhs",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "16UA",
+    "code": "16UA",
+    "name": "16 University Avenue (Psychology)",
+    "description": "Psychology, Linguistics, Speech & Hearing Clinic, Reading Clinic, Centre for Emotional Health.",
+    "address": "16 University Avenue",
+    "category": "academic",
+    "latitude": -33.7765829,
+    "longitude": 151.111851,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2011,
+    "campusY": 2617,
+    "aliases": [
+      "Speech & Hearing Clinic",
+      "Psychology Clinic",
+      "Reading Clinic",
+      "Centre for Emotional Health",
+      "16 University Avenue",
+      "16 UA",
+      "16UA",
+      "Australian Hearing Hub",
+      "Hearing Hub",
+      "Student Wellbeing",
+      "Accessibility Service",
+      "Counselling Services",
+      "Welfare Services",
+      "Student Care and Reporting Network",
+      "Care MQ Reports",
+      "CARE Reports",
+      "IUB Report",
+      "Department of Linguistics",
+      "Macquarie University Psychology Clinic",
+      "Macquarie University Reading Clinic",
+      "School of Psychological Sciences"
+    ],
+    "tags": [
+      "academic",
+      "psychology",
+      "health",
+      "faculty",
+      "student services"
+    ],
+    "searchTokens": [
+      "australian hearing hub",
+      "hearing hub",
+      "student wellbeing",
+      "wellbeing",
+      "accessibility service",
+      "accessibility",
+      "disability support",
+      "counselling",
+      "counsellor",
+      "counselling services",
+      "welfare",
+      "welfare services",
+      "financial difficulty",
+      "student care",
+      "care mq",
+      "care report",
+      "iub",
+      "inappropriate unwanted behaviour",
+      "complaints",
+      "misconduct",
+      "academic misconduct",
+      "16ua",
+      "16 ua",
+      "16 university",
+      "centre for emotional health",
+      "linguistics",
+      "psychology clinic",
+      "reading clinic",
+      "school of psychological sciences",
+      "speech and hearing clinic",
+      "speech hearing"
+    ],
+    "gridRef": "T14",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "mhhs",
+    "studentServicesGroups": [
+      "support",
+      "inclusion"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "9WW",
+    "code": "9WW",
+    "name": "9 Wally's Walk (Engineering)",
+    "description": "School of Engineering, Australian Astronomical Optics.",
+    "address": "9 Wally's Walk",
+    "category": "academic",
+    "latitude": -33.7744275,
+    "longitude": 151.1155757,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3178,
+    "campusY": 1906,
+    "aliases": [
+      "School of Engineering",
+      "Australian Astronomical Optics",
+      "9 Wally's Walk",
+      "9 WW",
+      "9WW"
+    ],
+    "tags": [
+      "academic",
+      "engineering",
+      "labs",
+      "faculty"
+    ],
+    "searchTokens": [
+      "tutorial rooms",
+      "level 1",
+      "classes",
+      "9ww",
+      "9 ww",
+      "9 wally",
+      "australian astronomical optics",
+      "aao",
+      "school of engineering"
+    ],
+    "gridRef": "O22",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "science_engineering",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "4RPD",
+    "code": "4RPD",
+    "name": "4 Research Park Drive (Computing)",
+    "description": "School of Computing, Esc Cafe.",
+    "address": "4 Research Park Drive",
+    "category": "academic",
+    "latitude": -33.7747745,
+    "longitude": 151.1177871,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3733,
+    "campusY": 1975,
+    "aliases": [
+      "School of Computing"
+    ],
+    "tags": [
+      "academic",
+      "technology",
+      "labs",
+      "faculty",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "study spaces",
+      "4 research park drive",
+      "esc cafe",
+      "school of computing",
+      "computing"
+    ],
+    "gridRef": "O26",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "science_engineering",
+    "campusHubGroups": [
+      "study"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "12WW",
+    "code": "12WW",
+    "name": "12 Wally's Walk (Maths & Physics)",
+    "description": "School of Mathematical & Physical Sciences.",
+    "address": "12 Wally's Walk",
+    "category": "academic",
+    "latitude": -33.7742542,
+    "longitude": 151.1146649,
+    "entranceLatitude": -33.7742,
+    "entranceLongitude": 151.11475,
+    "campusX": 2852,
+    "campusY": 1813,
+    "aliases": [
+      "School of Mathematical & Physical Sciences",
+      "12 Wally's Walk",
+      "12WW",
+      "14 Sir Christopher Ondaatje Avenue",
+      "14 SCO"
+    ],
+    "tags": [
+      "academic",
+      "science",
+      "research",
+      "faculty",
+      "student services"
+    ],
+    "searchTokens": [
+      "dual address",
+      "same building as 14 sco",
+      "maths and physics",
+      "mathematics",
+      "physics",
+      "school of mathematical and physical sciences",
+      "12ww",
+      "12 ww",
+      "12 wally",
+      "maths"
+    ],
+    "gridRef": "N20",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "science_engineering",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "6WW",
+    "code": "6WW",
+    "name": "6 Wally's Walk (Natural Sciences)",
+    "description": "School of Natural Sciences, Biological Sciences, Herbarium.",
+    "address": "6 Wally's Walk",
+    "category": "academic",
+    "latitude": -33.773867,
+    "longitude": 151.1158118,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3194,
+    "campusY": 1676,
+    "aliases": [
+      "School of Natural Sciences",
+      "Herbarium",
+      "6 Wally's Walk",
+      "6 WW",
+      "6WW",
+      "Frank the Bear"
+    ],
+    "tags": [
+      "academic",
+      "science",
+      "research",
+      "faculty",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "frank the bear",
+      "frank",
+      "biological sciences offices",
+      "natural sciences",
+      "biology",
+      "6ww",
+      "6 ww",
+      "6 wally",
+      "school of natural sciences",
+      "herbarium",
+      "plant collection"
+    ],
+    "gridRef": "M23",
+    "levels": 3,
+    "wheelchair": false,
+    "facultyGroup": "science_engineering",
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "museums"
+    ]
+  },
+  {
+    "id": "4WW",
+    "code": "4WW",
+    "name": "4 Wally's Walk (Proteome)",
+    "description": "Australian Proteome Analysis Facility.",
+    "address": "4 Wally's Walk",
+    "category": "research",
+    "latitude": -33.7741298,
+    "longitude": 151.1167778,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3481,
+    "campusY": 1761,
+    "aliases": [
+      "Australian Proteome Analysis Facility"
+    ],
+    "tags": [
+      "academic",
+      "research",
+      "labs",
+      "faculty"
+    ],
+    "searchTokens": [
+      "australian proteome analysis facility",
+      "apaf",
+      "proteome"
+    ],
+    "gridRef": "M24",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "science_engineering",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "LOTUS",
+    "code": "LOTUS",
+    "name": "Lotus Theatre (T1 Lecture Theatre)",
+    "description": "Major teaching and entertainment venue.",
+    "address": "27 Wally's Walk",
+    "category": "venue",
+    "latitude": -33.7746065,
+    "longitude": 151.1106244,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1639,
+    "campusY": 1961,
+    "aliases": [
+      "Lotus Theatre",
+      "27 Wally's Walk",
+      "27 WW",
+      "27WW",
+      "T1",
+      "T1 Theatre"
+    ],
+    "tags": [
+      "venue",
+      "teaching",
+      "events",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "lotus theatre",
+      "lotus",
+      "t1",
+      "t1 theatre",
+      "theatres",
+      "tutorial rooms",
+      "27ww",
+      "27 ww",
+      "27 wally"
+    ],
+    "gridRef": "O11",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": null,
+    "campusHubGroups": [
+      "student_life"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "MQTH",
+    "code": "MQTH",
+    "name": "Macquarie Theatre (21 Wally's Walk)",
+    "description": "Large lecture theatre and entertainment venue.",
+    "address": "21 Wally's Walk",
+    "category": "venue",
+    "latitude": -33.7746334,
+    "longitude": 151.1122714,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2140,
+    "campusY": 1954,
+    "aliases": [
+      "Macquarie Theatre",
+      "Theatre"
+    ],
+    "tags": [
+      "venue",
+      "teaching",
+      "events",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "macquarie theatre",
+      "theatre",
+      "wally's walk landmark",
+      "21WW"
+    ],
+    "gridRef": "O15",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "student_life"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "PRICE",
+    "code": "PRICE",
+    "name": "Price Theatre",
+    "description": "Teaching theatre.",
+    "address": "23 Wally's Walk",
+    "category": "venue",
+    "latitude": -33.7748869,
+    "longitude": 151.1117559,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1952,
+    "campusY": 1956,
+    "aliases": [
+      "Price Theatre",
+      "23 Wally's Walk"
+    ],
+    "tags": [
+      "venue",
+      "teaching",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "price theatre",
+      "23 wally's walk",
+      "teaching venue",
+      "lecture theatre"
+    ],
+    "gridRef": "O14",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "student_life"
+    ]
+  },
+  {
+    "id": "LIGHT",
+    "code": "LIGHT",
+    "name": "Lighthouse Theatre (11 Gymnasium Road)",
+    "description": "Performance venue.",
+    "address": "11 Gymnasium Road",
+    "category": "venue",
+    "latitude": -33.7718686,
+    "longitude": 151.1114894,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2008,
+    "campusY": 1135,
+    "aliases": [],
+    "tags": [
+      "venue",
+      "performance",
+      "arts",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "11GR"
+    ],
+    "gridRef": "H14",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "student_life"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "AINS",
+    "code": "AINS",
+    "name": "Ainsworth Building",
+    "description": "Teaching facility.",
+    "address": "1 Wally's Walk",
+    "category": "academic",
+    "latitude": -33.7743803,
+    "longitude": 151.1174832,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3802,
+    "campusY": 1871,
+    "aliases": [
+      "1 Wally's Walk",
+      "1 WW",
+      "1WW",
+      "Ainsworth Building",
+      "Clinical Education Building"
+    ],
+    "tags": [
+      "academic",
+      "teaching",
+      "faculty"
+    ],
+    "searchTokens": [
+      "ainsworth",
+      "ainsworth building",
+      "clinical education",
+      "clinical education building",
+      "fmhhs",
+      "medicine health human sciences",
+      "fmhhs teaching",
+      "teaching building",
+      "1ww",
+      "1 ww",
+      "1 wally",
+      "1 wallys walk",
+      "teaching"
+    ],
+    "gridRef": "N27",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "mhhs",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "HOSP",
+    "code": "HOSP",
+    "name": "Macquarie University Hospital (3 Technology Place)",
+    "description": "Teaching hospital with specialist clinics, medical imaging, and pharmacy.",
+    "address": "3 Technology Place",
+    "category": "health",
+    "latitude": -33.7735912,
+    "longitude": 151.1179502,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3830,
+    "campusY": 1572,
+    "aliases": [
+      "Macquarie Medical Imaging",
+      "MMI",
+      "Pharmacy (Hospital)",
+      "3 Technology Place",
+      "Macquarie University Hospital",
+      "MUH"
+    ],
+    "tags": [
+      "health",
+      "medical",
+      "services",
+      "campus hub",
+      "hospital"
+    ],
+    "searchTokens": [
+      "macquarie university hospital",
+      "muh",
+      "private hospital",
+      "teaching hospital",
+      "specialist clinics",
+      "allied health",
+      "medical imaging",
+      "3 technology",
+      "technology place",
+      "no emergency services",
+      "3 technology place",
+      "macquarie medical imaging",
+      "mmi",
+      "pharmacy",
+      "hospital pharmacy",
+      "MACQUARIEU"
+    ],
+    "gridRef": "L27",
+    "levels": null,
+    "wheelchair": true,
+    "campusHubGroups": [
+      "health"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "CLINIC",
+    "code": "CLINIC",
+    "name": "GP & Physio Clinics (2 Technology Place)",
+    "description": "General practice and physiotherapy clinics, specialist consultations.",
+    "address": "2 Technology Place",
+    "category": "health",
+    "latitude": -33.7730453,
+    "longitude": 151.1176713,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3748,
+    "campusY": 1388,
+    "aliases": [
+      "Specialist Clinics",
+      "GP Clinic",
+      "Physiotherapy Clinic",
+      "2 Technology Place",
+      "Macquarie University GP Clinic",
+      "University GP Clinic"
+    ],
+    "tags": [
+      "health",
+      "medical",
+      "services",
+      "student services",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "gp clinic",
+      "gp",
+      "general practice",
+      "macquarie gp",
+      "university gp",
+      "bulk billed",
+      "medicare",
+      "2 technology",
+      "technology place",
+      "specialist clinics",
+      "physiotherapy",
+      "physio",
+      "2TP"
+    ],
+    "gridRef": "K26",
+    "levels": null,
+    "wheelchair": true,
+    "campusHubGroups": [
+      "health"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "WOOL",
+    "code": "WOOL",
+    "name": "Woolcock Institute",
+    "description": "Woolcock Institute of Medical Research.",
+    "address": "2 Innovation Road",
+    "category": "research",
+    "latitude": -33.7748879,
+    "longitude": 151.1197583,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 4260,
+    "campusY": 2048,
+    "aliases": [
+      "2 Innovation Road",
+      "Woolcock Institute of Medical Research"
+    ],
+    "tags": [
+      "health",
+      "research",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "woolcock institute",
+      "2 innovation road"
+    ],
+    "gridRef": "O30",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "health"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "SPORT",
+    "code": "SPORT",
+    "name": "Macquarie University Sport & Aquatic Centre (10 Gymnasium Road)",
+    "description": "Gym, swimming pool, sports facilities, Crunch Cafe, Sporting Hall of Fame Museum.",
+    "address": "10 Gymnasium Road",
+    "category": "sports",
+    "latitude": -33.7726489,
+    "longitude": 151.1105693,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1637,
+    "campusY": 1289,
+    "aliases": [
+      "Sporting Hall of Fame Museum",
+      "MUSAC",
+      "Macquarie University Sport and Aquatic Centre",
+      "Sport and Aquatic Centre",
+      "10 Gymnasium Road",
+      "Crunch Café"
+    ],
+    "tags": [
+      "sports",
+      "recreation",
+      "fitness",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "musac",
+      "sport and aquatic centre",
+      "gym",
+      "pool",
+      "swimming",
+      "fitness",
+      "basketball court",
+      "cycling studio",
+      "group fitness",
+      "health club",
+      "10 gymnasium",
+      "gymnasium road",
+      "sporting hall of fame",
+      "sporting hall of fame museum",
+      "sport facilities",
+      "10GR"
+    ],
+    "gridRef": "J12",
+    "levels": null,
+    "wheelchair": true,
+    "campusHubGroups": [
+      "sport",
+      "museums"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "FIELDS",
+    "code": "FIELDS",
+    "name": "Sports Fields & Tennis Centre",
+    "description": "Outdoor sports fields and tennis centre.",
+    "address": "Corner Talavera Road & Culloden Roads",
+    "category": "sports",
+    "latitude": -33.7734239,
+    "longitude": 151.1127799,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2293,
+    "campusY": 1541,
+    "aliases": [],
+    "tags": [
+      "sports",
+      "recreation",
+      "outdoor",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "sport facilities",
+      "tennis",
+      "sports fields",
+      "Talavera Road",
+      "corner talavera",
+      "culloden road",
+      "tennis centre"
+    ],
+    "gridRef": "K16",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "sport"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "UBAR",
+    "code": "UBAR",
+    "name": "UBar & Central Courtyard",
+    "description": "Campus bar, social venue, graduation ceremonies area.",
+    "address": "1 Central Courtyard",
+    "category": "food",
+    "latitude": -33.7733531,
+    "longitude": 151.1133796,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2529,
+    "campusY": 1542,
+    "aliases": [
+      "UBar",
+      "U Bar",
+      "Central Courtyard",
+      "1 Central Courtyard"
+    ],
+    "tags": [
+      "food",
+      "social",
+      "events",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "ubar",
+      "u bar",
+      "pizza",
+      "pizzas",
+      "food and beverage retailers",
+      "food retailers",
+      "food hub",
+      "drink venue",
+      "social events",
+      "macquarie lake",
+      "level g"
+    ],
+    "gridRef": "K18",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "student_life"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "CULT",
+    "code": "CULT",
+    "name": "Cult Eatery",
+    "description": "Campus eatery in Arts precinct.",
+    "address": "25B Wally's Walk",
+    "category": "food",
+    "latitude": -33.7745332,
+    "longitude": 151.1112771,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1844,
+    "campusY": 1924,
+    "aliases": [
+      "Cult Café",
+      "Cult Cafe",
+      "Cult Eatery",
+      "25B Wally's Walk",
+      "25 Wally's Walk B"
+    ],
+    "tags": [
+      "food",
+      "cafe"
+    ],
+    "searchTokens": [
+      "cult",
+      "cult cafe",
+      "cult café",
+      "arts precinct cafe",
+      "cafe",
+      "café",
+      "coffee"
+    ],
+    "gridRef": "O13",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "LACH",
+    "code": "LACH",
+    "name": "Lachlan's Restaurant (1 Executive Road)",
+    "description": "Fine dining restaurant.",
+    "address": "1 Executive Road",
+    "category": "food",
+    "latitude": -33.7713301,
+    "longitude": 151.1158846,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3203,
+    "campusY": 750,
+    "aliases": [
+      "1 Executive Road"
+    ],
+    "tags": [
+      "food",
+      "restaurant",
+      "accommodation",
+      "hotel",
+      "venue"
+    ],
+    "searchTokens": [
+      "lachlans restaurant",
+      "1 executive road",
+      "LAKESIDEHO"
+    ],
+    "gridRef": "E23",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "8SCO",
+    "code": "8SCO",
+    "name": "8 Sir Christopher Ondaatje Ave (Counselling & Wellbeing)",
+    "description": "Future Students, MQ College, MQ Academy, Prayer Room, IELTS/PTE Test Centre, Access & Widening Participation.",
+    "address": "8 Sir Christopher Ondaatje Ave, Macquarie Park, NSW",
+    "category": "services",
+    "latitude": -33.77578,
+    "longitude": 151.11473,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2802,
+    "campusY": 2224,
+    "aliases": [
+      "Future Students",
+      "MQ Academy",
+      "IELTS",
+      "PTE Test Centre",
+      "Macquarie University College",
+      "Prayer Room",
+      "Access and Widening Participation",
+      "Participation & Community Engagement",
+      "IELTS / PTE Test Centre"
+    ],
+    "tags": [
+      "services",
+      "student",
+      "administration",
+      "student services"
+    ],
+    "searchTokens": [
+      "access and widening participation",
+      "future students",
+      "ielts",
+      "pte test centre",
+      "macquarie university college",
+      "mu college",
+      "mq academy",
+      "prayer room",
+      "graduate research academy"
+    ],
+    "gridRef": "P20",
+    "levels": 4,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "support",
+      "inclusion",
+      "admin"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "16WW",
+    "code": "16WW",
+    "name": "16 Wally's Walk (Lincoln Building — Research Office)",
+    "description": "Graduate Research Academy, Research Services, Commercialisation & Innovation.",
+    "address": "16 Wally's Walk",
+    "category": "research",
+    "latitude": -33.774231,
+    "longitude": 151.113649,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2550,
+    "campusY": 1810,
+    "aliases": [
+      "Graduate Research Academy",
+      "Research Services",
+      "Office of Commercialisation and Innovation",
+      "16 Wally's Walk",
+      "Lincoln Building",
+      "Research Office"
+    ],
+    "tags": [
+      "research",
+      "services",
+      "student services"
+    ],
+    "searchTokens": [
+      "lincoln",
+      "lincoln building",
+      "research office",
+      "masters of research",
+      "phd",
+      "16ww",
+      "16 ww",
+      "16 wally",
+      "graduate research academy",
+      "office of commercialisation",
+      "commercialisation",
+      "innovation",
+      "research services"
+    ],
+    "gridRef": "N18",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "admin"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "12SW",
+    "code": "12SW",
+    "name": "12 Second Way (Student Services)",
+    "description": "Student Wellbeing, Student Engagement, Graduation Unit.",
+    "address": "12 Second Way",
+    "category": "services",
+    "latitude": -33.775059,
+    "longitude": 151.113014,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2222,
+    "campusY": 2115,
+    "aliases": [
+      "Student Wellbeing",
+      "Student Engagement",
+      "Graduation Unit"
+    ],
+    "tags": [
+      "services",
+      "student",
+      "wellbeing",
+      "student services"
+    ],
+    "searchTokens": [
+      "student wellbeing",
+      "wellbeing",
+      "graduation unit",
+      "graduation",
+      "student engagement",
+      "12 second way"
+    ],
+    "gridRef": "P16",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "admin",
+      "support"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "19ER",
+    "code": "19ER",
+    "name": "19 Eastern Road (Chancellery)",
+    "description": "Chancellery, Archives & Records, Art Gallery.",
+    "address": "19 Eastern Road",
+    "category": "services",
+    "latitude": -33.7724696,
+    "longitude": 151.1148539,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2912,
+    "campusY": 1207,
+    "aliases": [
+      "Chancellery",
+      "Archives & Records Management"
+    ],
+    "tags": [
+      "administration",
+      "gallery",
+      "arts",
+      "student services",
+      "services"
+    ],
+    "searchTokens": [
+      "archives",
+      "records management",
+      "chancellery",
+      "19ERTHECHA"
+    ],
+    "gridRef": "H20",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "admin"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "OBS",
+    "code": "OBS",
+    "name": "Macquarie Observatory (5 Gymnasium Road)",
+    "description": "Astronomy observatory.",
+    "address": "5 Gymnasium Road",
+    "category": "research",
+    "latitude": -33.7703261,
+    "longitude": 151.1111248,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1745,
+    "campusY": 480,
+    "aliases": [
+      "Astronomy",
+      "Observatory",
+      "5 Gymnasium Road"
+    ],
+    "tags": [
+      "research",
+      "science",
+      "astronomy",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "observatory",
+      "astronomy",
+      "5 gymnasium road",
+      "5GR"
+    ],
+    "gridRef": "C12",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "INCUB",
+    "code": "INCUB",
+    "name": "MQ Incubator (8 Hadenfeld Avenue)",
+    "description": "Macquarie University Incubator for startups.",
+    "address": "8 Hadenfeld Avenue",
+    "category": "services",
+    "latitude": -33.7763444,
+    "longitude": 151.1090529,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1180,
+    "campusY": 2550,
+    "aliases": [
+      "Macquarie University Incubator"
+    ],
+    "tags": [
+      "services",
+      "business",
+      "innovation",
+      "student services",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "8 hadenfeld avenue",
+      "macquarie university incubator",
+      "incubator",
+      "8HA",
+      "startup",
+      "entrepreneurship",
+      "innovation hub"
+    ],
+    "gridRef": "S8",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "careers"
+    ],
+    "campusHubGroups": [
+      "student_life"
+    ]
+  },
+  {
+    "id": "WALU",
+    "code": "WALU",
+    "name": "Walanga Muru (Indigenous Student Hub)",
+    "description": "Indigenous student support and cultural services.",
+    "address": "29 Wally's Walk",
+    "category": "services",
+    "latitude": -33.7742704,
+    "longitude": 151.1105191,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1620,
+    "campusY": 1839,
+    "aliases": [
+      "Walanga Muru",
+      "29 Wally's Walk",
+      "12 Second Way",
+      "Jannawi",
+      "Walanga Muru Pavilion",
+      "Walanga Muru Office"
+    ],
+    "tags": [
+      "services",
+      "indigenous",
+      "culture",
+      "student services"
+    ],
+    "searchTokens": [
+      "walanga muru",
+      "walu",
+      "jannawi",
+      "pavilion",
+      "aboriginal",
+      "torres strait islander",
+      "first nations",
+      "indigenous students",
+      "first nations support",
+      "indigenous support",
+      "12 second way",
+      "29 wallys walk"
+    ],
+    "gridRef": "N11",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "inclusion"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "BANK",
+    "code": "BANK",
+    "name": "Banksia Cottage Childcare (8 Link Road)",
+    "description": "Campus childcare facility.",
+    "address": "8 Link Road",
+    "category": "services",
+    "latitude": -33.7752254,
+    "longitude": 151.1090476,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1180,
+    "campusY": 2170,
+    "aliases": [
+      "Banksia Cottage"
+    ],
+    "tags": [
+      "services",
+      "childcare",
+      "student services",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "8LR",
+      "banksia cottage",
+      "childcare",
+      "child care",
+      "8 link road",
+      "banksia"
+    ],
+    "gridRef": "P8",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "childcare"
+    ],
+    "studentServicesGroups": [
+      "support"
+    ]
+  },
+  {
+    "id": "GUMNUT",
+    "code": "GUMNUT",
+    "name": "Gumnut Cottage (Childcare)",
+    "description": "Campus childcare facility.",
+    "address": "17 University Avenue",
+    "category": "services",
+    "latitude": -33.7776699,
+    "longitude": 151.1122559,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2130,
+    "campusY": 2984,
+    "aliases": [
+      "Gumnut Cottage"
+    ],
+    "tags": [
+      "services",
+      "childcare",
+      "student services",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "gumnut cottage",
+      "childcare",
+      "child care",
+      "17 university avenue",
+      "gumnut"
+    ],
+    "gridRef": "V15",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "childcare"
+    ],
+    "studentServicesGroups": [
+      "support"
+    ]
+  },
+  {
+    "id": "MIAMIA",
+    "code": "MIAMIA",
+    "name": "Mia Mia (Childcare)",
+    "description": "Campus childcare facility near Walanga Muru.",
+    "address": "29 Wally's Walk",
+    "category": "services",
+    "latitude": -33.7742704,
+    "longitude": 151.1105191,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1546,
+    "campusY": 1852,
+    "aliases": [
+      "Mia Mia Child Care Centre",
+      "Mia Mia",
+      "29 Wally's Walk"
+    ],
+    "tags": [
+      "services",
+      "childcare",
+      "student services",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "mia mia",
+      "child care",
+      "childcare",
+      "family support"
+    ],
+    "gridRef": "N11",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "childcare"
+    ],
+    "studentServicesGroups": [
+      "support"
+    ]
+  },
+  {
+    "id": "WARATAH",
+    "code": "WARATAH",
+    "name": "Waratah (Childcare)",
+    "description": "Campus childcare facility.",
+    "address": "11 University Avenue",
+    "category": "services",
+    "latitude": -33.77713,
+    "longitude": 151.11174,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2442,
+    "campusY": 3137,
+    "aliases": [
+      "Waratah Childcare"
+    ],
+    "tags": [
+      "services",
+      "childcare",
+      "student services",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "waratah",
+      "childcare",
+      "child care",
+      "11 university avenue",
+      "waratah childcare"
+    ],
+    "gridRef": "W17",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "childcare"
+    ],
+    "studentServicesGroups": [
+      "support"
+    ]
+  },
+  {
+    "id": "NEXTSENSE",
+    "code": "NEXTSENSE",
+    "name": "NextSense Centre of Excellence",
+    "description": "NextSense Centre of Excellence for hearing, vision, and sensory research.",
+    "address": "2 Gymnasium Road",
+    "category": "research",
+    "latitude": -33.7719732,
+    "longitude": 151.1106033,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1311,
+    "campusY": 957,
+    "aliases": [],
+    "tags": [
+      "services",
+      "health",
+      "research"
+    ],
+    "searchTokens": [],
+    "gridRef": "F9",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "NEXTSCHOOL",
+    "code": "NEXTSCHOOL",
+    "name": "NextSense School",
+    "description": "NextSense School for deaf and vision impaired students.",
+    "address": "131 Culloden Road",
+    "category": "academic",
+    "latitude": -33.7720602,
+    "longitude": 151.1090071,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1022,
+    "campusY": 1038,
+    "aliases": [],
+    "tags": [
+      "services",
+      "education",
+      "accessibility",
+      "student services"
+    ],
+    "searchTokens": [],
+    "gridRef": "G7",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "METS",
+    "code": "METS",
+    "name": "Macquarie Engineering & Technical Services (3 Science Road)",
+    "description": "Macquarie Engineering Technical Services - workshop and technical support.",
+    "address": "3 Science Road",
+    "category": "services",
+    "latitude": -33.7733742,
+    "longitude": 151.1167229,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3414,
+    "campusY": 1478,
+    "aliases": [
+      "3 Science Road",
+      "METS",
+      "Macquarie Engineering Technical Services"
+    ],
+    "tags": [
+      "services",
+      "engineering",
+      "workshop",
+      "student services",
+      "academic"
+    ],
+    "searchTokens": [
+      "3 science road",
+      "engineering services",
+      "technical services",
+      "3SR",
+      "mets",
+      "workshop",
+      "engineering workshop"
+    ],
+    "gridRef": "K24",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "academic"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "WALLYS",
+    "code": "WALLYS",
+    "name": "Wally's Coffee and Toasties",
+    "description": "Campus cafe in the Central Hub building.",
+    "address": "18 Wally's Walk",
+    "category": "food",
+    "latitude": -33.7741501,
+    "longitude": 151.1127909,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2295,
+    "campusY": 1787,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "coffee"
+    ],
+    "searchTokens": [],
+    "gridRef": "N15",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "LIBCAFE",
+    "code": "LIBCAFE",
+    "name": "Library Cafe",
+    "description": "Cafe located in Waranara Library.",
+    "address": "16 Macquarie Walk",
+    "category": "food",
+    "latitude": -33.7756994,
+    "longitude": 151.1131306,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2393,
+    "campusY": 2311,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "coffee"
+    ],
+    "searchTokens": [],
+    "gridRef": "Q17",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "DLC",
+    "code": "DLC",
+    "name": "Dunmore Lang College",
+    "description": "Student residential college.",
+    "address": "130 Herring Road",
+    "category": "residential",
+    "latitude": -33.7782967,
+    "longitude": 151.1165648,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3410,
+    "campusY": 3175,
+    "aliases": [],
+    "tags": [
+      "residential",
+      "accommodation",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "accommodation",
+      "on campus housing",
+      "130 Herring Road",
+      "Dunmore Lang"
+    ],
+    "gridRef": "W25",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "accommodation"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "RMC",
+    "code": "RMC",
+    "name": "Robert Menzies College",
+    "description": "Student residential college.",
+    "address": "136 Herring Road",
+    "category": "residential",
+    "latitude": -33.77729,
+    "longitude": 151.1168364,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3492,
+    "campusY": 2832,
+    "aliases": [],
+    "tags": [
+      "residential",
+      "accommodation",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "accommodation",
+      "on campus housing",
+      "136 Herring Road",
+      "Robert Menzies"
+    ],
+    "gridRef": "V26",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "accommodation"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "MQV",
+    "code": "MQV",
+    "name": "MQ Village (Residences / Eateries)",
+    "description": "Student accommodation village.",
+    "address": "122 Culloden Road",
+    "category": "residential",
+    "latitude": -33.7710178,
+    "longitude": 151.1079173,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1027,
+    "campusY": 795,
+    "aliases": [
+      "Macquarie University Village",
+      "MQ Village",
+      "Village",
+      "Student Village"
+    ],
+    "tags": [
+      "residential",
+      "accommodation",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "macquarie university village",
+      "mq village",
+      "student village",
+      "accommodation village",
+      "on campus housing"
+    ],
+    "gridRef": "F7",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "accommodation"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "GALLERY",
+    "code": "GALLERY",
+    "name": "Art Gallery",
+    "description": "University art gallery and exhibitions.",
+    "address": "19 Eastern Road",
+    "category": "venue",
+    "latitude": -33.7723959,
+    "longitude": 151.1148585,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2913,
+    "campusY": 1182,
+    "aliases": [
+      "MQ Art Gallery",
+      "Macquarie Art Gallery"
+    ],
+    "tags": [
+      "arts",
+      "gallery",
+      "culture",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "art gallery",
+      "19 eastern road",
+      "gallery",
+      "MQ art gallery"
+    ],
+    "gridRef": "H20",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "museums"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "BIODISC",
+    "code": "BIODISC",
+    "name": "Biology Discovery Centre",
+    "description": "Biology museum and discovery centre.",
+    "address": "6 Science Road",
+    "category": "venue",
+    "latitude": -33.7736165,
+    "longitude": 151.1159258,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3228,
+    "campusY": 1591,
+    "aliases": [
+      "6 Science Road",
+      "Biological Sciences Museum"
+    ],
+    "tags": [
+      "science",
+      "museum",
+      "education",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "6 science",
+      "australian fauna",
+      "biological sciences museum",
+      "biology discovery centre",
+      "biology specimens",
+      "science road"
+    ],
+    "gridRef": "L23",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "museums"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "11WW",
+    "code": "11WW",
+    "name": "11 Wally's Walk (Tutorial Rooms)",
+    "description": "Academic building on Wallys Walk.",
+    "address": "11 Wally's Walk",
+    "category": "academic",
+    "latitude": -33.7746267,
+    "longitude": 151.1151193,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2987,
+    "campusY": 1937,
+    "aliases": [
+      "11 Wally's Walk",
+      "11 WW",
+      "11WW"
+    ],
+    "tags": [
+      "academic",
+      "teaching",
+      "faculty"
+    ],
+    "searchTokens": [
+      "tutorial rooms",
+      "level 1",
+      "classes",
+      "11ww",
+      "11 ww",
+      "11 wally"
+    ],
+    "gridRef": "N22",
+    "levels": 4,
+    "wheelchair": false,
+    "facultyGroup": "science_engineering",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "13RPD",
+    "code": "13RPD",
+    "name": "13 Research Park Drive",
+    "description": "Research facility on Research Park Drive.",
+    "address": "13 Research Park Drive, Macquarie Park, NSW",
+    "category": "research",
+    "latitude": -33.7732317,
+    "longitude": 151.1171794,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3602,
+    "campusY": 1454,
+    "aliases": [],
+    "tags": [
+      "research",
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": "M26",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "6ER",
+    "code": "6ER",
+    "name": "6 Eastern Road (Business)",
+    "description": "Academic building on Eastern Road.",
+    "address": "6 Eastern Road, Macquarie Park, NSW",
+    "category": "academic",
+    "latitude": -33.775576,
+    "longitude": 151.115895,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3049,
+    "campusY": 2279,
+    "aliases": [],
+    "tags": [
+      "academic",
+      "teaching",
+      "faculty"
+    ],
+    "searchTokens": [],
+    "gridRef": "Q21",
+    "levels": 4,
+    "wheelchair": false,
+    "facultyGroup": "business",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "1CC",
+    "code": "1CC",
+    "name": "1 Central Courtyard (The Hub / Student Life)",
+    "description": "Central Courtyard building and student hub.",
+    "address": "1 Central Courtyard",
+    "category": "services",
+    "latitude": -33.7738842,
+    "longitude": 151.1135164,
+    "entranceLatitude": -33.77395,
+    "entranceLongitude": 151.11365,
+    "campusX": 2547,
+    "campusY": 1618,
+    "aliases": [
+      "Graduation Venue",
+      "UBar",
+      "1 Central Courtyard",
+      "Central Courtyard",
+      "The Hub"
+    ],
+    "tags": [
+      "services",
+      "student",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "central courtyard",
+      "the hub",
+      "hub",
+      "student life",
+      "social hub",
+      "student group stalls",
+      "stalls",
+      "clubs and societies",
+      "food and beverage retailers",
+      "food retailers",
+      "graduation hall",
+      "1cc",
+      "graduation venue"
+    ],
+    "gridRef": "K18",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "student_life"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "13ARPD",
+    "code": "13ARPD",
+    "name": "13A Research Park Drive",
+    "description": "Research facility on Research Park Drive.",
+    "address": "13 Research Park Drive",
+    "category": "research",
+    "latitude": -33.773151,
+    "longitude": 151.116676,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3452,
+    "campusY": 1429,
+    "aliases": [],
+    "tags": [
+      "research",
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": "M26",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "COCHLEAR",
+    "code": "COCHLEAR",
+    "name": "Cochlear Limited",
+    "description": "Cochlear headquarters and research facility.",
+    "address": "University Avenue",
+    "category": "research",
+    "latitude": -33.7773091,
+    "longitude": 151.1134198,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2476,
+    "campusY": 2856,
+    "aliases": [],
+    "tags": [
+      "research",
+      "commercial",
+      "health"
+    ],
+    "searchTokens": [],
+    "gridRef": "U16",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "10SCO",
+    "code": "10SCO",
+    "name": "10 Sir Christopher Ondaatje Ave",
+    "description": "Academic building.",
+    "address": "10 Sir Christopher Ondaatje Ave",
+    "category": "academic",
+    "latitude": -33.774901,
+    "longitude": 151.114706,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2863,
+    "campusY": 2032,
+    "aliases": [],
+    "tags": [
+      "academic",
+      "teaching"
+    ],
+    "searchTokens": [],
+    "gridRef": "P21",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "14ER",
+    "code": "14ER",
+    "name": "14 Eastern Road (Business)",
+    "description": "Academic building on Eastern Road. Faculty of Science.",
+    "address": "14 Eastern Road",
+    "category": "academic",
+    "latitude": -33.77386,
+    "longitude": 151.115721,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3046,
+    "campusY": 1742,
+    "aliases": [],
+    "tags": [
+      "academic",
+      "teaching",
+      "faculty"
+    ],
+    "searchTokens": [],
+    "gridRef": "P22",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "business",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "14FW",
+    "code": "14FW",
+    "name": "14 First Walk (MUSEC)",
+    "description": "Macquarie University Special Education Centre - education programs for children.",
+    "address": "14 First Walk, Macquarie Park, NSW",
+    "category": "academic",
+    "latitude": -33.774814,
+    "longitude": 151.109691,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1372,
+    "campusY": 2027,
+    "aliases": [
+      "Macquarie University Special Education Centre"
+    ],
+    "tags": [
+      "academic",
+      "education",
+      "services",
+      "faculty"
+    ],
+    "searchTokens": [
+      "special education centre",
+      "musec"
+    ],
+    "gridRef": "O10",
+    "levels": null,
+    "wheelchair": false,
+    "facultyGroup": "arts",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "14SCO",
+    "code": "14SCO",
+    "name": "14 Sir Christopher Ondaatje Ave (Lecture Theatres / Mason Theatre)",
+    "description": "Academic building with teaching spaces and exam halls. Faculty of Sciences.",
+    "address": "14 Sir Christopher Ondaatje Ave",
+    "category": "academic",
+    "latitude": -33.773899,
+    "longitude": 151.114706,
+    "entranceLatitude": -33.77395,
+    "entranceLongitude": 151.11485,
+    "campusX": 2766,
+    "campusY": 1761,
+    "aliases": [
+      "14 Sir Christopher Ondaatje Avenue",
+      "14 SCO",
+      "14SCO",
+      "12 Wally's Walk",
+      "12 WW",
+      "12WW (alt)",
+      "Muslim Prayer Rooms",
+      "Prayer Room",
+      "Macquarie International",
+      "Macquarie University College",
+      "MQ College",
+      "English Language Centre",
+      "Independent Learning Centre",
+      "Numeracy Centre",
+      "Emergency Blue Help Point",
+      "Blue Help Point",
+      "Mason Theatre"
+    ],
+    "tags": [
+      "academic",
+      "teaching",
+      "exams",
+      "faculty",
+      "student services"
+    ],
+    "searchTokens": [
+      "muslim prayer",
+      "prayer rooms",
+      "mumsa",
+      "macquarie international",
+      "international students support",
+      "macquarie university college",
+      "mq college",
+      "foundational courses",
+      "diploma",
+      "pathway",
+      "english language centre",
+      "independent learning",
+      "numeracy centre",
+      "numeracy",
+      "maths support",
+      "statistics support",
+      "mathematics support",
+      "fse numeracy",
+      "emergency blue help point",
+      "blue help point",
+      "emergency help",
+      "help point",
+      "mason theatre",
+      "lecture theatre",
+      "14 sco",
+      "14sco",
+      "dual address",
+      "12 wally",
+      "14 sir christopher",
+      "sir christopher ondaatje"
+    ],
+    "gridRef": "N20",
+    "levels": 7,
+    "wheelchair": false,
+    "facultyGroup": "science_engineering",
+    "studentServicesGroups": [
+      "inclusion"
+    ],
+    "campusHubGroups": []
+  },
+  {
+    "id": "4WR",
+    "code": "4WR",
+    "name": "4 Western Road",
+    "description": "Academic building with teaching and examination rooms.",
+    "address": "4 Western Road",
+    "category": "academic",
+    "latitude": -33.775351,
+    "longitude": 151.1114772,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1886,
+    "campusY": 2086,
+    "aliases": [],
+    "tags": [
+      "academic",
+      "teaching",
+      "exams"
+    ],
+    "searchTokens": [],
+    "gridRef": "P14",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "6FW",
+    "code": "6FW",
+    "name": "6 First Walk",
+    "description": "Academic building.",
+    "address": "6 First Walk",
+    "category": "academic",
+    "latitude": -33.775402,
+    "longitude": 151.112022,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2064,
+    "campusY": 2215,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 3,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "17MW",
+    "code": "17MW",
+    "name": "17 Macquarie Walk",
+    "description": "Academic building.",
+    "address": "17 Macquarie Walk",
+    "category": "academic",
+    "latitude": -33.776217,
+    "longitude": 151.113178,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2407,
+    "campusY": 2486,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "1MD",
+    "code": "1MD",
+    "name": "1 Management Drive",
+    "description": "Academic building.",
+    "address": "1 Management Drive Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.771631,
+    "longitude": 151.116079,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3277,
+    "campusY": 916,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "3MD",
+    "code": "3MD",
+    "name": "3 Management Drive",
+    "description": "Academic building.",
+    "address": "3 Management Drive Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.771921,
+    "longitude": 151.1157,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3125,
+    "campusY": 958,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "5MD",
+    "code": "5MD",
+    "name": "5 Management Drive",
+    "description": "Academic building.",
+    "address": "5 Management Drive",
+    "category": "academic",
+    "latitude": -33.7720139,
+    "longitude": 151.1157984,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3193,
+    "campusY": 1048,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "2FW",
+    "code": "2FW",
+    "name": "2 First Walk",
+    "description": "Academic building.",
+    "address": "2 First Walk Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.775327,
+    "longitude": 151.113379,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2468,
+    "campusY": 2183,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 3,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "4FW",
+    "code": "4FW",
+    "name": "4 First Walk",
+    "description": "Academic building.",
+    "address": "4 First Walk",
+    "category": "academic",
+    "latitude": -33.77537,
+    "longitude": 151.112847,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2310,
+    "campusY": 2201,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 4,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "2LR",
+    "code": "2LR",
+    "name": "2 Link Road",
+    "description": "Academic building.",
+    "address": "2 Link Road",
+    "category": "academic",
+    "latitude": -33.7748578,
+    "longitude": 151.1058082,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 218,
+    "campusY": 2061,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "6LR",
+    "code": "6LR",
+    "name": "6 Link Road",
+    "description": "Academic building.",
+    "address": "6 Link Road",
+    "category": "academic",
+    "latitude": -33.7746607,
+    "longitude": 151.1066688,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 474,
+    "campusY": 1990,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "DESTINATIO",
+    "code": "DESTINATIO",
+    "name": "Destination Orana",
+    "description": "Student accommodation.",
+    "address": "112-118 Talavera Road Macquarie Park",
+    "category": "residential",
+    "latitude": -33.7738573,
+    "longitude": 151.120262,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 4517,
+    "campusY": 1651,
+    "aliases": [],
+    "tags": [
+      "residential"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 28,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "3IR",
+    "code": "3IR",
+    "name": "3 Innovation Road",
+    "description": "Academic building.",
+    "address": "3 Innovation Road Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.775235,
+    "longitude": 151.118627,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 4028,
+    "campusY": 2126,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "1IR",
+    "code": "1IR",
+    "name": "1 Innovation Road",
+    "description": "Academic building.",
+    "address": "1 Innovation Road Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.775569,
+    "longitude": 151.119137,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 4179,
+    "campusY": 2237,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "15RPD",
+    "code": "15RPD",
+    "name": "15 Research Park Drive",
+    "description": "Academic building.",
+    "address": "15 Research Park Drive Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.772875,
+    "longitude": 151.116836,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3500,
+    "campusY": 1335,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "RONREILLYP",
+    "code": "RONREILLYP",
+    "name": "Ron Reilly Pavilion",
+    "description": "Sports pavilion.",
+    "address": null,
+    "category": "sports",
+    "latitude": -33.766262,
+    "longitude": 151.114914,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2941,
+    "campusY": 0,
+    "aliases": [],
+    "tags": [
+      "sports",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "sport facilities",
+      "pavilion",
+      "sports"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "sport"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "VILLAS",
+    "code": "VILLAS",
+    "name": "The Villas",
+    "description": "Residential villas.",
+    "address": "116-118 Herring Road Macquarie Park NSW",
+    "category": "residential",
+    "latitude": -33.7793912,
+    "longitude": 151.1132109,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2411,
+    "campusY": 3307,
+    "aliases": [],
+    "tags": [
+      "residential",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "accommodation",
+      "student housing"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "accommodation"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "6MD",
+    "code": "6MD",
+    "name": "6 Management Drive",
+    "description": "Academic building.",
+    "address": "6 Management Drive Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.772124,
+    "longitude": 151.116066,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3273,
+    "campusY": 1084,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "7MD",
+    "code": "7MD",
+    "name": "7 Management Drive",
+    "description": "Academic building.",
+    "address": "7 Management Drive Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.772257,
+    "longitude": 151.115679,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3157,
+    "campusY": 1131,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "12MW",
+    "code": "12MW",
+    "name": "12 Macquarie Walk",
+    "description": "Academic building.",
+    "address": "12 Macquarie Walk Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.7759467,
+    "longitude": 151.1151423,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2991,
+    "campusY": 2385,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "18ER",
+    "code": "18ER",
+    "name": "18 Eastern Road",
+    "description": "Academic building.",
+    "address": "18 Eastern Road Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.772871,
+    "longitude": 151.115713,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3166,
+    "campusY": 1339,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "2WW",
+    "code": "2WW",
+    "name": "2 Wally's Walk",
+    "description": "Academic building.",
+    "address": "2 Wally's Walk Macquarie Park NSW",
+    "category": "academic",
+    "latitude": -33.774145,
+    "longitude": 151.117209,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3609,
+    "campusY": 1764,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "23WW",
+    "code": "23WW",
+    "name": "23WW",
+    "description": "23WW building.",
+    "address": null,
+    "category": "academic",
+    "latitude": -33.775064,
+    "longitude": 151.111811,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2002,
+    "campusY": 2102,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "SIEMENS",
+    "code": "SIEMENS",
+    "name": "Siemens",
+    "description": "Siemens building.",
+    "address": null,
+    "category": "other",
+    "latitude": -33.774873,
+    "longitude": 151.119825,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 4385,
+    "campusY": 1998,
+    "aliases": [],
+    "tags": [
+      "commercial",
+      "office"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "10HA",
+    "code": "10HA",
+    "name": "10 Hadenfeld Avenue (Chaplaincy & MMCCS)",
+    "description": "Multi-faith chaplaincy and spiritual services building.",
+    "address": "10 Hadenfeld Avenue",
+    "category": "services",
+    "latitude": -33.7764943,
+    "longitude": 151.1118029,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 962,
+    "campusY": 2522,
+    "aliases": [
+      "10 Hadenfeld Avenue",
+      "2SER 107.3",
+      "2SER",
+      "2SER 107.3 Radio Station",
+      "Macquarie Radio Station",
+      "Department of Media, Communication, Creative Arts, Language & Literature",
+      "MMCCS"
+    ],
+    "tags": [
+      "services",
+      "spiritual",
+      "chaplaincy",
+      "student services",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "2ser",
+      "2ser 107.3",
+      "107.3",
+      "radio station",
+      "student radio",
+      "student media",
+      "community radio",
+      "10 hadenfeld",
+      "mmccs",
+      "department of media communication",
+      "creative arts language and literature",
+      "CHAP",
+      "chaplaincy",
+      "multifaith",
+      "spiritual support"
+    ],
+    "gridRef": "R6",
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [
+      "support"
+    ],
+    "campusHubGroups": [],
+    "facultyGroup": "arts"
+  },
+  {
+    "id": "MACQUARIEC",
+    "code": "MACQUARIEC",
+    "name": "Macquarie Centre",
+    "description": "Macquarie Centre shopping mall with food court, retail stores, and cinema.",
+    "address": null,
+    "category": "other",
+    "latitude": -33.7772506,
+    "longitude": 151.1211352,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 4678,
+    "campusY": 2798,
+    "aliases": [],
+    "tags": [
+      "food",
+      "retail",
+      "shopping"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "DUNMORELAN",
+    "code": "DUNMORELAN",
+    "name": "Dunmore Lang College - Postgraduate Apartments",
+    "description": "Dunmore Lang College apartments.",
+    "address": null,
+    "category": "residential",
+    "latitude": -33.7783819,
+    "longitude": 151.1165762,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3413,
+    "campusY": 3204,
+    "aliases": [],
+    "tags": [
+      "residential"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "29WW",
+    "code": "29WW",
+    "name": "29 Wally's Walk (Faculty of Arts)",
+    "description": "29WW building.",
+    "address": "29 Wally's Walk",
+    "category": "academic",
+    "latitude": -33.7742704,
+    "longitude": 151.1105191,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1620,
+    "campusY": 1839,
+    "aliases": [
+      "29 Wally's Walk",
+      "29 WW",
+      "29WW",
+      "T1",
+      "Mason Theatre"
+    ],
+    "tags": [
+      "academic",
+      "faculty"
+    ],
+    "searchTokens": [
+      "t1",
+      "t1 theatre",
+      "theatres",
+      "tutorial rooms",
+      "classes",
+      "29ww",
+      "29 ww",
+      "29 wally"
+    ],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "facultyGroup": "arts",
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "25WW",
+    "code": "25WW",
+    "name": "25WW",
+    "description": "25WW building.",
+    "address": null,
+    "category": "academic",
+    "latitude": -33.7751678,
+    "longitude": 151.1110393,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1773,
+    "campusY": 2141,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "14SW",
+    "code": "14SW",
+    "name": "14SW",
+    "description": "14SW building.",
+    "address": null,
+    "category": "academic",
+    "latitude": -33.774892,
+    "longitude": 151.112682,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2261,
+    "campusY": 2039,
+    "aliases": [],
+    "tags": [
+      "academic"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "STUDENTACC",
+    "code": "STUDENTACC",
+    "name": "Student Accommodation",
+    "description": "Student Accommodation.",
+    "address": "15-17 Gymnasium Road",
+    "category": "residential",
+    "latitude": -33.7732885,
+    "longitude": 151.1127885,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2296,
+    "campusY": 1495,
+    "aliases": [
+      "Student Accommodation",
+      "15-17 Gymnasium Road",
+      "15 Gymnasium Road",
+      "17 Gymnasium Road"
+    ],
+    "tags": [
+      "residential",
+      "accommodation",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "student accommodation",
+      "accommodation",
+      "on campus accommodation",
+      "on-campus housing",
+      "housing",
+      "dorm",
+      "dorms",
+      "residence",
+      "15-17 gymnasium",
+      "gymnasium road"
+    ],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "accommodation"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "205A",
+    "code": "205A",
+    "name": "205A Culloden Road",
+    "description": "205A Culloden Road residential building.",
+    "address": null,
+    "category": "residential",
+    "latitude": -33.769159,
+    "longitude": 151.111826,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2017,
+    "campusY": 99,
+    "aliases": [],
+    "tags": [
+      "residential"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "205B",
+    "code": "205B",
+    "name": "205B Culloden Road",
+    "description": "205B Culloden Road residential building.",
+    "address": null,
+    "category": "residential",
+    "latitude": -33.769541,
+    "longitude": 151.111623,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1956,
+    "campusY": 229,
+    "aliases": [],
+    "tags": [
+      "residential"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 1,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "DLCNEW",
+    "code": "DLCNEW",
+    "name": "Dunmore Lang College - New Wing",
+    "description": "Dunmore Lang College New Wing residential building.",
+    "address": "130 Herring Road, Macquarie Park NSW",
+    "category": "residential",
+    "latitude": -33.777772,
+    "longitude": 151.116569,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3412,
+    "campusY": 2997,
+    "aliases": [],
+    "tags": [
+      "residential"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 3,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "DLCOFFICE",
+    "code": "DLCOFFICE",
+    "name": "Dunmore Lang College - Office",
+    "description": "Dunmore Lang College administration office.",
+    "address": "130 Herring Road, Macquarie Park NSW",
+    "category": "residential",
+    "latitude": -33.7776104,
+    "longitude": 151.1166667,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3441,
+    "campusY": 2942,
+    "aliases": [],
+    "tags": [
+      "residential",
+      "services"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": 2,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "VILLAS2",
+    "code": "VILLAS2",
+    "name": "Villas (Building 2)",
+    "description": "Residential villas - second building.",
+    "address": "116-118 Herring Road, Macquarie Park NSW",
+    "category": "residential",
+    "latitude": -33.78005,
+    "longitude": 151.11359,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2522,
+    "campusY": 3307,
+    "aliases": [],
+    "tags": [
+      "residential"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "LBNMQ",
+    "code": "LBNMQ",
+    "name": "1919 Lanzhou Beef Noodle",
+    "description": "Chinese hand-pulled noodle restaurant on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.774214,
+    "longitude": 151.113325,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2454,
+    "campusY": 1806,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "noodles"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "BKCMQ",
+    "code": "BKCMQ",
+    "name": "BAP Korean",
+    "description": "Korean cuisine restaurant on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.774058,
+    "longitude": 151.113779,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2589,
+    "campusY": 1751,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "korean"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "BJMQ",
+    "code": "BJMQ",
+    "name": "Boost Juice",
+    "description": "Juice and smoothie bar.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773581,
+    "longitude": 151.112794,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2297,
+    "campusY": 1594,
+    "aliases": [],
+    "tags": [
+      "food",
+      "drinks",
+      "juice"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "CTMQ",
+    "code": "CTMQ",
+    "name": "Chatime",
+    "description": "Bubble tea and drinks.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.774311,
+    "longitude": 151.113772,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2587,
+    "campusY": 1837,
+    "aliases": [],
+    "tags": [
+      "food",
+      "drinks",
+      "bubble tea"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "EIMQ",
+    "code": "EIMQ",
+    "name": "Eat Istanbul",
+    "description": "Turkish restaurant on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.77331,
+    "longitude": 151.11382,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2603,
+    "campusY": 1497,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "turkish"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "IMMQ",
+    "code": "IMMQ",
+    "name": "Iguanas Mexicana",
+    "description": "Mexican food on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773587,
+    "longitude": 151.11281,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2302,
+    "campusY": 1596,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "mexican"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "IGGMQ",
+    "code": "IGGMQ",
+    "name": "Indi Go-Go",
+    "description": "Indian food on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773587,
+    "longitude": 151.11281,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2302,
+    "campusY": 1596,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "indian"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "LGBMQ",
+    "code": "LGBMQ",
+    "name": "Lashings Gourmet Burgers",
+    "description": "Gourmet burger restaurant on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773562,
+    "longitude": 151.113215,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2422,
+    "campusY": 1585,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "burgers"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "LAMQ",
+    "code": "LAMQ",
+    "name": "Little Asia",
+    "description": "Asian food court on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773606,
+    "longitude": 151.113187,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2414,
+    "campusY": 1601,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "asian"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "MSMQ",
+    "code": "MSMQ",
+    "name": "Monster Sushi",
+    "description": "Sushi restaurant on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.774203,
+    "longitude": 151.113436,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2487,
+    "campusY": 1802,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "sushi",
+      "japanese"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PRMQ",
+    "code": "PRMQ",
+    "name": "PappaRich",
+    "description": "Malaysian cuisine restaurant on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.774198,
+    "longitude": 151.113534,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2516,
+    "campusY": 1800,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "malaysian"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "RMQ",
+    "code": "RMQ",
+    "name": "Roll'd",
+    "description": "Vietnamese rice paper rolls and pho.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.774198,
+    "longitude": 151.112661,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2256,
+    "campusY": 1804,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "vietnamese"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "SOMQ",
+    "code": "SOMQ",
+    "name": "Soul Origin",
+    "description": "Fresh healthy meals, salads, and coffee.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773577,
+    "longitude": 151.113474,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2499,
+    "campusY": 1589,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "healthy"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "SLCMQ",
+    "code": "SLCMQ",
+    "name": "St Laurent Coffee",
+    "description": "Specialty coffee shop on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773495,
+    "longitude": 151.113687,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2563,
+    "campusY": 1560,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "coffee"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "SWMQ",
+    "code": "SWMQ",
+    "name": "Sushi World",
+    "description": "Sushi and Japanese takeaway on campus.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773406,
+    "longitude": 151.113362,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2466,
+    "campusY": 1532,
+    "aliases": [],
+    "tags": [
+      "food",
+      "restaurant",
+      "sushi",
+      "japanese"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "TBMQ",
+    "code": "TBMQ",
+    "name": "Taste Baguette",
+    "description": "Bakery and cafe serving baguettes and pastries.",
+    "address": "Central Courtyard",
+    "category": "food",
+    "latitude": -33.773446,
+    "longitude": 151.113841,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2609,
+    "campusY": 1543,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "bakery"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "BUMQ",
+    "code": "BUMQ",
+    "name": "(BREW)us",
+    "description": "Coffee and brunch spot near Macquarie University Station.",
+    "address": "University Avenue",
+    "category": "food",
+    "latitude": -33.771791,
+    "longitude": 151.115756,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3181,
+    "campusY": 972,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "coffee"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "ECMQ",
+    "code": "ECMQ",
+    "name": "esc Cafe",
+    "description": "Cafe near the eastern campus precinct.",
+    "address": "4 Research Park Drive",
+    "category": "food",
+    "latitude": -33.774628,
+    "longitude": 151.117692,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3751,
+    "campusY": 1925,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "coffee"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "CCMQ",
+    "code": "CCMQ",
+    "name": "Crunch Cafe",
+    "description": "Cafe near the Sport & Aquatic Centre.",
+    "address": "10 Gymnasium Road",
+    "category": "food",
+    "latitude": -33.772214,
+    "longitude": 151.110554,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1634,
+    "campusY": 1141,
+    "aliases": [
+      "Crunch Café"
+    ],
+    "tags": [
+      "food",
+      "cafe",
+      "coffee"
+    ],
+    "searchTokens": [
+      "crunch cafe",
+      "crunch café",
+      "cafe",
+      "10 gymnasium road"
+    ],
+    "gridRef": "J12",
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "WWC",
+    "code": "WWC",
+    "name": "MQH Cafe",
+    "description": "Cafe at Macquarie University Hospital precinct.",
+    "address": "2 Technology Place",
+    "category": "food",
+    "latitude": -33.773449,
+    "longitude": 151.118332,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3944,
+    "campusY": 1522,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "hospital"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PICCOLO",
+    "code": "PICCOLO",
+    "name": "Piccolo Me",
+    "description": "Specialty coffee and food.",
+    "address": "Wally's Walk",
+    "category": "food",
+    "latitude": -33.776723,
+    "longitude": 151.112015,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2060,
+    "campusY": 2664,
+    "aliases": [],
+    "tags": [
+      "food",
+      "cafe",
+      "coffee"
+    ],
+    "searchTokens": [],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PSOUTH2",
+    "code": "PSOUTH2",
+    "name": "Carpark P South 2",
+    "description": "Car park in the south of campus.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.776533,
+    "longitude": 151.114171,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2701,
+    "campusY": 2589,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "transport"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PEAST3",
+    "code": "PEAST3",
+    "name": "Carpark P East 3",
+    "description": "Car park in the east of campus.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.775446,
+    "longitude": 151.116794,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3483,
+    "campusY": 2207,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "transport"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PEAST2",
+    "code": "PEAST2",
+    "name": "Carpark P East 2",
+    "description": "Car park in the east of campus.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.774567,
+    "longitude": 151.116969,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3537,
+    "campusY": 1908,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "transport"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PWEST5",
+    "code": "PWEST5",
+    "name": "Carpark P West 5",
+    "description": "Car park in the west of campus.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.773501,
+    "longitude": 151.109232,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1238,
+    "campusY": 1584,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "transport"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PWEST4",
+    "code": "PWEST4",
+    "name": "Carpark P West 4",
+    "description": "Car park in the west of campus.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.777012,
+    "longitude": 151.109179,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1216,
+    "campusY": 2776,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "transport"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "PWEST3",
+    "code": "PWEST3",
+    "name": "Carpark P West 3",
+    "description": "Car park in the west of campus.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.775667,
+    "longitude": 151.110247,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1536,
+    "campusY": 2314,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "transport"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "HEALTHP1",
+    "code": "HEALTHP1",
+    "name": "MQ Health Disability Parking",
+    "description": "Disability parking for Macquarie University Clinic.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.772509,
+    "longitude": 151.117418,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3674,
+    "campusY": 1208,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "accessibility",
+      "hospital"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "HEALTHP2",
+    "code": "HEALTHP2",
+    "name": "Macquarie Hospital Parking",
+    "description": "Parking for Macquarie University Hospital and Clinic.",
+    "address": null,
+    "category": "parking",
+    "latitude": -33.774105,
+    "longitude": 151.117429,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 3674,
+    "campusY": 1749,
+    "aliases": [
+      "Parking on campus",
+      "Car park"
+    ],
+    "tags": [
+      "parking",
+      "hospital"
+    ],
+    "searchTokens": [
+      "parking on campus",
+      "car parks",
+      "student parking",
+      "staff parking",
+      "visitor parking",
+      "vpermit",
+      "pay as you go",
+      "payg",
+      "licence plate recognition"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "130HR",
+    "code": "130HR",
+    "name": "Central Courtyard Accommodation",
+    "description": "On-campus student accommodation near Central Courtyard.",
+    "address": "Central Courtyard, Macquarie University",
+    "category": "residential",
+    "latitude": -33.773631,
+    "longitude": 151.113952,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2641,
+    "campusY": 1605,
+    "aliases": [
+      "CCSA",
+      "Central Courtyard student accommodation",
+      "Central Courtyard Student Accommodation"
+    ],
+    "tags": [
+      "accommodation",
+      "residential",
+      "housing",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "accommodation",
+      "central courtyard accommodation",
+      "CCSA"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "accommodation"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "136HR",
+    "code": "136HR",
+    "name": "Morling Residential Cottage",
+    "description": "Residential cottage on the southern edge of campus.",
+    "address": "Macquarie University residential precinct",
+    "category": "residential",
+    "latitude": -33.778378,
+    "longitude": 151.114336,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 2747,
+    "campusY": 3214,
+    "aliases": [
+      "MRSA",
+      "Morling Cottage"
+    ],
+    "tags": [
+      "accommodation",
+      "residential",
+      "housing",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "accommodation",
+      "Morling Residential Cottage",
+      "MRSA"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "accommodation"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "MUSE",
+    "code": "MUSE",
+    "name": "MUSE (MQ University Study Experience)",
+    "description": "Collaborative study space and student experience hub.",
+    "address": "Central Courtyard",
+    "category": "academic",
+    "latitude": -33.774058,
+    "longitude": 151.112639,
+    "entranceLatitude": -33.774,
+    "entranceLongitude": 151.1127,
+    "campusX": 2250,
+    "campusY": 1757,
+    "aliases": [],
+    "tags": [
+      "study",
+      "academic",
+      "student",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "study spaces",
+      "social study spaces",
+      "computer lab",
+      "student connect"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "study"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "BBALL",
+    "code": "BBALL",
+    "name": "Basketball Courts",
+    "description": "Outdoor basketball courts on campus.",
+    "address": null,
+    "category": "sports",
+    "latitude": -33.773111,
+    "longitude": 151.111416,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1888,
+    "campusY": 1441,
+    "aliases": [],
+    "tags": [
+      "sports",
+      "basketball",
+      "recreation",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "sport facilities",
+      "basketball court",
+      "kompan"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "sport"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "GALEHIST",
+    "code": "GALEHIST",
+    "name": "Macquarie University History Museum",
+    "description": "Macquarie University history museum housing artefacts, archives, and exhibits about the University and the Wallumattagal Campus.",
+    "address": "25C Wally's Walk",
+    "category": "venue",
+    "latitude": -33.7745932,
+    "longitude": 151.1113971,
+    "entranceLatitude": null,
+    "entranceLongitude": null,
+    "campusX": 1880,
+    "campusY": 1944,
+    "aliases": [
+      "Gale Museum",
+      "History Museum",
+      "Macquarie University History Museum",
+      "MQ History Museum",
+      "25C Wally's Walk"
+    ],
+    "tags": [
+      "venue",
+      "museum",
+      "history",
+      "campus hub"
+    ],
+    "searchTokens": [
+      "gale",
+      "history",
+      "museum",
+      "macquarie university history museum",
+      "history museum",
+      "first nations history",
+      "25c wally"
+    ],
+    "gridRef": "O13",
+    "levels": null,
+    "wheelchair": false,
+    "campusHubGroups": [
+      "museums"
+    ],
+    "studentServicesGroups": []
+  },
+  {
+    "id": "BIKEF01",
+    "code": "BIKEF01",
+    "name": "Bike Rack — Department of Media",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77641107,
+    "longitude": 151.108324,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 963,
+    "campusY": 2576
+  },
+  {
+    "id": "BIKEF02",
+    "code": "BIKEF02",
+    "name": "Bike Rack — Department of Media",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77619307,
+    "longitude": 151.1084343,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 996,
+    "campusY": 2501
+  },
+  {
+    "id": "BIKEF03",
+    "code": "BIKEF03",
+    "name": "Bike Rack — Department of Media",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77598002,
+    "longitude": 151.1087144,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1080,
+    "campusY": 2428
+  },
+  {
+    "id": "BIKEF04",
+    "code": "BIKEF04",
+    "name": "Bike Rack — Incubator",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77641107,
+    "longitude": 151.1091227,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1201,
+    "campusY": 2572
+  },
+  {
+    "id": "BIKEF05",
+    "code": "BIKEF05",
+    "name": "Bike Rack — History Museum",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77615001,
+    "longitude": 151.1071254,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 607,
+    "campusY": 2493
+  },
+  {
+    "id": "BIKEF06",
+    "code": "BIKEF06",
+    "name": "Bike Rack — History Museum",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.7760039,
+    "longitude": 151.1066164,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 456,
+    "campusY": 2446
+  },
+  {
+    "id": "BIKEF07",
+    "code": "BIKEF07",
+    "name": "Bike Rack — Mars Creek",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77410046,
+    "longitude": 151.1093134,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1261,
+    "campusY": 1787
+  },
+  {
+    "id": "BIKEF08",
+    "code": "BIKEF08",
+    "name": "Bike Rack — 29 Wally's Walk",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77440482,
+    "longitude": 151.1104507,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1599,
+    "campusY": 1885
+  },
+  {
+    "id": "BIKEF09",
+    "code": "BIKEF09",
+    "name": "Bike Rack — Faculty of Arts",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.7750265,
+    "longitude": 151.110563,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1631,
+    "campusY": 2095
+  },
+  {
+    "id": "BIKEF10",
+    "code": "BIKEF10",
+    "name": "Bike Rack — Price Theatre",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77449034,
+    "longitude": 151.1115363,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1922,
+    "campusY": 1909
+  },
+  {
+    "id": "BIKEF11",
+    "code": "BIKEF11",
+    "name": "Bike Rack — MUSE",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77427408,
+    "longitude": 151.1121306,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2099,
+    "campusY": 1832
+  },
+  {
+    "id": "BIKEF12",
+    "code": "BIKEF12",
+    "name": "Bike Rack — MUSE",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77441106,
+    "longitude": 151.113239,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2428,
+    "campusY": 1873
+  },
+  {
+    "id": "BIKEF13",
+    "code": "BIKEF13",
+    "name": "Bike Rack — Macquarie Theatre",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77476997,
+    "longitude": 151.1126063,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2239,
+    "campusY": 1998
+  },
+  {
+    "id": "BIKEF14",
+    "code": "BIKEF14",
+    "name": "Bike Rack — Library",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77552195,
+    "longitude": 151.1135006,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2504,
+    "campusY": 2249
+  },
+  {
+    "id": "BIKEF15",
+    "code": "BIKEF15",
+    "name": "Bike Rack — Central Avenue",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77522113,
+    "longitude": 151.1137101,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2567,
+    "campusY": 2146
+  },
+  {
+    "id": "BIKEF16",
+    "code": "BIKEF16",
+    "name": "Bike Rack — Wally's Walk",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77443686,
+    "longitude": 151.1144011,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2773,
+    "campusY": 1876
+  },
+  {
+    "id": "BIKEF17",
+    "code": "BIKEF17",
+    "name": "Bike Rack — IELTS Centre",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77514276,
+    "longitude": 151.1145138,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2806,
+    "campusY": 2115
+  },
+  {
+    "id": "BIKEF18",
+    "code": "BIKEF18",
+    "name": "Bike Rack — Mason Theatre",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77367682,
+    "longitude": 151.1146611,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2852,
+    "campusY": 1617
+  },
+  {
+    "id": "BIKEF19",
+    "code": "BIKEF19",
+    "name": "Bike Rack — Mason Theatre",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77431012,
+    "longitude": 151.1154038,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 3072,
+    "campusY": 1829
+  },
+  {
+    "id": "BIKEF20",
+    "code": "BIKEF20",
+    "name": "Bike Rack — Eastern Road",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77563367,
+    "longitude": 151.1157062,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 3159,
+    "campusY": 2276
+  },
+  {
+    "id": "BIKEF21",
+    "code": "BIKEF21",
+    "name": "Bike Rack — P East 2",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77497028,
+    "longitude": 151.1163492,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 3352,
+    "campusY": 2048
+  },
+  {
+    "id": "BIKEF22",
+    "code": "BIKEF22",
+    "name": "Bike Rack — Sport & Aquatic Centre",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77220385,
+    "longitude": 151.110692,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1675,
+    "campusY": 1137
+  },
+  {
+    "id": "BIKEF23",
+    "code": "BIKEF23",
+    "name": "Bike Rack — MGSM Parking",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77231686,
+    "longitude": 151.1157649,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 3183,
+    "campusY": 1151
+  },
+  {
+    "id": "BIKEF24",
+    "code": "BIKEF24",
+    "name": "Bike Rack — Culloden Road",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.76902772,
+    "longitude": 151.1116207,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 1957,
+    "campusY": 55
+  },
+  {
+    "id": "BIKEF25",
+    "code": "BIKEF25",
+    "name": "Bike Rack — Macquarie University Stn",
+    "description": "",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77680857,
+    "longitude": 151.1175848,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "rack"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 3716,
+    "campusY": 2665
+  },
+  {
+    "id": "BIKEHUBC",
+    "code": "BIKEHUBC",
+    "name": "Central BikeHub (covered)",
+    "description": "Secure covered bike parking with amenities.",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.7750461,
+    "longitude": 151.112583,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "hub"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2232,
+    "campusY": 2092
+  },
+  {
+    "id": "BIKEHUBE",
+    "code": "BIKEHUBE",
+    "name": "Eastern BikeHub (covered)",
+    "description": "Secure covered bike parking with amenities.",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77384218,
+    "longitude": 151.1154089,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "hub"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 3074,
+    "campusY": 1670
+  },
+  {
+    "id": "BIKEREPC",
+    "code": "BIKEREPC",
+    "name": "Central Bike Repair Station",
+    "description": "Self-service bike repair station.",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77486665,
+    "longitude": 151.1126361,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "repair"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 2248,
+    "campusY": 2031
+  },
+  {
+    "id": "BIKEREPE",
+    "code": "BIKEREPE",
+    "name": "Eastern Bike Repair Station",
+    "description": "Self-service bike repair station.",
+    "address": null,
+    "category": "transport",
+    "latitude": -33.77395499,
+    "longitude": 151.1154055,
+    "tags": [
+      "transport",
+      "cycling",
+      "bike facilities",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "bike",
+      "bicycle",
+      "bike rack",
+      "cycling",
+      "bike parking",
+      "repair"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "bike"
+    ],
+    "campusX": 3073,
+    "campusY": 1708
+  },
+  {
+    "id": "SMOKE1",
+    "code": "SMOKE1",
+    "name": "Smoking Area — Library / Central Court",
+    "description": "Designated outdoor smoking area.",
+    "address": null,
+    "category": "smoking",
+    "latitude": -33.77617232,
+    "longitude": 151.1127007,
+    "tags": [
+      "smoking",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "smoking",
+      "smoking area",
+      "designated smoking",
+      "cigarette",
+      "vape"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "smoking"
+    ],
+    "campusX": 2265,
+    "campusY": 2473
+  },
+  {
+    "id": "SMOKE2",
+    "code": "SMOKE2",
+    "name": "Smoking Area — West Road",
+    "description": "Designated outdoor smoking area.",
+    "address": null,
+    "category": "smoking",
+    "latitude": -33.77548989,
+    "longitude": 151.1087204,
+    "tags": [
+      "smoking",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "smoking",
+      "smoking area",
+      "designated smoking",
+      "cigarette",
+      "vape"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "smoking"
+    ],
+    "campusX": 1083,
+    "campusY": 2261
+  },
+  {
+    "id": "SMOKE3",
+    "code": "SMOKE3",
+    "name": "Smoking Area — MUSE / Wally's Walk",
+    "description": "Designated outdoor smoking area.",
+    "address": null,
+    "category": "smoking",
+    "latitude": -33.77417067,
+    "longitude": 151.1116475,
+    "tags": [
+      "smoking",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "smoking",
+      "smoking area",
+      "designated smoking",
+      "cigarette",
+      "vape"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "smoking"
+    ],
+    "campusX": 1955,
+    "campusY": 1800
+  },
+  {
+    "id": "SMOKE4",
+    "code": "SMOKE4",
+    "name": "Smoking Area — Sport & Aquatic Centre",
+    "description": "Designated outdoor smoking area.",
+    "address": null,
+    "category": "smoking",
+    "latitude": -33.77188061,
+    "longitude": 151.1114789,
+    "tags": [
+      "smoking",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "smoking",
+      "smoking area",
+      "designated smoking",
+      "cigarette",
+      "vape"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "smoking"
+    ],
+    "campusX": 1909,
+    "campusY": 1024
+  },
+  {
+    "id": "SMOKE5",
+    "code": "SMOKE5",
+    "name": "Smoking Area — University Avenue",
+    "description": "Designated outdoor smoking area.",
+    "address": null,
+    "category": "smoking",
+    "latitude": -33.77227974,
+    "longitude": 151.1166718,
+    "tags": [
+      "smoking",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "smoking",
+      "smoking area",
+      "designated smoking",
+      "cigarette",
+      "vape"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "smoking"
+    ],
+    "campusX": 3452,
+    "campusY": 1134
+  },
+  {
+    "id": "SMOKE6",
+    "code": "SMOKE6",
+    "name": "Smoking Area — Eastern / P East 1",
+    "description": "Designated outdoor smoking area.",
+    "address": null,
+    "category": "smoking",
+    "latitude": -33.77460014,
+    "longitude": 151.118728,
+    "tags": [
+      "smoking",
+      "campus hub"
+    ],
+    "aliases": [],
+    "searchTokens": [
+      "smoking",
+      "smoking area",
+      "designated smoking",
+      "cigarette",
+      "vape"
+    ],
+    "wheelchair": false,
+    "studentServicesGroups": [],
+    "campusHubGroups": [
+      "smoking"
+    ],
+    "campusX": 4059,
+    "campusY": 1911
+  },
+  {
+    "id": "hadenfeld-10",
+    "code": "hadenfeld-10",
+    "name": "10 Hadenfeld Avenue",
+    "description": "Open Day venue.",
+    "address": "10 Hadenfeld Avenue",
+    "category": "teaching",
+    "latitude": -33.7764943,
+    "longitude": 151.1118029,
+    "entranceLatitude": -33.7745,
+    "entranceLongitude": 151.113,
+    "campusX": 962,
+    "campusY": 2522,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "hadenfeld-10",
+      "10 hadenfeld avenue"
+    ],
+    "gridRef": "R6",
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "wallys-29",
+    "code": "wallys-29",
+    "name": "29 Wally's Walk",
+    "description": "Open Day venue.",
+    "address": "29 Wally's Walk",
+    "category": "teaching",
+    "latitude": -33.7742704,
+    "longitude": 151.1105191,
+    "entranceLatitude": -33.774,
+    "entranceLongitude": 151.1135,
+    "campusX": 1620,
+    "campusY": 1839,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "wallys-29",
+      "29 wally's walk"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "wallys-27",
+    "code": "wallys-27",
+    "name": "27 Wally's Walk",
+    "description": "Open Day venue.",
+    "address": "27 Wally's Walk",
+    "category": "teaching",
+    "latitude": -33.7741,
+    "longitude": 151.1136,
+    "entranceLatitude": -33.7741,
+    "entranceLongitude": 151.1136,
+    "campusX": 2536,
+    "campusY": 1766,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "wallys-27",
+      "27 wally's walk"
+    ],
+    "gridRef": "L12",
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "wallys-23",
+    "code": "wallys-23",
+    "name": "23 Wally's Walk",
+    "description": "Open Day venue.",
+    "address": "23 Wally's Walk",
+    "category": "teaching",
+    "latitude": -33.775064,
+    "longitude": 151.111811,
+    "entranceLatitude": -33.7742,
+    "entranceLongitude": 151.1137,
+    "campusX": 2002,
+    "campusY": 2102,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "wallys-23",
+      "23 wally's walk"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "wallys-21",
+    "code": "wallys-21",
+    "name": "21 Wally's Walk",
+    "description": "Open Day venue.",
+    "address": "21 Wally's Walk",
+    "category": "teaching",
+    "latitude": -33.7746334,
+    "longitude": 151.1122714,
+    "entranceLatitude": -33.7743,
+    "entranceLongitude": 151.1138,
+    "campusX": 2140,
+    "campusY": 1954,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "wallys-21",
+      "21 wally's walk"
+    ],
+    "gridRef": "O15",
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "wallys-17",
+    "code": "wallys-17",
+    "name": "17 Wally's Walk",
+    "description": "Open Day venue.",
+    "address": "17 Wally's Walk",
+    "category": "teaching",
+    "latitude": -33.7748805,
+    "longitude": 151.1133652,
+    "entranceLatitude": -33.7744,
+    "entranceLongitude": 151.1139,
+    "campusX": 2516,
+    "campusY": 1883,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "wallys-17",
+      "17 wally's walk"
+    ],
+    "gridRef": "O19",
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "ondaatje-14",
+    "code": "ondaatje-14",
+    "name": "14 Sir Christopher Ondaatje Avenue",
+    "description": "Open Day venue.",
+    "address": "14 Sir Christopher Ondaatje Avenue",
+    "category": "teaching",
+    "latitude": -33.773899,
+    "longitude": 151.114706,
+    "entranceLatitude": -33.77395,
+    "entranceLongitude": 151.11485,
+    "campusX": 2766,
+    "campusY": 1761,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "ondaatje-14",
+      "14 sir christopher ondaatje avenue"
+    ],
+    "gridRef": "N20",
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "wallys-1",
+    "code": "wallys-1",
+    "name": "1 Wally's Walk",
+    "description": "Open Day venue.",
+    "address": "1 Wally's Walk",
+    "category": "teaching",
+    "latitude": -33.7747,
+    "longitude": 151.1142,
+    "entranceLatitude": -33.7747,
+    "entranceLongitude": 151.1142,
+    "campusX": 2713,
+    "campusY": 1967,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "wallys-1",
+      "1 wally's walk"
+    ],
+    "gridRef": "K27",
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  },
+  {
+    "id": "wallys-25",
+    "code": "wallys-25",
+    "name": "25 Wally's Walk",
+    "description": "Open Day venue.",
+    "address": "25 Wally's Walk",
+    "category": "teaching",
+    "latitude": -33.7751678,
+    "longitude": 151.1110393,
+    "entranceLatitude": -33.7748,
+    "entranceLongitude": 151.1143,
+    "campusX": 1773,
+    "campusY": 2141,
+    "aliases": [],
+    "tags": [
+      "open day"
+    ],
+    "searchTokens": [
+      "wallys-25",
+      "25 wally's walk"
+    ],
+    "gridRef": null,
+    "levels": null,
+    "wheelchair": true,
+    "studentServicesGroups": [],
+    "campusHubGroups": []
+  }
+]

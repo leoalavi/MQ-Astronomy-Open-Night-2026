@@ -1,0 +1,9 @@
+{
+  "source_repo": "MQ_Journey",
+  "source_path": "assets/data/buildings.json",
+  "source_commit": "39b62eb35f3a5c07c46212f458d07912b774f4ca",
+  "sha256": "2b98cf2ed26301ac8718a35e5ccd5630871b5b9f68dc11a6cab2a3d3548dc17b",
+  "record_count": 170,
+  "licence": "Vendored from the MQ_Journey sibling project; confirm redistribution permission before any public/store release (IOU).",
+  "vendored_on": "2026-08-16"
+}

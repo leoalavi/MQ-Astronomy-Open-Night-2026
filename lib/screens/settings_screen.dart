@@ -6,11 +6,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/app/text_scale.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/app_settings.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/widgets/event_time_preview.dart';
 import 'package:aon2026/widgets/section_header.dart';
 
 /// Visitor settings.
@@ -55,11 +57,19 @@ class SettingsScreen extends ConsumerWidget {
             data: (s) => _AppearanceCard(selected: s.themeMode),
           ),
 
-          // ── Motion ──
+          // ── Language ──
           SectionHeader(
-            title: l.settingsMotion,
-            icon: Icons.animation_rounded,
+            title: l.settingsLanguage,
+            icon: Icons.translate_rounded,
           ),
+          settings.when(
+            loading: () => const _SettingSkeleton(),
+            error: (_, _) => const _SettingUnavailable(),
+            data: (s) => _LanguageCard(selected: s.localeCode),
+          ),
+
+          // ── Motion ──
+          SectionHeader(title: l.settingsMotion, icon: Icons.animation_rounded),
           settings.when(
             loading: () => const _SettingSkeleton(),
             error: (_, _) => const _SettingUnavailable(),
@@ -69,10 +79,7 @@ class SettingsScreen extends ConsumerWidget {
                 onChanged: (v) =>
                     ref.read(appSettingsProvider.notifier).setReduceMotion(v),
                 title: Text(l.settingsReduceMotion),
-                subtitle: const Text(
-                  'Turns off the tab bar and glass animations. Your phone’s '
-                  'own reduce-motion setting is always respected too.',
-                ),
+                subtitle: Text(l.settingsReduceMotionBody),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: AonSpacing.space4,
                   vertical: AonSpacing.space2,
@@ -88,17 +95,13 @@ class SettingsScreen extends ConsumerWidget {
           ),
           _InfoCard(
             icon: Icons.text_fields_rounded,
-            title: 'Set text size on your phone',
-            body:
-                'This app follows your device text size, up to '
-                '${(kMaxTextScale * 100).round()}% — every screen is tested at '
-                'that size. Change it in your phone’s display or accessibility '
-                'settings.',
+            title: l.settingsTextSizeCardTitle,
+            body: l.settingsTextSizeBody((kMaxTextScale * 100).round()),
           ),
 
           // ── About ──
           SectionHeader(
-            title: 'About ${config.name}',
+            title: l.settingsAbout(config.name),
             icon: Icons.info_outline_rounded,
           ),
           _AboutCard(config: config),
@@ -108,20 +111,24 @@ class SettingsScreen extends ConsumerWidget {
             title: l.settingsPrivacy,
             icon: Icons.lock_outline_rounded,
           ),
-          const _InfoCard(
+          _InfoCard(
             icon: Icons.verified_user_outlined,
-            title: 'Nothing leaves your phone',
+            title: l.settingsPrivacyCardTitle,
             // Every clause here is a fact about this build, not marketing.
-            body:
-                'There is no account and no sign-in. Your saved activities are '
-                'stored on this device only. The app collects no analytics and '
-                'tracks no location.\n\n'
-                'The only thing it fetches from the internet is map imagery — '
-                'unless you choose Google Maps walking directions (below).',
+            body: l.settingsPrivacyBody,
           ),
           // M4: the one exception to "nothing leaves your phone" — surfaced
           // honestly, with a revoke control once consent has been given.
           const _GoogleMapsPrivacyCard(),
+
+          // ── Event-night preview ──
+          //
+          // Deliberately the LAST thing on the screen. It is a review tool for
+          // the organisers before the night, not something a visitor needs
+          // during it — it used to sit in the app bar of the visitor's main
+          // flow, which was the wrong place entirely.
+          SectionHeader(title: l.previewSection, icon: Icons.science_outlined),
+          const EventTimePreviewCard(),
 
           // ── Credits ──
           SectionHeader(
@@ -148,6 +155,7 @@ class _AppearanceCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
 
     return Card(
@@ -167,14 +175,13 @@ class _AppearanceCard extends ConsumerWidget {
               RadioListTile<AppThemeMode>(
                 value: mode,
                 title: Text(switch (mode) {
-                  AppThemeMode.system => 'Follow my phone',
-                  AppThemeMode.light => 'Light',
-                  AppThemeMode.dark => 'Dark',
+                  AppThemeMode.system => l.settingsAppearanceSystem,
+                  AppThemeMode.light => l.settingsAppearanceLight,
+                  AppThemeMode.dark => l.settingsAppearanceDark,
                 }),
                 subtitle: mode == AppThemeMode.dark
                     ? Text(
-                        'Recommended — kinder to your night vision at the '
-                        'event',
+                        l.settingsAppearanceDarkHint,
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: context.aon.contentTertiary,
                         ),
@@ -185,6 +192,90 @@ class _AppearanceCard extends ConsumerWidget {
                   vertical: AonSpacing.space1,
                 ),
               ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// In-app language picker: System / English / فارسی.
+///
+/// ## Why this exists as an explicit control
+///
+/// The app ships two complete translations, but until this card existed the
+/// Persian one was only reachable by changing the whole phone's language. That
+/// stranded two groups: a visitor who prefers Persian on a device shared or
+/// configured in English, and anyone at the University trying to review the
+/// translation before the night.
+///
+/// `null` means "follow the device", which is the default and stays the default
+/// — an explicit choice is stored only once the visitor makes one, so a phone
+/// already set to Persian opens in Persian with no interaction.
+///
+/// The language names are deliberately NOT translated. An endonym is the only
+/// label a reader who cannot yet read the current language can recognise.
+class _LanguageCard extends ConsumerWidget {
+  const _LanguageCard({required this.selected});
+
+  /// The stored language code, or null for "match my device".
+  final String? selected;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    final theme = Theme.of(context);
+
+    // Null is a legitimate value here, so the group is keyed on String? and the
+    // system option carries null rather than a sentinel string.
+    return Card(
+      child: RadioGroup<String?>(
+        groupValue: selected,
+        onChanged: (v) => ref.read(appSettingsProvider.notifier).setLocale(v),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            RadioListTile<String?>(
+              value: null,
+              title: Text(l.settingsLanguageSystem),
+              subtitle: Text(
+                l.settingsLanguageSystemHint,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: context.aon.contentTertiary,
+                ),
+              ),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AonSpacing.space4,
+                vertical: AonSpacing.space1,
+              ),
+            ),
+            RadioListTile<String?>(
+              value: 'en',
+              // Endonym: always "English", never translated.
+              title: Text(l.settingsLanguageEnglish),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AonSpacing.space4,
+                vertical: AonSpacing.space1,
+              ),
+            ),
+            RadioListTile<String?>(
+              value: 'fa',
+              // Endonym: always "فارسی", never romanised.
+              //
+              // No explicit textDirection. An earlier version forced RTL here
+              // "so it reads correctly in English", which was unnecessary — the
+              // string is pure Arabic script, so bidi shapes it right-to-left
+              // whatever the paragraph direction — and actively harmful: RTL
+              // aligned the label to the far edge of the full-width title slot,
+              // stranding it ~500pt from its own radio button. Inheriting the
+              // ambient direction keeps every option aligned with its control
+              // in both app languages.
+              title: Text(l.settingsLanguagePersian),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AonSpacing.space4,
+                vertical: AonSpacing.space1,
+              ),
+            ),
           ],
         ),
       ),
@@ -214,13 +305,18 @@ class _GoogleMapsPrivacyCard extends ConsumerWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.map_outlined, size: AonSpacing.iconMd, color: context.aon.accent),
+                Icon(
+                  Icons.map_outlined,
+                  size: AonSpacing.iconMd,
+                  color: context.aon.accent,
+                ),
                 const SizedBox(width: AonSpacing.space3),
                 Expanded(
                   child: Text(
                     l.settingsGoogleMapsNotice,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: context.aon.contentSecondary),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: context.aon.contentSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -230,7 +326,8 @@ class _GoogleMapsPrivacyCard extends ConsumerWidget {
               Align(
                 alignment: AlignmentDirectional.centerEnd,
                 child: TextButton(
-                  onPressed: () => ref.read(mapsConsentProvider.notifier).revoke(),
+                  onPressed: () =>
+                      ref.read(mapsConsentProvider.notifier).revoke(),
                   child: Text(l.settingsRevokeGoogleConsent),
                 ),
               ),
@@ -263,14 +360,16 @@ class _AboutCard extends StatelessWidget {
               '${TimeFormat.longDate(config.startsAt)}\n'
               '${TimeFormat.range(config.startsAt, config.endsAt)}\n'
               '${config.host}',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
             const SizedBox(height: AonSpacing.space3),
             Text(
               config.faculty,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: context.aon.contentTertiary),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.aon.contentTertiary,
+              ),
             ),
           ],
         ),
@@ -286,9 +385,11 @@ class _CreditsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
-    final body = theme.textTheme.bodySmall
-        ?.copyWith(color: context.aon.contentSecondary);
+    final body = theme.textTheme.bodySmall?.copyWith(
+      color: context.aon.contentSecondary,
+    );
 
     return Card(
       child: Padding(
@@ -296,21 +397,27 @@ class _CreditsCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Hero image', style: theme.textTheme.titleSmall),
+            Text(l.settingsCreditsHeroImage, style: theme.textTheme.titleSmall),
             const SizedBox(height: 2),
             Text(config.heroCredit, style: body),
             const SizedBox(height: AonSpacing.space4),
-            Text('Event materials', style: theme.textTheme.titleSmall),
+            Text(
+              l.settingsCreditsEventMaterials,
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: 2),
             Text(
-              'Programme, map and branding © ${config.host}, '
-              '${config.faculty}.',
+              l.creditsEventMaterialsBody(
+                config.host,
+                config.faculty,
+                EventInfo.cricosProvider,
+              ),
               style: body,
             ),
             const SizedBox(height: AonSpacing.space4),
-            Text('Map data', style: theme.textTheme.titleSmall),
+            Text(l.settingsCreditsMapData, style: theme.textTheme.titleSmall),
             const SizedBox(height: 2),
-            Text('© OpenStreetMap contributors.', style: body),
+            Text(l.settingsOsmAttribution, style: body),
           ],
         ),
       ),
@@ -350,8 +457,9 @@ class _InfoCard extends StatelessWidget {
                   const SizedBox(height: AonSpacing.space1),
                   Text(
                     body,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: context.aon.contentSecondary),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: context.aon.contentSecondary,
+                    ),
                   ),
                 ],
               ),
@@ -384,11 +492,11 @@ class _SettingUnavailable extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const _InfoCard(
+    final l = AonL10n.of(context);
+    return _InfoCard(
       icon: Icons.error_outline_rounded,
-      title: 'Settings unavailable',
-      body: 'Your preferences couldn’t be opened on this device. The app '
-          'still works — it just won’t remember this choice.',
+      title: l.settingsUnavailableTitle,
+      body: l.settingsUnavailableBody,
     );
   }
 }

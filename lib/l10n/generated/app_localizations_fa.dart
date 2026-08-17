@@ -191,12 +191,29 @@ class AonL10nFa extends AonL10n {
 
   @override
   String programItemCount(int count) {
-    return '$count مورد در برنامه';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString برنامه',
+      one: '۱ برنامه',
+    );
+    return '$_temp0';
   }
 
   @override
   String programFilteredCount(int shown, int total) {
-    return '$shown از $total نمایش داده شد';
+    final intl.NumberFormat shownNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String shownString = shownNumberFormat.format(shown);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'نمایش $shownString از $totalString';
   }
 
   @override
@@ -447,7 +464,7 @@ class AonL10nFa extends AonL10n {
   String get settingsLanguage => 'زبان';
 
   @override
-  String get settingsLanguageSystem => 'مطابق تنظیمات گوشی';
+  String get settingsLanguageSystem => 'هم‌سان با دستگاه';
 
   @override
   String settingsAbout(String eventName) {
@@ -503,17 +520,17 @@ class AonL10nFa extends AonL10n {
   String get wayfindingTitle => 'مسیر پیاده';
 
   @override
-  String get wayfindingStartingFrom => 'مبدأ';
+  String get wayfindingStartingFrom => 'نقطهٔ شروع';
 
   @override
   String get wayfindingGoingTo => 'مقصد';
 
   @override
-  String get wayfindingPickTitle => 'مبدأ و مقصد را انتخاب کنید';
+  String get wayfindingPickTitle => 'یک نقطهٔ شروع و یک مقصد انتخاب کنید';
 
   @override
   String get wayfindingPickBody =>
-      'جایی که پارک کرده‌اید و مقصدتان را انتخاب کنید تا راهنمای نوشتاری برای پیاده‌روی در تاریکی به شما بدهیم.';
+      'انتخاب کنید کجا پارک کرده‌اید و به کجا می‌روید، تا راهنمای نوشتاری پیمودن آن در تاریکی را به شما بدهیم.';
 
   @override
   String get wayfindingNoRouteTitle => 'هنوز مسیری برای این دو نقطه نداریم';
@@ -545,7 +562,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get wayfindingStepFreeUnknown =>
-      'دسترسی بدون پله در این مسیر هنوز تأیید نشده است. اگر به مسیر بدون پله نیاز دارید، از باجهٔ اطلاعات بپرسید.';
+      'بدون‌پله بودن این مسیر هنوز تأیید نشده است. اگر به مسیر بدون پله نیاز دارید، از یکی از باجه‌های اطلاعات بپرسید.';
 
   @override
   String get locateShow => 'موقعیت من';
@@ -779,4 +796,264 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get compassUnlocatable => 'موقعیت نامشخص — نقشهٔ چاپی را ببینید';
+
+  @override
+  String get homeNothingRunningNow =>
+      'در این لحظه چیزی در حال اجرا نیست — برنامهٔ بعدی را ببینید.';
+
+  @override
+  String get homeFactColdTitle => 'هوا سرد و تاریک می‌شود';
+
+  @override
+  String get homeFactColdBody =>
+      'کاپشن و چراغ‌قوه همراه داشته باشید. نزدیک تلسکوپ‌ها حالت نور سرخ بهترین است — دید شبانهٔ همه را حفظ می‌کند.';
+
+  @override
+  String get homeFactBookingTitle => 'بعضی نمایش‌ها نیازمند رزرو پیشین‌اند';
+
+  @override
+  String get homeFactBookingBody =>
+      'برای نمایش‌های شعبده و «سفر به ماه» باید صندلی را هنگام خرید بلیت رزرو کنید.';
+
+  @override
+  String get homeFactParkingTitle => 'پارکینگ رایگان';
+
+  @override
+  String get homeFactParkingBody => 'West 5، West 6 و South 2.';
+
+  @override
+  String get homeFactMetroTitle => 'مترو';
+
+  @override
+  String get homeFactMetroBody =>
+      'ایستگاه مترو Macquarie University حدود ۱۰ دقیقه پیاده از حیاط مرکزی فاصله دارد.';
+
+  @override
+  String get programClearSearch => 'پاک کردن جست‌وجو';
+
+  @override
+  String get programBookedOnly => 'فقط رزروشده';
+
+  @override
+  String get detailNotFoundTitle => 'پیدا نشد';
+
+  @override
+  String get detailSessionTimes => 'زمان سانس‌ها';
+
+  @override
+  String get detailTime => 'زمان';
+
+  @override
+  String get detailLocation => 'مکان';
+
+  @override
+  String get detailUnpublishedTimes =>
+      'این زمان‌ها در برنامهٔ رسمی منتشر نشده‌اند — آن‌ها را تقریبی در نظر بگیرید.';
+
+  @override
+  String get detailPositionUnconfirmed =>
+      'موقعیت دقیق این مکان هنوز نهایی نشده است. تابلوها را دنبال کنید و از باجهٔ اطلاعات بپرسید.';
+
+  @override
+  String get detail360View => 'نمای ۳۶۰ درجه';
+
+  @override
+  String detailMarkedOnMap(String letter) {
+    return 'روی نقشهٔ چاپی رویداد با $letter نشان داده شده است';
+  }
+
+  @override
+  String get myNightClearConfirm => 'پاک کردن';
+
+  @override
+  String get settingsTextSizeCardTitle =>
+      'اندازهٔ متن را در گوشی خود تنظیم کنید';
+
+  @override
+  String get settingsPrivacyCardTitle => 'هیچ داده‌ای از گوشی شما خارج نمی‌شود';
+
+  @override
+  String get settingsOsmAttribution => '© مشارکت‌کنندگان OpenStreetMap.';
+
+  @override
+  String get infoFirstAid => 'کمک‌های اولیه';
+
+  @override
+  String get infoToilets => 'سرویس بهداشتی';
+
+  @override
+  String get infoRegistrationAndInfo => 'پذیرش و اطلاعات';
+
+  @override
+  String get infoFoodAndDrink => 'خوراکی و نوشیدنی';
+
+  @override
+  String get infoParking => 'پارکینگ';
+
+  @override
+  String get infoParkingFree => 'پارکینگ رایگان رویداد';
+
+  @override
+  String get infoWalkingFromParking => 'مسیر پیاده از پارکینگ';
+
+  @override
+  String get infoGettingHere => 'رسیدن به محل';
+
+  @override
+  String get infoBeforeYouCome => 'پیش از آمدن';
+
+  @override
+  String get infoDressTitle => 'لباس مناسب ایستادن در بیرون';
+
+  @override
+  String get infoDressBody =>
+      'پارک تلسکوپ و حیاط مرکزی فضای باز هستند و شب‌های سپتامبر سرد می‌شود. کاپشن همراه داشته باشید.';
+
+  @override
+  String get infoTorchTitle => 'چراغ‌قوه بیاورید — اگر دارید، نور سرخ';
+
+  @override
+  String get infoTorchBody =>
+      'به‌سمت رصدخانه واقعاً تاریک می‌شود و این عمدی است. نور سفید دید شبانهٔ اطرافیان را از بین می‌برد؛ نزدیک تلسکوپ‌ها از حالت نور سرخ استفاده کنید و روشنایی گوشی را کم کنید.';
+
+  @override
+  String get infoBookTitle => 'نمایش‌های بلیتی را زودتر رزرو کنید';
+
+  @override
+  String get infoBookBody =>
+      'برای نمایش‌های شعبدهٔ فیزیک و شیمی و «سفر به ماه» باید صندلی را هنگام خرید بلیت رزرو کنید.';
+
+  @override
+  String get infoChildrenTitle => 'کودکان باید همراه بزرگسال باشند';
+
+  @override
+  String get infoChildrenBody =>
+      'کودکان باید همیشه در فضای کودکان همراه پدر، مادر یا سرپرست باشند.';
+
+  @override
+  String get infoCloudTitle => 'اگر هوا ابری شد';
+
+  @override
+  String get infoCloudBody =>
+      'رصد با تلسکوپ به هوا بستگی دارد، اما سانس‌های آسمان‌نما در مرکز ورزش و آبی در هر حال برگزار می‌شوند.';
+
+  @override
+  String get infoCredits => 'اعتبارها';
+
+  @override
+  String get previewSection => 'پیش‌نمایش';
+
+  @override
+  String get previewTitle => 'پیش‌نمایش شب رویداد';
+
+  @override
+  String previewBody(String date) {
+    return 'ساعت برنامه را روی هر لحظه از $date تنظیم کنید تا ببینید برنامه در آن لحظه چگونه است. پیش از شب رویداد سودمند است؛ در طول رویداد خاموش بگذارید.';
+  }
+
+  @override
+  String get previewChooseTime => 'انتخاب زمان';
+
+  @override
+  String get previewBackToRealTime => 'بازگشت به زمان واقعی';
+
+  @override
+  String previewBanner(String time) {
+    return 'پیش‌نمایش $time در شب رویداد';
+  }
+
+  @override
+  String get previewExit => 'خروج';
+
+  @override
+  String get passportTitle => 'گذرنامهٔ نجوم';
+
+  @override
+  String get venueNoDirections =>
+      'هنوز راهنمای نوشتاری برای رسیدن به اینجا نداریم. از باجهٔ اطلاعات در حیاط مرکزی بپرسید.';
+
+  @override
+  String get venueNothingScheduled => 'امشب برنامه‌ای در اینجا نیست.';
+
+  @override
+  String get parkingNoConfirmedPosition =>
+      'هنوز موقعیت تأییدشده‌ای برای این پارکینگ نداریم — تابلوهای محل را دنبال کنید.';
+
+  @override
+  String creditsEventMaterialsBody(String host, String faculty, String cricos) {
+    return 'مواد رویداد، نقشهٔ پردیس و نشان‌ها © $host، $faculty. $cricos.';
+  }
+
+  @override
+  String creditsHeroImageBody(String credit) {
+    return 'تصویر اصلی: «$credit». با اجازه برای این پروژه استفاده شده است.';
+  }
+
+  @override
+  String get wayfindingReset => 'بازنشانی';
+
+  @override
+  String get wayfindingNoPairTitle => 'هنوز مسیری برای این دو نقطه نداریم';
+
+  @override
+  String get wayfindingNoPairBody =>
+      'مسیر نوشته‌شده‌ای میان این دو نقطه نداریم. می‌توانید حیاط مرکزی را نقطهٔ واسط بگیرید — بیشتر مسیرها از آن می‌گذرند — یا از یکی از باجه‌های اطلاعات بپرسید.';
+
+  @override
+  String get wayfindingDraftRoute =>
+      'این راهنما پیش‌نویس است و هنوز شب‌هنگام در دانشگاه پیموده و بازبینی نشده است. اگر با تابلوها و راهنمایان رویداد تفاوت داشت، از آن‌ها پیروی کنید.';
+
+  @override
+  String get wayfindingStepFree => 'این مسیر بدون پله است.';
+
+  @override
+  String get wayfindingNotStepFree => 'این مسیر بدون پله نیست.';
+
+  @override
+  String get settingsLanguageSystemHint =>
+      'اگر زبان دستگاه شما در دسترس نباشد، انگلیسی نمایش داده می‌شود.';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguagePersian => 'فارسی';
+
+  @override
+  String get creditsMapDataBody =>
+      'داده‌های نقشه © مشارکت‌کنندگان OpenStreetMap.';
+
+  @override
+  String eventSourceNote(String note) {
+    return 'منبع: $note';
+  }
+
+  @override
+  String eventMapReference(String ref) {
+    return 'با نشان $ref روی نقشهٔ چاپی رویداد';
+  }
+
+  @override
+  String get timingOnTheNight => 'در شب رویداد';
+
+  @override
+  String get categoryActivities => 'فعالیت‌ها';
+
+  @override
+  String get categoryShortTalks => 'سخنرانی‌های کوتاه';
+
+  @override
+  String get categoryKeynote => 'سخنرانی کلیدی';
+
+  @override
+  String get categoryFeaturedPresentations => 'ارائه‌های ویژه';
+
+  @override
+  String get bandEarlyEvening => '۴ تا ۶ بعدازظهر';
+
+  @override
+  String get bandEvening => '۶ تا ۸ شب';
+
+  @override
+  String get bandLateEvening => '۸ تا ۱۰ شب';
 }

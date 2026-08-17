@@ -41,8 +41,7 @@ final eventsProvider = Provider<List<AonEvent>>((ref) => EventsData.all);
 
 final venuesProvider = Provider<List<Venue>>((ref) => VenuesData.all);
 
-final parkingProvider =
-    Provider<List<ParkingArea>>((ref) => ParkingData.all);
+final parkingProvider = Provider<List<ParkingArea>>((ref) => ParkingData.all);
 
 final routesProvider = Provider<List<WalkingRoute>>((ref) => RoutesData.all);
 
@@ -72,12 +71,11 @@ final parkingByIdProvider = Provider.family<ParkingArea?, String>((ref, id) {
 });
 
 /// Every event scheduled at a given venue.
-final eventsAtVenueProvider =
-    Provider.family<List<AonEvent>, String>((ref, venueId) {
-  return ref
-      .watch(eventsProvider)
-      .where((e) => e.venueId == venueId)
-      .toList()
+final eventsAtVenueProvider = Provider.family<List<AonEvent>, String>((
+  ref,
+  venueId,
+) {
+  return ref.watch(eventsProvider).where((e) => e.venueId == venueId).toList()
     ..sort((a, b) => a.firstStart.compareTo(b.firstStart));
 });
 
@@ -91,8 +89,9 @@ final venuesWithEventsProvider = Provider<List<Venue>>((ref) {
 
 // ── Programme filtering ──────────────────────────────────
 
-final eventFilterProvider =
-    NotifierProvider<EventFilterNotifier, EventFilter>(EventFilterNotifier.new);
+final eventFilterProvider = NotifierProvider<EventFilterNotifier, EventFilter>(
+  EventFilterNotifier.new,
+);
 
 class EventFilterNotifier extends Notifier<EventFilter> {
   @override
@@ -133,8 +132,9 @@ final filteredEventsProvider = Provider<List<AonEvent>>((ref) {
 });
 
 /// Filtered programme, grouped into the printed programme's sections.
-final groupedEventsProvider =
-    Provider<Map<EventCategory, List<AonEvent>>>((ref) {
+final groupedEventsProvider = Provider<Map<EventCategory, List<AonEvent>>>((
+  ref,
+) {
   return EventFilterService.groupByCategory(ref.watch(filteredEventsProvider));
 });
 
@@ -172,8 +172,10 @@ final upcomingProvider = Provider<List<TimedEvent>>((ref) {
 // ── Wayfinding ───────────────────────────────────────────
 
 /// Routes departing from the selected start point.
-final routesFromProvider =
-    Provider.family<List<WalkingRoute>, String>((ref, fromId) {
+final routesFromProvider = Provider.family<List<WalkingRoute>, String>((
+  ref,
+  fromId,
+) {
   return ref.watch(routesProvider).where((r) => r.fromId == fromId).toList();
 });
 
@@ -218,7 +220,6 @@ final selectedRouteProvider = Provider<WalkingRoute?>((ref) {
   return null;
 });
 
-
 /// Which venues have a 360 tour (synchronous — no manifest I/O; the picker
 /// reads this, not every JSON file).
 final venuesWithPanoramaProvider = Provider<Set<String>>(
@@ -228,8 +229,10 @@ final venuesWithPanoramaProvider = Provider<Set<String>>(
 /// Loads + caches a venue's indoor manifest. The asset path comes from an EXACT
 /// panorama_data lookup — never interpolated from [venueId]; an unknown id
 /// yields null (no arbitrary asset read).
-final indoorManifestProvider =
-    FutureProvider.family<IndoorManifest?, String>((ref, venueId) async {
+final indoorManifestProvider = FutureProvider.family<IndoorManifest?, String>((
+  ref,
+  venueId,
+) async {
   final tour = PanoramaData.tourFor(venueId);
   if (tour == null) return null;
   final raw = await rootBundle.loadString(tour.manifestAsset);
@@ -269,3 +272,12 @@ final nextUpProvider = Provider<ItineraryEntry?>(
 final hasItineraryConflictProvider = Provider<bool>(
   (ref) => ref.watch(itineraryProvider).any((e) => e.hasConflict),
 );
+
+/// Whether an authored walking route ends at [venueId].
+///
+/// Pure frontend lookup over `RoutesData`. Quick Access and the venue sheet use
+/// it to avoid offering walking directions that do not exist — the previous
+/// behaviour dropped the visitor onto an empty planner.
+final hasRouteToProvider = Provider.family<bool, String>((ref, venueId) {
+  return ref.watch(routesProvider).any((r) => r.toId == venueId);
+});

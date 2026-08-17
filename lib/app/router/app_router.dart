@@ -15,7 +15,6 @@ import 'package:aon2026/screens/google_nav_screen.dart';
 import 'package:aon2026/screens/passport_reward_screen.dart';
 import 'package:aon2026/screens/passport_scan_screen.dart';
 import 'package:aon2026/screens/passport_screen.dart';
-import 'package:aon2026/screens/whats_on_screen.dart';
 import 'package:aon2026/widgets/app_shell.dart';
 
 /// Route paths, in one place so nothing hard-codes a string literal.
@@ -31,11 +30,6 @@ abstract final class Routes {
   static String eventDetail = '/event/:id';
   static String wayfinding = '/wayfinding';
   static String settings = '/settings';
-
-  /// The time-sliced programme view. Home surfaces the same content inline,
-  /// so this is a "see everything" push rather than a tab of its own —
-  /// keeping the tab bar at five.
-  static String whatsOn = '/whats-on';
 
   /// Astronomy Passport (Phase 6). Builders are registered in the tasks that
   /// create each screen, so no builder imports a screen before it exists.
@@ -60,7 +54,8 @@ abstract final class Routes {
   /// Embedded Google walking-nav for a M3 place key ("venue:x" / "building:y").
   /// The helper URL-encodes the key (it contains a colon). M4.
   static String googleNav = '/google-nav/:placeKey';
-  static String googleNavTo(String placeKey) => '/google-nav/${Uri.encodeComponent(placeKey)}';
+  static String googleNavTo(String placeKey) =>
+      '/google-nav/${Uri.encodeComponent(placeKey)}';
 }
 
 /// The app's navigator.
@@ -132,9 +127,8 @@ GoRouter buildRouter() {
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
         path: Routes.eventDetail,
-        builder: (context, state) => EventDetailScreen(
-          eventId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            EventDetailScreen(eventId: state.pathParameters['id']!),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
@@ -145,34 +139,26 @@ GoRouter buildRouter() {
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
-        path: Routes.whatsOn,
-        builder: (context, state) => const WhatsOnScreen(),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
         path: Routes.settings,
         builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
         path: Routes.panorama,
-        builder: (context, state) => PanoramaScreen(
-          venueId: state.pathParameters['venueId']!,
-        ),
+        builder: (context, state) =>
+            PanoramaScreen(venueId: state.pathParameters['venueId']!),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
         path: Routes.pointMe,
-        builder: (context, state) => PointMeScreen(
-          venueId: state.pathParameters['id']!,
-        ),
+        builder: (context, state) =>
+            PointMeScreen(venueId: state.pathParameters['id']!),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,
         path: Routes.googleNav,
-        builder: (context, state) => GoogleNavScreen(
-          placeKey: state.pathParameters['placeKey']!,
-        ),
+        builder: (context, state) =>
+            GoogleNavScreen(placeKey: state.pathParameters['placeKey']!),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,

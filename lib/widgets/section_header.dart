@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/utils/time_format.dart';
 
 /// A titled section divider used down the length of the scrolling screens.
 class SectionHeader extends StatelessWidget {
@@ -61,7 +62,7 @@ class SectionHeader extends StatelessWidget {
                         BorderRadius.circular(AonSpacing.radiusFull),
                   ),
                   child: Text(
-                    '$count',
+                    TimeFormat.count(count!),
                     style: theme.textTheme.labelSmall
                         ?.copyWith(color: context.aon.contentSecondary),
                   ),

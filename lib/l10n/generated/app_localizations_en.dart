@@ -191,12 +191,29 @@ class AonL10nEn extends AonL10n {
 
   @override
   String programItemCount(int count) {
-    return '$count items in the program';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$countString items in the program',
+      one: '1 item in the program',
+    );
+    return '$_temp0';
   }
 
   @override
   String programFilteredCount(int shown, int total) {
-    return '$shown of $total shown';
+    final intl.NumberFormat shownNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String shownString = shownNumberFormat.format(shown);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return '$shownString of $totalString shown';
   }
 
   @override
@@ -447,7 +464,7 @@ class AonL10nEn extends AonL10n {
   String get settingsLanguage => 'Language';
 
   @override
-  String get settingsLanguageSystem => 'Follow my phone';
+  String get settingsLanguageSystem => 'Match my device';
 
   @override
   String settingsAbout(String eventName) {
@@ -777,4 +794,262 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get compassUnlocatable => 'Location unknown — see the printed map';
+
+  @override
+  String get homeNothingRunningNow =>
+      'Nothing running this minute — check what’s next.';
+
+  @override
+  String get homeFactColdTitle => 'It gets cold and dark';
+
+  @override
+  String get homeFactColdBody =>
+      'Bring a jacket and a torch. Red-light mode is best near the telescopes — it protects everyone’s night vision.';
+
+  @override
+  String get homeFactBookingTitle => 'Some shows need pre-booking';
+
+  @override
+  String get homeFactBookingBody =>
+      'The magic shows and Destination Moon need seats booked at the time of ticket purchase.';
+
+  @override
+  String get homeFactParkingTitle => 'Free parking';
+
+  @override
+  String get homeFactParkingBody => 'West 5, West 6 and South 2.';
+
+  @override
+  String get homeFactMetroTitle => 'Metro';
+
+  @override
+  String get homeFactMetroBody =>
+      'Macquarie University Metro Station is about a 10 minute walk from the Central Courtyard.';
+
+  @override
+  String get programClearSearch => 'Clear search';
+
+  @override
+  String get programBookedOnly => 'Pre-booked only';
+
+  @override
+  String get detailNotFoundTitle => 'Not found';
+
+  @override
+  String get detailSessionTimes => 'Session times';
+
+  @override
+  String get detailTime => 'Time';
+
+  @override
+  String get detailLocation => 'Location';
+
+  @override
+  String get detailUnpublishedTimes =>
+      'These times are not published in the official program — treat them as a guide.';
+
+  @override
+  String get detailPositionUnconfirmed =>
+      'The exact position of this location is still being confirmed. Follow signage and ask at an information point.';
+
+  @override
+  String get detail360View => '360° view';
+
+  @override
+  String detailMarkedOnMap(String letter) {
+    return 'Marked $letter on the printed event map';
+  }
+
+  @override
+  String get myNightClearConfirm => 'Clear';
+
+  @override
+  String get settingsTextSizeCardTitle => 'Set text size on your phone';
+
+  @override
+  String get settingsPrivacyCardTitle => 'Nothing leaves your phone';
+
+  @override
+  String get settingsOsmAttribution => '© OpenStreetMap contributors.';
+
+  @override
+  String get infoFirstAid => 'First aid';
+
+  @override
+  String get infoToilets => 'Toilets';
+
+  @override
+  String get infoRegistrationAndInfo => 'Registration and information';
+
+  @override
+  String get infoFoodAndDrink => 'Food and drink';
+
+  @override
+  String get infoParking => 'Parking';
+
+  @override
+  String get infoParkingFree => 'Free event parking';
+
+  @override
+  String get infoWalkingFromParking => 'Walking directions from parking';
+
+  @override
+  String get infoGettingHere => 'Getting here';
+
+  @override
+  String get infoBeforeYouCome => 'Before you come';
+
+  @override
+  String get infoDressTitle => 'Dress for standing outside';
+
+  @override
+  String get infoDressBody =>
+      'The Telescope Park and the Central Courtyard are open ground, and September evenings get cold. Bring a jacket.';
+
+  @override
+  String get infoTorchTitle => 'Bring a torch — red light if you have it';
+
+  @override
+  String get infoTorchBody =>
+      'It gets genuinely dark towards the Observatory, and that is on purpose. White light ruins night vision for everyone around you, so use a red torch mode near the telescopes and turn your phone brightness down.';
+
+  @override
+  String get infoBookTitle => 'Book the ticketed shows early';
+
+  @override
+  String get infoBookBody =>
+      'The physics and chemistry magic shows and Destination Moon need seats pre-booked at the time of ticket purchase.';
+
+  @override
+  String get infoChildrenTitle => 'Children must be supervised';
+
+  @override
+  String get infoChildrenBody =>
+      'Children must be accompanied by a parent or guardian at all times in the Kids’ space.';
+
+  @override
+  String get infoCloudTitle => 'If it clouds over';
+
+  @override
+  String get infoCloudBody =>
+      'Telescope viewing depends on the weather, but the planetarium sessions at the Sport and Aquatic Centre run regardless.';
+
+  @override
+  String get infoCredits => 'Credits';
+
+  @override
+  String get previewSection => 'Preview';
+
+  @override
+  String get previewTitle => 'Preview event night';
+
+  @override
+  String previewBody(String date) {
+    return 'Set the app’s clock to any point on $date to see what the program looks like at that moment. Useful before the night; leave it off during the event.';
+  }
+
+  @override
+  String get previewChooseTime => 'Choose a time';
+
+  @override
+  String get previewBackToRealTime => 'Back to real time';
+
+  @override
+  String previewBanner(String time) {
+    return 'Previewing $time on event night';
+  }
+
+  @override
+  String get previewExit => 'Exit';
+
+  @override
+  String get passportTitle => 'Astronomy Passport';
+
+  @override
+  String get venueNoDirections =>
+      'We don’t have written walking directions to here yet. Ask at an information point in the Central Courtyard.';
+
+  @override
+  String get venueNothingScheduled => 'Nothing scheduled here tonight.';
+
+  @override
+  String get parkingNoConfirmedPosition =>
+      'We don’t have a confirmed position for this car park yet — follow on-site signage.';
+
+  @override
+  String creditsEventMaterialsBody(String host, String faculty, String cricos) {
+    return 'Event materials, campus map and branding © $host, $faculty. $cricos.';
+  }
+
+  @override
+  String creditsHeroImageBody(String credit) {
+    return 'Hero image: “$credit”. Used with permission for this project.';
+  }
+
+  @override
+  String get wayfindingReset => 'Reset';
+
+  @override
+  String get wayfindingNoPairTitle => 'No directions for that pair yet';
+
+  @override
+  String get wayfindingNoPairBody =>
+      'We don’t have a written route between those two points. Try the Central Courtyard as a staging point — most routes run through it — or ask at an information point.';
+
+  @override
+  String get wayfindingDraftRoute =>
+      'These directions are a draft and have not yet been walked and verified on campus at night. Follow event signage and marshals if they differ.';
+
+  @override
+  String get wayfindingStepFree => 'Step-free access along this route.';
+
+  @override
+  String get wayfindingNotStepFree => 'This route is not step-free.';
+
+  @override
+  String get settingsLanguageSystemHint =>
+      'Falls back to English if your device language isn’t available.';
+
+  @override
+  String get settingsLanguageEnglish => 'English';
+
+  @override
+  String get settingsLanguagePersian => 'فارسی';
+
+  @override
+  String get creditsMapDataBody => 'Map data © OpenStreetMap contributors.';
+
+  @override
+  String eventSourceNote(String note) {
+    return 'Source: $note';
+  }
+
+  @override
+  String eventMapReference(String ref) {
+    return 'Marked $ref on the printed event map';
+  }
+
+  @override
+  String get timingOnTheNight => 'On the night';
+
+  @override
+  String get categoryActivities => 'Activities';
+
+  @override
+  String get categoryShortTalks => 'Short talks';
+
+  @override
+  String get categoryKeynote => 'Keynote lecture';
+
+  @override
+  String get categoryFeaturedPresentations => 'Featured presentations';
+
+  @override
+  String get bandEarlyEvening => '4–6pm';
+
+  @override
+  String get bandEvening => '6–8pm';
+
+  @override
+  String get bandLateEvening => '8–10pm';
 }

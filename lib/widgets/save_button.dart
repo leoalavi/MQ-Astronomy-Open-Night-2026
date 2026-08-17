@@ -54,8 +54,8 @@ class SaveButton extends ConsumerWidget {
     final icon = saved ? Icons.star_rounded : Icons.star_outline_rounded;
     final colour = saved ? context.aon.accent : context.aon.contentSecondary;
     final semanticLabel = saved
-        ? 'Remove $eventTitle from $planName'
-        : 'Save $eventTitle to $planName';
+        ? l.a11yRemoveFromPlan(eventTitle, planName)
+        : l.a11ySaveToPlan(eventTitle, planName);
 
     Future<void> onPressed() async {
       final nowSaved = await ref
@@ -70,7 +70,9 @@ class SaveButton extends ConsumerWidget {
         ..showSnackBar(
           SnackBar(
             content: Text(
-              nowSaved ? 'Saved to $planName' : 'Removed from $planName',
+              nowSaved
+                  ? l.snackSavedTo(planName)
+                  : l.snackRemovedFrom(planName),
             ),
             duration: const Duration(seconds: 2),
             behavior: SnackBarBehavior.floating,
@@ -111,7 +113,7 @@ class SaveButton extends ConsumerWidget {
       child: Semantics(
         label: semanticLabel,
         child: Tooltip(
-          message: saved ? 'Remove from $planName' : 'Save to $planName',
+          message: saved ? l.actionRemoveFromPlan : l.actionSave,
           child: ConstrainedBox(
             // The full 56pt target even though the glyph is small — this sits
             // inside a scrolling list and gets tapped one-handed in the dark.

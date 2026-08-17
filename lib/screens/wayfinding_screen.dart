@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/walking_route.dart';
 import 'package:aon2026/services/providers.dart';
@@ -50,9 +51,7 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
     if (destination != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
-        ref
-            .read(selectedRouteDestinationProvider.notifier)
-            .select(destination);
+        ref.read(selectedRouteDestinationProvider.notifier).select(destination);
       });
     }
   }
@@ -91,7 +90,7 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
                 ref.read(selectedRouteStartProvider.notifier).clear();
                 ref.read(selectedRouteDestinationProvider.notifier).clear();
               },
-              child: const Text('Reset'),
+              child: Text(l.wayfindingReset),
             ),
         ],
       ),
@@ -104,7 +103,7 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
         ),
         children: [
           // ── Start ──
-          Text('Starting from', style: theme.textTheme.titleMedium),
+          Text(l.wayfindingStartingFrom, style: theme.textTheme.titleMedium),
           const SizedBox(height: AonSpacing.space3),
           Wrap(
             spacing: AonSpacing.space2,
@@ -139,7 +138,7 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
           const SizedBox(height: AonSpacing.space5),
 
           // ── Destination ──
-          Text('Going to', style: theme.textTheme.titleMedium),
+          Text(l.wayfindingGoingTo, style: theme.textTheme.titleMedium),
           const SizedBox(height: AonSpacing.space3),
           Wrap(
             spacing: AonSpacing.space2,
@@ -164,22 +163,16 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
           else if (fromId != null && toId != null)
             // Both ends chosen but no route exists — a genuinely different
             // message from "you haven't chosen yet".
-            const EmptyState(
+            EmptyState(
               icon: Icons.wrong_location_rounded,
-              title: 'No directions for that pair yet',
-              message:
-                  'We don’t have a written route between those two points. '
-                  'Try the Central Courtyard as a staging point — most '
-                  'routes run through it — or ask at an information point.',
+              title: l.wayfindingNoPairTitle,
+              message: l.wayfindingNoPairBody,
             )
           else
-            const EmptyState(
+            EmptyState(
               icon: Icons.directions_walk_rounded,
-              title: 'Pick a start and a destination',
-              message:
-                  'Choose where you parked and where you’re heading, and '
-                  'we’ll give you written directions for walking it in the '
-                  'dark.',
+              title: l.wayfindingPickTitle,
+              message: l.wayfindingPickBody,
             ),
         ],
       ),
@@ -204,7 +197,7 @@ class _VenueChoiceChip extends ConsumerWidget {
     if (venue == null) return const SizedBox.shrink();
 
     return ChoiceChip(
-      label: Text(venue.chipLabel),
+      label: Text(Bidi.isolate(venue.chipLabel)),
       selected: selected,
       onSelected: (_) => onSelected(),
     );
@@ -219,6 +212,7 @@ class _RouteDetail extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -310,10 +304,7 @@ class _RouteDetail extends StatelessWidget {
         // ── Confidence ──
         ConfidenceNote(
           confidence: route.pathConfidence,
-          message:
-              'These directions are a draft and have not yet been walked and '
-              'verified on campus at night. Follow event signage and marshals '
-              'if they differ.',
+          message: l.wayfindingDraftRoute,
         ),
 
         const SizedBox(height: AonSpacing.space4),
@@ -323,7 +314,7 @@ class _RouteDetail extends StatelessWidget {
           _InfoRow(
             icon: Icons.lightbulb_outline_rounded,
             color: context.aon.soon,
-            text: route.lightingNotes!,
+            text: Bidi.isolate(route.lightingNotes),
           ),
 
         // ── Accessibility ──
@@ -331,21 +322,21 @@ class _RouteDetail extends StatelessWidget {
           icon: Icons.accessible_rounded,
           color: context.aon.info,
           text: switch (route.isAccessible) {
-            true => route.accessibilityNotes ??
-                'Step-free access along this route.',
-            false => route.accessibilityNotes ??
-                'This route is not step-free.',
+            true => Bidi.isolate(route.accessibilityNotes).isEmpty
+                ? l.wayfindingStepFree
+                : Bidi.isolate(route.accessibilityNotes),
+            false => Bidi.isolate(route.accessibilityNotes).isEmpty
+                ? l.wayfindingNotStepFree
+                : Bidi.isolate(route.accessibilityNotes),
             // `null` is unknown, and must not read as "no".
-            null => 'Step-free access along this route has not been '
-                'confirmed yet. Ask at an information point if you need a '
-                'step-free path.',
+            null => l.wayfindingStepFreeUnknown,
           },
         ),
 
         const SizedBox(height: AonSpacing.space5),
 
         // ── Written steps: the primary output ──
-        Text('Directions', style: theme.textTheme.headlineSmall),
+        Text(l.wayfindingDirections, style: theme.textTheme.headlineSmall),
         const SizedBox(height: AonSpacing.space3),
         for (var i = 0; i < route.steps.length; i++)
           _StepRow(index: i + 1, step: route.steps[i]),
@@ -362,8 +353,7 @@ class _RouteMap extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDraftGeometry =
-        route.pathConfidence == DataConfidence.placeholder;
+    final isDraftGeometry = route.pathConfidence == DataConfidence.placeholder;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,8 +414,9 @@ class _RouteMap extends StatelessWidget {
           Text(
             'Straight line shown — this is the general direction, not the '
             'exact path. Follow the written directions below.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.aon.contentTertiary),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
         ],
       ],
@@ -474,8 +465,9 @@ class _StepRow extends StatelessWidget {
             ),
             child: Text(
               '$index',
-              style: theme.textTheme.labelMedium
-                  ?.copyWith(color: context.aon.accent),
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: context.aon.accent,
+              ),
             ),
           ),
           const SizedBox(width: AonSpacing.space3),
@@ -498,8 +490,9 @@ class _StepRow extends StatelessWidget {
                       Expanded(
                         child: Text(
                           step.landmark!,
-                          style: theme.textTheme.bodySmall
-                              ?.copyWith(color: context.aon.contentTertiary),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: context.aon.contentTertiary,
+                          ),
                         ),
                       ),
                     ],
@@ -535,10 +528,9 @@ class _Stat extends StatelessWidget {
           const SizedBox(width: AonSpacing.space2),
           Text(
             value,
-            style: Theme.of(context)
-                .textTheme
-                .bodyMedium
-                ?.copyWith(color: context.aon.contentSecondary),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: context.aon.contentSecondary,
+            ),
           ),
         ],
       ),
@@ -547,11 +539,7 @@ class _Stat extends StatelessWidget {
 }
 
 class _InfoRow extends StatelessWidget {
-  const _InfoRow({
-    required this.icon,
-    required this.color,
-    required this.text,
-  });
+  const _InfoRow({required this.icon, required this.color, required this.text});
 
   final IconData icon;
   final Color color;
@@ -569,10 +557,9 @@ class _InfoRow extends StatelessWidget {
           Expanded(
             child: Text(
               text,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
           ),
         ],

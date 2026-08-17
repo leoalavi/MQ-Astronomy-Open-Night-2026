@@ -16,6 +16,7 @@ import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/event_phase.dart';
+import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/services/whats_on_service.dart';
@@ -29,6 +30,7 @@ import 'package:aon2026/widgets/activity_rail_card.dart';
 import 'package:aon2026/widgets/quick_link_tile.dart';
 import 'package:aon2026/widgets/section_header.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
+import 'package:aon2026/widgets/venue_info_sheet.dart';
 
 /// Landing screen: branding, when and where, and the four things people
 /// actually open the app for.
@@ -71,9 +73,7 @@ class HomeScreen extends ConsumerWidget {
                   iconColor: context.aon.live,
                   items: happeningNow,
                   now: now,
-                  emptyMessage: phase.isLive
-                      ? 'Nothing running this minute — check what’s next.'
-                      : null,
+                  emptyMessage: phase.isLive ? l.homeNothingRunningNow : null,
                 ),
 
                 const SizedBox(height: AonSpacing.space5),
@@ -82,7 +82,9 @@ class HomeScreen extends ConsumerWidget {
                 _ActivityRail(
                   title: l.homeUpNext,
                   subtitle: startingSoon.isNotEmpty
-                      ? 'Starting in the next ${WhatsOnService.soonWindow.inMinutes} minutes'
+                      ? l.timingStartingWithin(
+                          WhatsOnService.soonWindow.inMinutes,
+                        )
                       : null,
                   icon: Icons.schedule_rounded,
                   iconColor: context.aon.soon,
@@ -99,9 +101,20 @@ class HomeScreen extends ConsumerWidget {
                   Align(
                     alignment: Alignment.centerLeft,
                     child: TextButton.icon(
-                      onPressed: () => context.push(Routes.whatsOn),
+                      // Goes to the Program tab, forcing its Tonight view.
+                      // Program IS the canonical time-sliced programme; a
+                      // second screen showing the same four buckets only made
+                      // visitors wonder which one was "the real" programme.
+                      onPressed: () {
+                        ref
+                            .read(programViewProvider.notifier)
+                            .set(ProgramView.tonight);
+                        context.go(Routes.program);
+                      },
                       icon: const Icon(Icons.timeline_rounded),
-                      label: Text('See the whole ${terminology.eventPeriod(l)}'),
+                      label: Text(
+                        l.homeSeeWholeEvent(terminology.eventPeriod(l)),
+                      ),
                     ),
                   ),
                 ],
@@ -112,41 +125,37 @@ class HomeScreen extends ConsumerWidget {
 
                 const SizedBox(height: AonSpacing.space6),
 
-                Text('Find your way to', style: theme.textTheme.headlineSmall),
+                Text(
+                  l.homeQuickAccessTitle,
+                  style: theme.textTheme.headlineSmall,
+                ),
                 const SizedBox(height: AonSpacing.space3),
                 const _QuickAccessGrid(),
 
                 const SizedBox(height: AonSpacing.space6),
 
                 // ── Practical summary ──
-                Text('Good to know', style: theme.textTheme.headlineSmall),
+                Text(l.homeGoodToKnow, style: theme.textTheme.headlineSmall),
                 const SizedBox(height: AonSpacing.space3),
-                const _FactRow(
+                _FactRow(
                   icon: Icons.dark_mode_rounded,
-                  title: 'It gets cold and dark',
-                  body:
-                      'Bring a jacket and a torch. Red-light mode is best '
-                      'near the telescopes — it protects everyone’s night '
-                      'vision.',
+                  title: l.homeFactColdTitle,
+                  body: l.homeFactColdBody,
                 ),
-                const _FactRow(
+                _FactRow(
                   icon: Icons.confirmation_number_rounded,
-                  title: 'Some shows need pre-booking',
-                  body:
-                      'The magic shows and Destination Moon need seats '
-                      'booked at the time of ticket purchase.',
+                  title: l.homeFactBookingTitle,
+                  body: l.homeFactBookingBody,
                 ),
-                const _FactRow(
+                _FactRow(
                   icon: Icons.local_parking_rounded,
-                  title: 'Free parking',
-                  body: 'West 5, West 6 and South 2.',
+                  title: l.homeFactParkingTitle,
+                  body: l.homeFactParkingBody,
                 ),
-                const _FactRow(
+                _FactRow(
                   icon: Icons.train_rounded,
-                  title: 'Metro',
-                  body:
-                      'Macquarie University Metro Station is about a '
-                      '10 minute walk from the Central Courtyard.',
+                  title: l.homeFactMetroTitle,
+                  body: l.homeFactMetroBody,
                 ),
 
                 const SizedBox(height: AonSpacing.space6),
@@ -438,13 +447,18 @@ class _FactRow extends StatelessWidget {
   }
 }
 
-class _Attribution extends StatelessWidget {
+class _Attribution extends ConsumerWidget {
   const _Attribution({required this.theme});
 
   final ThemeData theme;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    // The credit text has exactly one home: EventConfig.heroCredit. It used to
+    // be duplicated as a literal here too, which is how the Info screen and the
+    // Home screen end up crediting the photographer differently after an edit.
+    final config = ref.watch(eventConfigProvider);
     return Container(
       padding: const EdgeInsets.all(AonSpacing.space4),
       decoration: BoxDecoration(
@@ -456,14 +470,14 @@ class _Attribution extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Image credit',
+            l.homeImageCredit,
             style: theme.textTheme.labelSmall?.copyWith(
               color: context.aon.contentTertiary,
             ),
           ),
           const SizedBox(height: AonSpacing.space1),
           Text(
-            'A Deep Triangulum Galaxy — Aleix Roig, 2026',
+            config.heroCredit,
             style: theme.textTheme.bodySmall?.copyWith(
               color: context.aon.contentSecondary,
             ),
@@ -704,16 +718,12 @@ class _MapCta extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    l.homeOpenMapTitle,
-                    style: theme.textTheme.titleMedium,
-                  ),
+                  Text(l.homeOpenMapTitle, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 2),
                   Text(
                     features.wayfinding
-                        ? 'Venues, toilets, first aid — and walking directions '
-                              'from the car parks'
-                        : 'Venues, toilets, first aid and parking',
+                        ? l.homeOpenMapBody
+                        : l.homeOpenMapBodyNoWayfinding,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: context.aon.contentSecondary,
                     ),
@@ -774,6 +784,7 @@ class _QuickAccessTile extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final venue = item.venueId == null
         ? null
         : ref.watch(venueByIdProvider(item.venueId!));
@@ -787,20 +798,34 @@ class _QuickAccessTile extends ConsumerWidget {
         ? context.aon.mapParking
         : VenueStyle.colorFor(context, venue?.category ?? VenueCategory.other);
 
+    // The venue's own name as the subtitle — so "Telescopes" is immediately
+    // grounded in "Observatory", which is what the printed map calls it.
+    // But when the shortcut label and the venue name are the same word
+    // ("First aid", "Toilets"), repeating it read as a rendering bug — fall
+    // back to the building it is in.
+    final venueLabel = venue?.chipLabel;
+    final description = isParking
+        ? l.quickAccessWalkingRoutes
+        : (venueLabel == null || venueLabel == item.label(l)
+              ? (venue?.building ?? l.infoLocationToBeConfirmed)
+              : venueLabel);
+
     return QuickLinkTile(
       icon: icon,
-      label: item.label,
-      // The venue's own name as the subtitle — so "Telescopes" is immediately
-      // grounded in "Observatory", which is what the printed map calls it.
-      description: isParking
-          ? 'Walking routes'
-          : (venue?.chipLabel ?? 'Location to be confirmed'),
+      label: item.label(l),
+      description: description,
       accent: accent,
       onTap: () {
         if (isParking) {
+          // Parking is the one shortcut whose answer really is the planner:
+          // the visitor picks which car park they used.
           context.push(Routes.wayfinding);
         } else {
-          context.push(Routes.wayfindingTo(item.venueId!));
+          // Everything else opens the venue sheet, which answers "where is
+          // this and what's on here" and offers walking directions only when
+          // we actually have an authored route. Sending these straight to the
+          // planner dropped five of eight tiles onto an empty screen.
+          VenueInfoSheet.show(context, item.venueId!);
         }
       },
     );

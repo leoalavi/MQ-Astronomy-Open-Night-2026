@@ -11,6 +11,7 @@ import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/aon_tactile_button.dart';
 import 'package:aon2026/widgets/save_button.dart';
@@ -97,7 +98,7 @@ class EventCard extends ConsumerWidget {
                           const SizedBox(width: AonSpacing.space2),
                           Flexible(
                             child: Text(
-                              event.category.label,
+                              event.category.labelOf(l),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.labelSmall?.copyWith(
@@ -165,7 +166,7 @@ class EventCard extends ConsumerWidget {
                         const SizedBox(width: AonSpacing.space2),
                         Expanded(
                           child: Text(
-                            'Pre-booking required',
+                            l.programPreBookingRequired,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: context.aon.soon,
                             ),

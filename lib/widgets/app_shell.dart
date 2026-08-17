@@ -3,12 +3,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/services/clock.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/utils/haptics.dart';
+import 'package:aon2026/widgets/event_time_preview.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 import 'package:aon2026/widgets/liquid_tab_bar.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
@@ -71,6 +73,8 @@ class AppShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AonL10n.of(context);
     final items = itemsFor(ref.watch(terminologyProvider), l);
+    // Whether the preview banner is occupying the top inset (see body below).
+    final previewing = ref.watch(simulatedTimeProvider) != null;
 
     // Drive GPS lifecycle from the authoritative branch index (Map Parity
     // Phase A). Deferred to a post-frame callback because provider state must
@@ -85,7 +89,27 @@ class AppShell extends ConsumerWidget {
       // The body runs behind the floating island so the glass has live content
       // to refract.
       extendBody: true,
-      body: navigationShell,
+      body: Column(
+        children: [
+          // Visible on every tab while the clock is simulated. Without it, a
+          // phone left in preview mode shows a confidently wrong programme
+          // with no explanation.
+          const EventTimePreviewBanner(),
+          Expanded(
+            // The banner already consumes the status-bar inset via its own
+            // SafeArea. Without removing the top padding here, every tab's
+            // AppBar applies that same inset a second time, opening a ~50pt
+            // empty band between the banner and the screen title.
+            child: previewing
+                ? MediaQuery.removePadding(
+                    context: context,
+                    removeTop: true,
+                    child: navigationShell,
+                  )
+                : navigationShell,
+          ),
+        ],
+      ),
       bottomNavigationBar: SafeArea(
         top: false,
         child: Padding(

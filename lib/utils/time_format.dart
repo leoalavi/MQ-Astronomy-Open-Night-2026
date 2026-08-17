@@ -9,6 +9,14 @@ import 'package:aon2026/models/event.dart';
 /// the same as the paper in the attendee's other hand. `intl`'s default
 /// `jm` pattern would give "5:00 PM", which is subtly foreign here.
 abstract final class TimeFormat {
+  /// A count formatted for the current locale.
+  ///
+  /// Persian uses Extended Arabic-Indic digits (۳۶), so a bare `'$n'` renders a
+  /// Western "36" next to correctly localised times like "۴ب.ظ." — the Program
+  /// screen showed exactly that mismatch in its section-count pills.
+  static String count(int value) =>
+      NumberFormat.decimalPattern(locale).format(value);
+
   /// The locale used for date/time formatting.
   ///
   /// Set from `AonApp` whenever the app locale changes. `intl`'s `DateFormat`

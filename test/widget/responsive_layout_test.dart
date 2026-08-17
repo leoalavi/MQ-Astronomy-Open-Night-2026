@@ -12,7 +12,6 @@ import 'package:aon2026/screens/home_screen.dart';
 import 'package:aon2026/screens/info_screen.dart';
 import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
-import 'package:aon2026/screens/whats_on_screen.dart';
 import 'package:aon2026/services/clock.dart';
 
 /// Renders every primary screen across phone widths (320/360/414) at the
@@ -46,7 +45,6 @@ void main() {
   final screens = <String, Widget>{
     'Home': const HomeScreen(),
     'Program': const ProgramScreen(),
-    'WhatsOn': const WhatsOnScreen(),
     'Info': const InfoScreen(),
     'Wayfinding': const WayfindingScreen(),
     'EventDetail': EventDetailScreen(eventId: EventsData.all.first.id),

@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/models/venue.dart';
@@ -14,6 +15,7 @@ import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/empty_state.dart';
@@ -35,13 +37,11 @@ class EventDetailScreen extends ConsumerWidget {
     // real case here) must land somewhere sensible, not crash.
     if (event == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Not found')),
+        appBar: AppBar(title: Text(l.detailNotFoundTitle)),
         body: EmptyState(
           icon: Icons.help_outline_rounded,
-          title: 'We can’t find that activity',
-          message:
-              'It may have been changed or removed from the program since '
-              'this link was shared.',
+          title: l.eventNotFoundTitle,
+          message: l.eventNotFoundBody,
           actionLabel: l.actionBrowseProgram,
           onAction: () => context.go(Routes.program),
         ),
@@ -55,7 +55,7 @@ class EventDetailScreen extends ConsumerWidget {
     final accent = VenueStyle.colorForEventCategory(context, event.category);
 
     return Scaffold(
-      appBar: AppBar(title: Text(event.category.label)),
+      appBar: AppBar(title: Text(event.category.labelOf(l))),
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AonSpacing.space4,
@@ -76,11 +76,13 @@ class EventDetailScreen extends ConsumerWidget {
                     timing: timed.timing,
                     trailingText: switch (timed.timing) {
                       EventTiming.happeningNow => TimeFormat.remaining(
-                          now,
-                          timed.session!.end,
-                        ).replaceFirst('ends ', ''),
-                      EventTiming.startingSoon =>
-                        TimeFormat.until(now, timed.session!.start),
+                        now,
+                        timed.session!.end,
+                      ).replaceFirst('ends ', ''),
+                      EventTiming.startingSoon => TimeFormat.until(
+                        now,
+                        timed.session!.start,
+                      ),
                       _ => null,
                     },
                   ),
@@ -106,8 +108,7 @@ class EventDetailScreen extends ConsumerWidget {
                 Expanded(
                   child: Text(
                     event.presenter!,
-                    style: theme.textTheme.titleMedium
-                        ?.copyWith(color: accent),
+                    style: theme.textTheme.titleMedium?.copyWith(color: accent),
                   ),
                 ),
               ],
@@ -124,7 +125,9 @@ class EventDetailScreen extends ConsumerWidget {
           // ── Times ──
           _DetailBlock(
             icon: Icons.schedule_rounded,
-            title: event.hasMultipleSessions ? 'Session times' : 'Time',
+            title: event.hasMultipleSessions
+                ? l.detailSessionTimes
+                : l.detailTime,
             children: [
               for (final session in event.sessions) ...[
                 Row(
@@ -145,15 +148,15 @@ class EventDetailScreen extends ConsumerWidget {
                   const SizedBox(height: AonSpacing.space1),
                   Text(
                     session.note!,
-                    style: theme.textTheme.bodySmall
-                        ?.copyWith(color: context.aon.contentTertiary),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: context.aon.contentTertiary,
+                    ),
                   ),
                 ],
                 ConfidenceNote(
                   confidence: session.timeConfidence,
                   compact: true,
-                  message: 'These times are not published in the official '
-                      'program — treat them as a guide.',
+                  message: l.detailUnpublishedTimes,
                 ),
                 const SizedBox(height: AonSpacing.space3),
               ],
@@ -187,9 +190,10 @@ class EventDetailScreen extends ConsumerWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Pre-booking required',
-                            style: theme.textTheme.titleSmall
-                                ?.copyWith(color: context.aon.soon),
+                            l.programPreBookingRequired,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: context.aon.soon,
+                            ),
                           ),
                           if (event.bookingNote != null) ...[
                             const SizedBox(height: AonSpacing.space1),
@@ -219,10 +223,7 @@ class EventDetailScreen extends ConsumerWidget {
               runSpacing: AonSpacing.space2,
               children: [
                 for (final tag in event.tags)
-                  Chip(
-                    label: Text(tag),
-                    visualDensity: VisualDensity.compact,
-                  ),
+                  Chip(label: Text(tag), visualDensity: VisualDensity.compact),
               ],
             ),
           ],
@@ -231,9 +232,10 @@ class EventDetailScreen extends ConsumerWidget {
           if (event.sourceNote != null) ...[
             const SizedBox(height: AonSpacing.space6),
             Text(
-              'Source: ${event.sourceNote}',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: context.aon.borderStrong),
+              l.eventSourceNote(event.sourceNote!),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.aon.borderStrong,
+              ),
             ),
           ],
         ],
@@ -248,17 +250,13 @@ class EventDetailScreen extends ConsumerWidget {
               // Save is always available — it does not depend on the venue
               // being resolvable, so an activity with a to-be-confirmed
               // location can still be planned for.
-              SaveButton.labelled(
-                eventId: event.id,
-                eventTitle: event.title,
-              ),
+              SaveButton.labelled(eventId: event.id, eventTitle: event.title),
               if (venue != null) ...[
                 const SizedBox(width: AonSpacing.space3),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () => context.push(
-                      Routes.wayfindingTo(venue.id),
-                    ),
+                    onPressed: () =>
+                        context.push(Routes.wayfindingTo(venue.id)),
                     icon: const Icon(Icons.directions_walk_rounded),
                     label: Text(l.actionWalkThere),
                   ),
@@ -280,17 +278,19 @@ class _LocationBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
 
     if (venue == null) {
       return _DetailBlock(
         icon: Icons.place_rounded,
-        title: 'Location',
+        title: l.detailLocation,
         children: [
           Text(
-            'Location to be confirmed.',
-            style: theme.textTheme.bodyMedium
-                ?.copyWith(color: context.aon.contentSecondary),
+            l.infoLocationToBeConfirmed,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: context.aon.contentSecondary,
+            ),
           ),
         ],
       );
@@ -300,22 +300,27 @@ class _LocationBlock extends StatelessWidget {
 
     return _DetailBlock(
       icon: Icons.place_rounded,
-      title: 'Location',
+      title: l.detailLocation,
       children: [
         if (event.room != null)
-          Text(event.room!, style: theme.textTheme.titleMedium),
+          Text(
+            Bidi.isolate(event.room),
+            style: theme.textTheme.titleMedium,
+          ),
         Text(
           v.name,
           style: event.room == null
               ? theme.textTheme.titleMedium
-              : theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
+              : theme.textTheme.bodyMedium?.copyWith(
+                  color: context.aon.contentSecondary,
+                ),
         ),
         if (v.building != null && v.building != v.name)
           Text(
             v.building!,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.aon.contentTertiary),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
         if (event.mapReference != null) ...[
           const SizedBox(height: AonSpacing.space3),
@@ -331,16 +336,18 @@ class _LocationBlock extends StatelessWidget {
                 ),
                 child: Text(
                   event.mapReference!,
-                  style: theme.textTheme.labelMedium
-                      ?.copyWith(color: context.aon.onAccent),
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: context.aon.onAccent,
+                  ),
                 ),
               ),
               const SizedBox(width: AonSpacing.space3),
               Expanded(
                 child: Text(
-                  'Marked ${event.mapReference} on the printed event map',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: context.aon.contentSecondary),
+                  l.eventMapReference(event.mapReference!),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: context.aon.contentSecondary,
+                  ),
                 ),
               ),
             ],
@@ -349,9 +356,10 @@ class _LocationBlock extends StatelessWidget {
         if (v.notes != null) ...[
           const SizedBox(height: AonSpacing.space3),
           Text(
-            v.notes!,
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.aon.contentSecondary),
+            Bidi.isolate(v.notes),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentSecondary,
+            ),
           ),
         ],
         if (v.accessibilityNotes != null) ...[
@@ -367,9 +375,10 @@ class _LocationBlock extends StatelessWidget {
               const SizedBox(width: AonSpacing.space2),
               Expanded(
                 child: Text(
-                  v.accessibilityNotes!,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: context.aon.info),
+                  Bidi.isolate(v.accessibilityNotes),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: context.aon.info,
+                  ),
                 ),
               ),
             ],
@@ -379,8 +388,7 @@ class _LocationBlock extends StatelessWidget {
         ConfidenceNote(
           confidence: v.coordinateConfidence,
           compact: true,
-          message: 'The exact position of this location is still being '
-              'confirmed. Follow signage and ask at an information point.',
+          message: l.detailPositionUnconfirmed,
         ),
         const SizedBox(height: AonSpacing.space3),
         _VenueActions(venueId: v.id),
@@ -404,7 +412,8 @@ class _VenueActions extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AonL10n.of(context);
-    final hasPanorama = ref.watch(featuresProvider).panorama &&
+    final hasPanorama =
+        ref.watch(featuresProvider).panorama &&
         ref.watch(venuesWithPanoramaProvider).contains(venueId);
 
     return Row(
@@ -421,9 +430,11 @@ class _VenueActions extends ConsumerWidget {
           Expanded(
             child: OutlinedButton.icon(
               onPressed: () => context.push(Routes.panoramaFor(venueId)),
-              icon: const Icon(Icons.threesixty_rounded,
-                  size: AonSpacing.iconSm),
-              label: const Text('360° view'),
+              icon: const Icon(
+                Icons.threesixty_rounded,
+                size: AonSpacing.iconSm,
+              ),
+              label: Text(l.detail360View),
             ),
           ),
         ],

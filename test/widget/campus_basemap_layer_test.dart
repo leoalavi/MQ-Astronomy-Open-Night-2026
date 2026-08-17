@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -16,22 +18,26 @@ String _asset(WidgetTester t) {
 }
 
 Widget _host(ProviderContainer c) => UncontrolledProviderScope(
-      container: c,
-      child: MaterialApp(
-        home: Scaffold(
-          body: FlutterMap(
-            options: MapOptions(
-              crs: const CrsSimple(),
-              initialCameraFit: CameraFit.bounds(bounds: MapConfig.mapBounds),
-            ),
-            children: const [CampusBasemapLayer()],
-          ),
+  container: c,
+  child: MaterialApp(
+    localizationsDelegates: AonL10n.localizationsDelegates,
+    supportedLocales: AonL10n.supportedLocales,
+    home: Scaffold(
+      body: FlutterMap(
+        options: MapOptions(
+          crs: const CrsSimple(),
+          initialCameraFit: CameraFit.bounds(bounds: MapConfig.mapBounds),
         ),
+        children: const [CampusBasemapLayer()],
       ),
-    );
+    ),
+  ),
+);
 
 void main() {
-  testWidgets('base: one overlay image = the dark campus (migrated)', (t) async {
+  testWidgets('base: one overlay image = the dark campus (migrated)', (
+    t,
+  ) async {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     await t.pumpWidget(_host(c));
@@ -42,8 +48,9 @@ void main() {
     expect(t.takeException(), isNull);
   });
 
-  testWidgets('variant selected: renders that variant asset, still one image',
-      (t) async {
+  testWidgets('variant selected: renders that variant asset, still one image', (
+    t,
+  ) async {
     final c = ProviderContainer();
     addTearDown(c.dispose);
     c.read(campusVariantProvider.notifier).select(CampusMapVariant.water);

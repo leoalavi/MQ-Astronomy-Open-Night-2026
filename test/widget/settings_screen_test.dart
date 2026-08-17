@@ -41,7 +41,12 @@ void main() {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
+    // Settings is a lazy ListView and the Language section now sits above
+    // Motion, so the switch starts off-screen on a test-sized viewport.
     final toggle = find.byType(SwitchListTile);
+    await tester.scrollUntilVisible(toggle, 200);
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
     expect(toggle, findsOneWidget);
 
     await tester.tap(toggle);

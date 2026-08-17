@@ -7,6 +7,8 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/utils/bidi.dart';
+import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/models/data_confidence.dart';
@@ -66,13 +68,11 @@ class InfoScreen extends ConsumerWidget {
                 const SizedBox(height: AonSpacing.space2),
                 Text(
                   '${TimeFormat.longDate(EventInfo.startsAt)}\n'
-                  '${TimeFormat.range(
-                    EventInfo.startsAt,
-                    EventInfo.endsAt,
-                  )}\n'
+                  '${TimeFormat.range(EventInfo.startsAt, EventInfo.endsAt)}\n'
                   '${EventInfo.host}',
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: context.aon.contentSecondary),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: context.aon.contentSecondary,
+                  ),
                 ),
               ],
             ),
@@ -85,13 +85,13 @@ class InfoScreen extends ConsumerWidget {
             child: FilledButton.icon(
               onPressed: () => context.push(Routes.passport),
               icon: const Icon(Icons.workspace_premium_rounded),
-              label: const Text('Astronomy Passport'),
+              label: Text(l.passportTitle),
             ),
           ),
 
           // ── First aid ──
           SectionHeader(
-            title: 'First aid',
+            title: l.infoFirstAid,
             icon: Icons.medical_services_rounded,
             iconColor: context.aon.error,
           ),
@@ -100,7 +100,7 @@ class InfoScreen extends ConsumerWidget {
 
           // ── Toilets ──
           SectionHeader(
-            title: 'Toilets',
+            title: l.infoToilets,
             icon: Icons.wc_rounded,
             iconColor: context.aon.mapFacility,
           ),
@@ -109,7 +109,7 @@ class InfoScreen extends ConsumerWidget {
 
           // ── Information & registration ──
           SectionHeader(
-            title: 'Registration and information',
+            title: l.infoRegistrationAndInfo,
             icon: Icons.info_rounded,
             iconColor: context.aon.mapFacility,
           ),
@@ -121,7 +121,7 @@ class InfoScreen extends ConsumerWidget {
 
           // ── Food ──
           SectionHeader(
-            title: 'Food and drink',
+            title: l.infoFoodAndDrink,
             icon: Icons.local_cafe_rounded,
             iconColor: context.aon.tertiary,
           ),
@@ -130,8 +130,8 @@ class InfoScreen extends ConsumerWidget {
 
           // ── Parking ──
           SectionHeader(
-            title: 'Parking',
-            subtitle: 'Free event parking',
+            title: l.infoParking,
+            subtitle: l.infoParkingFree,
             icon: Icons.local_parking_rounded,
             iconColor: context.aon.mapParking,
             count: parking.length,
@@ -158,18 +158,17 @@ class InfoScreen extends ConsumerWidget {
                     if (p.notes != null) ...[
                       const SizedBox(height: AonSpacing.space2),
                       Text(
-                        p.notes!,
-                        style: theme.textTheme.bodySmall
-                            ?.copyWith(color: context.aon.contentSecondary),
+                        Bidi.isolate(p.notes),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: context.aon.contentSecondary,
+                        ),
                       ),
                     ],
                     const SizedBox(height: AonSpacing.space3),
                     ConfidenceNote(
                       confidence: p.coordinateConfidence,
                       compact: true,
-                      message:
-                          'We don’t have a confirmed position for this car '
-                          'park yet — follow on-site signage.',
+                      message: l.parkingNoConfirmedPosition,
                     ),
                   ],
                 ),
@@ -180,13 +179,13 @@ class InfoScreen extends ConsumerWidget {
             child: FilledButton.icon(
               onPressed: () => context.push(Routes.wayfinding),
               icon: const Icon(Icons.directions_walk_rounded),
-              label: const Text('Walking directions from parking'),
+              label: Text(l.infoWalkingFromParking),
             ),
           ),
 
           // ── Transport ──
           SectionHeader(
-            title: 'Getting here',
+            title: l.infoGettingHere,
             icon: Icons.train_rounded,
             iconColor: context.aon.mapTransport,
           ),
@@ -198,70 +197,70 @@ class InfoScreen extends ConsumerWidget {
             _InfoTile(venue: v),
 
           // ── Guidance ──
-          const SectionHeader(
-            title: 'Before you come',
+          SectionHeader(
+            title: l.infoBeforeYouCome,
             icon: Icons.checklist_rounded,
           ),
-          const _Guidance(
+          _Guidance(
             icon: Icons.thermostat_rounded,
-            title: 'Dress for standing outside',
-            body: 'The Telescope Park and the Central Courtyard are open '
-                'ground, and September evenings get cold. Bring a jacket.',
+            title: l.infoDressTitle,
+            body: l.infoDressBody,
           ),
-          const _Guidance(
+          _Guidance(
             icon: Icons.flashlight_on_rounded,
-            title: 'Bring a torch — red light if you have it',
-            body: 'It gets genuinely dark towards the Observatory, and that '
-                'is on purpose. White light ruins night vision for everyone '
-                'around you, so use a red torch mode near the telescopes and '
-                'turn your phone brightness down.',
+            title: l.infoTorchTitle,
+            body: l.infoTorchBody,
           ),
-          const _Guidance(
+          _Guidance(
             icon: Icons.confirmation_number_rounded,
-            title: 'Book the ticketed shows early',
-            body: 'The physics and chemistry magic shows and Destination '
-                'Moon need seats pre-booked at the time of ticket purchase.',
+            title: l.infoBookTitle,
+            body: l.infoBookBody,
           ),
-          const _Guidance(
+          _Guidance(
             icon: Icons.family_restroom_rounded,
-            title: 'Children must be supervised',
-            body: 'Children must be accompanied by a parent or guardian at '
-                'all times in the Kids’ space.',
+            title: l.infoChildrenTitle,
+            body: l.infoChildrenBody,
           ),
-          const _Guidance(
+          _Guidance(
             icon: Icons.cloud_rounded,
-            title: 'If it clouds over',
-            body: 'Telescope viewing depends on the weather, but the '
-                'planetarium sessions at the Sport and Aquatic Centre run '
-                'regardless.',
+            title: l.infoCloudTitle,
+            body: l.infoCloudBody,
           ),
 
           // ── Credits ──
           SectionHeader(title: l.settingsCredits),
           Text(
-            'Event materials, campus map and branding © Macquarie University, '
-            '${EventInfo.faculty}. ${EventInfo.cricosProvider}.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.aon.contentTertiary),
+            l.creditsEventMaterialsBody(
+              EventInfo.host,
+              EventInfo.faculty,
+              EventInfo.cricosProvider,
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
           const SizedBox(height: AonSpacing.space2),
           Text(
-            'Hero image: “A Deep Triangulum Galaxy” — Aleix Roig, 2026. '
-            'Used with permission for this project.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.aon.contentTertiary),
+            l.creditsHeroImageBody(
+              ref.watch(eventConfigProvider).heroCredit,
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
           const SizedBox(height: AonSpacing.space2),
           Text(
-            'Map data © OpenStreetMap contributors.',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.aon.contentTertiary),
+            l.creditsMapDataBody,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
           const SizedBox(height: AonSpacing.space2),
           Text(
             '${EventInfo.socialHandle}  ${EventInfo.hashtag}',
-            style: theme.textTheme.bodySmall
-                ?.copyWith(color: context.aon.contentTertiary),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
           ),
         ],
       ),
@@ -295,22 +294,27 @@ class _InfoTile extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(venue.name, style: theme.textTheme.titleSmall),
+                  Text(
+                    Bidi.isolate(venue.name),
+                    style: theme.textTheme.titleSmall,
+                  ),
                   if (venue.building != null &&
                       venue.building != venue.name) ...[
                     const SizedBox(height: 2),
                     Text(
-                      venue.building!,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: context.aon.contentTertiary),
+                      Bidi.isolate(venue.building),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: context.aon.contentTertiary,
+                      ),
                     ),
                   ],
                   if (venue.notes != null) ...[
                     const SizedBox(height: AonSpacing.space2),
                     Text(
-                      venue.notes!,
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: context.aon.contentSecondary),
+                      Bidi.isolate(venue.notes),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: context.aon.contentSecondary,
+                      ),
                     ),
                   ],
                   if (!venue.coordinateConfidence.isReliable ||
@@ -361,8 +365,9 @@ class _Guidance extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   body,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: context.aon.contentSecondary),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: context.aon.contentSecondary,
+                  ),
                 ),
               ],
             ),

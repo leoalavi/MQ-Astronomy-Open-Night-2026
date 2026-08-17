@@ -3,64 +3,88 @@ import 'package:flutter/material.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/screens/map_screen.dart';
-import 'package:aon2026/screens/whats_on_screen.dart';
+import 'package:aon2026/screens/settings_screen.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 
 void main() {
-  testWidgets(
-    "What's On time-simulator sheet: opens, no overflow, scrollable @ 320x640 / 2.0",
-    (tester) async {
-      tester.view.physicalSize = const Size(320, 640);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
+  testWidgets('Event-night preview sheet: opens from Settings, no overflow, '
+      'scrollable @ 320x640 / 2.0', (tester) async {
+    tester.view.physicalSize = const Size(320, 640);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
 
-      await tester.pumpWidget(
-        ProviderScope(
-          overrides: [
-            baseClockProvider.overrideWithValue(
-              FixedClock(EventInfo.at(19, 0)),
-            ),
-          ],
-          child: MaterialApp(
-            localizationsDelegates: AonL10n.localizationsDelegates,
-            supportedLocales: AonL10n.supportedLocales,
-            theme: AonTheme.build(),
-            builder: (context, child) => MediaQuery(
-              data: MediaQuery.of(
-                context,
-              ).copyWith(textScaler: const TextScaler.linear(2.0)),
-              child: child!,
-            ),
-            home: const WhatsOnScreen(),
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          baseClockProvider.overrideWithValue(FixedClock(EventInfo.at(19, 0))),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AonL10n.localizationsDelegates,
+          supportedLocales: AonL10n.supportedLocales,
+          theme: AonTheme.build(),
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: const TextScaler.linear(2.0)),
+            child: child!,
           ),
+          home: const SettingsScreen(),
         ),
-      );
+      ),
+    );
 
-      // Open the sheet via the AppBar science icon (deterministic trigger).
-      await tester.tap(find.byIcon(Icons.science_outlined));
-      await tester.pump(const Duration(milliseconds: 400));
+    // The event-night preview sheet now lives at the bottom of Settings,
+    // not in a visitor-facing app bar. Scroll to its button, then open it.
+    await tester.pumpAndSettle();
+    final openButton = find.widgetWithText(OutlinedButton, 'Choose a time');
+    await tester.scrollUntilVisible(
+      openButton,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
+    // ensureVisible first: at 2.0 on a 320pt phone scrollUntilVisible can
+    // stop with the button only partially on screen, and a tap on its
+    // centre then lands outside the viewport.
+    await tester.ensureVisible(openButton);
+    await tester.pumpAndSettle();
+    await tester.tap(openButton);
+    await tester.pumpAndSettle();
 
-      // Mandatory: prove the sheet opened BEFORE judging layout.
-      expect(find.text('Back to real time'), findsOneWidget);
-      // No overflow, and THIS sheet's body is genuinely scrollable (scoped to the
-      // sheet — not "exactly one SingleChildScrollView in the whole tree", which
-      // would be brittle if a screen later gains its own).
-      expect(tester.takeException(), isNull);
-      expect(
-        find.ancestor(
-          of: find.text('Back to real time'),
-          matching: find.byType(SingleChildScrollView),
-        ),
-        findsOneWidget,
-      );
-    },
-  );
+    // Mandatory: prove the sheet opened BEFORE judging layout. The preview
+    // title is at the top of the sheet, so it is visible immediately; the
+    // reset button sits past 12 half-hour chips and needs a scroll at 2.0.
+    expect(find.text('Preview event night'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.text('Back to real time'),
+      300,
+      scrollable: find
+          .descendant(
+            of: find.byType(SingleChildScrollView),
+            matching: find.byType(Scrollable),
+          )
+          .last,
+    );
+    expect(find.text('Back to real time'), findsOneWidget);
+    // No overflow, and THIS sheet's body is genuinely scrollable (scoped to the
+    // sheet — not "exactly one SingleChildScrollView in the whole tree", which
+    // would be brittle if a screen later gains its own).
+    expect(tester.takeException(), isNull);
+    expect(
+      find.ancestor(
+        of: find.text('Back to real time'),
+        matching: find.byType(SingleChildScrollView),
+      ),
+      findsOneWidget,
+    );
+  });
 
   // Opens `sheet` via a real modal bottom sheet at the given viewport / 2.0.
   // CRITICAL: the 2.0 override goes in MaterialApp.builder (ABOVE the Navigator),

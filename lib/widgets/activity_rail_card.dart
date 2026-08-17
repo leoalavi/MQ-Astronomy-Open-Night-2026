@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 import 'package:aon2026/utils/time_format.dart';
@@ -29,8 +32,18 @@ class ActivityRailCard extends ConsumerWidget {
   /// which is what tells people the row scrolls at all.
   static const double width = 268;
 
+  /// Width actually available to the card's content.
+  ///
+  /// [width] minus the left padding and the right gutter reserved for the
+  /// floating save button. TimingBadge needs this to decide whether the
+  /// countdown fits; at 196pt it does not, and a half-printed countdown is
+  /// misinformation rather than a cosmetic clip.
+  static const double contentWidth =
+      width - AonSpacing.space4 - AonSpacing.minTapTarget;
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final event = timed.event;
     final venue = ref.watch(venueByIdProvider(event.venueId));
@@ -63,6 +76,7 @@ class ActivityRailCard extends ConsumerWidget {
                       child: TimingBadge(
                         timing: timed.timing,
                         trailingText: _countdown(),
+                        maxWidth: contentWidth,
                       ),
                     ),
                     const SizedBox(height: AonSpacing.space2),
@@ -83,7 +97,9 @@ class ActivityRailCard extends ConsumerWidget {
                         const SizedBox(width: AonSpacing.space2),
                         Expanded(
                           child: Text(
-                            venue?.chipLabel ?? 'Location to be confirmed',
+                            venue == null
+                                ? l.infoLocationToBeConfirmed
+                                : Bidi.isolate(venue.chipLabel),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: context.aon.contentSecondary,
                             ),

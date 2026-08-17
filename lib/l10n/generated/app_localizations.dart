@@ -403,13 +403,13 @@ abstract class AonL10n {
   /// **'Search talks, activities, presenters'**
   String get programSearchHint;
 
-  /// No description provided for @programItemCount.
+  /// Count of programme items when no filter is applied.
   ///
   /// In en, this message translates to:
-  /// **'{count} items in the program'**
+  /// **'{count,plural, =1{1 item in the program} other{{count} items in the program}}'**
   String programItemCount(int count);
 
-  /// No description provided for @programFilteredCount.
+  /// Count when a filter is applied: how many of the whole programme match.
   ///
   /// In en, this message translates to:
   /// **'{shown} of {total} shown'**
@@ -865,16 +865,16 @@ abstract class AonL10n {
   /// **'This app follows your device text size, up to {percent}% — every screen is tested at that size. Change it in your phone’s display or accessibility settings.'**
   String settingsTextSizeBody(int percent);
 
-  /// No description provided for @settingsLanguage.
+  /// Settings section header for the language picker.
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get settingsLanguage;
 
-  /// No description provided for @settingsLanguageSystem.
+  /// Use whatever language the phone is set to.
   ///
   /// In en, this message translates to:
-  /// **'Follow my phone'**
+  /// **'Match my device'**
   String get settingsLanguageSystem;
 
   /// No description provided for @settingsAbout.
@@ -973,25 +973,25 @@ abstract class AonL10n {
   /// **'Walking directions'**
   String get wayfindingTitle;
 
-  /// No description provided for @wayfindingStartingFrom.
+  /// Label above the start-point chips (a car park or venue).
   ///
   /// In en, this message translates to:
   /// **'Starting from'**
   String get wayfindingStartingFrom;
 
-  /// No description provided for @wayfindingGoingTo.
+  /// Label above the destination chips.
   ///
   /// In en, this message translates to:
   /// **'Going to'**
   String get wayfindingGoingTo;
 
-  /// No description provided for @wayfindingPickTitle.
+  /// Nothing chosen yet — distinct from having chosen an unroutable pair.
   ///
   /// In en, this message translates to:
   /// **'Pick a start and a destination'**
   String get wayfindingPickTitle;
 
-  /// No description provided for @wayfindingPickBody.
+  /// Body for the nothing-chosen-yet empty state.
   ///
   /// In en, this message translates to:
   /// **'Choose where you parked and where you’re heading, and we’ll give you written directions for walking it in the dark.'**
@@ -1009,7 +1009,7 @@ abstract class AonL10n {
   /// **'We don’t have a written route between those two points. Try the Central Courtyard as a staging point — most routes run through it — or ask at an information point.'**
   String get wayfindingNoRouteBody;
 
-  /// No description provided for @wayfindingDirections.
+  /// Heading above the numbered walking steps.
   ///
   /// In en, this message translates to:
   /// **'Directions'**
@@ -1039,7 +1039,7 @@ abstract class AonL10n {
   /// **'~{metres} m'**
   String wayfindingApproxMetres(int metres);
 
-  /// No description provided for @wayfindingStepFreeUnknown.
+  /// Accessibility is UNKNOWN. Must never read as a 'no' — a wrong 'no' turns someone away from a route they could have used.
   ///
   /// In en, this message translates to:
   /// **'Step-free access along this route has not been confirmed yet. Ask at an information point if you need a step-free path.'**
@@ -1446,6 +1446,462 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Location unknown — see the printed map'**
   String get compassUnlocatable;
+
+  /// No description provided for @homeNothingRunningNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing running this minute — check what’s next.'**
+  String get homeNothingRunningNow;
+
+  /// No description provided for @homeFactColdTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'It gets cold and dark'**
+  String get homeFactColdTitle;
+
+  /// No description provided for @homeFactColdBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring a jacket and a torch. Red-light mode is best near the telescopes — it protects everyone’s night vision.'**
+  String get homeFactColdBody;
+
+  /// No description provided for @homeFactBookingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Some shows need pre-booking'**
+  String get homeFactBookingTitle;
+
+  /// No description provided for @homeFactBookingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The magic shows and Destination Moon need seats booked at the time of ticket purchase.'**
+  String get homeFactBookingBody;
+
+  /// No description provided for @homeFactParkingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Free parking'**
+  String get homeFactParkingTitle;
+
+  /// No description provided for @homeFactParkingBody.
+  ///
+  /// In en, this message translates to:
+  /// **'West 5, West 6 and South 2.'**
+  String get homeFactParkingBody;
+
+  /// No description provided for @homeFactMetroTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Metro'**
+  String get homeFactMetroTitle;
+
+  /// No description provided for @homeFactMetroBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Macquarie University Metro Station is about a 10 minute walk from the Central Courtyard.'**
+  String get homeFactMetroBody;
+
+  /// No description provided for @programClearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get programClearSearch;
+
+  /// No description provided for @programBookedOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Pre-booked only'**
+  String get programBookedOnly;
+
+  /// No description provided for @detailNotFoundTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Not found'**
+  String get detailNotFoundTitle;
+
+  /// No description provided for @detailSessionTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'Session times'**
+  String get detailSessionTimes;
+
+  /// No description provided for @detailTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get detailTime;
+
+  /// No description provided for @detailLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get detailLocation;
+
+  /// No description provided for @detailUnpublishedTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'These times are not published in the official program — treat them as a guide.'**
+  String get detailUnpublishedTimes;
+
+  /// No description provided for @detailPositionUnconfirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'The exact position of this location is still being confirmed. Follow signage and ask at an information point.'**
+  String get detailPositionUnconfirmed;
+
+  /// No description provided for @detail360View.
+  ///
+  /// In en, this message translates to:
+  /// **'360° view'**
+  String get detail360View;
+
+  /// No description provided for @detailMarkedOnMap.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked {letter} on the printed event map'**
+  String detailMarkedOnMap(String letter);
+
+  /// No description provided for @myNightClearConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get myNightClearConfirm;
+
+  /// No description provided for @settingsTextSizeCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Set text size on your phone'**
+  String get settingsTextSizeCardTitle;
+
+  /// No description provided for @settingsPrivacyCardTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing leaves your phone'**
+  String get settingsPrivacyCardTitle;
+
+  /// No description provided for @settingsOsmAttribution.
+  ///
+  /// In en, this message translates to:
+  /// **'© OpenStreetMap contributors.'**
+  String get settingsOsmAttribution;
+
+  /// No description provided for @infoFirstAid.
+  ///
+  /// In en, this message translates to:
+  /// **'First aid'**
+  String get infoFirstAid;
+
+  /// No description provided for @infoToilets.
+  ///
+  /// In en, this message translates to:
+  /// **'Toilets'**
+  String get infoToilets;
+
+  /// No description provided for @infoRegistrationAndInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration and information'**
+  String get infoRegistrationAndInfo;
+
+  /// No description provided for @infoFoodAndDrink.
+  ///
+  /// In en, this message translates to:
+  /// **'Food and drink'**
+  String get infoFoodAndDrink;
+
+  /// No description provided for @infoParking.
+  ///
+  /// In en, this message translates to:
+  /// **'Parking'**
+  String get infoParking;
+
+  /// No description provided for @infoParkingFree.
+  ///
+  /// In en, this message translates to:
+  /// **'Free event parking'**
+  String get infoParkingFree;
+
+  /// No description provided for @infoWalkingFromParking.
+  ///
+  /// In en, this message translates to:
+  /// **'Walking directions from parking'**
+  String get infoWalkingFromParking;
+
+  /// No description provided for @infoGettingHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Getting here'**
+  String get infoGettingHere;
+
+  /// No description provided for @infoBeforeYouCome.
+  ///
+  /// In en, this message translates to:
+  /// **'Before you come'**
+  String get infoBeforeYouCome;
+
+  /// No description provided for @infoDressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Dress for standing outside'**
+  String get infoDressTitle;
+
+  /// No description provided for @infoDressBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The Telescope Park and the Central Courtyard are open ground, and September evenings get cold. Bring a jacket.'**
+  String get infoDressBody;
+
+  /// No description provided for @infoTorchTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Bring a torch — red light if you have it'**
+  String get infoTorchTitle;
+
+  /// No description provided for @infoTorchBody.
+  ///
+  /// In en, this message translates to:
+  /// **'It gets genuinely dark towards the Observatory, and that is on purpose. White light ruins night vision for everyone around you, so use a red torch mode near the telescopes and turn your phone brightness down.'**
+  String get infoTorchBody;
+
+  /// No description provided for @infoBookTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Book the ticketed shows early'**
+  String get infoBookTitle;
+
+  /// No description provided for @infoBookBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The physics and chemistry magic shows and Destination Moon need seats pre-booked at the time of ticket purchase.'**
+  String get infoBookBody;
+
+  /// No description provided for @infoChildrenTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Children must be supervised'**
+  String get infoChildrenTitle;
+
+  /// No description provided for @infoChildrenBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Children must be accompanied by a parent or guardian at all times in the Kids’ space.'**
+  String get infoChildrenBody;
+
+  /// No description provided for @infoCloudTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'If it clouds over'**
+  String get infoCloudTitle;
+
+  /// No description provided for @infoCloudBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Telescope viewing depends on the weather, but the planetarium sessions at the Sport and Aquatic Centre run regardless.'**
+  String get infoCloudBody;
+
+  /// No description provided for @infoCredits.
+  ///
+  /// In en, this message translates to:
+  /// **'Credits'**
+  String get infoCredits;
+
+  /// No description provided for @previewSection.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview'**
+  String get previewSection;
+
+  /// No description provided for @previewTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview event night'**
+  String get previewTitle;
+
+  /// No description provided for @previewBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Set the app’s clock to any point on {date} to see what the program looks like at that moment. Useful before the night; leave it off during the event.'**
+  String previewBody(String date);
+
+  /// No description provided for @previewChooseTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose a time'**
+  String get previewChooseTime;
+
+  /// No description provided for @previewBackToRealTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to real time'**
+  String get previewBackToRealTime;
+
+  /// No description provided for @previewBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Previewing {time} on event night'**
+  String previewBanner(String time);
+
+  /// No description provided for @previewExit.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit'**
+  String get previewExit;
+
+  /// Entry-point label for the Astronomy Passport feature (owned by the map/backend side). NOTE: not present in the official programme PDF — pending confirmation with Liz.
+  ///
+  /// In en, this message translates to:
+  /// **'Astronomy Passport'**
+  String get passportTitle;
+
+  /// No description provided for @venueNoDirections.
+  ///
+  /// In en, this message translates to:
+  /// **'We don’t have written walking directions to here yet. Ask at an information point in the Central Courtyard.'**
+  String get venueNoDirections;
+
+  /// No description provided for @venueNothingScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing scheduled here tonight.'**
+  String get venueNothingScheduled;
+
+  /// No description provided for @parkingNoConfirmedPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'We don’t have a confirmed position for this car park yet — follow on-site signage.'**
+  String get parkingNoConfirmedPosition;
+
+  /// No description provided for @creditsEventMaterialsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Event materials, campus map and branding © {host}, {faculty}. {cricos}.'**
+  String creditsEventMaterialsBody(String host, String faculty, String cricos);
+
+  /// No description provided for @creditsHeroImageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Hero image: “{credit}”. Used with permission for this project.'**
+  String creditsHeroImageBody(String credit);
+
+  /// Clears both wayfinding endpoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get wayfindingReset;
+
+  /// Both endpoints chosen but no authored route joins them.
+  ///
+  /// In en, this message translates to:
+  /// **'No directions for that pair yet'**
+  String get wayfindingNoPairTitle;
+
+  /// Body for the no-route-for-this-pair empty state.
+  ///
+  /// In en, this message translates to:
+  /// **'We don’t have a written route between those two points. Try the Central Courtyard as a staging point — most routes run through it — or ask at an information point.'**
+  String get wayfindingNoPairBody;
+
+  /// Confidence note shown on every placeholder-confidence route.
+  ///
+  /// In en, this message translates to:
+  /// **'These directions are a draft and have not yet been walked and verified on campus at night. Follow event signage and marshals if they differ.'**
+  String get wayfindingDraftRoute;
+
+  /// Route is known to be step-free.
+  ///
+  /// In en, this message translates to:
+  /// **'Step-free access along this route.'**
+  String get wayfindingStepFree;
+
+  /// Route is known NOT to be step-free.
+  ///
+  /// In en, this message translates to:
+  /// **'This route is not step-free.'**
+  String get wayfindingNotStepFree;
+
+  /// Explains the System option — the app ships English and Persian only, so most devices land on English.
+  ///
+  /// In en, this message translates to:
+  /// **'Falls back to English if your device language isn’t available.'**
+  String get settingsLanguageSystemHint;
+
+  /// The English option. Always written in English — a language name must be legible to someone who does not yet read the current language.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEnglish;
+
+  /// The Persian option, written in Persian (an endonym), for the same reason.
+  ///
+  /// In en, this message translates to:
+  /// **'فارسی'**
+  String get settingsLanguagePersian;
+
+  /// Required OSM attribution.
+  ///
+  /// In en, this message translates to:
+  /// **'Map data © OpenStreetMap contributors.'**
+  String get creditsMapDataBody;
+
+  /// Provenance line under an activity — which published document this entry came from.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {note}'**
+  String eventSourceNote(String note);
+
+  /// Cross-reference to the paper map handed out on the night.
+  ///
+  /// In en, this message translates to:
+  /// **'Marked {ref} on the printed event map'**
+  String eventMapReference(String ref);
+
+  /// Timing label for an activity that has not started, shown when today is NOT the event date. Replaces 'Later tonight', which would falsely imply the event is today.
+  ///
+  /// In en, this message translates to:
+  /// **'On the night'**
+  String get timingOnTheNight;
+
+  /// Programme section: drop-in, hands-on activities.
+  ///
+  /// In en, this message translates to:
+  /// **'Activities'**
+  String get categoryActivities;
+
+  /// Programme section: the 12 short research talks.
+  ///
+  /// In en, this message translates to:
+  /// **'Short talks'**
+  String get categoryShortTalks;
+
+  /// Programme section: the single keynote.
+  ///
+  /// In en, this message translates to:
+  /// **'Keynote lecture'**
+  String get categoryKeynote;
+
+  /// Programme section: the longer featured talks.
+  ///
+  /// In en, this message translates to:
+  /// **'Featured presentations'**
+  String get categoryFeaturedPresentations;
+
+  /// Time filter for the first two hours of the event.
+  ///
+  /// In en, this message translates to:
+  /// **'4–6pm'**
+  String get bandEarlyEvening;
+
+  /// Time filter for the middle two hours.
+  ///
+  /// In en, this message translates to:
+  /// **'6–8pm'**
+  String get bandEvening;
+
+  /// Time filter for the final two hours.
+  ///
+  /// In en, this message translates to:
+  /// **'8–10pm'**
+  String get bandLateEvening;
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

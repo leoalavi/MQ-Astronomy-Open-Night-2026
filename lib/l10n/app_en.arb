@@ -1,43 +1,72 @@
 {
   "@@locale": "en",
-
   "eventName": "Astronomy Open Night",
   "@eventName": {
     "description": "Official event name. Proper noun — never translate freely; use the organisers' approved rendering for the locale, or keep the English."
   },
-
   "tabHome": "Home",
-  "@tabHome": { "description": "Bottom navigation label" },
+  "@tabHome": {
+    "description": "Bottom navigation label"
+  },
   "tabProgram": "Program",
-  "@tabProgram": { "description": "Bottom navigation label" },
+  "@tabProgram": {
+    "description": "Bottom navigation label"
+  },
   "tabMyNight": "Night",
-  "@tabMyNight": { "description": "Bottom navigation label for the saved-plan tab. MUST stay very short — it clips past about 6 characters in a five-tab bar on a 320pt phone." },
+  "@tabMyNight": {
+    "description": "Bottom navigation label for the saved-plan tab. MUST stay very short — it clips past about 6 characters in a five-tab bar on a 320pt phone."
+  },
   "tabMap": "Map",
-  "@tabMap": { "description": "Bottom navigation label" },
+  "@tabMap": {
+    "description": "Bottom navigation label"
+  },
   "tabInfo": "Info",
-  "@tabInfo": { "description": "Bottom navigation label" },
-
+  "@tabInfo": {
+    "description": "Bottom navigation label"
+  },
   "myNight": "My Night",
-  "@myNight": { "description": "Name of the saved-itinerary feature. Evening event, so night vocabulary — the Open Day equivalent is 'Your Day'." },
+  "@myNight": {
+    "description": "Name of the saved-itinerary feature. Evening event, so night vocabulary — the Open Day equivalent is 'Your Day'."
+  },
   "myNightEmptyTitle": "Your night is empty",
   "myNightEmptyBody": "Tap the star on any activity to plan your night. We’ll line everything up in time order and tell you where to go.",
   "myNightNext": "Next in {planName}",
   "@myNightNext": {
     "description": "Home card heading pointing at the next saved activity",
-    "placeholders": { "planName": { "type": "String", "example": "My Night" } }
+    "placeholders": {
+      "planName": {
+        "type": "String",
+        "example": "My Night"
+      }
+    }
   },
   "myNightSavedCount": "{count, plural, =1{1 activity saved} other{{count} activities saved}}",
   "@myNightSavedCount": {
-    "placeholders": { "count": { "type": "int" } }
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
   },
   "myNightSessionOf": "Session {index} of {total}",
   "@myNightSessionOf": {
     "description": "Shown when one activity runs more than once",
-    "placeholders": { "index": { "type": "int" }, "total": { "type": "int" } }
+    "placeholders": {
+      "index": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
   },
   "myNightClearTitle": "Clear {planName}?",
   "@myNightClearTitle": {
-    "placeholders": { "planName": { "type": "String" } }
+    "placeholders": {
+      "planName": {
+        "type": "String"
+      }
+    }
   },
   "myNightClearBody": "This removes every saved activity. It can’t be undone.",
   "myNightAllFinished": "Everything you saved has finished. What a night.",
@@ -45,34 +74,47 @@
   "myNightConflictOverlaps": "Overlaps {titles}",
   "@myNightConflictOverlaps": {
     "description": "Names the clashing activities",
-    "placeholders": { "titles": { "type": "String", "example": "The Big Cosmic Q&A" } }
+    "placeholders": {
+      "titles": {
+        "type": "String",
+        "example": "The Big Cosmic Q&A"
+      }
+    }
   },
   "myNightLoadFailedTitle": "Couldn’t open your saved plan",
   "myNightLoadFailedBody": "Your saved activities are stored on this device. Try again in a moment.",
-
   "timingHappeningNow": "Happening now",
   "timingStartingSoon": "Starting soon",
   "timingLaterTonight": "Later tonight",
-  "@timingLaterTonight": { "description": "Evening event. The Open Day equivalent would be 'Later today'." },
+  "@timingLaterTonight": {
+    "description": "Evening event. The Open Day equivalent would be 'Later today'."
+  },
   "timingFinished": "Finished",
   "timingOpenAllEvening": "Open all evening",
   "timingStartingWithin": "In the next {minutes} minutes",
   "@timingStartingWithin": {
-    "placeholders": { "minutes": { "type": "int" } }
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
   },
-
   "phaseTonight": "Tonight",
   "phaseStartsSoon": "Starts soon",
   "phaseHappeningNow": "Happening now",
   "phaseEndingSoon": "Ending soon",
   "phaseEnded": "This event has finished",
-
   "homeUpNext": "Up next",
   "homeNothingRightNow": "Nothing running this minute — check what’s next.",
   "homeSeeWholeEvent": "See the whole {period}",
   "@homeSeeWholeEvent": {
     "description": "Link to the full time-sliced programme",
-    "placeholders": { "period": { "type": "String", "example": "tonight" } }
+    "placeholders": {
+      "period": {
+        "type": "String",
+        "example": "tonight"
+      }
+    }
   },
   "homeOpenMapTitle": "Open the campus map",
   "homeOpenMapBody": "Venues, toilets, first aid — and walking directions from the car parks",
@@ -80,7 +122,6 @@
   "homeQuickAccessTitle": "Find your way to",
   "homeGoodToKnow": "Good to know",
   "homeImageCredit": "Image credit",
-
   "quickAccessTelescopes": "Telescopes",
   "quickAccessPlanetariums": "Planetariums",
   "quickAccessTalks": "Talks",
@@ -90,23 +131,43 @@
   "quickAccessFirstAid": "First aid",
   "quickAccessParking": "Parking",
   "quickAccessWalkingRoutes": "Walking routes",
-
   "programTonight": "Tonight",
-  "@programTonight": { "description": "Segmented-control label for the time-sliced programme view" },
+  "@programTonight": {
+    "description": "Segmented-control label for the time-sliced programme view"
+  },
   "programSections": "Sections",
-  "@programSections": { "description": "Segmented-control label for the printed programme's own sections" },
+  "@programSections": {
+    "description": "Segmented-control label for the printed programme's own sections"
+  },
   "programSearchHint": "Search talks, activities, presenters",
-  "programItemCount": "{count} items in the program",
-  "@programItemCount": { "placeholders": { "count": { "type": "int" } } },
+  "programItemCount": "{count,plural, =1{1 item in the program} other{{count} items in the program}}",
+  "@programItemCount": {
+    "description": "Count of programme items when no filter is applied.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
+  },
   "programFilteredCount": "{shown} of {total} shown",
   "@programFilteredCount": {
-    "placeholders": { "shown": { "type": "int" }, "total": { "type": "int" } }
+    "description": "Count when a filter is applied: how many of the whole programme match.",
+    "placeholders": {
+      "shown": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   },
   "programNoMatchTitle": "Nothing matches",
   "programNoMatchBody": "Try removing a filter or searching for something else.",
   "programClearFilters": "Clear filters",
   "programPreBookingRequired": "Pre-booking required",
-
   "actionSave": "Save",
   "actionSaved": "Saved",
   "actionClear": "Clear",
@@ -118,47 +179,81 @@
   "actionBrowseProgram": "Browse the program",
   "actionRemoveFromPlan": "Remove from plan",
   "actionBack": "Back",
-
   "a11ySaveToPlan": "Save {title} to {planName}",
   "@a11ySaveToPlan": {
     "description": "Screen-reader label for the unsaved star button",
-    "placeholders": { "title": { "type": "String" }, "planName": { "type": "String" } }
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "planName": {
+        "type": "String"
+      }
+    }
   },
   "a11yRemoveFromPlan": "Remove {title} from {planName}",
   "@a11yRemoveFromPlan": {
-    "placeholders": { "title": { "type": "String" }, "planName": { "type": "String" } }
+    "placeholders": {
+      "title": {
+        "type": "String"
+      },
+      "planName": {
+        "type": "String"
+      }
+    }
   },
   "snackSavedTo": "Saved to {planName}",
-  "@snackSavedTo": { "placeholders": { "planName": { "type": "String" } } },
+  "@snackSavedTo": {
+    "placeholders": {
+      "planName": {
+        "type": "String"
+      }
+    }
+  },
   "snackRemovedFrom": "Removed from {planName}",
-  "@snackRemovedFrom": { "placeholders": { "planName": { "type": "String" } } },
-
+  "@snackRemovedFrom": {
+    "placeholders": {
+      "planName": {
+        "type": "String"
+      }
+    }
+  },
   "mapTitle": "Map",
   "mapWalkingDirections": "Walking directions",
   "mapLookInside360": "Look inside in 360°",
-  "@mapLookInside360": { "description": "Opens the immersive panorama for a venue" },
+  "@mapLookInside360": {
+    "description": "Opens the immersive panorama for a venue"
+  },
   "mapOnHereTonight": "On here tonight",
   "mapAttribution": "© OpenStreetMap contributors",
   "mapRecentre": "Recentre",
   "mapZoomIn": "Zoom in",
   "mapZoomOut": "Zoom out",
-
   "mapLayersTitle": "Map layers",
-  "@mapLayersTitle": { "description": "Title of the thematic-variant picker sheet; label of the Layers button" },
+  "@mapLayersTitle": {
+    "description": "Title of the thematic-variant picker sheet; label of the Layers button"
+  },
   "mapVariantBase": "Campus map",
-  "@mapVariantBase": { "description": "Picker row for the plain illustrated campus basemap (no theme)" },
+  "@mapVariantBase": {
+    "description": "Picker row for the plain illustrated campus basemap (no theme)"
+  },
   "mapVariantParking": "Parking",
   "mapVariantParkingDesc": "Visitor and event parking areas",
   "mapVariantAccessibility": "Accessible routes",
   "mapVariantAccessibilityDesc": "Step-free paths and accessible entrances",
   "mapVariantWater": "Drinking water",
   "mapVariantWaterDesc": "Water refill points across campus",
-
   "mapSearchTitle": "Find a place",
   "mapSearchHint": "Search buildings and venues",
   "mapSearchTooltip": "Search",
   "mapSearchEmpty": "No results for \"{query}\"",
-  "@mapSearchEmpty": { "placeholders": { "query": { "type": "String" } } },
+  "@mapSearchEmpty": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
   "mapFavoritesTitle": "Favourites",
   "mapFavoritesTooltip": "Favourites",
   "mapFavoritesEmpty": "No favourites yet",
@@ -167,7 +262,13 @@
   "mapFavoriteAdd": "Add to favourites",
   "mapFavoriteRemove": "Remove from favourites",
   "mapBuildingGridRef": "Grid {ref}",
-  "@mapBuildingGridRef": { "placeholders": { "ref": { "type": "String" } } },
+  "@mapBuildingGridRef": {
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
   "mapCatAcademic": "Academic",
   "mapCatServices": "Services",
   "mapCatHealth": "Health",
@@ -181,12 +282,12 @@
   "mapCatSmoking": "Smoking area",
   "mapCatTeaching": "Teaching",
   "mapCatOther": "Other",
-
   "panorama360Unavailable": "3D view is not available for this location.",
-  "@panorama360Unavailable": { "description": "Shown when a venue has no 360 tour. Never expose scene ids or 'not found' errors." },
+  "@panorama360Unavailable": {
+    "description": "Shown when a venue has no 360 tour. Never expose scene ids or 'not found' errors."
+  },
   "panorama360Loading": "Loading the 360° view…",
   "panorama360Title": "360° preview",
-
   "settingsTitle": "Settings",
   "settingsAppearance": "Appearance",
   "settingsAppearanceSystem": "Follow my phone",
@@ -199,11 +300,23 @@
   "settingsTextSize": "Text size",
   "settingsTextSizeTitle": "Set text size on your phone",
   "settingsTextSizeBody": "This app follows your device text size, up to {percent}% — every screen is tested at that size. Change it in your phone’s display or accessibility settings.",
-  "@settingsTextSizeBody": { "placeholders": { "percent": { "type": "int" } } },
+  "@settingsTextSizeBody": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
   "settingsLanguage": "Language",
-  "settingsLanguageSystem": "Follow my phone",
+  "settingsLanguageSystem": "Match my device",
   "settingsAbout": "About {eventName}",
-  "@settingsAbout": { "placeholders": { "eventName": { "type": "String" } } },
+  "@settingsAbout": {
+    "placeholders": {
+      "eventName": {
+        "type": "String"
+      }
+    }
+  },
   "settingsPrivacy": "Privacy",
   "settingsPrivacyTitle": "Nothing leaves your phone",
   "settingsPrivacyBody": "There is no account and no sign-in. Your saved activities are stored on this device only. The app collects no analytics and tracks no location.\n\nThe only thing it fetches from the internet is map imagery.",
@@ -213,15 +326,14 @@
   "settingsCreditsMapData": "Map data",
   "settingsUnavailableTitle": "Settings unavailable",
   "settingsUnavailableBody": "Your preferences couldn’t be opened on this device. The app still works — it just won’t remember this choice.",
-
   "infoTitle": "Useful information",
   "infoLocationToBeConfirmed": "Location to be confirmed",
   "infoDetailToBeConfirmed": "This detail is still to be confirmed.",
-  "@infoDetailToBeConfirmed": { "description": "Shown wherever data is a placeholder rather than confirmed by the organisers." },
-
+  "@infoDetailToBeConfirmed": {
+    "description": "Shown wherever data is a placeholder rather than confirmed by the organisers."
+  },
   "eventNotFoundTitle": "We can’t find that activity",
   "eventNotFoundBody": "It may have been changed or removed from the program since this link was shared.",
-
   "wayfindingTitle": "Walking directions",
   "wayfindingStartingFrom": "Starting from",
   "wayfindingGoingTo": "Going to",
@@ -233,50 +345,137 @@
   "wayfindingStraightLineNote": "Straight line shown — this is the general direction, not the exact path. Follow the written directions below.",
   "wayfindingDraftWarning": "These directions are a draft and have not yet been walked and verified on campus at night. Follow event signage and marshals if they differ.",
   "wayfindingAboutMinutes": "About {minutes} min",
-  "@wayfindingAboutMinutes": { "placeholders": { "minutes": { "type": "int" } } },
+  "@wayfindingAboutMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "wayfindingApproxMetres": "~{metres} m",
-  "@wayfindingApproxMetres": { "placeholders": { "metres": { "type": "int" } } },
+  "@wayfindingApproxMetres": {
+    "placeholders": {
+      "metres": {
+        "type": "int"
+      }
+    }
+  },
   "wayfindingStepFreeUnknown": "Step-free access along this route has not been confirmed yet. Ask at an information point if you need a step-free path.",
   "locateShow": "Show my location",
-  "@locateShow": { "description": "Map locate button, inactive state" },
+  "@locateShow": {
+    "description": "Map locate button, inactive state"
+  },
   "locateFollow": "Follow my location",
-  "@locateFollow": { "description": "Map locate button, active but not following" },
+  "@locateFollow": {
+    "description": "Map locate button, active but not following"
+  },
   "locateStopFollowing": "Stop following my location",
-  "@locateStopFollowing": { "description": "Map locate button, following" },
+  "@locateStopFollowing": {
+    "description": "Map locate button, following"
+  },
   "locateLowAccuracy": "Location accuracy is low",
-  "@locateLowAccuracy": { "description": "Map locate button, active but the fix is low-accuracy (>200m)" },
+  "@locateLowAccuracy": {
+    "description": "Map locate button, active but the fix is low-accuracy (>200m)"
+  },
   "locateUnavailable": "Location unavailable",
-  "@locateUnavailable": { "description": "Map locate button, permission denied" },
+  "@locateUnavailable": {
+    "description": "Map locate button, permission denied"
+  },
   "locateServiceOff": "Turn on Location Services",
-  "@locateServiceOff": { "description": "Map locate button, device location services off" },
+  "@locateServiceOff": {
+    "description": "Map locate button, device location services off"
+  },
   "mapLowAccuracy": "Location accuracy is low",
-  "@mapLowAccuracy": { "description": "Banner note shown when the current fix is low-accuracy" },
+  "@mapLowAccuracy": {
+    "description": "Banner note shown when the current fix is low-accuracy"
+  },
   "mapOffCampus": "You're about {km} km from campus",
-  "@mapOffCampus": { "description": "Banner when the user is outside the campus radius", "placeholders": { "km": { "type": "String" } } },
+  "@mapOffCampus": {
+    "description": "Banner when the user is outside the campus radius",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "mapLocatingOnCampus": "Locating you on the campus map…",
-  "@mapLocatingOnCampus": { "description": "Shown when a near-campus GPS fix can't be placed on the illustrated map yet" },
+  "@mapLocatingOnCampus": {
+    "description": "Shown when a near-campus GPS fix can't be placed on the illustrated map yet"
+  },
   "pointMeTitle": "Point me there",
-  "@pointMeTitle": { "description": "Heading screen title + venue-sheet button" },
+  "@pointMeTitle": {
+    "description": "Heading screen title + venue-sheet button"
+  },
   "pointMeDistanceMeters": "{meters} m",
-  "@pointMeDistanceMeters": { "placeholders": { "meters": { "type": "int" } } },
+  "@pointMeDistanceMeters": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
   "pointMeDistanceKm": "{km} km",
-  "@pointMeDistanceKm": { "placeholders": { "km": { "type": "String" } } },
+  "@pointMeDistanceKm": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "pointMeFindingNorth": "Finding north…",
-  "@pointMeFindingNorth": { "description": "Heading acquiring state" },
+  "@pointMeFindingNorth": {
+    "description": "Heading acquiring state"
+  },
   "pointMeNearby": "You're basically there",
-  "@pointMeNearby": { "description": "Shown within the near-target radius" },
+  "@pointMeNearby": {
+    "description": "Shown within the near-target radius"
+  },
   "pointMeNoCompass": "The live arrow needs a phone with a compass sensor. Here's the direction and distance.",
-  "@pointMeNoCompass": { "description": "Fallback when heading is unsupported/unavailable" },
+  "@pointMeNoCompass": {
+    "description": "Fallback when heading is unsupported/unavailable"
+  },
   "pointMeImprovingAccuracy": "Your location is a bit rough right now — here's the rough direction. It'll sharpen as GPS settles.",
-  "@pointMeImprovingAccuracy": { "description": "Shown when the fix is low-accuracy (>200 m)" },
+  "@pointMeImprovingAccuracy": {
+    "description": "Shown when the fix is low-accuracy (>200 m)"
+  },
   "pointMeNeedsLocation": "Turn on location to point the way",
-  "@pointMeNeedsLocation": { "description": "Shown when there is no location fix" },
+  "@pointMeNeedsLocation": {
+    "description": "Shown when there is no location fix"
+  },
   "pointMeUnknownPlace": "We can't find that place",
-  "@pointMeUnknownPlace": { "description": "Unknown/removed venue id" },
+  "@pointMeUnknownPlace": {
+    "description": "Unknown/removed venue id"
+  },
   "pointMeBearingSentence": "{venue} is about {distance} {cardinal} of you",
-  "@pointMeBearingSentence": { "description": "Fallback bearing card", "placeholders": { "venue": {"type":"String"}, "distance": {"type":"String"}, "cardinal": {"type":"String"} } },
+  "@pointMeBearingSentence": {
+    "description": "Fallback bearing card",
+    "placeholders": {
+      "venue": {
+        "type": "String"
+      },
+      "distance": {
+        "type": "String"
+      },
+      "cardinal": {
+        "type": "String"
+      }
+    }
+  },
   "pointMeA11yDirection": "{venue} is {side}, {distance} away",
-  "@pointMeA11yDirection": { "description": "Live arrow semantic label", "placeholders": { "venue": {"type":"String"}, "side": {"type":"String"}, "distance": {"type":"String"} } },
+  "@pointMeA11yDirection": {
+    "description": "Live arrow semantic label",
+    "placeholders": {
+      "venue": {
+        "type": "String"
+      },
+      "side": {
+        "type": "String"
+      },
+      "distance": {
+        "type": "String"
+      }
+    }
+  },
   "sideAhead": "ahead of you",
   "sideBehind": "behind you",
   "sideLeft": "to your left",
@@ -289,47 +488,109 @@
   "cardinalSW": "south-west",
   "cardinalW": "west",
   "cardinalNW": "north-west",
-
   "mapNavGoogle": "Navigate with Google Maps",
-  "@mapNavGoogle": { "description": "CTA to open the embedded Google walking-nav screen" },
+  "@mapNavGoogle": {
+    "description": "CTA to open the embedded Google walking-nav screen"
+  },
   "mapNavOpenExternal": "Open in Google Maps",
-  "@mapNavOpenExternal": { "description": "Hand off to the Google Maps app / keyless directions URL" },
+  "@mapNavOpenExternal": {
+    "description": "Hand off to the Google Maps app / keyless directions URL"
+  },
   "mapNavDistanceMeters": "{meters} m",
-  "@mapNavDistanceMeters": { "description": "Route distance under 1 km", "placeholders": { "meters": {"type":"int"} } },
+  "@mapNavDistanceMeters": {
+    "description": "Route distance under 1 km",
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
   "mapNavDistanceKm": "{km} km",
-  "@mapNavDistanceKm": { "description": "Route distance 1 km or more (km pre-formatted, one decimal)", "placeholders": { "km": {"type":"String"} } },
+  "@mapNavDistanceKm": {
+    "description": "Route distance 1 km or more (km pre-formatted, one decimal)",
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
   "mapNavEtaMin": "{mins} min",
-  "@mapNavEtaMin": { "description": "Walking ETA under an hour", "placeholders": { "mins": {"type":"int"} } },
+  "@mapNavEtaMin": {
+    "description": "Walking ETA under an hour",
+    "placeholders": {
+      "mins": {
+        "type": "int"
+      }
+    }
+  },
   "mapNavEtaHourMin": "{hours} hr {mins} min",
-  "@mapNavEtaHourMin": { "description": "Walking ETA an hour or more", "placeholders": { "hours": {"type":"int"}, "mins": {"type":"int"} } },
+  "@mapNavEtaHourMin": {
+    "description": "Walking ETA an hour or more",
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "mins": {
+        "type": "int"
+      }
+    }
+  },
   "mapNavNoRoute": "No walking route found to here.",
-  "@mapNavNoRoute": { "description": "200 response with zero routes" },
+  "@mapNavNoRoute": {
+    "description": "200 response with zero routes"
+  },
   "mapNavOffline": "You're offline — can't fetch the route.",
-  "@mapNavOffline": { "description": "Network failure fetching the route" },
+  "@mapNavOffline": {
+    "description": "Network failure fetching the route"
+  },
   "mapNavError": "Couldn't load the route. Please try again.",
-  "@mapNavError": { "description": "API/malformed error fetching the route" },
+  "@mapNavError": {
+    "description": "API/malformed error fetching the route"
+  },
   "mapNavNeedLocation": "Turn on location to get walking directions.",
-  "@mapNavNeedLocation": { "description": "No location permission/fix for Google nav" },
+  "@mapNavNeedLocation": {
+    "description": "No location permission/fix for Google nav"
+  },
   "mapNavUnavailable": "Google navigation isn't available in this build.",
-  "@mapNavUnavailable": { "description": "Capability flag off (no keys) — deep-link landed here" },
+  "@mapNavUnavailable": {
+    "description": "Capability flag off (no keys) — deep-link landed here"
+  },
   "mapNavRetry": "Retry",
-  "@mapNavRetry": { "description": "Retry a failed route fetch" },
+  "@mapNavRetry": {
+    "description": "Retry a failed route fetch"
+  },
   "mapNavWalkingWarning": "Walking routes are in beta — sidewalks and paths may be missing, so use caution.",
-  "@mapNavWalkingWarning": { "description": "Google-mandated baseline caution for WALK routes" },
+  "@mapNavWalkingWarning": {
+    "description": "Google-mandated baseline caution for WALK routes"
+  },
   "mapNavWarningsTitle": "Route notices",
-  "@mapNavWarningsTitle": { "description": "Header above Google-supplied route warnings" },
+  "@mapNavWarningsTitle": {
+    "description": "Header above Google-supplied route warnings"
+  },
   "mapNavDisclosureTitle": "Use Google Maps for directions?",
-  "@mapNavDisclosureTitle": { "description": "Consent dialog title before sharing location with Google" },
+  "@mapNavDisclosureTitle": {
+    "description": "Consent dialog title before sharing location with Google"
+  },
   "mapNavDisclosureBody": "To show a walking route, your current location is sent to Google Maps. Otherwise your location stays on your device and isn't shared.",
-  "@mapNavDisclosureBody": { "description": "Consent dialog body" },
+  "@mapNavDisclosureBody": {
+    "description": "Consent dialog body"
+  },
   "mapNavDisclosureAccept": "Use Google Maps",
-  "@mapNavDisclosureAccept": { "description": "Consent accept button" },
+  "@mapNavDisclosureAccept": {
+    "description": "Consent accept button"
+  },
   "mapNavDisclosureDecline": "Not now",
-  "@mapNavDisclosureDecline": { "description": "Consent decline button" },
+  "@mapNavDisclosureDecline": {
+    "description": "Consent decline button"
+  },
   "settingsRevokeGoogleConsent": "Revoke Google Maps access",
-  "@settingsRevokeGoogleConsent": { "description": "Settings control to reset Google-nav consent to unknown" },
+  "@settingsRevokeGoogleConsent": {
+    "description": "Settings control to reset Google-nav consent to unknown"
+  },
   "settingsGoogleMapsNotice": "When you use Google Maps directions, your location is sent to Google. Google's terms and privacy policy apply.",
-  "@settingsGoogleMapsNotice": { "description": "Settings/Info notice about Google Maps usage + ToS" },
+  "@settingsGoogleMapsNotice": {
+    "description": "Settings/Info notice about Google Maps usage + ToS"
+  },
   "mapModeMap": "Map",
   "mapModePanorama": "360°",
   "mapModeCompass": "Compass",
@@ -344,5 +605,219 @@
   "compassEnableLocation": "Enable location",
   "compassYouAreHere": "You're basically there",
   "compassApproximate": "Approximate location",
-  "compassUnlocatable": "Location unknown — see the printed map"
+  "compassUnlocatable": "Location unknown — see the printed map",
+  "homeNothingRunningNow": "Nothing running this minute — check what’s next.",
+  "homeFactColdTitle": "It gets cold and dark",
+  "homeFactColdBody": "Bring a jacket and a torch. Red-light mode is best near the telescopes — it protects everyone’s night vision.",
+  "homeFactBookingTitle": "Some shows need pre-booking",
+  "homeFactBookingBody": "The magic shows and Destination Moon need seats booked at the time of ticket purchase.",
+  "homeFactParkingTitle": "Free parking",
+  "homeFactParkingBody": "West 5, West 6 and South 2.",
+  "homeFactMetroTitle": "Metro",
+  "homeFactMetroBody": "Macquarie University Metro Station is about a 10 minute walk from the Central Courtyard.",
+  "programClearSearch": "Clear search",
+  "programBookedOnly": "Pre-booked only",
+  "detailNotFoundTitle": "Not found",
+  "detailSessionTimes": "Session times",
+  "detailTime": "Time",
+  "detailLocation": "Location",
+  "detailUnpublishedTimes": "These times are not published in the official program — treat them as a guide.",
+  "detailPositionUnconfirmed": "The exact position of this location is still being confirmed. Follow signage and ask at an information point.",
+  "detail360View": "360° view",
+  "detailMarkedOnMap": "Marked {letter} on the printed event map",
+  "@detailMarkedOnMap": {
+    "placeholders": {
+      "letter": {
+        "type": "String"
+      }
+    }
+  },
+  "myNightClearConfirm": "Clear",
+  "settingsTextSizeCardTitle": "Set text size on your phone",
+  "settingsPrivacyCardTitle": "Nothing leaves your phone",
+  "settingsOsmAttribution": "© OpenStreetMap contributors.",
+  "infoFirstAid": "First aid",
+  "infoToilets": "Toilets",
+  "infoRegistrationAndInfo": "Registration and information",
+  "infoFoodAndDrink": "Food and drink",
+  "infoParking": "Parking",
+  "infoParkingFree": "Free event parking",
+  "infoWalkingFromParking": "Walking directions from parking",
+  "infoGettingHere": "Getting here",
+  "infoBeforeYouCome": "Before you come",
+  "infoDressTitle": "Dress for standing outside",
+  "infoDressBody": "The Telescope Park and the Central Courtyard are open ground, and September evenings get cold. Bring a jacket.",
+  "infoTorchTitle": "Bring a torch — red light if you have it",
+  "infoTorchBody": "It gets genuinely dark towards the Observatory, and that is on purpose. White light ruins night vision for everyone around you, so use a red torch mode near the telescopes and turn your phone brightness down.",
+  "infoBookTitle": "Book the ticketed shows early",
+  "infoBookBody": "The physics and chemistry magic shows and Destination Moon need seats pre-booked at the time of ticket purchase.",
+  "infoChildrenTitle": "Children must be supervised",
+  "infoChildrenBody": "Children must be accompanied by a parent or guardian at all times in the Kids’ space.",
+  "infoCloudTitle": "If it clouds over",
+  "infoCloudBody": "Telescope viewing depends on the weather, but the planetarium sessions at the Sport and Aquatic Centre run regardless.",
+  "infoCredits": "Credits",
+  "previewSection": "Preview",
+  "previewTitle": "Preview event night",
+  "previewBody": "Set the app’s clock to any point on {date} to see what the program looks like at that moment. Useful before the night; leave it off during the event.",
+  "@previewBody": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "previewChooseTime": "Choose a time",
+  "previewBackToRealTime": "Back to real time",
+  "previewBanner": "Previewing {time} on event night",
+  "@previewBanner": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "previewExit": "Exit",
+  "passportTitle": "Astronomy Passport",
+  "@passportTitle": {
+    "description": "Entry-point label for the Astronomy Passport feature (owned by the map/backend side). NOTE: not present in the official programme PDF — pending confirmation with Liz."
+  },
+  "venueNoDirections": "We don’t have written walking directions to here yet. Ask at an information point in the Central Courtyard.",
+  "venueNothingScheduled": "Nothing scheduled here tonight.",
+  "parkingNoConfirmedPosition": "We don’t have a confirmed position for this car park yet — follow on-site signage.",
+  "creditsEventMaterialsBody": "Event materials, campus map and branding © {host}, {faculty}. {cricos}.",
+  "@creditsEventMaterialsBody": {
+    "placeholders": {
+      "host": {
+        "type": "String"
+      },
+      "faculty": {
+        "type": "String"
+      },
+      "cricos": {
+        "type": "String"
+      }
+    }
+  },
+  "creditsHeroImageBody": "Hero image: “{credit}”. Used with permission for this project.",
+  "@creditsHeroImageBody": {
+    "placeholders": {
+      "credit": {
+        "type": "String"
+      }
+    }
+  },
+  "wayfindingReset": "Reset",
+  "@wayfindingReset": {
+    "description": "Clears both wayfinding endpoints."
+  },
+  "@wayfindingStartingFrom": {
+    "description": "Label above the start-point chips (a car park or venue)."
+  },
+  "@wayfindingGoingTo": {
+    "description": "Label above the destination chips."
+  },
+  "wayfindingNoPairTitle": "No directions for that pair yet",
+  "@wayfindingNoPairTitle": {
+    "description": "Both endpoints chosen but no authored route joins them."
+  },
+  "wayfindingNoPairBody": "We don’t have a written route between those two points. Try the Central Courtyard as a staging point — most routes run through it — or ask at an information point.",
+  "@wayfindingNoPairBody": {
+    "description": "Body for the no-route-for-this-pair empty state."
+  },
+  "@wayfindingPickTitle": {
+    "description": "Nothing chosen yet — distinct from having chosen an unroutable pair."
+  },
+  "@wayfindingPickBody": {
+    "description": "Body for the nothing-chosen-yet empty state."
+  },
+  "@wayfindingDirections": {
+    "description": "Heading above the numbered walking steps."
+  },
+  "wayfindingDraftRoute": "These directions are a draft and have not yet been walked and verified on campus at night. Follow event signage and marshals if they differ.",
+  "@wayfindingDraftRoute": {
+    "description": "Confidence note shown on every placeholder-confidence route."
+  },
+  "wayfindingStepFree": "Step-free access along this route.",
+  "@wayfindingStepFree": {
+    "description": "Route is known to be step-free."
+  },
+  "wayfindingNotStepFree": "This route is not step-free.",
+  "@wayfindingNotStepFree": {
+    "description": "Route is known NOT to be step-free."
+  },
+  "@wayfindingStepFreeUnknown": {
+    "description": "Accessibility is UNKNOWN. Must never read as a 'no' — a wrong 'no' turns someone away from a route they could have used."
+  },
+  "@settingsLanguage": {
+    "description": "Settings section header for the language picker."
+  },
+  "@settingsLanguageSystem": {
+    "description": "Use whatever language the phone is set to."
+  },
+  "settingsLanguageSystemHint": "Falls back to English if your device language isn’t available.",
+  "@settingsLanguageSystemHint": {
+    "description": "Explains the System option — the app ships English and Persian only, so most devices land on English."
+  },
+  "settingsLanguageEnglish": "English",
+  "@settingsLanguageEnglish": {
+    "description": "The English option. Always written in English — a language name must be legible to someone who does not yet read the current language."
+  },
+  "settingsLanguagePersian": "فارسی",
+  "@settingsLanguagePersian": {
+    "description": "The Persian option, written in Persian (an endonym), for the same reason."
+  },
+  "creditsMapDataBody": "Map data © OpenStreetMap contributors.",
+  "@creditsMapDataBody": {
+    "description": "Required OSM attribution."
+  },
+  "eventSourceNote": "Source: {note}",
+  "@eventSourceNote": {
+    "description": "Provenance line under an activity — which published document this entry came from.",
+    "placeholders": {
+      "note": {
+        "type": "String"
+      }
+    }
+  },
+  "eventMapReference": "Marked {ref} on the printed event map",
+  "@eventMapReference": {
+    "description": "Cross-reference to the paper map handed out on the night.",
+    "placeholders": {
+      "ref": {
+        "type": "String"
+      }
+    }
+  },
+  "timingOnTheNight": "On the night",
+  "@timingOnTheNight": {
+    "description": "Timing label for an activity that has not started, shown when today is NOT the event date. Replaces 'Later tonight', which would falsely imply the event is today."
+  },
+  "categoryActivities": "Activities",
+  "@categoryActivities": {
+    "description": "Programme section: drop-in, hands-on activities."
+  },
+  "categoryShortTalks": "Short talks",
+  "@categoryShortTalks": {
+    "description": "Programme section: the 12 short research talks."
+  },
+  "categoryKeynote": "Keynote lecture",
+  "@categoryKeynote": {
+    "description": "Programme section: the single keynote."
+  },
+  "categoryFeaturedPresentations": "Featured presentations",
+  "@categoryFeaturedPresentations": {
+    "description": "Programme section: the longer featured talks."
+  },
+  "bandEarlyEvening": "4–6pm",
+  "@bandEarlyEvening": {
+    "description": "Time filter for the first two hours of the event."
+  },
+  "bandEvening": "6–8pm",
+  "@bandEvening": {
+    "description": "Time filter for the middle two hours."
+  },
+  "bandLateEvening": "8–10pm",
+  "@bandLateEvening": {
+    "description": "Time filter for the final two hours."
+  }
 }

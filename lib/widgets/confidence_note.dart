@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/data_confidence.dart';
@@ -32,12 +34,13 @@ class ConfidenceNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     if (confidence.isReliable) return const SizedBox.shrink();
 
-    final text = message ?? 'This detail is still to be confirmed.';
-    final style = Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: context.aon.soon,
-        );
+    final text = message ?? l.infoDetailToBeConfirmed;
+    final style = Theme.of(
+      context,
+    ).textTheme.bodySmall?.copyWith(color: context.aon.soon);
 
     if (compact) {
       return Row(

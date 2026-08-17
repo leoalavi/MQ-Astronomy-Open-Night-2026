@@ -50,9 +50,8 @@ class MyNightScreen extends ConsumerWidget {
         // First read hits disk. A skeleton beats a spinner — the user sees the
         // shape of what is coming rather than an indeterminate wait.
         loading: () => const _TimelineSkeleton(),
-        error: (_, _) => _LoadFailed(
-          onRetry: () => ref.invalidate(savedEventsProvider),
-        ),
+        error: (_, _) =>
+            _LoadFailed(onRetry: () => ref.invalidate(savedEventsProvider)),
         data: (_) => _Timeline(terminology: terminology),
       ),
     );
@@ -67,10 +66,8 @@ class MyNightScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Clear $planName?'),
-        content: const Text(
-          'This removes every saved activity. It can’t be undone.',
-        ),
+        title: Text(l.myNightClearTitle(planName)),
+        content: Text(l.myNightClearBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
@@ -106,9 +103,7 @@ class _Timeline extends ConsumerWidget {
       return EmptyState(
         icon: Icons.star_outline_rounded,
         title: terminology.myPlanEmpty(l),
-        message:
-            'Tap the star on any activity to plan your night. We’ll line '
-            'everything up in time order and tell you where to go.',
+        message: l.myNightEmptyBody,
         actionLabel: l.actionBrowseProgram,
         onAction: () => context.go(Routes.program),
       );
@@ -133,12 +128,11 @@ class _Timeline extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.symmetric(vertical: AonSpacing.space6),
             child: Text(
-              'Everything you saved has finished. What a night.',
+              l.myNightAllFinished,
               textAlign: TextAlign.center,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
           ),
 
@@ -171,11 +165,15 @@ class _ItineraryCard extends ConsumerWidget {
     final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final venue = ref.watch(venueByIdProvider(entry.event.venueId));
-    final accent = VenueStyle.colorForEventCategory(context, entry.event.category);
+    final accent = VenueStyle.colorForEventCategory(
+      context,
+      entry.event.category,
+    );
     final now = ref.watch(currentTimeProvider);
 
-    final titleColour =
-        dimmed ? context.aon.contentTertiary : context.aon.contentPrimary;
+    final titleColour = dimmed
+        ? context.aon.contentTertiary
+        : context.aon.contentPrimary;
 
     return Card(
       clipBehavior: Clip.antiAlias,
@@ -206,11 +204,13 @@ class _ItineraryCard extends ConsumerWidget {
                     timing: entry.timing,
                     trailingText: switch (entry.timing) {
                       EventTiming.happeningNow => TimeFormat.remaining(
-                          now,
-                          entry.session.end,
-                        ).replaceFirst('ends ', ''),
-                      EventTiming.startingSoon =>
-                        TimeFormat.until(now, entry.session.start),
+                        now,
+                        entry.session.end,
+                      ).replaceFirst('ends ', ''),
+                      EventTiming.startingSoon => TimeFormat.until(
+                        now,
+                        entry.session.start,
+                      ),
                       _ => null,
                     },
                   ),
@@ -228,9 +228,10 @@ class _ItineraryCard extends ConsumerWidget {
               if (entry.isMultiSession) ...[
                 const SizedBox(height: 2),
                 Text(
-                  'Session ${entry.sessionIndex} of ${entry.sessionCount}',
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(color: context.aon.contentTertiary),
+                  l.myNightSessionOf(entry.sessionIndex, entry.sessionCount),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: context.aon.contentTertiary,
+                  ),
                 ),
               ],
 
@@ -249,11 +250,12 @@ class _ItineraryCard extends ConsumerWidget {
                   Expanded(
                     child: Text(
                       Bidi.joinIsolated([
-                        entry.event.room,
+                        Bidi.isolate(entry.event.room),
                         venue?.name ?? l.infoLocationToBeConfirmed,
                       ]),
-                      style: theme.textTheme.bodySmall
-                          ?.copyWith(color: context.aon.contentSecondary),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: context.aon.contentSecondary,
+                      ),
                     ),
                   ),
                 ],
@@ -277,18 +279,18 @@ class _ItineraryCard extends ConsumerWidget {
                     // rather than push the delete button off the card.
                     Flexible(
                       child: TextButton.icon(
-                      onPressed: () =>
-                          context.push(Routes.wayfindingTo(venue.id)),
-                      icon: const Icon(
-                        Icons.directions_walk_rounded,
-                        size: AonSpacing.iconSm,
+                        onPressed: () =>
+                            context.push(Routes.wayfindingTo(venue.id)),
+                        icon: const Icon(
+                          Icons.directions_walk_rounded,
+                          size: AonSpacing.iconSm,
+                        ),
+                        label: Text(
+                          l.actionWalkThere,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                      label: Text(
-                        l.actionWalkThere,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
                     ),
                   const Spacer(),
                   IconButton(
@@ -310,11 +312,7 @@ class _ItineraryCard extends ConsumerWidget {
     );
   }
 
-  Future<void> _remove(
-    BuildContext context,
-    WidgetRef ref,
-    AonL10n l,
-  ) async {
+  Future<void> _remove(BuildContext context, WidgetRef ref, AonL10n l) async {
     final planName = ref.read(terminologyProvider).myPlan(l);
     final id = entry.event.id;
     await ref.read(savedEventsProvider.notifier).remove(id);
@@ -324,15 +322,14 @@ class _ItineraryCard extends ConsumerWidget {
       ?..clearSnackBars()
       ..showSnackBar(
         SnackBar(
-          content: Text('Removed from $planName'),
+          content: Text(l.snackRemovedFrom(planName)),
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 4),
           // Undo matters here: the remove button sits next to "Walk there" on
           // a card being tapped in the dark.
           action: SnackBarAction(
             label: l.actionUndo,
-            onPressed: () =>
-                ref.read(savedEventsProvider.notifier).toggle(id),
+            onPressed: () => ref.read(savedEventsProvider.notifier).toggle(id),
           ),
         ),
       );
@@ -346,6 +343,7 @@ class _ConflictNote extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
     final list = titles.length == 1
         ? titles.single
@@ -362,7 +360,7 @@ class _ConflictNote extends StatelessWidget {
         const SizedBox(width: AonSpacing.space2),
         Expanded(
           child: Text(
-            'Overlaps $list',
+            l.myNightConflictOverlaps(list),
             style: theme.textTheme.bodySmall?.copyWith(color: context.aon.soon),
           ),
         ),
@@ -376,6 +374,7 @@ class _ConflictBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     final theme = Theme.of(context);
 
     return Container(
@@ -397,11 +396,10 @@ class _ConflictBanner extends StatelessWidget {
           const SizedBox(width: AonSpacing.space3),
           Expanded(
             child: Text(
-              'Some of your saved activities run at the same time. They’re '
-              'flagged below — most run more than once, so check for another '
-              'session.',
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: context.aon.contentSecondary),
+              l.myNightConflictBanner,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
           ),
         ],
@@ -446,11 +444,10 @@ class _LoadFailed extends StatelessWidget {
     final l = AonL10n.of(context);
     return EmptyState(
       icon: Icons.cloud_off_rounded,
-      title: 'Couldn’t open your saved plan',
+      title: l.myNightLoadFailedTitle,
       // No stack trace, no storage terminology — just what happened and what
       // the visitor can do about it.
-      message: 'Your saved activities are stored on this device. '
-          'Try again in a moment.',
+      message: l.myNightLoadFailedBody,
       actionLabel: l.actionRetry,
       onAction: onRetry,
     );

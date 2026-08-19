@@ -24,21 +24,43 @@ abstract interface class HeadingService {
 /// deterministic on failure. Web has no Magnetometer API in any browser, so it
 /// short-circuits to a single `unsupported` WITHOUT subscribing.
 class SensorsHeadingService implements HeadingService {
+  /// The raw-sensor streams and timeouts are injectable so the fusion, the
+  /// acquire/stale timeouts and the terminal `fail()` cascade can be exercised
+  /// off-hardware (a simulator has no magnetometer) — map audit P1. Production
+  /// uses the sensors_plus globals, mapped to the pure [Vector3].
+  SensorsHeadingService({
+    Stream<Vector3> Function()? accelStream,
+    Stream<Vector3> Function()? magStream,
+    this.acquireTimeout = const Duration(seconds: 4),
+    this.staleTimeout = const Duration(seconds: 2),
+    this.isWeb = kIsWeb,
+  })  : _accelStream = accelStream ?? _defaultAccel,
+        _magStream = magStream ?? _defaultMag;
+
+  final Stream<Vector3> Function() _accelStream;
+  final Stream<Vector3> Function() _magStream;
+  final Duration acquireTimeout;
+  final Duration staleTimeout;
+  final bool isWeb;
+
   static const _period = Duration(milliseconds: 50); // ~20 Hz
-  static const _acquireTimeout = Duration(seconds: 4);
-  static const _staleTimeout = Duration(seconds: 2);
+
+  static Stream<Vector3> _defaultAccel() => accelerometerEventStream(samplingPeriod: _period)
+      .map((e) => Vector3(e.x, e.y, e.z));
+  static Stream<Vector3> _defaultMag() => magnetometerEventStream(samplingPeriod: _period)
+      .map((e) => Vector3(e.x, e.y, e.z));
 
   @override
   Stream<HeadingSample> watch() {
-    if (kIsWeb) {
+    if (isWeb) {
       return Stream<HeadingSample>.value(
           const HeadingSample(availability: HeadingAvailability.unsupported));
     }
     final controller = StreamController<HeadingSample>();
     final smoother = CircularSmoother(0.2); // fresh per session
     Vector3? latestAccel;
-    StreamSubscription<AccelerometerEvent>? accSub;
-    StreamSubscription<MagnetometerEvent>? magSub;
+    StreamSubscription<Vector3>? accSub;
+    StreamSubscription<Vector3>? magSub;
     Timer? acquireTimer, staleTimer;
     var closed = false;
 
@@ -64,19 +86,19 @@ class SensorsHeadingService implements HeadingService {
           const HeadingSample(availability: HeadingAvailability.acquiring));
       // No valid heading within the window → deterministic fallback (this is
       // what a no-magnetometer simulator/device hits instead of "finding north…").
-      acquireTimer = Timer(_acquireTimeout, fail);
-      accSub = accelerometerEventStream(samplingPeriod: _period).listen(
-          (e) => latestAccel = Vector3(e.x, e.y, e.z),
+      acquireTimer = Timer(acquireTimeout, fail);
+      accSub = _accelStream().listen(
+          (v) => latestAccel = v,
           onError: (Object _) => fail());
-      magSub = magnetometerEventStream(samplingPeriod: _period).listen(
-        (e) {
+      magSub = _magStream().listen(
+        (v) {
           final a = latestAccel;
           if (a == null) return; // wait for first accel sample
-          final mag = tiltCompensatedHeadingDegrees(Vector3(e.x, e.y, e.z), a);
+          final mag = tiltCompensatedHeadingDegrees(v, a);
           if (mag == null) return; // degenerate reading; keep waiting
           acquireTimer?.cancel();
           staleTimer?.cancel();
-          staleTimer = Timer(_staleTimeout, fail); // sensor stalled → unavailable
+          staleTimer = Timer(staleTimeout, fail); // sensor stalled → unavailable
           controller.add(HeadingSample(
             availability: HeadingAvailability.available,
             magneticHeadingDegrees: smoother.add(mag),

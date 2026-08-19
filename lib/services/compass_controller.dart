@@ -29,7 +29,6 @@ class CompassState {
     this.trueHeadingDegrees,
     this.locked,
     this.lockedTrueBearingDegrees,
-    this.lockedTurnDegrees,
     this.lockedNearTarget = false,
     this.lockedApproximate = false,
     this.locationReliable = false,
@@ -42,10 +41,6 @@ class CompassState {
   /// Where the locked target sits on the N-up rose — the SAME absolute frame as
   /// every blip (§0R-1). The user rotates until [trueHeadingDegrees] overlaps it.
   final double? lockedTrueBearingDegrees;
-
-  /// Optional relative turn (bearing − heading) for a TEXTUAL "turn X°" cue only;
-  /// never the rose arrow.
-  final double? lockedTurnDegrees;
 
   final bool lockedNearTarget;
   final bool lockedApproximate; // locked coord is placeholder/derived (§0R-6)
@@ -132,7 +127,7 @@ class CompassController extends Notifier<CompassState> {
     final fix = ref.read(locationControllerProvider).fix;
     final lockedKey = ref.read(compassLockedProvider);
     NearbyTarget? locked;
-    double? lockedBearing, lockedTurn;
+    double? lockedBearing;
     var near = false, approx = false, reliable = false;
     if (lockedKey != null && fix != null) {
       locked = _resolveLocked(lockedKey, fix.position);
@@ -142,9 +137,6 @@ class CompassController extends Notifier<CompassState> {
         // "You're here" is a strong claim → require a confirmed coordinate.
         reliable = !fix.isLowAccuracy && locked.confidence == DataConfidence.confirmed;
         near = reliable && locked.distanceMeters <= MapConfig.pointMeNearTargetMeters;
-        if (trueHeading != null) {
-          lockedTurn = relativeAngleDegrees(lockedBearing, trueHeading);
-        }
       }
     }
     return CompassState(
@@ -152,7 +144,6 @@ class CompassController extends Notifier<CompassState> {
       trueHeadingDegrees: trueHeading,
       locked: locked,
       lockedTrueBearingDegrees: lockedBearing,
-      lockedTurnDegrees: lockedTurn,
       lockedNearTarget: near,
       lockedApproximate: approx,
       locationReliable: reliable,

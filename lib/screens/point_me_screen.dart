@@ -209,10 +209,24 @@ class _PointMeScreenState extends ConsumerState<PointMeScreen> {
       ]);
 }
 
+/// Advance an accumulated *turns* value toward [targetDegrees] by the SHORTEST
+/// arc (never more than half a turn). Feeding a raw `degrees/360` into
+/// [AnimatedRotation] makes it tween linearly, so a target crossing the ±180°
+/// wrap (e.g. +179°→−179°, a real 2° change) sweeps the arrow ~358° through
+/// "dead ahead" — pointing the wrong way while the destination is behind you
+/// (map audit P1). Accumulating continuous turns keeps every step ≤ half a turn.
+@visibleForTesting
+double shortestTurns(double currentTurns, double targetDegrees) {
+  final target = targetDegrees / 360.0;
+  var delta = (target - currentTurns) % 1.0; // Dart doubles: result in [0, 1)
+  if (delta > 0.5) delta -= 1.0; // take the short way round
+  return currentTurns + delta;
+}
+
 /// The live arrow. The rotation IS essential state, so under reduced motion it
 /// snaps (plain Transform.rotate) rather than easing (AnimatedRotation) — but it
 /// still reorients. One non-liveRegion Semantics node carries the spoken label.
-class _Arrow extends StatelessWidget {
+class _Arrow extends StatefulWidget {
   const _Arrow({
     required this.semanticLabel,
     required this.angleDegrees,
@@ -227,28 +241,44 @@ class _Arrow extends StatelessWidget {
   final bool reduceMotion;
 
   @override
+  State<_Arrow> createState() => _ArrowState();
+}
+
+class _ArrowState extends State<_Arrow> {
+  // Continuous accumulated rotation in turns, so AnimatedRotation takes the
+  // shortest arc across the ±180° wrap instead of spinning the long way.
+  late double _turns = widget.angleDegrees / 360.0;
+
+  @override
+  void didUpdateWidget(_Arrow old) {
+    super.didUpdateWidget(old);
+    if (widget.angleDegrees != old.angleDegrees) {
+      _turns = shortestTurns(_turns, widget.angleDegrees);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final turns = angleDegrees / 360.0;
     final icon =
         Icon(Icons.navigation_rounded, size: 140, color: context.aon.accent);
-    final rotated = reduceMotion
-        ? Transform.rotate(angle: angleDegrees * math.pi / 180, child: icon)
+    final rotated = widget.reduceMotion
+        ? Transform.rotate(angle: widget.angleDegrees * math.pi / 180, child: icon)
         : AnimatedRotation(
-            turns: turns,
+            turns: _turns,
             duration: const Duration(milliseconds: 220),
             child: icon);
     return Column(mainAxisSize: MainAxisSize.min, children: [
       // liveRegion:false (default) — do NOT announce on every sensor tick.
       Semantics(
         key: const Key('point-me-arrow'),
-        label: semanticLabel,
+        label: widget.semanticLabel,
         excludeSemantics: true,
         child: rotated,
       ),
       const SizedBox(height: AonSpacing.space5),
-      Text(distance, style: Theme.of(context).textTheme.headlineMedium),
+      Text(widget.distance, style: Theme.of(context).textTheme.headlineMedium),
       const SizedBox(height: AonSpacing.space2),
-      Text(cardinal,
+      Text(widget.cardinal,
           style: Theme.of(context)
               .textTheme
               .titleMedium

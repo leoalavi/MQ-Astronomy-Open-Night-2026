@@ -29,6 +29,13 @@ class BlipCluster {
   final double bearingDegrees; // circular-mean true bearing (honest)
   final List<NearbyTarget> members;
   int get count => members.length;
+
+  /// The distance the blip's radius represents: the NEAREST member, so a
+  /// {30 m, 700 m} cluster reads as "something close in this direction" rather
+  /// than borrowing whichever member happened to sort first by bearing
+  /// (map audit P2).
+  double get nearestMeters =>
+      members.map((t) => t.distanceMeters).reduce(math.min);
 }
 
 double _meanBearing(List<NearbyTarget> m) {
@@ -102,7 +109,7 @@ class CompassRadarView extends ConsumerWidget {
               // Blips: sighted convenience only → ExcludeSemantics (§0R-9).
               for (final c in clusters)
                 _positioned(
-                  _onRose(c.bearingDegrees, blipRadiusFraction(c.members.first.distanceMeters),
+                  _onRose(c.bearingDegrees, blipRadiusFraction(c.nearestMeters),
                       center, radius),
                   ExcludeSemantics(child: _Blip(cluster: c)),
                 ),

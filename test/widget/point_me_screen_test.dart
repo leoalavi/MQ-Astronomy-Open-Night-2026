@@ -191,4 +191,29 @@ void main() {
     await t.pump();
     expect(t.takeException(), isNull);
   });
+
+  group('shortestTurns (arrow ±180° wrap, map audit P1)', () {
+    test('crossing the wrap moves the short way, never ~a full turn', () {
+      // +179° displayed, target −179° (a real 2° change). The new turns value
+      // must stay within half a turn of the old, i.e. cross 0.5, NOT unwind to
+      // −0.497 (which AnimatedRotation would sweep ~358° through dead-ahead).
+      const from = 179 / 360.0; // ≈ 0.4972
+      final to = shortestTurns(from, -179);
+      expect((to - from).abs(), lessThan(0.5)); // shortest arc
+      expect(to, greaterThan(0.5)); // continued forward past the seam
+      expect(to, closeTo(181 / 360.0, 1e-9)); // congruent to −179° mod 360
+    });
+
+    test('plain quadrants take the obvious short direction', () {
+      expect(shortestTurns(0, 90), closeTo(0.25, 1e-9));
+      expect(shortestTurns(0, -90), closeTo(-0.25, 1e-9)); // not +0.75
+    });
+
+    test('an unchanged target does not drift on repeated application', () {
+      var turns = shortestTurns(0.5028, -179);
+      turns = shortestTurns(turns, -179);
+      turns = shortestTurns(turns, -179);
+      expect(turns, closeTo(181 / 360.0, 1e-9)); // stable, no accumulation
+    });
+  });
 }

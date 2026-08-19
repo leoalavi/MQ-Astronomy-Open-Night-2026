@@ -61,6 +61,15 @@ void main() {
     await _pump(t, c);
     expect(find.byKey(const ValueKey('compass-locked-marker')), findsOneWidget);
     expect(t.takeException(), isNull);
+
+    // Position, not just existence: bearing 90° on an N-up rose is due EAST, so
+    // the marker sits to the RIGHT and on the horizontal centre-line. If the
+    // layer regressed to a RELATIVE angle (bearing − heading = 60°) the marker
+    // would ride well ABOVE centre — this assertion catches that (map audit P2).
+    final viewCenter = t.getCenter(find.byType(CompassRadarView));
+    final marker = t.getCenter(find.byKey(const ValueKey('compass-locked-marker')));
+    expect(marker.dx, greaterThan(viewCenter.dx + 100)); // east of centre
+    expect((marker.dy - viewCenter.dy).abs(), lessThan(40)); // on the E axis, not up (relative 60°)
   });
 }
 

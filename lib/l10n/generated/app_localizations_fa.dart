@@ -687,6 +687,9 @@ class AonL10nFa extends AonL10n {
   String get mapNavOpenExternalFailed => 'باز کردن نقشهٔ گوگل ممکن نشد.';
 
   @override
+  String get mapPlaceListOnly => 'فقط جزئیات — روی نقشه نشان داده نمی‌شود';
+
+  @override
   String mapNavDistanceMeters(int meters) {
     return '$meters متر';
   }

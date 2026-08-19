@@ -67,12 +67,20 @@ class _CampusSearchSheetState extends ConsumerState<CampusSearchSheet> {
                   itemCount: results.length,
                   itemBuilder: (context, i) {
                     final e = results[i];
+                    // A place with no map coordinate is list-only: say so and use
+                    // a location-off icon rather than a normal pin (map audit P2).
+                    final placeable = isPlaceableOnMap(e);
                     return ListTile(
-                      leading: Icon(e.kind == PlaceKind.building
-                          ? Icons.business_rounded
-                          : Icons.place_rounded),
+                      leading: Icon(!placeable
+                          ? Icons.location_off_rounded
+                          : (e.kind == PlaceKind.building
+                              ? Icons.business_rounded
+                              : Icons.place_rounded)),
                       title: Text(e.title),
-                      subtitle: e.subtitle == null ? null : Text(e.subtitle!),
+                      subtitle: !placeable
+                          ? Text(l.mapPlaceListOnly,
+                              style: TextStyle(color: context.aon.contentTertiary))
+                          : (e.subtitle == null ? null : Text(e.subtitle!)),
                       onTap: () => Navigator.of(context).pop(e.placeKey),
                     );
                   },

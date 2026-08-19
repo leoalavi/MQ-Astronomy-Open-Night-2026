@@ -62,7 +62,21 @@ void main() {
     });
   });
 
-  testWidgets('idle → sorted by placeKey, capped 15; scored → non-increasing; non-match empty',
+  test('isPlaceableOnMap: placeholder/no-coord venue → false; placeable venue/building → true', () {
+    const noCoord = Venue(id: 'z', name: 'z', category: VenueCategory.other);
+    const placed = Venue(id: 'y', name: 'y', category: VenueCategory.other,
+        latitude: -33.7739, longitude: 151.1126);
+    expect(isPlaceableOnMap(VenueEntry(noCoord)), isFalse); // list-only affordance path
+    expect(isPlaceableOnMap(VenueEntry(placed)), isTrue);
+    expect(
+        isPlaceableOnMap(BuildingEntry(
+            const Building(id: 'B', code: 'B', name: 'B', campusX: 1200, campusY: 800))),
+        isTrue);
+    expect(isPlaceableOnMap(BuildingEntry(const Building(id: 'N', code: 'N', name: 'N'))),
+        isFalse);
+  });
+
+  testWidgets('idle → event venues FIRST, capped 15; scored → non-increasing; non-match empty',
       (t) async {
     await t.runAsync(() async {
       final c = ProviderContainer();
@@ -71,8 +85,14 @@ void main() {
       c.read(mapSearchQueryProvider.notifier).setQuery('');
       final idle = c.read(mapSearchResultsProvider);
       expect(idle.length, 15);
-      final keys = idle.map((e) => e.placeKey).toList();
-      expect(keys, List.of(keys)..sort()); // placeKey-ascending
+      // Event venues lead the idle browse — never buried behind building:* keys
+      // that all sort ahead of venue:* (map audit P2).
+      expect(idle.any((e) => e.kind == PlaceKind.venue), isTrue);
+      final firstBuilding = idle.indexWhere((e) => e.kind == PlaceKind.building);
+      final lastVenue = idle.lastIndexWhere((e) => e.kind == PlaceKind.venue);
+      if (firstBuilding != -1) {
+        expect(firstBuilding, greaterThan(lastVenue)); // all venues precede all buildings
+      }
 
       c.read(mapSearchQueryProvider.notifier).setQuery('a');
       final scored = c.read(mapSearchResultsProvider);

@@ -68,9 +68,16 @@ class _FavoriteRow extends ConsumerWidget {
               leading: const Icon(Icons.help_outline_rounded),
               title: Text(l.mapFavoriteUnavailable)) // confirmed-absent (kept, not dropped)
           : ListTile(
-              leading: Icon(Icons.place_rounded, color: context.aon.accent),
+              // A favourite with no map coordinate is list-only — encode it by
+              // icon + hint, not a normal pin that pans nowhere (map audit P2).
+              leading: place.renderPoint == null
+                  ? Icon(Icons.location_off_rounded, color: context.aon.contentTertiary)
+                  : Icon(Icons.place_rounded, color: context.aon.accent),
               title: Text(place.title),
-              subtitle: place.subtitle == null ? null : Text(place.subtitle!),
+              subtitle: place.renderPoint == null
+                  ? Text(l.mapPlaceListOnly,
+                      style: TextStyle(color: context.aon.contentTertiary))
+                  : (place.subtitle == null ? null : Text(place.subtitle!)),
               trailing: FavoriteToggleTrailing(placeKey: placeKey),
               onTap: () => Navigator.of(context).pop(placeKey),
             ),

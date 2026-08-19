@@ -193,6 +193,7 @@
   "mapNavGoogle": "مسیریابی با نقشهٔ گوگل",
   "mapNavOpenExternal": "باز کردن در نقشهٔ گوگل",
   "mapNavOpenExternalFailed": "باز کردن نقشهٔ گوگل ممکن نشد.",
+  "mapPlaceListOnly": "فقط جزئیات — روی نقشه نشان داده نمی‌شود",
   "mapNavDistanceMeters": "{meters} متر",
   "mapNavDistanceKm": "{km} کیلومتر",
   "mapNavEtaMin": "{mins} دقیقه",

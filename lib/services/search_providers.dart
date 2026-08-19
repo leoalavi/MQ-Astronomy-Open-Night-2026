@@ -11,6 +11,18 @@ import 'package:aon2026/services/providers.dart' show venuesProvider;
 const _proj = CampusProjection();
 const _idleCap = 15; // parity with MQ's _defaultVisibleBuildings
 
+/// Idle-browse ordering: event venues before buildings.
+int _idleRank(SearchEntry e) => e is VenueEntry ? 0 : 1;
+
+/// Whether an entry can be pinned on the map (has a resolvable render point).
+/// A placeholder-confidence venue, or one off the illustrated footprint, is
+/// list-only — the sheet row must say so rather than look map-tappable and then
+/// pan nowhere (map audit P2).
+bool isPlaceableOnMap(SearchEntry e) => switch (e) {
+      VenueEntry(:final venue) => placeVenue(venue, _proj) != null,
+      BuildingEntry(:final building) => placeBuilding(building, _proj) != null,
+    };
+
 /// Mutable search text (G3: query state is separate from derived results, so
 /// results recompute when the registry loads). AON idiom — a method, not `.state`.
 class MapSearchQuery extends Notifier<String> {
@@ -67,7 +79,14 @@ final mapSearchResultsProvider = Provider<List<SearchEntry>>((ref) {
   final q = normalizeMapSearch(ref.watch(mapSearchQueryProvider));
   final index = ref.watch(searchIndexProvider);
   if (q.isEmpty) {
-    final sorted = [...index]..sort((a, b) => a.placeKey.compareTo(b.placeKey));
+    // Foreground event venues in the idle browse. Sorting by placeKey alone put
+    // all 170 `building:*` keys ahead of every `venue:*`, so on the real
+    // registry the idle set was 15 buildings and NEVER a venue — the opposite of
+    // what an astronomy-night app should surface first (map audit P2).
+    final sorted = [...index]..sort((a, b) {
+      final byKind = _idleRank(a).compareTo(_idleRank(b));
+      return byKind != 0 ? byKind : a.placeKey.compareTo(b.placeKey);
+    });
     return sorted.take(_idleCap).toList();
   }
   final scored = [

@@ -3,9 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/building.dart';
+import 'package:aon2026/models/search_entry.dart';
+import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/building_providers.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/favorites_store.dart';
+import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_search_sheet.dart';
 import 'package:aon2026/widgets/favorites_sheet.dart';
@@ -79,6 +82,27 @@ void main() {
     await t.scrollUntilVisible(find.byType(ListTile).last, 200, scrollable: list);
     await t.pumpAndSettle();
     expect(t.takeException(), isNull);
+  });
+
+  testWidgets('unplaceable place shows the list-only hint, not a normal pin (map audit P2)', (t) async {
+    const ghost = Venue(id: 'ghost', name: 'First Aid', category: VenueCategory.other); // no coords
+    await t.pumpWidget(ProviderScope(
+      overrides: [
+        buildingsProvider.overrideWith((ref) async => const <Building>[]),
+        favoritesStoreProvider.overrideWithValue(const NoopFavoritesStore()),
+        mapSearchResultsProvider.overrideWithValue([VenueEntry(ghost)]),
+      ],
+      child: const MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: Scaffold(body: CampusSearchSheet()),
+      ),
+    ));
+    await t.pumpAndSettle();
+    final l = await AonL10n.delegate.load(const Locale('en'));
+    expect(find.text('First Aid'), findsOneWidget);
+    expect(find.text(l.mapPlaceListOnly), findsOneWidget);
+    expect(find.byIcon(Icons.location_off_rounded), findsOneWidget);
   });
 
   testWidgets('building sheet renders name/code/category/gridRef + favorite toggle', (t) async {

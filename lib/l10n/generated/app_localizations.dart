@@ -1255,6 +1255,12 @@ abstract class AonL10n {
   /// **'Couldn\'t open Google Maps.'**
   String get mapNavOpenExternalFailed;
 
+  /// Row hint for a place with no map coordinate (placeholder confidence or off the illustrated footprint); tapping still opens its details
+  ///
+  /// In en, this message translates to:
+  /// **'Details only — not shown on the map'**
+  String get mapPlaceListOnly;
+
   /// Route distance under 1 km
   ///
   /// In en, this message translates to:

@@ -500,6 +500,10 @@
   "@mapNavOpenExternalFailed": {
     "description": "Snackbar shown when the external Google Maps hand-off fails to launch"
   },
+  "mapPlaceListOnly": "Details only — not shown on the map",
+  "@mapPlaceListOnly": {
+    "description": "Row hint for a place with no map coordinate (placeholder confidence or off the illustrated footprint); tapping still opens its details"
+  },
   "mapNavDistanceMeters": "{meters} m",
   "@mapNavDistanceMeters": {
     "description": "Route distance under 1 km",

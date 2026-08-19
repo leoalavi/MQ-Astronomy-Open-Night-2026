@@ -192,6 +192,7 @@
   "cardinalNW": "شمال‌غرب",
   "mapNavGoogle": "مسیریابی با نقشهٔ گوگل",
   "mapNavOpenExternal": "باز کردن در نقشهٔ گوگل",
+  "mapNavOpenExternalFailed": "باز کردن نقشهٔ گوگل ممکن نشد.",
   "mapNavDistanceMeters": "{meters} متر",
   "mapNavDistanceKm": "{km} کیلومتر",
   "mapNavEtaMin": "{mins} دقیقه",

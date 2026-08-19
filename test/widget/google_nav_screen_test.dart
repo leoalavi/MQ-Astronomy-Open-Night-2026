@@ -35,6 +35,12 @@ class _FakeLauncher implements ExternalMapsLauncher {
   }
 }
 
+/// Launcher that reports failure (no Maps app / launch refused).
+class _FailLauncher implements ExternalMapsLauncher {
+  @override
+  Future<bool> open(Uri uri) async => false;
+}
+
 class _FakeSurface implements EmbeddedMapSurface {
   @override
   Widget build({
@@ -70,7 +76,7 @@ ProviderContainer _c({
   MapsConsent consent = MapsConsent.accepted,
   (double, double)? origin = const (-33.77, 151.11),
   bool enabled = true,
-  _FakeLauncher? launcher,
+  ExternalMapsLauncher? launcher,
 }) {
   final c = ProviderContainer(overrides: [
     googleNavEnabledProvider.overrideWithValue(enabled),
@@ -110,6 +116,31 @@ void main() {
     expect(find.textContaining('412 m'), findsOneWidget);
     expect(find.textContaining('6 min'), findsOneWidget);
     expect(find.text(l.mapNavWalkingWarning), findsOneWidget); // #13
+  });
+
+  testWidgets('Google-supplied route warnings are rendered on success (ToS display gap)', (t) async {
+    final svc = _StubService(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11)],
+      distanceMeters: 100,
+      eta: Duration(minutes: 2),
+      warnings: ['Sidewalk closed ahead', 'Use caution at night'],
+    )));
+    await t.pumpWidget(_app(_c(service: svc)));
+    await t.pumpAndSettle();
+    final l = await _en();
+    expect(find.text(l.mapNavWarningsTitle), findsOneWidget);
+    expect(find.text('• Sidewalk closed ahead'), findsOneWidget);
+    expect(find.text('• Use caution at night'), findsOneWidget);
+  });
+
+  testWidgets('external hand-off failure surfaces a toast (not a silent dead-end)', (t) async {
+    final svc = _StubService(const RouteNoRoute());
+    await t.pumpWidget(_app(_c(service: svc, launcher: _FailLauncher())));
+    await t.pumpAndSettle();
+    final l = await _en();
+    await t.tap(find.text(l.mapNavOpenExternal));
+    await t.pumpAndSettle();
+    expect(find.text(l.mapNavOpenExternalFailed), findsOneWidget);
   });
 
   testWidgets('RouteNoRoute → no-route panel with retry + external', (t) async {

@@ -76,6 +76,12 @@ class GoogleRoutesService implements RoutesService {
       final decoded = jsonDecode(resp.body);
       if (decoded is! Map<String, dynamic>) return const RouteMalformed();
       final routes = decoded['routes'];
+      // Routes v2 is proto3 JSON, which OMITS empty repeated fields — a genuine
+      // "no walkable route" comes back as `{}` (no `routes` key), NEVER as
+      // `{"routes":[]}`. Treat an absent key as no-route, so it degrades to the
+      // external-Maps fallback instead of a generic, un-retryable error. A
+      // present-but-wrong-type `routes` is still malformed (map audit P1).
+      if (routes == null) return const RouteNoRoute();
       if (routes is! List) return const RouteMalformed();
       if (routes.isEmpty) return const RouteNoRoute();
 
@@ -88,7 +94,12 @@ class GoogleRoutesService implements RoutesService {
         return const RouteMalformed();
       }
 
-      final warnings = (route['warnings'] as List?)?.cast<String>() ?? const <String>[];
+      // Materialise eagerly and keep only real strings: a lazy `.cast<String>()`
+      // would defer a bad element into an uncaught TypeError during widget build
+      // (map audit P2). Google sends `repeated string`, so this only ever filters
+      // anomalous output rather than dropping legitimate warnings.
+      final warnings =
+          (route['warnings'] as List?)?.whereType<String>().toList() ?? const <String>[];
       return RouteSuccess(NavRoute(
         polyline: decodePolyline(encoded),
         distanceMeters: distance,
@@ -104,7 +115,11 @@ class GoogleRoutesService implements RoutesService {
   /// e.g. `"3.5s"`, `"351s"`, `"0.125s"`. Parse as double → milliseconds so a
   /// fractional value never crashes an int parse.
   Duration _parseDuration(String v) {
-    final seconds = double.parse(v.substring(0, v.length - 1));
+    // Strip the documented `s` suffix only when present — never blindly drop the
+    // last char, which would turn an unsuffixed "351" into 35 s (map audit P2).
+    // A non-numeric value throws here and is caught as RouteMalformed.
+    final trimmed = v.endsWith('s') ? v.substring(0, v.length - 1) : v;
+    final seconds = double.parse(trimmed);
     return Duration(milliseconds: (seconds * 1000).round());
   }
 }

@@ -496,6 +496,10 @@
   "@mapNavOpenExternal": {
     "description": "Hand off to the Google Maps app / keyless directions URL"
   },
+  "mapNavOpenExternalFailed": "Couldn't open Google Maps.",
+  "@mapNavOpenExternalFailed": {
+    "description": "Snackbar shown when the external Google Maps hand-off fails to launch"
+  },
   "mapNavDistanceMeters": "{meters} m",
   "@mapNavDistanceMeters": {
     "description": "Route distance under 1 km",

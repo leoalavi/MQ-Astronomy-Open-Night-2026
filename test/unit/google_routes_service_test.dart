@@ -78,6 +78,38 @@ void main() {
         isA<RouteNoRoute>());
   });
 
+  test('200 + `{}` (proto3 omits the empty routes key) → RouteNoRoute, NOT malformed (P1)',
+      () async {
+    // The real Google Routes v2 "no walkable route" response — proto3 JSON does
+    // not emit empty repeated fields, so it is `{}`, never `{"routes":[]}`.
+    expect(await _svc(_ok('{}')).walkingRoute(origin: (0, 0), destination: (0, 0)),
+        isA<RouteNoRoute>());
+  });
+
+  test('200 + routes present but WRONG TYPE → RouteMalformed (not silently no-route)', () async {
+    expect(await _svc(_ok('{"routes":"nonsense"}')).walkingRoute(origin: (0, 0), destination: (0, 0)),
+        isA<RouteMalformed>());
+  });
+
+  test('duration without the `s` suffix parses as whole seconds (not off-by-one char)', () async {
+    final r = await _svc(_ok(jsonEncode({
+      'routes': [
+        {'distanceMeters': 1, 'duration': '351', 'polyline': {'encodedPolyline': ''}}
+      ]
+    }))).walkingRoute(origin: (0, 0), destination: (0, 0));
+    expect((r as RouteSuccess).route.eta, const Duration(seconds: 351)); // NOT 35s
+  });
+
+  test('non-string warning elements are filtered, never crash (defensive cast)', () async {
+    final r = await _svc(_ok(jsonEncode({
+      'routes': [
+        {'distanceMeters': 1, 'duration': '1s', 'polyline': {'encodedPolyline': ''},
+         'warnings': ['Use caution', 42, null]}
+      ]
+    }))).walkingRoute(origin: (0, 0), destination: (0, 0));
+    expect((r as RouteSuccess).route.warnings, ['Use caution']); // 42/null dropped, no throw
+  });
+
   test('401/403/429 → RouteApiFailure(status) (NOT no-route)', () async {
     for (final s in [401, 403, 429]) {
       final r = await _svc(MockClient((_) async => http.Response('{"error":"x"}', s)))

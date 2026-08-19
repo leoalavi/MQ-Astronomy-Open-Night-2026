@@ -683,6 +683,9 @@ class AonL10nEn extends AonL10n {
   String get mapNavOpenExternal => 'Open in Google Maps';
 
   @override
+  String get mapNavOpenExternalFailed => 'Couldn\'t open Google Maps.';
+
+  @override
   String mapNavDistanceMeters(int meters) {
     return '$meters m';
   }

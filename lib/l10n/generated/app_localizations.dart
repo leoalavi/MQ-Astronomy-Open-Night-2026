@@ -1249,6 +1249,12 @@ abstract class AonL10n {
   /// **'Open in Google Maps'**
   String get mapNavOpenExternal;
 
+  /// Snackbar shown when the external Google Maps hand-off fails to launch
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open Google Maps.'**
+  String get mapNavOpenExternalFailed;
+
   /// Route distance under 1 km
   ///
   /// In en, this message translates to:

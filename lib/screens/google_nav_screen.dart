@@ -131,6 +131,10 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         notifier.decline();
         await Navigator.of(context).maybePop();
       }
+      // Re-arm: if consent is later revoked while this screen stays mounted
+      // (e.g. via Settings pushed on top), the next disclosure-needed build must
+      // show the sheet again instead of a permanent blank body (map audit P2).
+      if (mounted) _disclosureRequested = false;
     });
   }
 
@@ -252,9 +256,23 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
 
   Widget _externalButton(BuildContext context, AonL10n l, (double, double) dest) => TextButton.icon(
         icon: const Icon(Icons.open_in_new_rounded, size: 18),
-        onPressed: () => ref
-            .read(externalMapsLauncherProvider)
-            .open(buildWalkingMapsUrl(destLat: dest.$1, destLng: dest.$2)),
+        // The keyless external hand-off is the last-resort action on every error
+        // panel, so a silent throw / false return would strand the user. Await,
+        // catch, and surface a failure toast (map audit P2).
+        onPressed: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          var ok = false;
+          try {
+            ok = await ref
+                .read(externalMapsLauncherProvider)
+                .open(buildWalkingMapsUrl(destLat: dest.$1, destLng: dest.$2));
+          } catch (_) {
+            ok = false;
+          }
+          if (!ok) {
+            messenger.showSnackBar(SnackBar(content: Text(l.mapNavOpenExternalFailed)));
+          }
+        },
         label: Text(l.mapNavOpenExternal),
       );
 

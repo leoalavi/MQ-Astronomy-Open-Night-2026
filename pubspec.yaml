@@ -47,6 +47,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   shared_preferences_platform_interface: ^2.4.2
+  crypto: ^3.0.0 # test-only: verify the vendored buildings.json SHA-256 in-suite
 
 flutter:
   uses-material-design: true

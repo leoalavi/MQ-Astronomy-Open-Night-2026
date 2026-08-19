@@ -78,7 +78,12 @@ run_gate "flutter analyze" flutter analyze
 provenance_gate() {
   local asset="assets/data/buildings.json"
   local prov="docs/fixtures/buildings_provenance.json"
-  [ -f "$asset" ] && [ -f "$prov" ] || return 0  # feature not present yet → skip
+  [ -f "$asset" ] || return 0  # asset not present yet → feature absent, skip
+  # Asset present but provenance record gone = integrity gate silently removed.
+  # FAIL rather than skip (map audit P2 — deleting the record bypassed the gate).
+  if [ ! -f "$prov" ]; then
+    echo "provenance record missing: $prov (present asset $asset has no SHA gate)"; return 1
+  fi
   local have want
   have="$(shasum -a 256 "$asset" | awk '{print $1}')"
   want="$(python3 -c "import json,sys;print(json.load(open('$prov'))['sha256'])")"

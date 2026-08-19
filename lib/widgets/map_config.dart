@@ -1,6 +1,7 @@
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/services/campus_projection.dart';
 
 /// Map camera and tile configuration.
@@ -47,10 +48,13 @@ abstract final class MapConfig {
   static const Distance _distance = Distance();
 
   /// One canonical calculation, consumed by BOTH the guard and the banner.
-  static double distanceFromCampusMeters(LatLng p) =>
-      _distance.as(LengthUnit.Meter, campusCentre, p);
+  /// Takes a [GpsPoint], not a raw [LatLng], so a [CampusMapPoint] in map-units
+  /// can't be fed to a geographic distance and yield a nonsense value that
+  /// drives the off-campus banner / follow guard (map audit P2).
+  static double distanceFromCampusMeters(GpsPoint p) =>
+      _distance.as(LengthUnit.Meter, campusCentre, p.value);
 
-  static bool isNearCampus(LatLng p,
+  static bool isNearCampus(GpsPoint p,
           {double radiusMeters = locationCampusRadiusMeters}) =>
       distanceFromCampusMeters(p) <= radiusMeters;
 

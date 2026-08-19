@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:crypto/crypto.dart' show sha256;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
@@ -79,12 +80,14 @@ void main() {
 
   test('provenance SHA-256 matches the vendored asset (G21 drift gate)', () {
     final bytes = File(buildingsAssetPath).readAsBytesSync();
-    // simple SHA-256 without adding a dep: use the shell-verified value as the
-    // source of truth via the provenance record; here assert record consistency.
     final prov = jsonDecode(File('docs/fixtures/buildings_provenance.json').readAsStringSync())
         as Map<String, dynamic>;
+    // Actually hash the asset and compare — the test used to assert only the
+    // record count + that a 64-char string existed, so a content edit that kept
+    // 170 records sailed through this "SHA gate" (map audit P1). Now a byte edit
+    // fails here, in `flutter test`, not only in the shell gate.
+    final have = sha256.convert(bytes).toString();
+    expect(have, prov['sha256'], reason: 'buildings.json content drifted from its provenance record');
     expect(prov['record_count'], data.length);
-    expect(bytes.isNotEmpty, isTrue);
-    expect((prov['sha256'] as String).length, 64);
   });
 }

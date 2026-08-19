@@ -250,7 +250,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 ),
                 // One status note: off-campus takes priority over low-accuracy.
                 if (loc.active && loc.fix != null)
-                  if (!MapConfig.isNearCampus(loc.fix!.position))
+                  if (!MapConfig.isNearCampus(GpsPoint(loc.fix!.position)))
                     Positioned(
                       top: AonSpacing.space4,
                       // Clear the top-left Layers button AND the top-right
@@ -260,7 +260,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                       child: _MapNote(
                         text: l.mapOffCampus(
                           (MapConfig.distanceFromCampusMeters(
-                                      loc.fix!.position) /
+                                      GpsPoint(loc.fix!.position)) /
                                   1000)
                               .toStringAsFixed(1),
                         ),

@@ -1,18 +1,19 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/widgets/map_config.dart';
 
 void main() {
   test('campus centre is ~0 m away and near', () {
-    expect(MapConfig.distanceFromCampusMeters(MapConfig.campusCentre),
+    expect(MapConfig.distanceFromCampusMeters(const GpsPoint(MapConfig.campusCentre)),
         lessThan(1));
-    expect(MapConfig.isNearCampus(MapConfig.campusCentre), isTrue);
+    expect(MapConfig.isNearCampus(const GpsPoint(MapConfig.campusCentre)), isTrue);
   });
 
   test('a point ~5 km away is far', () {
     // ~0.045 deg latitude ≈ 5 km.
-    final far = LatLng(MapConfig.campusCentre.latitude + 0.045,
-        MapConfig.campusCentre.longitude);
+    final far = GpsPoint(LatLng(MapConfig.campusCentre.latitude + 0.045,
+        MapConfig.campusCentre.longitude));
     expect(MapConfig.distanceFromCampusMeters(far), greaterThan(4000));
     expect(MapConfig.isNearCampus(far), isFalse);
   });

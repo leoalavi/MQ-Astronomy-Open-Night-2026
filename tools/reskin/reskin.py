@@ -78,7 +78,15 @@ def reskin_array(arr, *, style='c'):
 
 # --- build-time driver ------------------------------------------------------
 
-_MQ = "/Users/raoof.r12/Desktop/Raouf/MQ_Journey/assets/maps"
+_MQ = "/Users/raoof.r12/Desktop/Raouf/MQ_Journey/assets/maps"  # last-resort fallback
+
+
+def _sibling_src():
+    """A sibling MQ_Journey checkout next to this repo, if present."""
+    import os
+    p = os.path.normpath(os.path.join(
+        os.path.dirname(__file__), "..", "..", "..", "MQ_Journey", "assets", "maps"))
+    return p if os.path.isdir(p) else None
 _MAP = [
     ("mq-campus", "mqcampus_dark"),
     ("overlay_parking", "overlay_parking_dark"),
@@ -89,10 +97,14 @@ _MAP = [
 _MAX_DIM = 2048   # memory gate: downscale so a decode stays well under 33 MiB
 
 
-def main(style='c', src_dir=_MQ, out_dir=None):
+def main(style='c', src_dir=None, out_dir=None):
     import os
     import numpy as np
     from PIL import Image
+    # Prefer an explicit source (CLI arg / RESKIN_SRC env), then a sibling
+    # MQ_Journey checkout, then the legacy absolute fallback — so the documented
+    # reproduce step is not tied to the author's machine (map audit P2).
+    src_dir = src_dir or os.environ.get("RESKIN_SRC") or _sibling_src() or _MQ
     out_dir = out_dir or os.path.join(os.path.dirname(__file__), "out")
     os.makedirs(out_dir, exist_ok=True)
     print(f"reskin style={style}  ->  {out_dir}")
@@ -115,4 +127,5 @@ def main(style='c', src_dir=_MQ, out_dir=None):
 
 if __name__ == "__main__":
     import sys
-    main(style=sys.argv[1] if len(sys.argv) > 1 else 'c')
+    main(style=sys.argv[1] if len(sys.argv) > 1 else 'c',
+         src_dir=sys.argv[2] if len(sys.argv) > 2 else None)

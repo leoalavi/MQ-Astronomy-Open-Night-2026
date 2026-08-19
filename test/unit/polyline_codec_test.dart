@@ -13,8 +13,13 @@ void main() {
     expect(pts[2].$2, closeTo(-126.453, 1e-3)); // longitude decode covered
   });
   test('empty string → empty', () => expect(decodePolyline(''), isEmpty));
-  test('truncated/dangling encoding does not throw (returns what it decoded)', () {
-    // a trailing chunk with the continuation bit set but no following byte
-    expect(() => decodePolyline('_p~iF~ps|U_ulL'), returnsNormally);
+  test('truncated mid-longitude drops the incomplete pair (no spurious point)', () {
+    // Full first point + a dangling second point that has a latitude delta but
+    // no longitude — must decode to ONLY the complete first point, not a garbage
+    // (lat, −0.00001) second point (map audit P2).
+    final pts = decodePolyline('_p~iF~ps|U_ulL');
+    expect(pts.length, 1);
+    expect(pts[0].$1, closeTo(38.5, 1e-5));
+    expect(pts[0].$2, closeTo(-120.2, 1e-5));
   });
 }

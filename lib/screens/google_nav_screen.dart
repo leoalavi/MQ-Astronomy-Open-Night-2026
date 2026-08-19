@@ -166,18 +166,27 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           message: l.mapNavOffline,
           actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
         ),
-      RouteApiFailure() || RouteMalformed() => _routeError(context, l, dest, origin),
+      RouteApiFailure(:final status) =>
+        _routeError(context, l, dest, origin, apiStatus: status),
+      RouteMalformed() => _routeError(context, l, dest, origin),
     };
   }
 
   Widget _routeError(BuildContext context, AonL10n l, (double, double) dest,
-          (double, double) origin) =>
-      _panel(
-        context,
-        icon: Icons.error_outline_rounded,
-        message: l.mapNavError,
-        actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
-      );
+      (double, double) origin, {int? apiStatus}) {
+    if (apiStatus != null) {
+      // Surface the HTTP status to logs so the on-device restriction-rejection
+      // debt (M4 IOU) is diagnosable — 401/403 (key) vs 429 (quota) vs 5xx. The
+      // status was captured on RouteApiFailure but consumed nowhere (map audit P2).
+      debugPrint('GoogleNav: route API failure HTTP $apiStatus');
+    }
+    return _panel(
+      context,
+      icon: Icons.error_outline_rounded,
+      message: l.mapNavError,
+      actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
+    );
+  }
 
   Widget _needLocation(BuildContext context, AonL10n l, (double, double) dest) => _panel(
         context,

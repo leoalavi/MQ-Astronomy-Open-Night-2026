@@ -14,34 +14,37 @@ List<(double lat, double lng)> decodePolyline(String encoded) {
   var lng = 0;
 
   while (index < len) {
-    // Each coordinate delta is a variable-length chunk of 5-bit groups; the
-    // high bit (0x20) marks "another byte follows". Decode lat, then lng.
-    final startIndex = index;
-    var result = 1;
-    var shift = 0;
-    int b;
-    do {
-      if (index >= len) break; // truncated: stop cleanly
-      b = encoded.codeUnitAt(index++) - 63 - 1;
-      result += b << shift;
-      shift += 5;
-    } while (b >= 0x1f);
-    lat += (result & 1) != 0 ? (~(result >> 1)) : (result >> 1);
+    // Decode the lat delta, then the lng delta. A coordinate is only emitted
+    // when BOTH complete — a string truncated mid-longitude used to append a
+    // spurious point at lng −0.00001 rather than dropping the incomplete pair
+    // (map audit P2).
+    final (dLat, i1, ok1) = _decodeDelta(encoded, index, len);
+    if (!ok1) break; // truncated during latitude
+    final (dLng, i2, ok2) = _decodeDelta(encoded, i1, len);
+    if (!ok2) break; // truncated during longitude → drop the incomplete pair
 
-    result = 1;
-    shift = 0;
-    do {
-      if (index >= len) break; // truncated
-      b = encoded.codeUnitAt(index++) - 63 - 1;
-      result += b << shift;
-      shift += 5;
-    } while (b >= 0x1f);
-    lng += (result & 1) != 0 ? (~(result >> 1)) : (result >> 1);
-
-    // If nothing advanced (fully dangling), avoid an infinite loop.
-    if (index == startIndex) break;
-
+    lat += dLat;
+    lng += dLng;
+    index = i2;
     points.add((lat / 1e5, lng / 1e5));
   }
   return points;
+}
+
+/// Decode one signed varint delta. Returns `(delta, newIndex, complete)`;
+/// `complete` is false when the string ends mid-chunk (a continuation bit was
+/// set but no byte followed), so the caller can drop an incomplete coordinate.
+(int delta, int newIndex, bool complete) _decodeDelta(String s, int index, int len) {
+  // Each delta is a variable-length chunk of 5-bit groups; the high bit (0x20)
+  // marks "another byte follows".
+  var result = 1;
+  var shift = 0;
+  int b;
+  do {
+    if (index >= len) return (0, index, false); // ran out mid-varint
+    b = s.codeUnitAt(index++) - 63 - 1;
+    result += b << shift;
+    shift += 5;
+  } while (b >= 0x1f);
+  return ((result & 1) != 0 ? (~(result >> 1)) : (result >> 1), index, true);
 }

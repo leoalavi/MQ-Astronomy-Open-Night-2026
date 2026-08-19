@@ -33,6 +33,14 @@ ProviderContainer _c(
 
 Future<void> _settle() => Future<void>.delayed(Duration.zero);
 
+/// The compass is on-screen only when its mode is selected AND the Map branch
+/// is on-screen. Both are required for the heading sensor to run (map audit
+/// P0 — compassVisible alone strands it off the Map tab).
+void _showCompass(ProviderContainer c) {
+  c.read(mapVisibleProvider.notifier).set(true);
+  c.read(compassVisibleProvider.notifier).set(true);
+}
+
 const _sample = HeadingSample(
     availability: HeadingAvailability.available, magneticHeadingDegrees: 0);
 
@@ -40,7 +48,7 @@ void main() {
   test('unavailable is TERMINAL — a later available does NOT resurrect (0R/M8)', () async {
     final h = FakeHeadingService();
     final c = _c(h, FakeLocationService());
-    c.read(compassVisibleProvider.notifier).set(true);
+    _showCompass(c);
     c.read(compassControllerProvider); // subscribe synchronously
     await _settle();
     h.emit(_sample);
@@ -56,7 +64,7 @@ void main() {
   test('declination applied to true heading', () async {
     final h = FakeHeadingService();
     final c = _c(h, FakeLocationService());
-    c.read(compassVisibleProvider.notifier).set(true);
+    _showCompass(c);
     c.read(compassControllerProvider);
     await _settle();
     h.emit(_sample); // 0 magnetic + 12.752 E = 12.752 true
@@ -74,7 +82,7 @@ void main() {
           latitude: -33.7700, longitude: 151.1134, campusX: 1, campusY: 1)),
     ]);
     await c.read(locationControllerProvider.notifier).ensureLocationActive();
-    c.read(compassVisibleProvider.notifier).set(true);
+    _showCompass(c);
     c.read(compassControllerProvider);
     l.emit(UserLocationFix(position: _fixLatLng, accuracyMeters: 8));
     await _settle();
@@ -96,7 +104,7 @@ void main() {
           coordinateConfidence: DataConfidence.placeholder)),
     ]);
     await c.read(locationControllerProvider.notifier).ensureLocationActive();
-    c.read(compassVisibleProvider.notifier).set(true);
+    _showCompass(c);
     c.read(compassControllerProvider);
     l.emit(UserLocationFix(position: _fixLatLng, accuracyMeters: 5)); // accurate GPS, ~0 m to target
     await _settle();

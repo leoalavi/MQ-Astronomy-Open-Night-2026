@@ -36,16 +36,21 @@ ProviderContainer _c(FakeHeadingService h, FakeLocationService l,
   return c;
 }
 
-Future<void> _pump(WidgetTester t, ProviderContainer c) => t.pumpWidget(
-      UncontrolledProviderScope(
-        container: c,
-        child: const MaterialApp(
-          localizationsDelegates: AonL10n.localizationsDelegates,
-          supportedLocales: AonL10n.supportedLocales,
-          home: Scaffold(body: CompassModeView()),
-        ),
+Future<void> _pump(WidgetTester t, ProviderContainer c) {
+  // CompassModeView is only ever shown on the Map tab, so the heading sensor's
+  // on-screen gate (compassVisible && mapVisible) needs mapVisible true here.
+  c.read(mapVisibleProvider.notifier).set(true);
+  return t.pumpWidget(
+    UncontrolledProviderScope(
+      container: c,
+      child: const MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: Scaffold(body: CompassModeView()),
       ),
-    );
+    ),
+  );
+}
 
 Future<AonL10n> _en() => AonL10n.delegate.load(const Locale('en'));
 
@@ -143,6 +148,7 @@ void main() {
     final l = FakeLocationService(grant: LocationStatus.granted);
     final index = [for (var i = 0; i < 12; i++) _b('b$i', -33.7737 - i * 0.0006, name: 'Place$i')];
     final c = _c(h, l, index: index);
+    c.read(mapVisibleProvider.notifier).set(true); // Map tab on-screen (heading gate)
     await t.pumpWidget(UncontrolledProviderScope(
       container: c,
       child: const MediaQuery(

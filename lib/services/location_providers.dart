@@ -66,8 +66,16 @@ class PointMeActiveNotifier extends Notifier<bool> {
   }
 }
 
-/// True while the compass mode (M5) is on-screen. OR'd into the location gate so
-/// GPS stays alive in compass mode (§0.1/B4). Same tiny-notifier shape.
+/// True while compass mode (M5) is the selected map mode. Consumed by
+/// [CompassController] (AND-gated there with [mapVisibleProvider]) to run the
+/// heading sensor only while the compass is actually on-screen.
+///
+/// Deliberately NOT part of the GPS gate below: compass is a sub-mode of the
+/// Map branch, so [mapVisibleProvider] already keeps GPS alive whenever the
+/// compass is on the Map tab. OR-ing compassVisible into the location gate
+/// stranded the stream OFF the Map tab, because `StatefulShellRoute.indexedStack`
+/// keeps the Map branch mounted, so `CompassModeView.dispose` (the only thing
+/// that clears this flag) never fires on a tab switch — map audit 2026-08-19 (P0).
 final compassVisibleProvider =
     NotifierProvider<CompassVisibleNotifier, bool>(CompassVisibleNotifier.new);
 
@@ -94,7 +102,6 @@ class LocationController extends Notifier<LocationSnapshot> {
     ref.onDispose(_cancel);
     ref.listen(mapVisibleProvider, (_, _) => _sync());
     ref.listen(pointMeActiveProvider, (_, _) => _sync());
-    ref.listen(compassVisibleProvider, (_, _) => _sync());
     return const LocationSnapshot();
   }
 
@@ -141,10 +148,10 @@ class LocationController extends Notifier<LocationSnapshot> {
   }
 
   void _sync() {
+    // Compass is a sub-mode of the Map branch, so mapVisible already covers it;
+    // adding a separate compassVisible term here stranded the stream off-tab.
     final wantStream = state.active &&
-        (ref.read(mapVisibleProvider) ||
-            ref.read(pointMeActiveProvider) ||
-            ref.read(compassVisibleProvider));
+        (ref.read(mapVisibleProvider) || ref.read(pointMeActiveProvider));
     if (wantStream && _sub == null) {
       _sub = _svc.watch().listen(_onFix, onError: (_) => _onStreamError());
       _serviceSub = _svc.serviceEnabledChanges().listen((enabled) {

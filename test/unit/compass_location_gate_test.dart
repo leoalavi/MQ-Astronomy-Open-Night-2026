@@ -18,18 +18,46 @@ BuildingEntry _b(String id, double lat, double lng) => BuildingEntry(Building(
 Future<void> _settle() => Future<void>.delayed(Duration.zero);
 
 void main() {
-  test('B4: compassVisible + ensureLocationActive keeps the stream alive', () async {
+  test('B4: on the Map tab in compass mode, ensureLocationActive streams a fix', () async {
     final svc = FakeLocationService(grant: LocationStatus.granted);
     final c = ProviderContainer(overrides: [
       locationServiceProvider.overrideWithValue(svc),
     ]);
     addTearDown(c.dispose);
     c.read(locationControllerProvider);
-    await c.read(locationControllerProvider.notifier).ensureLocationActive();
+    c.read(mapVisibleProvider.notifier).set(true); // compass is a Map-tab sub-mode
     c.read(compassVisibleProvider.notifier).set(true);
+    await c.read(locationControllerProvider.notifier).ensureLocationActive();
     svc.emit(UserLocationFix(position: const LatLng(-33.77, 151.11), accuracyMeters: 8));
     await _settle();
-    expect(c.read(locationControllerProvider).fix, isNotNull); // streamed while compass-only
+    expect(c.read(locationControllerProvider).fix, isNotNull);
+  });
+
+  test('P0: leaving the Map tab tears the stream down even with compass still selected',
+      () async {
+    final svc = FakeLocationService(grant: LocationStatus.granted);
+    final c = ProviderContainer(overrides: [
+      locationServiceProvider.overrideWithValue(svc),
+    ]);
+    addTearDown(c.dispose);
+    c.read(locationControllerProvider);
+    c.read(mapVisibleProvider.notifier).set(true);
+    c.read(compassVisibleProvider.notifier).set(true);
+    await c.read(locationControllerProvider.notifier).ensureLocationActive();
+    svc.emit(UserLocationFix(position: const LatLng(-33.77, 151.11), accuracyMeters: 8));
+    await _settle();
+    expect(c.read(locationControllerProvider).fix!.position.latitude, closeTo(-33.77, 1e-9));
+
+    // User taps another bottom-nav tab. AppShell clears mapVisible, but the Map
+    // branch (hence CompassModeView) stays mounted under indexedStack, so
+    // compassVisible remains true. The GPS stream MUST still tear down.
+    c.read(mapVisibleProvider.notifier).set(false);
+    await _settle();
+    expect(c.read(compassVisibleProvider), isTrue); // the strand condition holds
+    svc.emit(UserLocationFix(position: const LatLng(-33.99, 151.99), accuracyMeters: 8));
+    await _settle();
+    // Stream was cancelled on tab-leave, so the newer fix is NOT delivered.
+    expect(c.read(locationControllerProvider).fix!.position.latitude, closeTo(-33.77, 1e-9));
   });
 
   test('ensureLocationActive activates WITHOUT map-follow (§0R-11)', () async {
@@ -58,6 +86,7 @@ void main() {
     expect(c.read(nearbyTargetsProvider), isEmpty); // null fix
 
     await c.read(locationControllerProvider.notifier).ensureLocationActive();
+    c.read(mapVisibleProvider.notifier).set(true);
     c.read(compassVisibleProvider.notifier).set(true);
     svc.emit(UserLocationFix(position: const LatLng(-33.7737, 151.1134), accuracyMeters: 8));
     await _settle();

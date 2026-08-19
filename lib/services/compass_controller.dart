@@ -65,11 +65,33 @@ class CompassController extends Notifier<CompassState> {
   @override
   CompassState build() {
     ref.onDispose(_cancelSub);
-    ref.listen(compassVisibleProvider, (_, v) => v ? _subscribe() : _cancelSub());
+    // Run the heading sensor only while the compass is actually ON-SCREEN:
+    // compass mode selected (compassVisible) AND the Map branch on-screen
+    // (mapVisible). Gating on compassVisible alone strands the magnetometer +
+    // accelerometer when the user leaves the Map tab with compass still
+    // selected — `StatefulShellRoute.indexedStack` keeps the branch mounted so
+    // CompassModeView.dispose never fires (map audit 2026-08-19, P0). Listening
+    // to both means the sensor re-subscribes when the user returns to the tab.
+    ref.listen(compassVisibleProvider, (_, _) => _syncSub());
+    ref.listen(mapVisibleProvider, (_, _) => _syncSub());
     ref.listen(compassLockedProvider, (_, _) => _recompute());
     ref.listen(locationControllerProvider, (_, _) => _recompute());
-    if (ref.read(compassVisibleProvider)) _subscribe(); // subscribe only
+    _syncSub(); // subscribe only if already on-screen
     return _compute();
+  }
+
+  bool get _onScreen =>
+      ref.read(compassVisibleProvider) && ref.read(mapVisibleProvider);
+
+  /// (Re)subscribe on an off→on transition; cancel when no longer on-screen.
+  /// The `_sub == null` guard keeps an unrelated provider event from tearing
+  /// down and resetting the terminal-unavailable latch mid-session.
+  void _syncSub() {
+    if (_onScreen) {
+      if (_sub == null) _subscribe();
+    } else {
+      _cancelSub();
+    }
   }
 
   void _subscribe() {

@@ -36,6 +36,22 @@ abstract final class MapConfig {
     const LatLng(0, 0),
     const LatLng(CampusProjection.mapNorth, CampusProjection.mapEast),
   );
+
+  /// Footprint of the OFFICIAL AON 2026 basemap (`assets/aon_event_map.png`,
+  /// page 1 of the published program-and-map PDF) in the SAME CrsSimple space
+  /// as [mapBounds].
+  ///
+  /// The artwork is a slightly different crop of the same MQ cartographic
+  /// master, so it does NOT coincide with [mapBounds] — it overhangs to the
+  /// west/north and stops ~138 px short on the east. Derived from the projector
+  /// rather than hand-typed, so the artwork and the GPS calibration can never
+  /// drift apart (see `CampusProjection.aonPixel` and the georef test).
+  static final LatLngBounds aonMapBounds = () {
+    const proj = CampusProjection();
+    final sw = proj.aonPixel(0, CampusProjection.aonRenderHeight);
+    final ne = proj.aonPixel(CampusProjection.aonRenderWidth, 0);
+    return LatLngBounds(sw.value, ne.value);
+  }();
   // Zoom range for the CrsSimple campus map. CrsSimple scale = 256·2^zoom, so on
   // a phone the whole 120×85-unit campus frames at zoom ≈ -6.3 (verified
   // on-device). minZoom must sit BELOW that or initialCameraFit clamps and the

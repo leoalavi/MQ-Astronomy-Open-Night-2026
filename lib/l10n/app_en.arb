@@ -229,20 +229,6 @@
   "mapRecentre": "Recentre",
   "mapZoomIn": "Zoom in",
   "mapZoomOut": "Zoom out",
-  "mapLayersTitle": "Map layers",
-  "@mapLayersTitle": {
-    "description": "Title of the thematic-variant picker sheet; label of the Layers button"
-  },
-  "mapVariantBase": "Campus map",
-  "@mapVariantBase": {
-    "description": "Picker row for the plain illustrated campus basemap (no theme)"
-  },
-  "mapVariantParking": "Parking",
-  "mapVariantParkingDesc": "Visitor and event parking areas",
-  "mapVariantAccessibility": "Accessible routes",
-  "mapVariantAccessibilityDesc": "Step-free paths and accessible entrances",
-  "mapVariantWater": "Drinking water",
-  "mapVariantWaterDesc": "Water refill points across campus",
   "mapSearchTitle": "Find a place",
   "mapSearchHint": "Search buildings and venues",
   "mapSearchTooltip": "Search",

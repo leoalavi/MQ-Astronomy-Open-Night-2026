@@ -577,54 +577,6 @@ abstract class AonL10n {
   /// **'Zoom out'**
   String get mapZoomOut;
 
-  /// Title of the thematic-variant picker sheet; label of the Layers button
-  ///
-  /// In en, this message translates to:
-  /// **'Map layers'**
-  String get mapLayersTitle;
-
-  /// Picker row for the plain illustrated campus basemap (no theme)
-  ///
-  /// In en, this message translates to:
-  /// **'Campus map'**
-  String get mapVariantBase;
-
-  /// No description provided for @mapVariantParking.
-  ///
-  /// In en, this message translates to:
-  /// **'Parking'**
-  String get mapVariantParking;
-
-  /// No description provided for @mapVariantParkingDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Visitor and event parking areas'**
-  String get mapVariantParkingDesc;
-
-  /// No description provided for @mapVariantAccessibility.
-  ///
-  /// In en, this message translates to:
-  /// **'Accessible routes'**
-  String get mapVariantAccessibility;
-
-  /// No description provided for @mapVariantAccessibilityDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Step-free paths and accessible entrances'**
-  String get mapVariantAccessibilityDesc;
-
-  /// No description provided for @mapVariantWater.
-  ///
-  /// In en, this message translates to:
-  /// **'Drinking water'**
-  String get mapVariantWater;
-
-  /// No description provided for @mapVariantWaterDesc.
-  ///
-  /// In en, this message translates to:
-  /// **'Water refill points across campus'**
-  String get mapVariantWaterDesc;
-
   /// No description provided for @mapSearchTitle.
   ///
   /// In en, this message translates to:

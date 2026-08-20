@@ -15,8 +15,15 @@ import '../support/fake_location_service.dart';
 // Under CrsSimple the camera lives in map-units, not WGS84 degrees. The camera
 // fit centres on the ARITHMETIC middle of the bounds (not LatLngBounds.center,
 // which is a spherical midpoint). A follow moves to the PROJECTED fix.
-const _mapCentre =
-    LatLng(CampusProjection.mapNorth / 2, CampusProjection.mapEast / 2);
+//
+// The fit frames the OFFICIAL AON artwork, whose footprint is a different crop
+// of the same master than the MQ calibration frame — so this is derived from
+// MapConfig.aonMapBounds, never from mapNorth/mapEast, which would silently
+// drift from what the screen actually fits.
+final _mapCentre = LatLng(
+  (MapConfig.aonMapBounds.south + MapConfig.aonMapBounds.north) / 2,
+  (MapConfig.aonMapBounds.west + MapConfig.aonMapBounds.east) / 2,
+);
 
 ProviderContainer _container(FakeLocationService svc) {
   final c = ProviderContainer(

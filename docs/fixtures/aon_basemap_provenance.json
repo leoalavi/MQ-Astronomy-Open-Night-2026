@@ -1,0 +1,15 @@
+{
+  "asset": "assets/maps/aon_event_map.png",
+  "sha256": "53f4504364a14675b7611b4b660e8870dd119efd4532fb855fbc02f3356fe35f",
+  "source_document": "tools/aon_map/source/aon2026_program_and_map_A3.pdf",
+  "source_sha256": "c861c9a84fc42fe3738a0afe56f04eaa316e372c1324d61a88af8d8955347a17",
+  "source_title": "FSE26193 AON 2026 Program and Map, A3 FA DIGITAL",
+  "source_page": 1,
+  "source_producer": "Adobe InDesign 21.0 (Macintosh), created 2026-08-06",
+  "publisher": "Macquarie University, Faculty of Science and Engineering",
+  "extraction": "tools/aon_map/extract.py (pdftoppm -r 283 -> 4680x3310, LANCZOS -> 2048x1448)",
+  "modifications": "none — the official artwork ships unaltered (no night-reskin)",
+  "georeferencing": "similarity onto the MQ calibration frame: scale 1.024017937, tx -252.463703, ty -74.694819; fitted over 45 landmarks, 0.77px mean / 2.12px max residual (tools/aon_map/fit_georef_*.py)",
+  "licence": "Official AON 2026 event artwork. Confirm redistribution permission before any public/store release (IOU).",
+  "vendored_on": "2026-08-20"
+}

@@ -74,10 +74,10 @@ run_gate "pub get" flutter pub get
 # ── 2. static analysis (must be clean) ──────────────────────────────────────
 run_gate "flutter analyze" flutter analyze
 
-# ── 2b. vendored-asset provenance (buildings.json SHA-256 must not drift) ────
-provenance_gate() {
-  local asset="assets/data/buildings.json"
-  local prov="docs/fixtures/buildings_provenance.json"
+# ── 2b. vendored-asset provenance (SHA-256 of vendored assets must not drift) ─
+# One checker, reused for every vendored asset: $1 = asset path, $2 = record.
+_sha_gate() {
+  local asset="$1" prov="$2"
   [ -f "$asset" ] || return 0  # asset not present yet → feature absent, skip
   # Asset present but provenance record gone = integrity gate silently removed.
   # FAIL rather than skip (map audit P2 — deleting the record bypassed the gate).
@@ -88,11 +88,20 @@ provenance_gate() {
   have="$(shasum -a 256 "$asset" | awk '{print $1}')"
   want="$(python3 -c "import json,sys;print(json.load(open('$prov'))['sha256'])")"
   if [ "$have" != "$want" ]; then
-    echo "buildings.json SHA drift: asset=$have provenance=$want"; return 1
+    echo "$asset SHA drift: asset=$have provenance=$want"; return 1
   fi
   return 0
 }
-run_gate "buildings.json provenance" provenance_gate
+
+provenance_gate() {
+  _sha_gate "assets/data/buildings.json" "docs/fixtures/buildings_provenance.json" || return 1
+  # The OFFICIAL AON basemap. A silent re-render (different poppler, different
+  # dpi) would shift the artwork under a georeferencing fitted to the old one,
+  # sliding every pin off the ink — so gate the exact bytes.
+  _sha_gate "assets/maps/aon_event_map.png" "docs/fixtures/aon_basemap_provenance.json" || return 1
+  return 0
+}
+run_gate "vendored asset provenance" provenance_gate
 
 # ── 3. l10n: regenerate + assert EN/FA completeness ─────────────────────────
 # gen-l10n writes any missing non-template keys to untranslated-messages-file

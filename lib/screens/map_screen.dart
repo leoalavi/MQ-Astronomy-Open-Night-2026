@@ -27,7 +27,6 @@ import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_basemap_layer.dart';
 import 'package:aon2026/widgets/campus_search_sheet.dart';
-import 'package:aon2026/widgets/campus_variant_picker.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/favorites_sheet.dart';
 import 'package:aon2026/widgets/map_category_filter_bar.dart';
@@ -199,7 +198,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     // over initialCenter/initialZoom, so those are dropped.
                     crs: const CrsSimple(),
                     initialCameraFit: CameraFit.bounds(
-                      bounds: MapConfig.mapBounds,
+                      bounds: MapConfig.aonMapBounds,
                       padding: const EdgeInsets.all(12),
                       minZoom: MapConfig.mapMinZoom,
                       maxZoom: MapConfig.mapMaxZoom,
@@ -209,7 +208,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     // the real viewport exists (Map Parity M1, on-device fix).
                     onMapReady: () => _controller.fitCamera(
                       CameraFit.bounds(
-                        bounds: MapConfig.mapBounds,
+                        bounds: MapConfig.aonMapBounds,
                         padding: const EdgeInsets.all(12),
                         minZoom: MapConfig.mapMinZoom,
                         maxZoom: MapConfig.mapMaxZoom,
@@ -222,7 +221,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     // zoom, so `contain` is unsatisfiable; containCenter keeps
                     // the map from being panned away.
                     cameraConstraint: CameraConstraint.containCenter(
-                      bounds: MapConfig.mapBounds,
+                      bounds: MapConfig.aonMapBounds,
                     ),
                     backgroundColor: context.aon.surfaceBase,
                     // A deliberate user pan exits follow but keeps the dot; a
@@ -253,7 +252,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   if (!MapConfig.isNearCampus(GpsPoint(loc.fix!.position)))
                     Positioned(
                       top: AonSpacing.space4,
-                      // Clear the top-left Layers button AND the top-right
+                      // Clear the top-left control column AND the top-right
                       // control island — both are minTapTarget wide.
                       left: AonSpacing.space4 + AonSpacing.minTapTarget,
                       right: AonSpacing.space4 + AonSpacing.minTapTarget,
@@ -315,7 +314,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     locateButton: const LocateButton(),
                   ),
                 ),
-                // Top-left control column (G18): Layers (M2), Search, Favorites.
+                // Top-left control column (G18): Search, Favorites.
                 // One minTapTarget-wide stack, mirroring the top-right island;
                 // the status notes clear it via `left: space4 + minTapTarget`.
                 // This whole Stack only builds in MapMode.campusMap.
@@ -324,17 +323,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   left: AonSpacing.space4,
                   child: Column(
                     children: [
-                      _GlassMapButton(
-                        icon: Icons.layers_rounded,
-                        tooltip: l.mapLayersTitle,
-                        onTap: () => showModalBottomSheet<void>(
-                          context: context,
-                          isScrollControlled: true,
-                          useSafeArea: true,
-                          builder: (_) => const CampusVariantPicker(),
-                        ),
-                      ),
-                      const SizedBox(height: AonSpacing.space2),
                       _GlassMapButton(
                         icon: Icons.search_rounded,
                         tooltip: l.mapSearchTooltip,

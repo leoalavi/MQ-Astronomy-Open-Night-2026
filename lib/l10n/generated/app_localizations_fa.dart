@@ -307,31 +307,6 @@ class AonL10nFa extends AonL10n {
   String get mapZoomOut => 'کوچک‌نمایی';
 
   @override
-  String get mapLayersTitle => 'لایه‌های نقشه';
-
-  @override
-  String get mapVariantBase => 'نقشهٔ پردیس';
-
-  @override
-  String get mapVariantParking => 'پارکینگ';
-
-  @override
-  String get mapVariantParkingDesc => 'پارکینگ بازدیدکنندگان و رویداد';
-
-  @override
-  String get mapVariantAccessibility => 'مسیرهای دسترس‌پذیر';
-
-  @override
-  String get mapVariantAccessibilityDesc =>
-      'مسیرهای بدون پله و ورودی‌های دسترس‌پذیر';
-
-  @override
-  String get mapVariantWater => 'آب آشامیدنی';
-
-  @override
-  String get mapVariantWaterDesc => 'ایستگاه‌های پرکردن آب در پردیس';
-
-  @override
   String get mapSearchTitle => 'یافتن مکان';
 
   @override

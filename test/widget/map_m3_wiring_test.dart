@@ -11,7 +11,6 @@ import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_search_sheet.dart';
-import 'package:aon2026/widgets/campus_variant_picker.dart';
 import 'package:aon2026/widgets/favorites_sheet.dart';
 import 'package:aon2026/screens/map_screen.dart';
 import '../support/fake_location_service.dart';
@@ -45,15 +44,14 @@ int _markerCount(WidgetTester t) => t
     .fold(0, (s, l) => s + l.markers.length);
 
 void main() {
-  testWidgets('control column: Search/Favorites/Layers buttons coexist + open their sheets',
+  testWidgets('control column: Search/Favorites buttons coexist + open their sheets',
       (t) async {
     final c = _container();
     await t.pumpWidget(_app(c));
     await t.pumpAndSettle();
-    // all three tooltips present (coexist, no collision)
+    // both tooltips present (coexist, no collision)
     expect(find.byTooltip('Search'), findsOneWidget);
     expect(find.byTooltip('Favourites'), findsOneWidget);
-    expect(find.byTooltip('Map layers'), findsOneWidget);
 
     await t.tap(find.byTooltip('Search'));
     await t.pumpAndSettle();
@@ -67,9 +65,9 @@ void main() {
     Navigator.of(t.element(find.byType(FavoritesSheet))).pop();
     await t.pumpAndSettle();
 
-    await t.tap(find.byTooltip('Map layers'));
-    await t.pumpAndSettle();
-    expect(find.byType(CampusVariantPicker), findsOneWidget); // M2 intact
+    // The M2 'Map layers' button is gone: the official AON artwork is the only
+    // basemap, so there is nothing to switch between.
+    expect(find.byTooltip('Map layers'), findsNothing);
   });
 
   testWidgets('select a building via search → transient marker + BuildingSheet; '
@@ -108,12 +106,13 @@ void main() {
     expect(_markerCount(t), before); // same count — decoration, not a new pin
   });
 
-  testWidgets('M1/M2 intact: venues render; variant swap still works', (t) async {
+  testWidgets('M1 intact: venues render over the official basemap', (t) async {
     final c = _container();
     await t.pumpWidget(_app(c));
     await t.pumpAndSettle();
     expect(_markerCount(t), greaterThan(0)); // the 21 venues (+parking)
-    expect(find.byTooltip('Map layers'), findsOneWidget);
+    // The M2 variant picker is retired — one official basemap, nothing to swap.
+    expect(find.byTooltip('Map layers'), findsNothing);
     expect(t.takeException(), isNull);
   });
 }

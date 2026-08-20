@@ -1,0 +1,20 @@
+appId: au.edu.mq.astronomy.aon2026
+---
+# Cold-launch and land on the campus map, fitted.
+#
+# The bottom-nav "Map" tab is tapped BY POINT deliberately. Text matching is
+# unusable here: the tab's Flutter semantics become "Map\nMap" (label + tooltip)
+# once selected, which no `text:` regex Maestro accepts will match, while the
+# AppBar title and the mode-toggle segment are BOTH exactly "Map" — so
+# `tapOn: "Map"` silently hits the wrong one. The tab bar is also an animated
+# LiquidTabBar whose pill expands on selection, shifting its neighbours, so
+# bounds read from the hierarchy go stale mid-tap.
+- stopApp
+- launchApp
+# XCTest can crash on cold boot if the a11y tree is touched before first render.
+- swipe:
+    direction: DOWN
+    duration: 100
+- tapOn:
+    point: "68%,91%"
+- assertVisible: "Zoom in"

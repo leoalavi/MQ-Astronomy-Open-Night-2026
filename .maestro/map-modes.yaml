@@ -1,0 +1,36 @@
+# Map · the three map modes
+#
+# Tests: the Map / 360° / Compass toggle switches the body, each mode brings its
+# own finder, and the walk-route FAB is campus-map ONLY (spec §0.4/§0-N).
+appId: au.edu.mq.astronomy.aon2026
+tags: [map]
+---
+- runFlow: flows/open-map.yaml
+- assertVisible: "Directions"
+
+# ── 360° panorama picker ────────────────────────────────────────────────────
+- tapOn: "360°"
+- takeScreenshot: modes-01-panorama-picker
+# the walk-route FAB must NOT overlay a non-map finder
+- assertNotVisible: "Directions"
+- assertNotVisible: "Zoom in"
+
+# ── compass / point-me ──────────────────────────────────────────────────────
+- tapOn: "Compass"
+- takeScreenshot: modes-02-compass
+- assertNotVisible: "Directions"
+# The simulator has no magnetometer, so compass mode MUST degrade to the honest
+# cardinal-bearing LIST rather than draw a rose it cannot orient (M5 §0R).
+- assertVisible: "Filter places"
+
+# ── back to the campus map ──────────────────────────────────────────────────
+# "Map" is ambiguous — the AppBar title is ALSO exactly "Map" and comes first in
+# the hierarchy, so a bare `tapOn: "Map"` hits the title and nothing happens.
+# `leftOf:` does not disambiguate either (it ignores the row). index 1 is the
+# toggle segment; its bounds are stable across all three modes.
+- tapOn:
+    text: "Map"
+    index: 1
+- assertVisible: "Zoom in"
+- assertVisible: "Directions"
+- assertVisible: "Campus map © Macquarie University"

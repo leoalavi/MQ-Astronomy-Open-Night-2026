@@ -1,0 +1,39 @@
+# Map · location, permission and the honest off-campus / off-footprint notes
+#
+# Tests: the locate button drives the permission flow, an on-campus fix draws
+# the dot, and a far-away fix produces the off-campus banner rather than a
+# clamped dot at the map edge (spec §5.4/§5.5 — the projector NEVER clamps).
+appId: au.edu.mq.astronomy.aon2026
+tags: [map, location]
+---
+# Central Courtyard — squarely inside the frozen calibration domain.
+- setLocation:
+    latitude: -33.7737
+    longitude: 151.1134
+- runFlow: flows/open-map.yaml
+
+- assertVisible: "Show my location"
+- tapOn: "Show my location"
+
+# iOS permission sheet. Optional because the grant persists across relaunches,
+# so the dialog only appears on the very first run after install.
+- tapOn:
+    text: "Allow While Using App"
+    optional: true
+- tapOn:
+    text: "Allow Once"
+    optional: true
+- takeScreenshot: location-01-on-campus
+
+# Once granted AND a fix arrives, the control is actively following, so its
+# accessible name is the STOP action (locate_button.dart state machine).
+- assertVisible: "Stop following my location"
+
+# ── a fix far from campus must produce the honest banner, not a fake dot ────
+- setLocation:
+    latitude: -33.8688
+    longitude: 151.2093
+# project() returns null off the illustrated footprint — the app must show the
+# honest distance banner, never a dot clamped to the edge of the artwork.
+- assertVisible: ".*km from campus"
+- takeScreenshot: location-02-off-campus

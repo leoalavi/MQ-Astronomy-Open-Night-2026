@@ -1,0 +1,31 @@
+# Map · walking directions
+#
+# Tests: the campus-map-only Directions FAB reaches the wayfinding screen and a
+# start/destination pair produces a route preview with written steps.
+#
+# AUDIT NOTE: that preview map is the app's LAST live-network surface — it still
+# renders OpenStreetMap raster tiles (DarkTileLayer), so it shows different
+# cartography from the official AON basemap AND carries no visible OSM
+# attribution, which the OSM Tile Usage Policy requires. Screenshot
+# wayfinding-02-route is the evidence.
+appId: au.edu.mq.astronomy.aon2026
+tags: [map]
+---
+- runFlow: flows/open-map.yaml
+
+- tapOn: "Directions"
+- assertVisible: "Walking directions"
+- assertVisible: "Starting from"
+- assertVisible: "Going to"
+# (The empty-state heading is merged with its body into one a11y string, so it
+#  is not assertable as a standalone full-string match.)
+- takeScreenshot: wayfinding-01-picker
+
+- tapOn: "West 5"
+# Chip labels that come from an l10n PLACEHOLDER are wrapped by Flutter in
+# Unicode bidi isolates (U+2068 … U+2069) because the app ships EN + Persian.
+# The literal text is therefore "\u2068Observatory\u2069" and an exact match
+# fails. Wrap in .* so the isolates are absorbed.
+- tapOn: ".*Observatory.*"
+- assertVisible: "Reset"
+- takeScreenshot: wayfinding-02-route

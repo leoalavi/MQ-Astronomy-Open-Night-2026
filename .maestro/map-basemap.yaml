@@ -1,0 +1,38 @@
+# Map · basemap + chrome
+#
+# Tests: the OFFICIAL AON 2026 artwork is the basemap, the camera frames the
+# whole published sheet, the control chrome is present, and the retired M2
+# Layers picker is really gone.
+appId: au.edu.mq.astronomy.aon2026
+tags: [map, smoke]
+---
+- runFlow: flows/open-map.yaml
+- takeScreenshot: map-01-initial-fit
+
+# Chrome that must exist
+- assertVisible: "Zoom in"
+- assertVisible: "Zoom out"
+- assertVisible: "Search"
+- assertVisible: "Favourites"
+- assertVisible: "Directions"
+- assertVisible: "Campus map © Macquarie University"
+- assertVisible: "Show my location"
+
+# Mode toggle
+- assertVisible: "Map"
+- assertVisible: "360°"
+- assertVisible: "Compass"
+
+# REGRESSION: M2 thematic variants are retired — one official basemap, so there
+# is nothing to switch between and the Layers button must not come back.
+- assertNotVisible: "Map layers"
+
+# Zoom controls actually drive the camera. The venue pins are fixed-size, so
+# zooming in spreads the Central Courtyard cluster far enough that the venues
+# stacked at one coordinate stop sharing bounds.
+- tapOn: "Zoom in"
+- tapOn: "Zoom in"
+- takeScreenshot: map-02-zoomed-in
+- tapOn: "Zoom out"
+- tapOn: "Zoom out"
+- takeScreenshot: map-03-zoomed-back

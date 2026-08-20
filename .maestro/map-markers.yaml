@@ -1,0 +1,69 @@
+# Map · markers, sheets and category filters
+#
+# Tests: venue/parking pins render at the right places, tapping one opens its
+# sheet, and the category filter bar actually adds/removes pins.
+appId: au.edu.mq.astronomy.aon2026
+tags: [map]
+---
+- runFlow: flows/open-map.yaml
+
+# ── every event venue A–I from the official map is pinned ────────────────────
+- assertVisible: "Macquarie Theatre. Event venue."
+- assertVisible: "Mason Theatre. Event venue."
+- assertVisible: "Central Courtyard. Event venue."
+- assertVisible: "14 Sir Christopher Ondaatje Avenue. Event venue."
+- assertVisible: "1 Central Courtyard. Event venue."
+- assertVisible: "Macquarie University Sport and Aquatic Centre. Event venue."
+- assertVisible: "Macquarie University Astronomical Observatory. Event venue."
+- assertVisible: "11 Wally’s Walk. Event venue."
+- assertVisible: "17 Wally’s Walk. Event venue."
+# ...plus the facilities the legend promises
+- assertVisible: "Registration point. Registration."
+- assertVisible: "Information point 2. Information point."
+- assertVisible: "Information point 3. Information point."
+- assertVisible: "Food and drink. Food and drink."
+- assertVisible: "West 5. Parking."
+
+# The Metro Station and South 2 pins sit in the map's bottom-right, where the
+# "Directions" FAB is pinned — at the default fit the FAB covers them, so they
+# are present but not hittable. Pan them clear before asserting, and treat the
+# occlusion itself as the finding it is.
+- swipe:
+    start: "62%,62%"
+    end: "40%,45%"
+- assertVisible: "Macquarie University Metro Station. Metro station."
+- assertVisible: "South 2. Parking."
+- runFlow: flows/open-map.yaml
+
+# ── tapping a venue opens its sheet ──────────────────────────────────────────
+- tapOn: "Macquarie University Astronomical Observatory. Event venue."
+- assertVisible: "Walking directions"
+- assertVisible: "Point me there"
+- assertVisible: "Macquarie University Observatory"   # the venue subtitle
+- takeScreenshot: markers-01-venue-sheet
+# Dismiss by tapping the scrim ABOVE the sheet. A downward swipe does not work:
+# these are isScrollControlled sheets, so a drag inside them scrolls content
+# rather than dismissing.
+- tapOn:
+    point: "50%,25%"
+- assertNotVisible: "Point me there"
+
+# ── tapping a parking pin opens the parking sheet ────────────────────────────
+- tapOn: "West 5. Parking."
+- takeScreenshot: markers-02-parking-sheet
+- tapOn:
+    point: "50%,25%"
+
+# ── category filter removes and restores a whole class of pin ────────────────
+- tapOn: "Event venue"
+- assertNotVisible: "Macquarie Theatre. Event venue."
+- assertNotVisible: "Mason Theatre. Event venue."
+- assertVisible: "Registration point. Registration."   # other classes untouched
+- takeScreenshot: markers-03-venues-filtered-out
+- tapOn: "Event venue"
+- assertVisible: "Macquarie Theatre. Event venue."
+
+- tapOn: "Registration"
+- assertNotVisible: "Registration point. Registration."
+- tapOn: "Registration"
+- assertVisible: "Registration point. Registration."

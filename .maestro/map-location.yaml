@@ -23,7 +23,7 @@ tags: [map, location]
 - tapOn:
     text: "Allow Once"
     optional: true
-- takeScreenshot: location-01-on-campus
+- takeScreenshot: .maestro/screenshots/location-01-on-campus
 
 # Once granted AND a fix arrives, the control is actively following, so its
 # accessible name is the STOP action (locate_button.dart state machine).
@@ -36,4 +36,4 @@ tags: [map, location]
 # project() returns null off the illustrated footprint — the app must show the
 # honest distance banner, never a dot clamped to the edge of the artwork.
 - assertVisible: ".*km from campus"
-- takeScreenshot: location-02-off-campus
+- takeScreenshot: .maestro/screenshots/location-02-off-campus

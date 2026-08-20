@@ -36,6 +36,8 @@ class Venue {
     this.buildingId,
     this.campusX,
     this.campusY,
+    this.artworkX,
+    this.artworkY,
   });
 
   final String id;
@@ -87,6 +89,21 @@ class Venue {
   /// Baked pixel-exact overlay coords copied from the linked building
   /// (drift-tested against buildings.json). Present iff [buildingId] is set.
   final double? campusX, campusY;
+
+  /// Where this venue's marker is PRINTED on the official AON 2026 map, in the
+  /// artwork's own 4680x3310 pixel space (see `CampusProjection.aonPixel`).
+  ///
+  /// The published map already places every A–I disc, the 1/2/3 points, the
+  /// toilets and first aid, spaced by the designer so they do not collide.
+  /// Measured off the raster by `tools/aon_map/measure_markers.py`, so the pin
+  /// the app draws lands on the marker the paper map shows.
+  ///
+  /// A MAP-PLACEMENT coordinate, never a geographic one. It does not touch
+  /// [latitude]/[longitude] or [coordinateConfidence] — bearing, distance,
+  /// compass and routing keep reading real coordinates, and a venue with a
+  /// printed marker but no GPS fix (first aid) stays honestly unroutable while
+  /// still appearing on the map.
+  final double? artworkX, artworkY;
 
   /// The label to use anywhere horizontal space is constrained.
   String get chipLabel => shortName ?? name;

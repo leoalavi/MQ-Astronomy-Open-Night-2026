@@ -19,7 +19,7 @@ tags: [map]
 - assertVisible: "Going to"
 # (The empty-state heading is merged with its body into one a11y string, so it
 #  is not assertable as a standalone full-string match.)
-- takeScreenshot: wayfinding-01-picker
+- takeScreenshot: .maestro/screenshots/wayfinding-01-picker
 
 - tapOn: "West 5"
 # Chip labels that come from an l10n PLACEHOLDER are wrapped by Flutter in
@@ -28,4 +28,4 @@ tags: [map]
 # fails. Wrap in .* so the isolates are absorbed.
 - tapOn: ".*Observatory.*"
 - assertVisible: "Reset"
-- takeScreenshot: wayfinding-02-route
+- takeScreenshot: .maestro/screenshots/wayfinding-02-route

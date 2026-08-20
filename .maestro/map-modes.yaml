@@ -10,14 +10,14 @@ tags: [map]
 
 # ── 360° panorama picker ────────────────────────────────────────────────────
 - tapOn: "360°"
-- takeScreenshot: modes-01-panorama-picker
+- takeScreenshot: .maestro/screenshots/modes-01-panorama-picker
 # the walk-route FAB must NOT overlay a non-map finder
 - assertNotVisible: "Directions"
 - assertNotVisible: "Zoom in"
 
 # ── compass / point-me ──────────────────────────────────────────────────────
 - tapOn: "Compass"
-- takeScreenshot: modes-02-compass
+- takeScreenshot: .maestro/screenshots/modes-02-compass
 - assertNotVisible: "Directions"
 # The simulator has no magnetometer, so compass mode MUST degrade to the honest
 # cardinal-bearing LIST rather than draw a rose it cannot orient (M5 §0R).

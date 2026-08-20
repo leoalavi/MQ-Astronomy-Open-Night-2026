@@ -40,7 +40,7 @@ tags: [map]
 - assertVisible: "Walking directions"
 - assertVisible: "Point me there"
 - assertVisible: "Macquarie University Observatory"   # the venue subtitle
-- takeScreenshot: markers-01-venue-sheet
+- takeScreenshot: .maestro/screenshots/markers-01-venue-sheet
 # Dismiss by tapping the scrim ABOVE the sheet. A downward swipe does not work:
 # these are isScrollControlled sheets, so a drag inside them scrolls content
 # rather than dismissing.
@@ -50,7 +50,7 @@ tags: [map]
 
 # ── tapping a parking pin opens the parking sheet ────────────────────────────
 - tapOn: "West 5. Parking."
-- takeScreenshot: markers-02-parking-sheet
+- takeScreenshot: .maestro/screenshots/markers-02-parking-sheet
 - tapOn:
     point: "50%,25%"
 
@@ -59,7 +59,7 @@ tags: [map]
 - assertNotVisible: "Macquarie Theatre. Event venue."
 - assertNotVisible: "Mason Theatre. Event venue."
 - assertVisible: "Registration point. Registration."   # other classes untouched
-- takeScreenshot: markers-03-venues-filtered-out
+- takeScreenshot: .maestro/screenshots/markers-03-venues-filtered-out
 - tapOn: "Event venue"
 - assertVisible: "Macquarie Theatre. Event venue."
 

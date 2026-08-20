@@ -24,6 +24,7 @@ abstract final class VenuesData {
     // ── Event venues (map legend A–I) ────────────────────
     Venue(
       id: 'macquarie-theatre',
+      artworkX: 2258, artworkY: 1954, // official map: marker "A"
       buildingId: 'MQTH', campusX: 2140, campusY: 1954,
       name: 'Macquarie Theatre',
       category: VenueCategory.eventVenue,
@@ -38,6 +39,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'mason-theatre',
+      artworkX: 3046, artworkY: 1750, // official map: marker "B"
       name: 'Mason Theatre',
       category: VenueCategory.eventVenue,
       building: '14 Sir Christopher Ondaatje Avenue',
@@ -51,13 +53,19 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'central-courtyard',
+      artworkX: 2718, artworkY: 1720, // official map: the labelled "Central Courtyard" block
       name: 'Central Courtyard',
       category: VenueCategory.eventVenue,
       address: 'Central Courtyard',
       latitude: -33.7733531,
       longitude: 151.1133796,
       coordinateConfidence: DataConfidence.derived,
-      mapReference: 'C',
+      // NO mapReference. The official legend's "C" is *Food and drink, Central
+      // Courtyard* — the activity, not the courtyard — and the artwork prints
+      // that C disc over 1CC, which is where `food-and-drink` is now pinned.
+      // The courtyard block itself carries no letter on the printed map, so
+      // claiming one here would draw a second "C" the paper map does not have.
+      mapReference: null,
       aliases: [
         'Food and drink',
         'Laser graffiti',
@@ -70,6 +78,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '14-sir-christopher-ondaatje-avenue',
+      artworkX: 3150, artworkY: 1750, // official map: marker "D"
       buildingId: '14SCO', campusX: 2766, campusY: 1761,
       shortName: '14 Sir Christopher Ondaatje Ave',
       name: '14 Sir Christopher Ondaatje Avenue',
@@ -95,6 +104,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '1-central-courtyard',
+      artworkX: 2830, artworkY: 1506, // official map: marker "E"
       buildingId: '1CC', campusX: 2547, campusY: 1618,
       name: '1 Central Courtyard',
       category: VenueCategory.eventVenue,
@@ -111,6 +121,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'sport-and-aquatic-centre',
+      artworkX: 1950, artworkY: 1326, // official map: marker "F"
       buildingId: 'SPORT', campusX: 1637, campusY: 1289,
       shortName: 'Sport & Aquatic Centre',
       name: 'Macquarie University Sport and Aquatic Centre',
@@ -125,6 +136,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'astronomical-observatory',
+      artworkX: 1982, artworkY: 566, // official map: marker "G"
       buildingId: 'OBS', campusX: 1745, campusY: 480,
       shortName: 'Observatory',
       name: 'Macquarie University Astronomical Observatory',
@@ -142,6 +154,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '11-wallys-walk',
+      artworkX: 3126, artworkY: 1950, // official map: marker "H"
       buildingId: '11WW', campusX: 2987, campusY: 1937,
       name: '11 Wally’s Walk',
       category: VenueCategory.eventVenue,
@@ -155,6 +168,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: '17-wallys-walk',
+      artworkX: 2626, artworkY: 1958, // official map: marker "I"
       buildingId: '17WW', campusX: 2516, campusY: 1883,
       name: '17 Wally’s Walk',
       category: VenueCategory.eventVenue,
@@ -193,6 +207,7 @@ abstract final class VenuesData {
     // ── Registration and information (map legend 1, 2, 3) ─
     Venue(
       id: 'registration-point',
+      artworkX: 2894, artworkY: 1665, // official map: marker "1"
       shortName: 'Registration',
       name: 'Registration point',
       category: VenueCategory.registration,
@@ -207,6 +222,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'information-point-2',
+      artworkX: 2907, artworkY: 1857, // official map: marker "2"
       name: 'Information point 2',
       category: VenueCategory.informationPoint,
       building: 'Central Courtyard',
@@ -218,6 +234,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'information-point-3',
+      artworkX: 2624, artworkY: 1665, // official map: marker "3"
       name: 'Information point 3',
       category: VenueCategory.informationPoint,
       building: 'Central Courtyard',
@@ -233,6 +250,7 @@ abstract final class VenuesData {
     // Each entry therefore carries its building's coordinate, marked derived.
     Venue(
       id: 'toilets-macquarie-theatre',
+      artworkX: 2338, artworkY: 1949, // official map: marker "T"
       name: 'Toilets — Macquarie Theatre',
       category: VenueCategory.toilets,
       building: 'Macquarie Theatre',
@@ -243,6 +261,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'toilets-1-central-courtyard',
+      artworkX: 2591, artworkY: 1416, // official map: marker "T"
       name: 'Toilets — 1 Central Courtyard',
       category: VenueCategory.toilets,
       building: '1 Central Courtyard',
@@ -253,6 +272,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'toilets-mason-theatre',
+      artworkX: 3006, artworkY: 1665, // official map: marker "T"
       name: 'Toilets — Mason Theatre',
       category: VenueCategory.toilets,
       building: 'Mason Theatre',
@@ -263,6 +283,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'first-aid',
+      artworkX: 2544, artworkY: 1665, // official map: marker "+"
       name: 'First aid',
       category: VenueCategory.firstAid,
       // PLACEHOLDER: the map shows a first-aid symbol but the supplied
@@ -275,6 +296,7 @@ abstract final class VenuesData {
     ),
     Venue(
       id: 'food-and-drink',
+      artworkX: 2594, artworkY: 1506, // official map: marker "C"
       name: 'Food and drink',
       category: VenueCategory.foodAndDrink,
       building: 'Central Courtyard',

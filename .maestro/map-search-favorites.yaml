@@ -17,16 +17,16 @@ tags: [map]
 - assertVisible: "Find a place\nSearch buildings and venues"
 - assertVisible: "1 Central Courtyard\nEvent venue"
 - assertVisible: "11 Wally’s Walk\nEvent venue"
-- takeScreenshot: search-01-idle-browse
+- takeScreenshot: .maestro/screenshots/search-01-idle-browse
 
 # ── a VENUE query resolves, and selecting it opens the venue sheet ──────────
 - tapOn: "Find a place\nSearch buildings and venues"
 - inputText: "Mason"
 - assertVisible: "Mason Theatre\nEvent venue"
-- takeScreenshot: search-02-venue-query
+- takeScreenshot: .maestro/screenshots/search-02-venue-query
 - tapOn: "Mason Theatre\nEvent venue"
 - assertVisible: "Walking directions"
-- takeScreenshot: search-03-venue-selected
+- takeScreenshot: .maestro/screenshots/search-03-venue-selected
 - tapOn:
     point: "50%,25%"
 
@@ -34,18 +34,18 @@ tags: [map]
 - tapOn: "Search"
 - tapOn: "Find a place\nSearch buildings and venues"
 - inputText: "Chancellery"
-- takeScreenshot: search-04-building-query
+- takeScreenshot: .maestro/screenshots/search-04-building-query
 # Buildings resolve by their MQ street-address name + code, not a friendly
 # alias. Parens are regex metacharacters here, so they must be escaped.
 - assertVisible: "19 Eastern Road \\(Chancellery\\)\n19ER"
 - tapOn: "19 Eastern Road \\(Chancellery\\)\n19ER"
-- takeScreenshot: search-05-building-sheet
+- takeScreenshot: .maestro/screenshots/search-05-building-sheet
 - tapOn:
     point: "50%,25%"
 
 # ── favourites sheet opens ─────────────────────────────────────────────────
 - tapOn: "Favourites"
-- takeScreenshot: fav-01-initial
+- takeScreenshot: .maestro/screenshots/fav-01-initial
 - tapOn:
     point: "50%,25%"
 - assertVisible: "Zoom in"

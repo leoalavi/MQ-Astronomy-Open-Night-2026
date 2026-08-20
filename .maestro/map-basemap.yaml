@@ -7,7 +7,7 @@ appId: au.edu.mq.astronomy.aon2026
 tags: [map, smoke]
 ---
 - runFlow: flows/open-map.yaml
-- takeScreenshot: map-01-initial-fit
+- takeScreenshot: .maestro/screenshots/map-01-initial-fit
 
 # Chrome that must exist
 - assertVisible: "Zoom in"
@@ -32,7 +32,7 @@ tags: [map, smoke]
 # stacked at one coordinate stop sharing bounds.
 - tapOn: "Zoom in"
 - tapOn: "Zoom in"
-- takeScreenshot: map-02-zoomed-in
+- takeScreenshot: .maestro/screenshots/map-02-zoomed-in
 - tapOn: "Zoom out"
 - tapOn: "Zoom out"
-- takeScreenshot: map-03-zoomed-back
+- takeScreenshot: .maestro/screenshots/map-03-zoomed-back

@@ -73,6 +73,51 @@ render; they are kept for audit, not run by the build.
 | Modifications | **none** — official artwork ships unaltered |
 | Coverage | full vertically; horizontally to MQ px 4539.9 of 4678 (the last 2.95% is off-campus) |
 
+## Pin alignment (`measure_markers.py`)
+
+The published map already draws every event marker (A–I), the registration and
+information points (1, 2, 3), the toilets (T) and first aid (+) — laid out by
+the designer so they do not collide. The app used to derive each pin from a GPS
+centroid instead, which was wrong twice over:
+
+* **Collisions.** Five venues share one coordinate (`-33.7733531,151.1133796`),
+  so Registration, Information 2, Information 3, Food and drink and Central
+  Courtyard stacked into identical hit boxes — only the topmost was tappable.
+* **Duplicate markers.** Every app pin sat *beside* the printed disc for the
+  same place, so the map showed each venue twice.
+
+`measure_markers.py` reads the marker positions back out of the raster
+(ring-template correlation for the near-black A–I discs, which a filled template
+misses because of the white letter; colour-masked round components for the
+magenta / purple / green ones) and those become `Venue.artworkX/artworkY`.
+`placeVenue` prefers them over GPS.
+
+Two things this deliberately does **not** do:
+
+* It does not touch `latitude`/`longitude` or `coordinateConfidence`. Bearing,
+  distance, compass and routing keep reading real coordinates. `artworkX/Y` is
+  authoritative for *where the map says a thing is*, nothing more.
+* It does not invent a GPS fix for **first aid**, which the organisers never
+  supplied. First aid is now drawn on the map for the first time — at the `+`
+  the artwork prints — while staying honestly unroutable.
+
+The detector reports three ring hits it cannot avoid: the bold letter `O`s in
+the "ASTRONOMY OPEN NIGHT" branding block. Discs are identified **by eye**
+against the artwork, because the letters are what disambiguate a cluster and no
+detector here reads them.
+
+### Discrepancies found in the artwork
+
+* The map draws **four** toilet `T` discs (Macquarie Theatre, 1 Central
+  Courtyard, Mason Theatre, and one at 17 Wally's Walk / Michael Kirby) but its
+  own legend lists only **three**. The app follows the legend; the fourth is
+  unmapped. Worth raising with the organisers.
+* The legend's `C` is *"Food and drink, Central Courtyard"*, and the artwork
+  prints that C disc over **1CC**, not over the courtyard block. `food-and-drink`
+  is pinned there; `central-courtyard` sits on the labelled courtyard block and
+  had its duplicate `mapReference: 'C'` removed, so the app never draws a letter
+  the paper map does not have.
+
 ## Known limitations
 
 - **Not night-reskinned.** Brand fidelity was chosen over scotopic dimming. This

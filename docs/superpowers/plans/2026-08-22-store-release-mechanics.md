@@ -29,7 +29,8 @@ Read off the tree at `ed10da3`, not assumed:
 | Version `0.1.0+1` | `pubspec.yaml:6` | needs `1.0.0+1` |
 | Bundle ID `au.edu.mq.astronomy.aon2026` | `project.pbxproj:513` | fixed by D3 |
 | iPad support is real | `TARGETED_DEVICE_FAMILY = "1,2"` ×3 | 13" screenshots required; **layouts verified** by Plan A Task 12 (72 tests) |
-| Stamp codes are placeholders | `stamp_stations_data.dart:11-14`, `AON-A-TBC` etc., `codeConfidence: placeholder` | usable by App Review **today**; organisers must supply real ones before the night |
+| **Passport collection is DISABLED in every release build** | `stamp_service.dart:54-55` — `if (!isRelease) return true; return stations.every((s) => s.codeConfidence.isReliable)`. All **9** stations are `AON-*-TBC` and take the model's default `placeholder` confidence | **submission-affecting** — see A5. The app shows the honest *"Astronomy Passport opens on event night"* (`passport_screen.dart:25`) |
+| Panorama viewer ships on a **local HTTP server** | `panorama_server.dart:8,20` — `InAppLocalhostServer`, `http://localhost:$kPanoramaServerPort`; route `/panorama/:venueId`; **no `NSAppTransportSecurity`** in Info.plist | unverified in a **release** build — see D5 |
 
 ---
 
@@ -83,12 +84,28 @@ Nothing here is engineering, and nothing downstream can be finished without it.
   negotiation — but it must be recorded.
   *Evidence: an email or ticket, filed and linked from the spec.*
 
-- [ ] **A5. Ask the organisers the two open artwork questions** (spec §7): the
-  sheet draws four toilet `T` discs but its legend lists three, and the legend's
-  `C` prints over 1CC rather than the courtyard. Neither is a code bug. Also ask
-  for the **real stamp codes** to replace `AON-*-TBC`.
-  *Evidence: answers recorded; `stamp_stations_data.dart` updated with
-  `codeConfidence: confirmed` if supplied.*
+- [ ] **A5. Real stamp codes — a submission-affecting decision, not a chase.**
+
+  **Gauntlet finding (P0).** `stamp_service.dart:54-55` disables passport
+  collection in any release build while *any* station's code is a placeholder.
+  All 9 are `AON-*-TBC`. So TestFlight and App Review both get a passport that
+  cannot be used, showing *"Astronomy Passport opens on event night"*. That state
+  is honest and deliberate — but it decides what E3 can truthfully tell a
+  reviewer, so choose before submitting:
+
+  - **A5a — codes land.** Organisers supply the 9 real codes; update
+    `stamp_stations_data.dart` with `codeConfidence: confirmed`; collection turns
+    on in release and a reviewer can drive the passport to a reward. **Requires an
+    app-code change and a rebuild**, so it must land before the binary is cut.
+  - **A5b — codes do not land.** The passport ships visibly gated. E3 must say so
+    plainly rather than offering codes that will not work, and the Guideline 4.2
+    argument leans on the map, compass, wayfinding and programme instead.
+
+  Also ask the two open artwork questions (spec §7): the sheet draws four toilet
+  `T` discs while its legend lists three, and the legend's `C` prints over 1CC
+  rather than the courtyard. Neither is a code bug.
+
+  *Evidence: the codes, or a written decision to ship A5b.*
 
 - [ ] **A6. Confirm whether MQ owns the cartographic master.** Plan A ships
   `Campus map: Macquarie University` — source, not copyright — because ownership
@@ -217,7 +234,9 @@ Nothing here is engineering, and nothing downstream can be finished without it.
   package/cert pair (Android) and confirm it is **refused**.
   `google_nav_screen.dart` already surfaces `RouteApiFailure.status` to logs for
   exactly this.
-  *Evidence: the rejected HTTP status, captured.*
+  *Evidence: the rejected HTTP status captured **at the network layer** — a proxy
+  or `tcpdump`, not the app log. `google_nav_screen.dart:206` reports it via
+  `debugPrint`, which is not a dependable channel in a release build.*
 
   **If C6 fails**, the fallback is not available: fall back to an MQ-hosted Routes
   proxy behind an IP-restricted server key — and note that this puts MQ
@@ -252,6 +271,17 @@ Simulator-verified is the standing release IOU. These pay it.
   simulator has no magnetometer, so it only ever exercised the honest
   `unavailable` → list fallback.
 
+- [ ] **D5. Panorama viewer on a RELEASE build.** `panorama_server.dart` serves
+  the 360° viewer over `http://localhost:$kPanoramaServerPort` via
+  `InAppLocalhostServer`, and `Info.plist` declares **no**
+  `NSAppTransportSecurity` exceptions. Cleartext-HTTP behaviour can differ
+  between debug and release, and a panorama that silently fails in the shipped
+  binary is a Guideline 2.1 finding on a feature that is routed and reachable
+  (`/panorama/:venueId`).
+  *Evidence: a panorama opening on a physical device from a release build. If it
+  fails, add `NSAllowsLocalNetworking` under `NSAppTransportSecurity` — never
+  weaken ATS globally.*
+
 - [ ] **D4. Physical smoke test** of the Plan A changes most visible to a user:
   the wayfinding map now requires consent and shows a labelled placeholder when
   declined; Delete my data clears the session; preview mode shows its badge on
@@ -262,8 +292,15 @@ Simulator-verified is the standing release IOU. These pay it.
 ## Phase E — Store metadata and submission
 
 - [ ] **E1. Screenshots.** 6.9" iPhone (required) and 13" iPad (required —
-  `TARGETED_DEVICE_FAMILY = "1,2"`). Plan A Task 12 proved the layouts hold at
-  both, in EN and FA, so this is capture work, not fixing.
+  `TARGETED_DEVICE_FAMILY = "1,2"`).
+
+  **Gauntlet correction.** An earlier draft claimed Plan A Task 12 proved both.
+  It proved **iPad only** (1032×1376 / 1376×1032). The largest phone size tested
+  anywhere in the suite is **430×932** (`render_matrix_test.dart:62`); a 6.9"
+  iPhone is **440×956**. Ten points wider and twenty-four taller is unlikely to
+  break a layout that holds at 430×932 — but "unlikely" is not "proven", and that
+  distinction is the whole point of this document. Add 440×956 to the render
+  matrix, or capture on a 6.9" simulator and look.
 
 - [ ] **E2. Listing.** App name ≤30 chars, subtitle, description, keywords,
   category. Metadata must be 4+ appropriate regardless of the app's rating.
@@ -276,9 +313,16 @@ Simulator-verified is the standing release IOU. These pay it.
     anywhere"** to see the map dot, compass and nearby list as they work on the
     night. Off campus the app deliberately shows "You're about N km from campus"
     rather than a fabricated position.
-  - **Sample passport codes** — `AON-A-TBC`, `AON-B-TBC`, `AON-C-TBC` — entered
-    via Passport → Scan → *Enter code*. Manual entry is a first-class peer to the
-    camera, so the passport is fully exercisable without a QR sign.
+  - **The passport — write whichever of these is true**, per A5:
+    - *A5a (codes landed):* give the reviewer 3 of the 9 real codes and note that
+      manual entry is a first-class peer to the camera
+      (`passport_scan_screen.dart:105`), so the passport is fully exercisable
+      without a QR sign.
+    - *A5b (codes did not land):* state that stamp collection is deliberately
+      disabled until the venue codes are final, that the screen reads
+      *"Astronomy Passport opens on event night"*, and that this is a designed
+      state rather than a failure. **Do not offer `AON-*-TBC`** — a release build
+      rejects them, and a reviewer who tries one sees a feature that looks broken.
   - Location is used on-device for the campus map and sent to Google **only**
     after the visitor accepts the walking-directions disclosure.
   - The app is offline-first apart from Google Maps; there is no account.
@@ -345,5 +389,5 @@ Simulator-verified is the standing release IOU. These pay it.
 | **A1 lead time is unknown and unowned.** This is the single most likely cause of missing 19 Sep. | Requested day one, all three URLs together. |
 | C6 fails → proxy needed | Costed contingency in §5a; re-opens §2d/§2e/§2f. Decide fast, do not improvise. |
 | Review latency + one rejection ≈ 5-10 days | Submit as early as Phase E allows; treat any polish as 1.1. |
-| Stamp codes are still `AON-*-TBC` | Fine for App Review, **not** fine for the night. A5 chases the real ones. |
+| Stamp codes are still `AON-*-TBC`, so the passport is **off in release** | Not fine for App Review *or* the night. A5 forces the choice before the binary is cut. |
 | First submission is a 4.2/2.1 rejection | E3 argues it explicitly; Plan A built the reviewability features it points at. |

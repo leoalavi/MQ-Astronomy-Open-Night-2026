@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-22
 **Status:** proposed — revision 2 (awaiting user review)
-**Revisions:** r1 `f9b5747`; r2 folds in design review 2026-08-22 (§5a Play App Signing + Routes restriction model, D1/§8 redistribution contradiction, Terms of Use dependency, revocation invariant, manifest ownership, attribution split, three release gates)
+**Revisions:** r1 `f9b5747`; r2 folds in design review 2026-08-22; r3 corrects two factual errors found by reading the code during planning — wayfinding has NO location access and its routes are hand-authored, not Google's (§5a Play App Signing + Routes restriction model, D1/§8 redistribution contradiction, Terms of Use dependency, revocation invariant, manifest ownership, attribution split, three release gates)
 **Baseline:** `main@ea59d90`
 **Target:** App Store + Google Play, public download, live before **Sat 19 Sep 2026**
 
@@ -64,9 +64,21 @@ invariant, which is the normative statement of app behaviour:
 - **No Google-powered map, route request, or other Google location surface is
   initialised.**
 
-**After explicit consent:**
-- Google Maps and the Routes API may receive location and the request/device
-  information those services require to function.
+**After explicit consent, and differently per surface — verified by reading the
+code, not assumed:**
+- **Google nav** (`google_nav_screen`) captures a location snapshot via
+  `navOriginProvider` and sends it to the Routes API. Location does reach Google.
+- **Wayfinding** (`wayfinding_screen`) reads **no location at all** — grep returns
+  only a doc comment and an icon name — and its routes are hand-authored and
+  bundled offline (`walking_route.dart:22-29`: *"routes here are hand-authored,
+  bundled offline, and reviewable by the event organisers"*). Under D5 it renders
+  a Google basemap, so Google receives the request/device information any SDK
+  request carries, plus the campus route geometry being drawn. **It does not
+  receive the user's position.**
+
+Copy must not over-claim in either direction. Saying "your location is sent to
+Google" on the wayfinding screen would assert a privacy harm that does not occur —
+a 2.3 accuracy failure with the sign reversed.
 
 Real Persian, never machine-fill (repo convention). Both languages ship together.
 
@@ -91,7 +103,13 @@ Android binds later (the SDK reads `com.google.android.geo.API_KEY` when a map v
 is constructed) but must be held to the same invariant.
 
 Consent is presently enforced at exactly one site, `google_nav_screen.dart:76`.
-It must also gate the wayfinding route.
+It must also gate the wayfinding route — but for the accurate reason.
+
+**Two disclosures, not one.** `showMapsNavDisclosure` states that location is sent
+to Google. That is true on the nav screen and false on wayfinding. Wayfinding
+needs its own map-only disclosure whose text says a Google map will be loaded, in
+EN and FA. Reusing the location wording is not a shortcut; it is a false
+statement.
 
 **Acceptance is network-based, not inferred.** Whether `provideAPIKey` transmits
 anything by itself is not established here; Google documents that application and
@@ -370,16 +388,37 @@ Per §2b. Architectural, and the highest-priority feature change.
 drawing a polyline and two endpoint markers. `EmbeddedMap` already accepts exactly
 `origin` / `destination` / `route`. A ~90-line replacement of one private widget.
 
-Then: delete `DarkTileLayer` (its last user); extend the consent gate to the
-wayfinding route (§2b).
+Then: delete `DarkTileLayer` (its last user); gate the wayfinding route behind the
+map-only disclosure from §2b.
+
+**Accepted cost, recorded not hidden.** `wayfinding_screen.dart:20-33` designed
+this screen to survive with no network and a dying battery — the written steps are
+the primary output and the map is "a supporting visual" precisely so it degrades
+gracefully. A Google basemap trades that away and adds a consent gate to the one
+screen that previously needed none. D5 was reaffirmed with this on the table; the
+written steps still render when the map cannot, so the screen's primary output
+survives.
 
 ### 5d. Attribution cleanup — closes the open P1 audit finding
 
 OSM attribution currently sits on Credits (`info_screen.dart:253`) and Settings
 (`settings_screen.dart:420`) — screens that render no OSM tiles — while the screen
 that did render them said nothing. With §5c removing OSM entirely, both claims
-must go. `map_screen.dart`'s `_MapAttribution` prints a hardcoded, un-l10n'd string
-and must use the orphaned `mapAttribution` ARB key.
+must go. There are **three** OSM strings, all in the ARB rather than in Dart —
+which is why a naive `grep OpenStreetMap lib/**/*.dart` finds nothing and the
+finding looks stale when it is not:
+
+| Key | Rendered at | Fate |
+|---|---|---|
+| `creditsMapDataBody` | `info_screen.dart:253` | rewrite — content, key kept |
+| `settingsOsmAttribution` | `settings_screen.dart:420` | rename + rewrite |
+| `mapAttribution` | nowhere (orphan) | **delete** |
+
+`map_screen.dart:588`'s `_MapAttribution` prints a hardcoded, un-l10n'd
+`'Campus map © Macquarie University'` and needs a **new** key. It must **not**
+reuse the orphaned `mapAttribution` — that key's content is
+`"© OpenStreetMap contributors"`, so wiring it in would print OSM attribution
+over the AON basemap, replacing one false claim with another.
 
 Google's attribution is **three distinct requirements**, not one blanket rule:
 
@@ -387,9 +426,12 @@ Google's attribution is **three distinct requirements**, not one blanket rule:
    built-in attribution is sufficient and no second attribution is added. The
    obligation is that it must not be hidden, obscured or clipped — which is a
    layout constraint on anything drawn over `EmbeddedMap`.
-2. **Routes content outside a map.** `_RouteDetail` (`wayfinding_screen.dart:207`)
-   renders distance, duration and step text outside any Google map surface. That
-   content carries its own compliant Google Maps attribution requirement.
+2. **Routes content outside a map** — and note carefully *which* screen. This
+   applies to `google_nav_screen` / `nav_metrics.dart`, which render genuine
+   Routes API output outside the map surface. It does **not** apply to
+   wayfinding's `_RouteDetail`: that distance, duration and step text is MQ's own
+   hand-authored data, and attributing it to Google would be the exact inverse of
+   the OSM error this task exists to fix.
 3. **SDK legal notices.** Expose the licence text from
    `GMSServices.openSourceLicenseInfo` in Legal/About — the natural home is the
    existing credits section of `info_screen.dart`.
@@ -446,6 +488,7 @@ evidence.
 | `Macquarie Centre` falls outside the AON crop (1 of 170) | Pinned by `test/unit/aon_basemap_georef_test.dart`. Honest, documented. |
 | First aid has no GPS fix and is unroutable | Correct behaviour — organisers never supplied one and the data refuses to guess. Renders at the artwork marker. Belongs in the review notes. |
 | Four `T` discs vs three in the artwork legend | Organiser question, not a code bug. Do not "fix" it in data. |
+| Wayfinding loses its offline guarantee (D5) | Reaffirmed by the user after the screen's deliberate no-network / no-GPS design was put in front of them. The written steps remain the primary output and still render without the map. |
 | Web runtime black-screens at bootstrap | Pre-existing, unrelated to this release, and web is not a release target. |
 
 ---

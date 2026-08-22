@@ -1,0 +1,2555 @@
+# Store Release — App-Code Compliance & Reviewability Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Make aon2026's app code truthful, consent-correct and reviewable by a
+reviewer who is not on Macquarie campus, so it can be submitted to the App Store
+and Google Play.
+
+**Architecture:** One invariant drives most of this — no Google surface capable of
+transmitting data may initialise before consent resolves positively. That is
+enforced structurally by a `mapsSdkReadyProvider` that simply never calls the
+native initialiser unless consent is `accepted`, rather than by discipline at each
+call site. Around it sit honest privacy copy, a second (map-only) disclosure whose
+wording matches what that surface actually does, local-data deletion, and the
+off-campus states that let App Review exercise a campus app from Cupertino.
+
+**Tech Stack:** Flutter 3.44.7 / Dart ^3.11, Riverpod 3 (hand-written providers,
+no codegen), `google_maps_flutter`, `flutter_map` 8.3.1, `shared_preferences`,
+`flutter_test`.
+
+**Spec:** `docs/superpowers/specs/2026-08-22-app-store-release-program-design.md`
+(revision 3). Read it before starting; this plan argues from it.
+
+**Companion plan:** release mechanics (§4 signing, §5a credentials, §6 store
+metadata) is a separate checklist-shaped plan, not this document. Nothing here
+requires the GCP keys to exist.
+
+## Global Constraints
+
+Every task's requirements implicitly include this section.
+
+- **Riverpod 3.** `StateProvider` does not exist. Use a `Notifier<T>` exposing a
+  **method** (`set`, `toggle`, `select`) — never external `.state =`.
+  `AsyncValue.valueOrNull` is NOT in the resolved core: use `.asData?.value`.
+- **Every new string needs EN *and* FA.** `lib/l10n/app_en.arb` +
+  `lib/l10n/app_fa.arb`. Placeholders require an `@key` metadata block in EN.
+  Real Persian, never machine-fill. `flutter gen-l10n` after editing.
+- **Theme tokens only.** `context.aon.*` (`lib/app/theme/aon_palette.dart`) for
+  chrome; `AonSpacing.spaceN`; `AonSpacing.minTapTarget` = 56.
+- **Accessibility bar.** 320×568 at textScale 2.0 must not overflow. For icon
+  buttons the **tooltip IS the accessible name** — assert with
+  `find.byTooltip(...)`, never `find.bySemanticsLabel(...)`.
+- **Data honesty.** `DataConfidence { confirmed, derived, placeholder }`. Never
+  invent coordinates. Unknowns stay null and are surfaced.
+- **Persistence idiom.** Inject a pre-loaded snapshot + store via `ProviderScope`
+  overrides in `main.dart`, seed a sync `Notifier`, serialize writes through a
+  single `Future` chain, never throw on failure. See `maps_consent_*`.
+- **Lints.** `(_, _)` not `(_, __)` (`unnecessary_underscores`). `dart:typed_data`
+  is re-exported by `flutter/services.dart` (`unnecessary_import`).
+- **Async I/O in widget tests.** `rootBundle.load*` / `decodeImageFromList` do real
+  async I/O and hang a `testWidgets` fake-async zone to a 10-minute timeout unless
+  wrapped in `await t.runAsync(() async { ... })`.
+- **The commit gate is exit-code-gated, never piped:**
+  ```bash
+  ./scripts/check.sh > /tmp/gate.log 2>&1 && git add … && git commit … || { echo "GATE FAILED"; tail /tmp/gate.log; }
+  ```
+  `check.sh | tail && git commit` is a trap — the pipeline's status is `tail`'s, so
+  a red analyze/test still commits. This landed two red commits in M3.
+- **`dart format` is informational only.** The whole repo fails it under the 3.12
+  tall style. Never blanket-reformat.
+
+---
+
+### Task 1: Defer the native Maps SDK behind consent
+
+The architectural core. `ios/Runner/AppDelegate.swift` currently calls
+`GMSServices.provideAPIKey` inside `didFinishLaunchingWithOptions` — at launch,
+before any UI and before any consent. The `!key.isEmpty` guard only made that
+harmless while the app shipped keyless; once the keys ship it becomes a
+launch-time Google SDK initialisation for every user.
+
+**Files:**
+- Create: `lib/services/maps_sdk_initializer.dart`
+- Create: `test/unit/maps_sdk_initializer_test.dart`
+- Modify: `ios/Runner/AppDelegate.swift`
+- Modify: `android/app/src/main/kotlin/au/edu/mq/astronomy/aon2026/MainActivity.kt`
+
+**Interfaces:**
+- Consumes: `mapsConsentProvider` / `MapsConsent` from
+  `lib/services/maps_consent_store.dart` and `lib/services/maps_consent_providers.dart`.
+- Produces: `MapsSdkInitializer` (abstract interface, `Future<bool> ensureInitialized()`),
+  `PlatformMapsSdkInitializer`, `mapsSdkInitializerProvider`,
+  and `mapsSdkReadyProvider` (`FutureProvider<bool>`). Tasks 4 and 5 gate on
+  `mapsSdkReadyProvider`.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/maps_sdk_initializer_test.dart`:
+
+```dart
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  const channel = MethodChannel('aon2026/maps_sdk');
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+  tearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+  test('ensureInitialized invokes initialize exactly once', () async {
+    final calls = <String>[];
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      calls.add(call.method);
+      return true;
+    });
+
+    final init = PlatformMapsSdkInitializer();
+    expect(await init.ensureInitialized(), isTrue);
+    expect(await init.ensureInitialized(), isTrue);
+    expect(calls, ['initialize'], reason: 'second call must be a no-op');
+  });
+
+  test('a PlatformException returns false and does not latch as done', () async {
+    var attempts = 0;
+    messenger.setMockMethodCallHandler(channel, (call) async {
+      attempts++;
+      if (attempts == 1) throw PlatformException(code: 'NO_KEY');
+      return true;
+    });
+
+    final init = PlatformMapsSdkInitializer();
+    expect(await init.ensureInitialized(), isFalse);
+    expect(await init.ensureInitialized(), isTrue,
+        reason: 'a failed attempt must be retryable, not cached as failure');
+    expect(attempts, 2);
+  });
+
+  test('a missing platform handler returns false rather than throwing', () async {
+    // No mock handler registered at all.
+    final init = PlatformMapsSdkInitializer();
+    expect(await init.ensureInitialized(), isFalse);
+  });
+
+  test('a null result from the platform is treated as not initialised', () async {
+    messenger.setMockMethodCallHandler(channel, (call) async => null);
+    final init = PlatformMapsSdkInitializer();
+    expect(await init.ensureInitialized(), isFalse);
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/maps_sdk_initializer_test.dart`
+Expected: FAIL — `Error: Couldn't resolve the package 'aon2026' ... maps_sdk_initializer.dart` / `Undefined name 'PlatformMapsSdkInitializer'`.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+Create `lib/services/maps_sdk_initializer.dart`:
+
+```dart
+import 'package:flutter/services.dart';
+
+/// Initialises the native Google Maps SDK on demand.
+///
+/// Deliberately NOT called at app launch. Spec §2b: no Google surface capable of
+/// transmitting user or location data may initialise before consent resolves
+/// positively. `AppDelegate` used to call `GMSServices.provideAPIKey` in
+/// `didFinishLaunchingWithOptions`, which no render-time consent gate can catch.
+abstract interface class MapsSdkInitializer {
+  /// Idempotent on success. Returns true when the SDK is (now) initialised.
+  /// A failure is NOT cached — a later attempt may succeed.
+  Future<bool> ensureInitialized();
+}
+
+class PlatformMapsSdkInitializer implements MapsSdkInitializer {
+  PlatformMapsSdkInitializer({MethodChannel? channel})
+      : _channel = channel ?? const MethodChannel('aon2026/maps_sdk');
+
+  final MethodChannel _channel;
+  bool _initialized = false;
+
+  @override
+  Future<bool> ensureInitialized() async {
+    if (_initialized) return true;
+    try {
+      final ok = await _channel.invokeMethod<bool>('initialize');
+      _initialized = ok ?? false;
+      return _initialized;
+    } on PlatformException {
+      return false; // retryable; never latched
+    } on MissingPluginException {
+      return false; // unsupported platform / test host
+    }
+  }
+}
+
+/// A no-op initialiser for tests and unsupported platforms.
+class NoopMapsSdkInitializer implements MapsSdkInitializer {
+  const NoopMapsSdkInitializer();
+  @override
+  Future<bool> ensureInitialized() async => false;
+}
+```
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `flutter test test/unit/maps_sdk_initializer_test.dart`
+Expected: PASS — 4 tests.
+
+- [ ] **Step 5: Move the iOS init off launch**
+
+Replace `ios/Runner/AppDelegate.swift` in full:
+
+```swift
+import Flutter
+import UIKit
+import GoogleMaps
+
+@main
+@objc class AppDelegate: FlutterAppDelegate, FlutterImplicitEngineDelegate {
+  /// Latched once GMSServices has been keyed. GMSServices cannot be
+  /// un-initialised, which is why the app-level invariant (spec §2c) is enforced
+  /// above the SDK: revocation blocks surfaces and requests, it does not pretend
+  /// to tear the SDK down.
+  private var mapsSdkInitialized = false
+
+  override func application(
+    _ application: UIApplication,
+    didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
+  ) -> Bool {
+    // Spec §2b: NO GMSServices.provideAPIKey here. Initialisation is deferred to
+    // the "initialize" method call, which Dart only issues once maps consent has
+    // resolved positively.
+    return super.application(application, didFinishLaunchingWithOptions: launchOptions)
+  }
+
+  func didInitializeImplicitFlutterEngine(_ engineBridge: FlutterImplicitEngineBridge) {
+    GeneratedPluginRegistrant.register(with: engineBridge.pluginRegistry)
+
+    guard let registrar = engineBridge.pluginRegistry.registrar(forPlugin: "AonMapsSdk") else {
+      return
+    }
+    let channel = FlutterMethodChannel(
+      name: "aon2026/maps_sdk",
+      binaryMessenger: registrar.messenger()
+    )
+    channel.setMethodCallHandler { [weak self] call, result in
+      guard call.method == "initialize" else {
+        result(FlutterMethodNotImplemented)
+        return
+      }
+      result(self?.initializeMapsSdk() ?? false)
+    }
+  }
+
+  private func initializeMapsSdk() -> Bool {
+    if mapsSdkInitialized { return true }
+    guard let key = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String,
+          !key.isEmpty else {
+      return false // built without the secret → feature stays dark
+    }
+    GMSServices.provideAPIKey(key)
+    mapsSdkInitialized = true
+    return true
+  }
+}
+```
+
+- [ ] **Step 6: Add the Android handler**
+
+Replace `android/app/src/main/kotlin/au/edu/mq/astronomy/aon2026/MainActivity.kt` in full:
+
+```kotlin
+package au.edu.mq.astronomy.aon2026
+
+import android.content.pm.PackageManager
+import io.flutter.embedding.android.FlutterActivity
+import io.flutter.embedding.engine.FlutterEngine
+import io.flutter.plugin.common.MethodChannel
+
+class MainActivity : FlutterActivity() {
+    override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
+        super.configureFlutterEngine(flutterEngine)
+
+        // Android has no deferrable Maps SDK init: the SDK reads
+        // com.google.android.geo.API_KEY from the manifest when a MapView is
+        // first constructed. The spec §2b invariant is therefore enforced by not
+        // CONSTRUCTING a map view before consent — mapsSdkReadyProvider does
+        // that. This handler only reports whether a key is present, so Dart's
+        // readiness check means the same thing on both platforms.
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            "aon2026/maps_sdk"
+        ).setMethodCallHandler { call, result ->
+            if (call.method == "initialize") {
+                result(hasMapsApiKey())
+            } else {
+                result.notImplemented()
+            }
+        }
+    }
+
+    private fun hasMapsApiKey(): Boolean = try {
+        val info = packageManager.getApplicationInfo(packageName, PackageManager.GET_META_DATA)
+        !info.metaData?.getString("com.google.android.geo.API_KEY").isNullOrEmpty()
+    } catch (_: PackageManager.NameNotFoundException) {
+        false
+    }
+}
+```
+
+- [ ] **Step 7: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/services/maps_sdk_initializer.dart \
+          test/unit/maps_sdk_initializer_test.dart \
+          ios/Runner/AppDelegate.swift \
+          android/app/src/main/kotlin/au/edu/mq/astronomy/aon2026/MainActivity.kt
+  git commit -m "feat(maps): defer native Maps SDK init off app launch"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 2: Gate SDK readiness on consent
+
+Task 1 built the initialiser. This wires it so it is structurally impossible to
+call before consent is `accepted` — the invariant lives in one provider rather
+than in discipline at each call site.
+
+**Files:**
+- Modify: `lib/services/maps_sdk_initializer.dart`
+- Create: `test/unit/maps_sdk_ready_provider_test.dart`
+
+**Interfaces:**
+- Consumes: `MapsSdkInitializer` (Task 1), `mapsConsentProvider`, `MapsConsent`.
+- Produces: `mapsSdkInitializerProvider` (`Provider<MapsSdkInitializer>`) and
+  `mapsSdkReadyProvider` (`FutureProvider<bool>`). Tasks 4 and 5 watch
+  `mapsSdkReadyProvider` and render a Google surface only when it resolves true.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/maps_sdk_ready_provider_test.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+
+class _CountingInitializer implements MapsSdkInitializer {
+  int calls = 0;
+  @override
+  Future<bool> ensureInitialized() async {
+    calls++;
+    return true;
+  }
+}
+
+ProviderContainer _container(_CountingInitializer init, MapsConsent seed) {
+  final c = ProviderContainer(overrides: [
+    mapsSdkInitializerProvider.overrideWithValue(init),
+    mapsConsentSnapshotProvider.overrideWithValue(seed),
+  ]);
+  addTearDown(c.dispose);
+  return c;
+}
+
+void main() {
+  test('unknown consent never touches the initializer', () async {
+    final init = _CountingInitializer();
+    final c = _container(init, MapsConsent.unknown);
+
+    expect(await c.read(mapsSdkReadyProvider.future), isFalse);
+    expect(init.calls, 0, reason: 'spec §2b: no init before consent resolves');
+  });
+
+  test('declined consent never touches the initializer', () async {
+    final init = _CountingInitializer();
+    final c = _container(init, MapsConsent.declined);
+
+    expect(await c.read(mapsSdkReadyProvider.future), isFalse);
+    expect(init.calls, 0);
+  });
+
+  test('accepted consent initializes exactly once', () async {
+    final init = _CountingInitializer();
+    final c = _container(init, MapsConsent.accepted);
+
+    expect(await c.read(mapsSdkReadyProvider.future), isTrue);
+    expect(init.calls, 1);
+  });
+
+  test('accepting after decline initializes; revoking then reports not ready',
+      () async {
+    final init = _CountingInitializer();
+    final c = _container(init, MapsConsent.unknown);
+
+    expect(await c.read(mapsSdkReadyProvider.future), isFalse);
+    expect(init.calls, 0);
+
+    c.read(mapsConsentProvider.notifier).accept();
+    expect(await c.read(mapsSdkReadyProvider.future), isTrue);
+    expect(init.calls, 1);
+
+    c.read(mapsConsentProvider.notifier).revoke();
+    expect(await c.read(mapsSdkReadyProvider.future), isFalse,
+        reason: 'revocation must report not-ready even though GMSServices '
+            'cannot be un-initialised');
+    expect(init.calls, 1, reason: 'revocation must not re-initialise');
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/maps_sdk_ready_provider_test.dart`
+Expected: FAIL — `Undefined name 'mapsSdkInitializerProvider'` and `'mapsSdkReadyProvider'`.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+Append to `lib/services/maps_sdk_initializer.dart`:
+
+```dart
+// ---------------------------------------------------------------------------
+// Providers
+// ---------------------------------------------------------------------------
+
+/// Overridden in `main.dart` with [PlatformMapsSdkInitializer]; tests inject a
+/// fake. Defaults to the no-op so a forgotten override fails closed (no Google
+/// surface) rather than open.
+final mapsSdkInitializerProvider =
+    Provider<MapsSdkInitializer>((_) => const NoopMapsSdkInitializer());
+
+/// Whether a Google map surface may be constructed.
+///
+/// This provider IS the spec §2b invariant. It short-circuits on consent before
+/// touching the initialiser, so no amount of carelessness at a call site can
+/// initialise the SDK early — the only path to `ensureInitialized()` runs through
+/// an `accepted` check.
+final mapsSdkReadyProvider = FutureProvider<bool>((ref) async {
+  final consent = ref.watch(mapsConsentProvider);
+  if (consent != MapsConsent.accepted) return false;
+  return ref.read(mapsSdkInitializerProvider).ensureInitialized();
+});
+```
+
+And add these imports at the top of the same file, below the existing
+`package:flutter/services.dart` import:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'maps_consent_providers.dart';
+import 'maps_consent_store.dart';
+```
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `flutter test test/unit/maps_sdk_ready_provider_test.dart`
+Expected: PASS — 4 tests.
+
+- [ ] **Step 5: Wire the real initialiser in main**
+
+In `lib/main.dart`, find the `ProviderScope(overrides: [...])` list that already
+contains `mapsConsentSnapshotProvider.overrideWithValue(...)` (around line 105)
+and add one entry to it:
+
+```dart
+        mapsSdkInitializerProvider.overrideWithValue(PlatformMapsSdkInitializer()),
+```
+
+Add the import to `lib/main.dart`:
+
+```dart
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+```
+
+- [ ] **Step 6: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/services/maps_sdk_initializer.dart \
+          test/unit/maps_sdk_ready_provider_test.dart \
+          lib/main.dart
+  git commit -m "feat(maps): gate SDK readiness on accepted consent"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 3: A second, truthful disclosure for map-only surfaces
+
+`showMapsNavDisclosure` says *"your current location is sent to Google Maps"*.
+That is true on the nav screen and **false** on wayfinding, which reads no
+location at all (`wayfinding_screen.dart` has zero location references; its routes
+are hand-authored per `walking_route.dart:22-29`). Reusing it would assert a
+privacy harm that does not occur — a 2.3 accuracy failure with the sign reversed.
+
+One `MapsConsent` value still covers both surfaces, so the map-only text must also
+state what the same grant covers *elsewhere*. Otherwise accepting on wayfinding
+would silently authorise sending location on the nav screen.
+
+**Files:**
+- Modify: `lib/widgets/maps_nav_disclosure.dart`
+- Modify: `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`
+- Create: `test/widget/maps_disclosure_kind_test.dart`
+
+**Interfaces:**
+- Produces: `enum MapsDisclosureKind { navigation, mapDisplay }`,
+  `MapsNavDisclosure({MapsDisclosureKind kind})`, and
+  `showMapsNavDisclosure(BuildContext, {MapsDisclosureKind kind})` — defaulting to
+  `navigation` so the existing `google_nav_screen.dart:125` call site is unchanged.
+  Task 4 calls it with `MapsDisclosureKind.mapDisplay`.
+
+- [ ] **Step 1: Add the EN strings**
+
+In `lib/l10n/app_en.arb`, directly after the `"mapNavDisclosureDecline"` block
+(around line 577), add:
+
+```json
+  "mapDisplayDisclosureTitle": "Load the Google map here?",
+  "@mapDisplayDisclosureTitle": {
+    "description": "Title of the map-only disclosure shown before wayfinding renders a Google basemap."
+  },
+  "mapDisplayDisclosureBody": "This screen draws your walking route on a Google map, so Google loads the map imagery. This screen does not use your location.\n\nThe same choice also covers walking directions elsewhere in the app — if you ask for those, your location is sent to Google.",
+  "@mapDisplayDisclosureBody": {
+    "description": "Body of the map-only disclosure. States what THIS screen does, then what the same consent grant covers elsewhere, so accepting is informed for both."
+  },
+```
+
+- [ ] **Step 2: Add the FA strings**
+
+In `lib/l10n/app_fa.arb`, after the `"mapNavDisclosureDecline"` entry, add:
+
+```json
+  "mapDisplayDisclosureTitle": "نقشهٔ گوگل در اینجا بارگذاری شود؟",
+  "mapDisplayDisclosureBody": "این صفحه مسیر پیاده‌روی شما را روی نقشهٔ گوگل رسم می‌کند، بنابراین گوگل تصاویر نقشه را بارگذاری می‌کند. این صفحه از موقعیت مکانی شما استفاده نمی‌کند.\n\nهمین انتخاب، مسیریابی پیاده در بخش‌های دیگر برنامه را هم در بر می‌گیرد — اگر آن را بخواهید، موقعیت شما به گوگل ارسال می‌شود.",
+```
+
+- [ ] **Step 3: Regenerate localisations**
+
+Run: `flutter gen-l10n`
+Expected: succeeds; `.dart_tool/untranslated_messages.json` is `{}` or empty.
+
+- [ ] **Step 4: Write the failing test**
+
+Create `test/widget/maps_disclosure_kind_test.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/widgets/maps_nav_disclosure.dart';
+
+Widget _host(MapsDisclosureKind kind) => MaterialApp(
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
+      home: Scaffold(body: MapsNavDisclosure(kind: kind)),
+    );
+
+void main() {
+  testWidgets('the navigation disclosure states that location is sent',
+      (t) async {
+    await t.pumpWidget(_host(MapsDisclosureKind.navigation));
+    expect(find.text('Use Google Maps for directions?'), findsOneWidget);
+    expect(
+      find.textContaining('your current location is sent to Google Maps'),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('the map-only disclosure does NOT claim this screen uses location',
+      (t) async {
+    await t.pumpWidget(_host(MapsDisclosureKind.mapDisplay));
+    expect(find.text('Load the Google map here?'), findsOneWidget);
+    expect(
+      find.textContaining('This screen does not use your location'),
+      findsOneWidget,
+      reason: 'wayfinding reads no location; the copy must not say otherwise',
+    );
+  });
+
+  testWidgets('the map-only disclosure still discloses the wider grant',
+      (t) async {
+    await t.pumpWidget(_host(MapsDisclosureKind.mapDisplay));
+    expect(
+      find.textContaining('your location is sent to Google'),
+      findsOneWidget,
+      reason: 'one MapsConsent covers both surfaces, so accepting here must be '
+          'informed about the nav surface too',
+    );
+  });
+}
+```
+
+- [ ] **Step 5: Run the test to verify it fails**
+
+Run: `flutter test test/widget/maps_disclosure_kind_test.dart`
+Expected: FAIL — `No named parameter with the name 'kind'` / `Undefined name 'MapsDisclosureKind'`.
+
+- [ ] **Step 6: Write the minimal implementation**
+
+In `lib/widgets/maps_nav_disclosure.dart`, replace the `MapsNavDisclosure` class
+and the `showMapsNavDisclosure` function with:
+
+```dart
+/// Which truth this disclosure is telling.
+///
+/// [navigation] — the surface captures a location snapshot and sends it to the
+/// Routes API. [mapDisplay] — the surface renders a Google basemap but reads no
+/// location (wayfinding). One [MapsConsent] covers both, so [mapDisplay]'s copy
+/// also discloses what the grant permits on the navigation surface.
+enum MapsDisclosureKind { navigation, mapDisplay }
+
+class MapsNavDisclosure extends StatelessWidget {
+  const MapsNavDisclosure({
+    super.key,
+    this.kind = MapsDisclosureKind.navigation,
+  });
+
+  final MapsDisclosureKind kind;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
+    final theme = Theme.of(context);
+    final (title, body) = switch (kind) {
+      MapsDisclosureKind.navigation => (l.mapNavDisclosureTitle, l.mapNavDisclosureBody),
+      MapsDisclosureKind.mapDisplay => (
+          l.mapDisplayDisclosureTitle,
+          l.mapDisplayDisclosureBody
+        ),
+    };
+    return AlertDialog(
+      // scrollable so title + body + actions scroll together rather than
+      // overflowing at small screens / large text scale (320×568 @ 2.0).
+      scrollable: true,
+      backgroundColor: context.aon.surface,
+      title: Text(title),
+      content: Text(
+        body,
+        style: theme.textTheme.bodyMedium?.copyWith(color: context.aon.contentSecondary),
+      ),
+      actionsPadding: const EdgeInsets.fromLTRB(
+          AonSpacing.space2, 0, AonSpacing.space2, AonSpacing.space2),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(false),
+          child: Text(l.mapNavDisclosureDecline),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.of(context).pop(true),
+          child: Text(l.mapNavDisclosureAccept),
+        ),
+      ],
+    );
+  }
+}
+
+/// Shows [MapsNavDisclosure] and resolves to whether the user accepted.
+/// A barrier dismiss counts as decline (`false`).
+Future<bool> showMapsNavDisclosure(
+  BuildContext context, {
+  MapsDisclosureKind kind = MapsDisclosureKind.navigation,
+}) async {
+  final accepted = await showDialog<bool>(
+    context: context,
+    builder: (_) => MapsNavDisclosure(kind: kind),
+  );
+  return accepted ?? false;
+}
+```
+
+- [ ] **Step 7: Run the test to verify it passes**
+
+Run: `flutter test test/widget/maps_disclosure_kind_test.dart`
+Expected: PASS — 3 tests.
+
+- [ ] **Step 8: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/widgets/maps_nav_disclosure.dart lib/l10n/ \
+          test/widget/maps_disclosure_kind_test.dart
+  git commit -m "feat(consent): add a truthful map-only disclosure variant"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 4: Wayfinding renders a Google basemap behind consent
+
+Replaces `_RouteMap`'s `FlutterMap` + `DarkTileLayer` with `EmbeddedMap`.
+`_RouteMap` draws a hand-authored polyline and two endpoints — `EmbeddedMap`
+already takes exactly `origin` / `destination` / `route`, so this is a
+substitution inside one private widget, not a rewrite.
+
+**Accepted cost (spec §5c):** this screen was designed to work with no network.
+The written steps remain the primary output and still render when the map cannot.
+
+**Files:**
+- Modify: `lib/screens/wayfinding_screen.dart:348-440`
+- Create: `test/widget/wayfinding_google_map_test.dart`
+
+**Interfaces:**
+- Consumes: `mapsSdkReadyProvider` (Task 2), `showMapsNavDisclosure` +
+  `MapsDisclosureKind` (Task 3), `EmbeddedMap` / `EmbeddedMapSurface` from
+  `lib/widgets/embedded_map.dart`.
+- Produces: nothing consumed by later tasks.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/widget/wayfinding_google_map_test.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/models/data_confidence.dart';
+import 'package:aon2026/models/walking_route.dart';
+import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+import 'package:aon2026/widgets/embedded_map.dart';
+import 'package:aon2026/screens/wayfinding_screen.dart';
+
+/// A surface that records that it was asked to render, without a platform view.
+class _RecordingSurface implements EmbeddedMapSurface {
+  int builds = 0;
+  @override
+  Widget build({
+    required GeoBounds bounds,
+    required (double lat, double lng) origin,
+    required (double lat, double lng) destination,
+    required List<(double lat, double lng)> route,
+  }) {
+    builds++;
+    return const SizedBox(key: Key('fake-google-surface'));
+  }
+}
+
+class _ReadyInitializer implements MapsSdkInitializer {
+  @override
+  Future<bool> ensureInitialized() async => true;
+}
+
+final _route = WalkingRoute(
+  id: 'r1',
+  fromId: 'p1',
+  toId: 'v1',
+  fromLabel: 'Car park',
+  toLabel: 'Observatory',
+  steps: const [RouteStep(instruction: 'Walk toward the lit path.')],
+  points: const [LatLng(-33.7738, 151.1126), LatLng(-33.7745, 151.1133)],
+  pathConfidence: DataConfidence.confirmed,
+);
+
+Widget _host(ProviderContainer c, Widget child) => UncontrolledProviderScope(
+      container: c,
+      child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: Scaffold(body: child),
+      ),
+    );
+
+ProviderContainer _container(MapsConsent seed) {
+  final c = ProviderContainer(overrides: [
+    mapsConsentSnapshotProvider.overrideWithValue(seed),
+    mapsSdkInitializerProvider.overrideWithValue(_ReadyInitializer()),
+  ]);
+  addTearDown(c.dispose);
+  return c;
+}
+
+void main() {
+  testWidgets('without consent no Google surface is built', (t) async {
+    final surface = _RecordingSurface();
+    final c = _container(MapsConsent.unknown);
+
+    await t.pumpWidget(_host(c, RouteMapForTest(route: _route, surface: surface)));
+    await t.pumpAndSettle();
+
+    expect(surface.builds, 0,
+        reason: 'spec §2b: no Google surface may initialise before consent');
+    expect(find.byKey(const Key('fake-google-surface')), findsNothing);
+  });
+
+  testWidgets('with accepted consent the Google surface is built', (t) async {
+    final surface = _RecordingSurface();
+    final c = _container(MapsConsent.accepted);
+
+    await t.pumpWidget(_host(c, RouteMapForTest(route: _route, surface: surface)));
+    await t.pumpAndSettle();
+
+    expect(surface.builds, greaterThan(0));
+    expect(find.byKey(const Key('fake-google-surface')), findsOneWidget);
+  });
+
+  testWidgets('declined consent leaves the written steps reachable', (t) async {
+    final surface = _RecordingSurface();
+    final c = _container(MapsConsent.declined);
+
+    await t.pumpWidget(_host(c, RouteMapForTest(route: _route, surface: surface)));
+    await t.pumpAndSettle();
+
+    expect(surface.builds, 0);
+    // The map is a supporting visual; declining must not remove the primary
+    // output. A placeholder stands in its place rather than a blank gap.
+    expect(find.byKey(const Key('wayfinding-map-declined')), findsOneWidget);
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/widget/wayfinding_google_map_test.dart`
+Expected: FAIL — `Undefined name 'RouteMapForTest'`.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+In `lib/screens/wayfinding_screen.dart`, replace the entire `_RouteMap` class
+(lines 348-440, through the closing brace after `_endpoint`) with:
+
+```dart
+/// Test seam: `_RouteMap` is private, so widget tests construct this instead.
+/// It takes the same arguments plus an injectable [EmbeddedMapSurface].
+@visibleForTesting
+class RouteMapForTest extends ConsumerWidget {
+  const RouteMapForTest({required this.route, required this.surface, super.key});
+
+  final WalkingRoute route;
+  final EmbeddedMapSurface surface;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) =>
+      _RouteMap(route: route, surface: surface);
+}
+
+class _RouteMap extends ConsumerStatefulWidget {
+  const _RouteMap({required this.route, this.surface});
+
+  final WalkingRoute route;
+
+  /// Null in production → the real Google surface. Injected in tests.
+  final EmbeddedMapSurface? surface;
+
+  @override
+  ConsumerState<_RouteMap> createState() => _RouteMapState();
+}
+
+class _RouteMapState extends ConsumerState<_RouteMap> {
+  bool _disclosureRequested = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final route = widget.route;
+    final isDraftGeometry = route.pathConfidence == DataConfidence.placeholder;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
+          child: SizedBox(height: 220, child: _surface(context)),
+        ),
+        if (isDraftGeometry) ...[
+          const SizedBox(height: AonSpacing.space2),
+          Text(
+            'Straight line shown — this is the general direction, not the '
+            'exact path. Follow the written directions below.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _surface(BuildContext context) {
+    final consent = ref.watch(mapsConsentProvider);
+
+    // Spec §2b — nothing Google-shaped is constructed before consent resolves
+    // positively. The written steps below remain the primary output either way.
+    if (consentNeedsDisclosure(consent)) {
+      _ensureDisclosure();
+      return _placeholder(context);
+    }
+
+    final ready = ref.watch(mapsSdkReadyProvider);
+    if (ready.asData?.value != true) return _placeholder(context);
+
+    final pts = widget.route.points
+        .map<(double, double)>((p) => (p.latitude, p.longitude))
+        .toList();
+    return EmbeddedMap(
+      origin: pts.first,
+      destination: pts.last,
+      route: pts,
+      surface: widget.surface ?? const GoogleEmbeddedMapSurface(),
+    );
+  }
+
+  /// Stands in for the map so the layout does not jump. Deliberately NOT an
+  /// animating spinner: a pending disclosure dialog would never let tests settle.
+  Widget _placeholder(BuildContext context) => ColoredBox(
+        key: const Key('wayfinding-map-declined'),
+        color: context.aon.surfaceBase,
+      );
+
+  void _ensureDisclosure() {
+    if (_disclosureRequested) return;
+    _disclosureRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final accepted = await showMapsNavDisclosure(
+        context,
+        kind: MapsDisclosureKind.mapDisplay,
+      );
+      if (!mounted) return;
+      final notifier = ref.read(mapsConsentProvider.notifier);
+      accepted ? notifier.accept() : notifier.decline();
+      // Re-arm so a later revoke (via Settings) re-asks instead of leaving a
+      // permanent placeholder — same fix as google_nav_screen (map audit P2).
+      if (mounted) _disclosureRequested = false;
+    });
+  }
+}
+```
+
+Then update the imports at the top of `lib/screens/wayfinding_screen.dart`:
+remove `import 'package:aon2026/widgets/dark_tile_layer.dart';`,
+remove `import 'package:flutter_map/flutter_map.dart';`,
+remove `import 'package:aon2026/widgets/map_config.dart';`,
+remove `import 'package:latlong2/latlong.dart';` **only if** `flutter analyze`
+reports it unused after the edit, and add:
+
+```dart
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
+import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+import 'package:aon2026/widgets/embedded_map.dart';
+import 'package:aon2026/widgets/maps_nav_disclosure.dart';
+```
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `flutter test test/widget/wayfinding_google_map_test.dart`
+Expected: PASS — 3 tests.
+
+- [ ] **Step 5: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/screens/wayfinding_screen.dart \
+          test/widget/wayfinding_google_map_test.dart
+  git commit -m "feat(wayfinding): render the route on a consented Google basemap"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 5: Truth-up every map attribution
+
+Three OSM strings live in the ARB, which is why `grep OpenStreetMap lib/**/*.dart`
+finds nothing and this finding looks stale when it is not. After Task 4 the app
+renders no OSM tiles at all, so all three become false.
+
+`_MapAttribution` must get a **new** key. It must not reuse the orphaned
+`mapAttribution`, whose content is `"© OpenStreetMap contributors"` — that would
+replace one false claim with another.
+
+**Files:**
+- Delete: `lib/widgets/dark_tile_layer.dart`, `test/widget/dark_tile_layer_test.dart` (if present)
+- Modify: `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`, `lib/screens/map_screen.dart:576-595`, `lib/widgets/map_config.dart`
+- Create: `test/widget/map_attribution_test.dart`
+
+**Interfaces:**
+- Produces: l10n keys `mapAttributionCampus`, `settingsMapDataAttribution`
+  (replacing `settingsOsmAttribution`), rewritten `creditsMapDataBody`.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/widget/map_attribution_test.dart`:
+
+```dart
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
+void main() {
+  test('no shipped string claims OpenStreetMap attribution', () async {
+    for (final locale in AonL10n.supportedLocales) {
+      final l = await AonL10n.delegate.load(locale);
+      final claims = <String>[
+        l.settingsMapDataAttribution,
+        l.creditsMapDataBody,
+        l.mapAttributionCampus,
+      ];
+      for (final c in claims) {
+        expect(
+          c.toLowerCase(),
+          isNot(contains('openstreetmap')),
+          reason: 'the app renders no OSM tiles after the Google swap; '
+              'locale ${locale.languageCode} still attributes OSM',
+        );
+      }
+    }
+  });
+
+  test('the campus attribution names Macquarie University', () async {
+    final en = await AonL10n.delegate.load(const Locale('en'));
+    expect(en.mapAttributionCampus, contains('Macquarie University'));
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/widget/map_attribution_test.dart`
+Expected: FAIL — `The getter 'settingsMapDataAttribution' isn't defined` / `'mapAttributionCampus' isn't defined`.
+
+- [ ] **Step 3: Rewrite the EN strings**
+
+In `lib/l10n/app_en.arb`:
+
+1. **Delete** the `"mapAttribution"` line (line 228) — orphaned OSM text.
+2. **Replace** `"settingsOsmAttribution"` (line 632) with:
+
+```json
+  "settingsMapDataAttribution": "Campus map © Macquarie University. Walking directions and the map they appear on are provided by Google.",
+  "@settingsMapDataAttribution": {
+    "description": "Settings credits: who the map data actually comes from now that OSM tiles are gone."
+  },
+```
+
+3. **Replace** the value of `"creditsMapDataBody"` (line 763) with:
+
+```json
+  "creditsMapDataBody": "Campus map © Macquarie University. Walking directions and the map they appear on are provided by Google.",
+```
+
+4. **Add**, next to `"mapRecentre"`:
+
+```json
+  "mapAttributionCampus": "Campus map © Macquarie University",
+  "@mapAttributionCampus": {
+    "description": "Attribution overlaid on the AON campus basemap."
+  },
+```
+
+- [ ] **Step 4: Rewrite the FA strings**
+
+In `lib/l10n/app_fa.arb`: delete `"mapAttribution"` (line 79); replace
+`"settingsOsmAttribution"` (line 244) and the value of `"creditsMapDataBody"`
+(line 287); add `"mapAttributionCampus"`:
+
+```json
+  "mapAttributionCampus": "نقشهٔ پردیس © دانشگاه مکواری",
+  "settingsMapDataAttribution": "نقشهٔ پردیس © دانشگاه مکواری. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.",
+  "creditsMapDataBody": "نقشهٔ پردیس © دانشگاه مکواری. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.",
+```
+
+- [ ] **Step 5: Update the two render sites and the map screen**
+
+In `lib/screens/settings_screen.dart:420`, change `l.settingsOsmAttribution` to
+`l.settingsMapDataAttribution`.
+
+In `lib/screens/map_screen.dart:588`, replace the hardcoded literal:
+
+```dart
+        'Campus map © Macquarie University',
+```
+
+with:
+
+```dart
+        AonL10n.of(context).mapAttributionCampus,
+```
+
+(`info_screen.dart:253` already renders `l.creditsMapDataBody`, whose *value*
+changed — no code edit needed there.)
+
+- [ ] **Step 6: Delete the dead tile layer**
+
+```bash
+git rm lib/widgets/dark_tile_layer.dart
+git rm --ignore-unmatch test/widget/dark_tile_layer_test.dart
+```
+
+Then in `lib/widgets/map_config.dart`, delete the now-unused `tileUrlTemplate`
+constant (line 111-112) and its doc comment (line 101). Leave
+`userAgentPackageName` if `flutter analyze` shows another consumer; delete it if
+not.
+
+- [ ] **Step 7: Regenerate, run the test, verify it passes**
+
+```bash
+flutter gen-l10n
+flutter test test/widget/map_attribution_test.dart
+```
+Expected: PASS — 2 tests. If `flutter analyze` reports unused imports of
+`dark_tile_layer.dart` anywhere, remove them.
+
+- [ ] **Step 8: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add -A lib/ test/widget/map_attribution_test.dart
+  git commit -m "fix(attribution): remove OSM claims the app no longer earns"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 6: Delete local data
+
+Spec §2c. Not an Apple requirement — 5.1.1(i) governs what the *policy* must
+explain, and 5.1.1(v)'s in-app deletion rule is conditional on account creation,
+which this app has none of. It is in scope as good engineering: the data is local,
+so the control is cheap and testable. It must **not** claim to erase anything
+already transmitted to a third party.
+
+**Files:**
+- Create: `lib/services/local_data_eraser.dart`, `test/unit/local_data_eraser_test.dart`
+- Modify: `lib/screens/settings_screen.dart`, `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`
+
+**Interfaces:**
+- Produces: `LocalDataEraser.eraseAll()` and `localDataEraserProvider`.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/local_data_eraser_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:aon2026/services/local_data_eraser.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() => SharedPreferencesAsyncPlatform.instance = null);
+
+  test('eraseAll clears every app-owned key and reports success', () async {
+    SharedPreferences.setMockInitialValues({
+      'passport.v1': '["a","b"]',
+      'favorites.v1': '["obs"]',
+      'my_night.v1': '["e1"]',
+      'map_google_consent.v1': 'accepted',
+    });
+    final prefs = SharedPreferencesAsync();
+    final eraser = SharedPrefsLocalDataEraser(prefs: prefs);
+
+    expect(await eraser.eraseAll(), isTrue);
+
+    for (final key in SharedPrefsLocalDataEraser.ownedKeys) {
+      expect(await prefs.getString(key), isNull, reason: '$key survived erase');
+    }
+  });
+
+  test('eraseAll never throws when the platform store fails', () async {
+    final eraser = SharedPrefsLocalDataEraser(prefs: _ThrowingPrefs());
+    expect(await eraser.eraseAll(), isFalse);
+  });
+}
+
+class _ThrowingPrefs implements SharedPreferencesAsync {
+  @override
+  dynamic noSuchMethod(Invocation invocation) =>
+      Future<void>.error(StateError('platform store unavailable'));
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/local_data_eraser_test.dart`
+Expected: FAIL — `Couldn't resolve ... local_data_eraser.dart`.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+Create `lib/services/local_data_eraser.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+/// Erases everything this app stores on this device.
+///
+/// Scope is deliberately narrow and stated: it clears local storage only. It
+/// does NOT and must not claim to erase anything already transmitted to a third
+/// party (spec §2c) — the Settings copy says so in both languages.
+abstract interface class LocalDataEraser {
+  /// Never throws. Returns false when the platform store refused.
+  Future<bool> eraseAll();
+}
+
+class SharedPrefsLocalDataEraser implements LocalDataEraser {
+  SharedPrefsLocalDataEraser({required this.prefs});
+
+  final SharedPreferencesAsync prefs;
+
+  /// Every key this app owns. Enumerated rather than wildcard-cleared so an
+  /// unrelated key written by a plugin is never collateral damage.
+  static const List<String> ownedKeys = <String>[
+    'passport.v1',
+    'favorites.v1',
+    'my_night.v1',
+    'map_google_consent.v1',
+  ];
+
+  @override
+  Future<bool> eraseAll() async {
+    try {
+      for (final key in ownedKeys) {
+        await prefs.remove(key);
+      }
+      return true;
+    } catch (_) {
+      return false; // persistence failure is never fatal (passport idiom)
+    }
+  }
+}
+
+class NoopLocalDataEraser implements LocalDataEraser {
+  const NoopLocalDataEraser();
+  @override
+  Future<bool> eraseAll() async => true;
+}
+
+/// Overridden in `main.dart` with the SharedPreferences-backed eraser.
+final localDataEraserProvider =
+    Provider<LocalDataEraser>((_) => const NoopLocalDataEraser());
+```
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `flutter test test/unit/local_data_eraser_test.dart`
+Expected: PASS — 2 tests.
+
+**Note:** if `ownedKeys` does not match the real storage keys, fix the list, not
+the test. Confirm with:
+`grep -rn "static const _key\|const _key =" lib/services/`
+
+- [ ] **Step 5: Add the EN + FA strings**
+
+`lib/l10n/app_en.arb`:
+
+```json
+  "settingsEraseTitle": "Delete my data",
+  "@settingsEraseTitle": { "description": "Settings control that clears all locally stored app data." },
+  "settingsEraseBody": "Clears your passport stamps, favourites, saved plan and your Google Maps choice.",
+  "@settingsEraseBody": { "description": "Explains the scope of the erase control." },
+  "settingsEraseConfirmTitle": "Delete data stored on this device?",
+  "@settingsEraseConfirmTitle": { "description": "Destructive confirmation dialog title." },
+  "settingsEraseConfirmBody": "This permanently deletes data stored by this app on this device. It cannot undo anything already sent to Google.",
+  "@settingsEraseConfirmBody": { "description": "Destructive confirmation body. States the scope limit honestly." },
+  "settingsEraseConfirmAction": "Delete",
+  "@settingsEraseConfirmAction": { "description": "Destructive confirm button." },
+  "settingsEraseCancel": "Cancel",
+  "@settingsEraseCancel": { "description": "Dismisses the destructive confirmation." },
+  "settingsEraseDone": "Deleted.",
+  "@settingsEraseDone": { "description": "Snackbar shown after a successful erase." },
+```
+
+`lib/l10n/app_fa.arb`:
+
+```json
+  "settingsEraseTitle": "حذف داده‌های من",
+  "settingsEraseBody": "مهرهای پاسپورت، علاقه‌مندی‌ها، برنامهٔ ذخیره‌شده و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند.",
+  "settingsEraseConfirmTitle": "داده‌های ذخیره‌شده روی این دستگاه حذف شوند؟",
+  "settingsEraseConfirmBody": "این کار داده‌هایی را که این برنامه روی این دستگاه ذخیره کرده برای همیشه حذف می‌کند. آنچه پیش‌تر به گوگل ارسال شده قابل بازگرداندن نیست.",
+  "settingsEraseConfirmAction": "حذف",
+  "settingsEraseCancel": "انصراف",
+  "settingsEraseDone": "حذف شد.",
+```
+
+- [ ] **Step 6: Wire the control into Settings**
+
+In `lib/screens/settings_screen.dart`, immediately after the existing maps-consent
+revoke section (the block ending near line 330), add:
+
+```dart
+            const SizedBox(height: AonSpacing.space4),
+            ListTile(
+              contentPadding: EdgeInsets.zero,
+              title: Text(l.settingsEraseTitle),
+              subtitle: Text(l.settingsEraseBody),
+              trailing: TextButton(
+                key: const Key('settings-erase-button'),
+                onPressed: () => _confirmErase(context, ref, l),
+                child: Text(l.settingsEraseConfirmAction),
+              ),
+            ),
+```
+
+And add this method to the same widget's class:
+
+```dart
+  Future<void> _confirmErase(
+      BuildContext context, WidgetRef ref, AonL10n l) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        backgroundColor: context.aon.surface,
+        title: Text(l.settingsEraseConfirmTitle),
+        content: Text(l.settingsEraseConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l.settingsEraseCancel),
+          ),
+          FilledButton(
+            key: const Key('settings-erase-confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l.settingsEraseConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+    await ref.read(localDataEraserProvider).eraseAll();
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context)
+        .showSnackBar(SnackBar(content: Text(l.settingsEraseDone)));
+  }
+```
+
+Add to `lib/main.dart`'s override list:
+
+```dart
+        localDataEraserProvider.overrideWithValue(
+            SharedPrefsLocalDataEraser(prefs: SharedPreferencesAsync())),
+```
+
+- [ ] **Step 7: Regenerate and run the full gate, then commit**
+
+```bash
+flutter gen-l10n
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/ test/unit/local_data_eraser_test.dart
+  git commit -m "feat(settings): add a scoped delete-my-data control"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 7: Make the privacy copy true again
+
+`app_en.arb:308` and `app_fa.arb:128` assert "collects no analytics and **tracks
+no location**" and "the only thing it fetches from the internet is **map
+imagery**". Both become false with this release, in both languages. Spec §2a.
+
+**Files:**
+- Modify: `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`
+- Create: `test/unit/privacy_copy_truth_test.dart`
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/privacy_copy_truth_test.dart`:
+
+```dart
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
+void main() {
+  test('the English privacy copy does not deny what the app now does', () async {
+    final en = await AonL10n.delegate.load(const Locale('en'));
+    final body = en.settingsPrivacyBody.toLowerCase();
+
+    expect(body, isNot(contains('tracks no location')),
+        reason: 'the app sends location to Google for directions');
+    expect(body, isNot(contains('only thing it fetches')),
+        reason: 'the app also fetches Google map imagery and routes');
+    expect(body, contains('google'),
+        reason: 'third-party sharing must be disclosed in-app (5.1.1(i))');
+  });
+
+  test('both locales define the privacy body and mention Google', () async {
+    for (final locale in AonL10n.supportedLocales) {
+      final l = await AonL10n.delegate.load(locale);
+      expect(l.settingsPrivacyBody.trim(), isNotEmpty);
+      expect(l.settingsPrivacyBody.toLowerCase(),
+          anyOf(contains('google'), contains('گوگل')),
+          reason: '${locale.languageCode} must disclose the Google surface too');
+    }
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/privacy_copy_truth_test.dart`
+Expected: FAIL — the first test fails on `tracks no location`.
+
+- [ ] **Step 3: Rewrite the EN copy**
+
+Replace `"settingsPrivacyBody"` (line 308) in `lib/l10n/app_en.arb`:
+
+```json
+  "settingsPrivacyBody": "There is no account and no sign-in. Your passport stamps, favourites and saved plan stay on this device. The app collects no analytics.\n\nThe camera is used only to read a QR code, and the image is never stored or sent anywhere.\n\nYour location is used on this device to show where you are on the campus map. It is sent to Google only when you ask for walking directions — and only after you agree. Wayfinding draws its route on a Google map, which loads map imagery from Google but does not use your location.",
+```
+
+Replace `"settingsPrivacyCardTitle"` (line 631) and `"settingsPrivacyTitle"`
+(line 307) — both currently read "Nothing leaves your phone", which is no longer
+true — with:
+
+```json
+  "settingsPrivacyTitle": "What this app shares",
+  "settingsPrivacyCardTitle": "What this app shares",
+```
+
+- [ ] **Step 4: Rewrite the FA copy**
+
+Replace `"settingsPrivacyBody"` (line 128) in `lib/l10n/app_fa.arb`, and the
+matching title keys:
+
+```json
+  "settingsPrivacyTitle": "این برنامه چه چیزی را به اشتراک می‌گذارد",
+  "settingsPrivacyCardTitle": "این برنامه چه چیزی را به اشتراک می‌گذارد",
+  "settingsPrivacyBody": "نه حسابی وجود دارد و نه ورودی. مهرهای پاسپورت، علاقه‌مندی‌ها و برنامهٔ ذخیره‌شدهٔ شما روی همین دستگاه می‌مانند. این برنامه هیچ دادهٔ تحلیلی جمع نمی‌کند.\n\nدوربین فقط برای خواندن کد QR استفاده می‌شود و تصویر آن هرگز ذخیره یا ارسال نمی‌شود.\n\nموقعیت مکانی شما روی همین دستگاه برای نمایش جایگاه شما روی نقشهٔ پردیس به کار می‌رود. تنها زمانی به گوگل ارسال می‌شود که خودتان مسیریابی پیاده بخواهید — و تنها پس از موافقت شما. مسیریاب، مسیر را روی نقشهٔ گوگل رسم می‌کند؛ این کار تصاویر نقشه را از گوگل بارگذاری می‌کند اما از موقعیت مکانی شما استفاده نمی‌کند.",
+```
+
+- [ ] **Step 5: Regenerate, run the test, verify it passes**
+
+```bash
+flutter gen-l10n
+flutter test test/unit/privacy_copy_truth_test.dart
+```
+Expected: PASS — 2 tests.
+
+- [ ] **Step 6: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/l10n/ test/unit/privacy_copy_truth_test.dart
+  git commit -m "fix(privacy): tell the truth about Google in EN and FA"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 8: Say so when the user is off campus
+
+`map_screen.dart:77` projects the fix once and gets null off the illustrated
+footprint. Today the dot simply vanishes with no explanation — which to App
+Review, sitting in Cupertino, reads as broken rather than as designed.
+
+**Files:**
+- Modify: `lib/screens/map_screen.dart`, `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`
+- Create: `test/widget/map_off_campus_banner_test.dart`
+
+- [ ] **Step 1: Add the EN + FA strings**
+
+`lib/l10n/app_en.arb`:
+
+```json
+  "mapOffCampusNotice": "You're not on campus — showing the full map.",
+  "@mapOffCampusNotice": {
+    "description": "Shown when a valid GPS fix falls outside the campus artwork, so the position dot cannot be drawn."
+  },
+```
+
+`lib/l10n/app_fa.arb`:
+
+```json
+  "mapOffCampusNotice": "شما در پردیس نیستید — کل نقشه نمایش داده می‌شود.",
+```
+
+Then run `flutter gen-l10n`.
+
+- [ ] **Step 2: Write the failing test**
+
+Create `test/widget/map_off_campus_banner_test.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/models/campus_geometry.dart';
+import 'package:aon2026/services/campus_projection.dart';
+import 'package:aon2026/widgets/map_off_campus_notice.dart';
+
+void main() {
+  final proj = CampusProjection();
+
+  test('a Cupertino fix does not project onto the campus artwork', () {
+    // App Review's actual latitude/longitude. The non-clamping projector must
+    // return null rather than pinning them to the edge of Macquarie.
+    expect(proj.project(const GpsPoint(LatLng(37.3349, -122.0090))), isNull);
+  });
+
+  testWidgets('the notice renders the off-campus explanation', (t) async {
+    await t.pumpWidget(const MaterialApp(
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
+      home: Scaffold(body: MapOffCampusNotice()),
+    ));
+    expect(
+      find.text("You're not on campus — showing the full map."),
+      findsOneWidget,
+    );
+  });
+}
+```
+
+- [ ] **Step 3: Run the test to verify it fails**
+
+Run: `flutter test test/widget/map_off_campus_banner_test.dart`
+Expected: FAIL — `Couldn't resolve ... map_off_campus_notice.dart`.
+
+- [ ] **Step 4: Write the minimal implementation**
+
+Create `lib/widgets/map_off_campus_notice.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+
+import 'package:aon2026/app/theme/aon_palette.dart';
+import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
+/// Shown when there IS a valid fix but it falls outside the campus artwork.
+///
+/// This is a statement of fact, not an error: the projector is deliberately
+/// non-clamping, so a position off the illustrated footprint has nowhere
+/// truthful to be drawn. Saying so is what separates "designed" from "broken"
+/// for anyone using the app away from Macquarie — App Review included.
+class MapOffCampusNotice extends StatelessWidget {
+  const MapOffCampusNotice({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: AonSpacing.space3,
+        vertical: AonSpacing.space2,
+      ),
+      decoration: BoxDecoration(
+        color: context.aon.surface.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
+      ),
+      child: Text(
+        AonL10n.of(context).mapOffCampusNotice,
+        style: theme.textTheme.bodySmall
+            ?.copyWith(color: context.aon.contentSecondary),
+      ),
+    );
+  }
+}
+```
+
+- [ ] **Step 5: Render it on the map**
+
+In `lib/screens/map_screen.dart`, just after line 77's `projected` assignment, add:
+
+```dart
+    // A fix we HAVE but cannot draw. Distinct from "no fix yet", which is
+    // already covered by the locate control's own states.
+    final offCampus = fix != null && projected == null;
+```
+
+Then, in the same `Stack` that already positions `_MapAttribution`, add a sibling
+positioned above it:
+
+```dart
+          if (offCampus)
+            Positioned(
+              left: AonSpacing.space3,
+              right: AonSpacing.space3,
+              bottom: AonSpacing.space8,
+              child: const MapOffCampusNotice(),
+            ),
+```
+
+Add the import:
+
+```dart
+import 'package:aon2026/widgets/map_off_campus_notice.dart';
+```
+
+- [ ] **Step 6: Run the test, then the full gate, then commit**
+
+```bash
+flutter test test/widget/map_off_campus_banner_test.dart
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/ test/widget/map_off_campus_banner_test.dart
+  git commit -m "feat(map): explain an off-campus fix instead of hiding the dot"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 9: Stop the compass pointing across the Pacific
+
+`nearestTargets` (`nearby_targets.dart:88`) sorts by distance and takes N, with no
+ceiling. From Cupertino it happily lists Macquarie venues 12,000 km away with
+arrows pointing over the ocean. `MapConfig.locationCampusRadiusMeters` (2500)
+already exists and is the right bound — do not invent a new constant.
+
+**Files:**
+- Modify: `lib/services/nearby_targets.dart`
+- Create: `test/unit/nearby_targets_radius_test.dart`
+
+**Interfaces:**
+- Produces: `nearestTargets(..., {double maxDistanceMeters})`, defaulting to
+  `MapConfig.locationCampusRadiusMeters`.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/nearby_targets_radius_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'package:aon2026/models/building.dart';
+import 'package:aon2026/models/search_entry.dart';
+import 'package:aon2026/services/nearby_targets.dart';
+import 'package:aon2026/widgets/map_config.dart';
+
+List<SearchEntry> _index() => [
+      BuildingEntry(
+        building: const Building(
+          id: 'E7A',
+          name: 'Observatory',
+          latitude: -33.7738,
+          longitude: 151.1126,
+        ),
+      ),
+    ];
+
+void main() {
+  test('an on-campus fix still sees campus targets', () {
+    final targets = nearestTargets(const LatLng(-33.7737, 151.1134), _index());
+    expect(targets, isNotEmpty);
+  });
+
+  test('a Cupertino fix sees nothing rather than a 12,000 km bearing', () {
+    final targets = nearestTargets(const LatLng(37.3349, -122.0090), _index());
+    expect(targets, isEmpty,
+        reason: 'targets beyond the campus radius are not "nearby" in any '
+            'sense a compass arrow can express honestly');
+  });
+
+  test('the ceiling defaults to the existing campus radius', () {
+    // Just outside the radius on the same meridian.
+    const far = LatLng(-33.7737 + 0.03, 151.1134);
+    expect(nearestTargets(far, _index()), isEmpty);
+    expect(
+      nearestTargets(far, _index(),
+          maxDistanceMeters: MapConfig.locationCampusRadiusMeters * 100),
+      isNotEmpty,
+      reason: 'the bound must be a parameter, not a hard-coded rule',
+    );
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/nearby_targets_radius_test.dart`
+Expected: FAIL — the Cupertino test finds one target; `maxDistanceMeters` is not a named parameter.
+
+**If `Building`'s constructor signature differs**, fix the fixture to match the
+real model — never loosen the assertions.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+In `lib/services/nearby_targets.dart`, change the `nearestTargets` signature and
+add the filter:
+
+```dart
+List<NearbyTarget> nearestTargets(
+  LatLng fix,
+  List<SearchEntry> index, {
+  String filter = '',
+  int maxBuildings = MapConfig.compassMaxBuildingTargets,
+  double maxDistanceMeters = MapConfig.locationCampusRadiusMeters,
+}) {
+  final q = normalizeMapSearch(filter);
+  final located = <NearbyTarget>[];
+  for (final e in index) {
+    final ll = routingLatLngOf(e);
+    if (ll == null) continue;
+    if (q.isNotEmpty && scoreEntry(e, q) <= 0) continue; // M3 vocabulary (§0R-3)
+    final t = _target(e, fix, ll.$1, ll.$2);
+    // A target past the campus radius is not "nearby" in any sense an arrow can
+    // express honestly — off campus the list is empty and says so, rather than
+    // pointing across an ocean.
+    if (t.distanceMeters > maxDistanceMeters) continue;
+    located.add(t);
+  }
+  located.sort(_byDistance);
+  if (q.isNotEmpty) {
+    return located.take(maxBuildings).toList(); // filtered: nearest-N of matches
+  }
+  final venues = located.where((t) => t.kind == PlaceKind.venue);
+  final buildings = located.where((t) => t.kind == PlaceKind.building).take(maxBuildings);
+  return [...venues, ...buildings]..sort(_byDistance);
+}
+```
+
+- [ ] **Step 4: Run the test to verify it passes**
+
+Run: `flutter test test/unit/nearby_targets_radius_test.dart`
+Expected: PASS — 3 tests.
+
+Then run the existing compass suites, which may assume unbounded targets:
+`flutter test test/unit/nearby_targets_test.dart test/widget/compass_radar_view_test.dart`
+If one fails because its fixture sits outside 2500 m, move the fixture onto
+campus. Do **not** raise the ceiling to make an old fixture pass.
+
+- [ ] **Step 5: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/services/nearby_targets.dart test/
+  git commit -m "fix(compass): bound targets to the campus radius"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 10: Explain the empty "Happening now" before the event
+
+`home_screen.dart:76` passes `emptyMessage: phase.isLive ? l.homeNothingRunningNow : null`.
+Before 19 September `phase.isLive` is false, so the message is null and the
+section renders empty with no explanation — which is precisely what App Review
+will see, since review happens before the event.
+
+**Files:**
+- Modify: `lib/screens/home_screen.dart:76`, `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`
+- Create: `test/widget/home_pre_event_message_test.dart`
+
+- [ ] **Step 1: Add the EN + FA strings**
+
+`lib/l10n/app_en.arb`:
+
+```json
+  "homeNothingRunningYet": "Nothing yet — the night begins at 4:00 pm on Saturday 19 September.",
+  "@homeNothingRunningYet": {
+    "description": "Empty state for 'Happening now' before the event has started."
+  },
+```
+
+`lib/l10n/app_fa.arb`:
+
+```json
+  "homeNothingRunningYet": "هنوز چیزی شروع نشده — برنامه شنبه ۲۸ شهریور، ساعت ۴ بعدازظهر آغاز می‌شود.",
+```
+
+Run `flutter gen-l10n`.
+
+- [ ] **Step 2: Write the failing test**
+
+Create `test/widget/home_pre_event_message_test.dart`:
+
+```dart
+import 'package:flutter/widgets.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
+void main() {
+  test('a pre-event empty message exists in both locales', () async {
+    for (final locale in AonL10n.supportedLocales) {
+      final l = await AonL10n.delegate.load(locale);
+      expect(l.homeNothingRunningYet.trim(), isNotEmpty,
+          reason: 'App Review sees the app before the event; an unexplained '
+              'empty section reads as broken');
+    }
+  });
+
+  test('the English pre-event message names the date', () async {
+    final en = await AonL10n.delegate.load(const Locale('en'));
+    expect(en.homeNothingRunningYet, contains('19 September'));
+  });
+}
+```
+
+- [ ] **Step 3: Run the test to verify it fails**
+
+Run: `flutter test test/widget/home_pre_event_message_test.dart`
+Expected: FAIL — `The getter 'homeNothingRunningYet' isn't defined`.
+
+- [ ] **Step 4: Write the minimal implementation**
+
+In `lib/screens/home_screen.dart:76`, replace:
+
+```dart
+                  emptyMessage: phase.isLive ? l.homeNothingRunningNow : null,
+```
+
+with:
+
+```dart
+                  // Before the night, an empty section with no message reads as
+                  // a bug — to attendees planning ahead and to App Review alike.
+                  emptyMessage: phase.isLive
+                      ? l.homeNothingRunningNow
+                      : l.homeNothingRunningYet,
+```
+
+- [ ] **Step 5: Run the test, the gate, and commit**
+
+```bash
+flutter test test/widget/home_pre_event_message_test.dart
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/ test/widget/home_pre_event_message_test.dart
+  git commit -m "feat(home): explain the empty programme before the event"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 11: Preview from anywhere
+
+Spec §3c, decision D7. A **visible**, clearly-labelled Settings toggle that seeds
+a simulated campus position so the map dot, compass and nearby list come alive
+off campus. Visible and documented, therefore not a 2.3.1(a) hidden feature.
+Session-only — it resets to off on every launch, so it can never silently mislead
+a returning user.
+
+**Files:**
+- Create: `lib/services/preview_location.dart`, `test/unit/preview_location_test.dart`
+- Modify: `lib/services/location_providers.dart`, `lib/screens/settings_screen.dart`, both ARB files
+
+**Interfaces:**
+- Consumes: `LocationService`, `locationServiceProvider`.
+- Produces: `PreviewLocationService`, `previewLocationProvider`
+  (`NotifierProvider<PreviewLocationNotifier, bool>` with a `set(bool)` method),
+  `effectiveLocationServiceProvider`.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/preview_location_test.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/models/user_location_fix.dart';
+import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/services/location_service.dart';
+import 'package:aon2026/services/preview_location.dart';
+import 'package:aon2026/widgets/map_config.dart';
+
+class _RealService implements LocationService {
+  @override
+  Future<LocationStatus> status() async => LocationStatus.denied;
+  @override
+  Future<LocationStatus> request() async => LocationStatus.denied;
+  @override
+  Stream<UserLocationFix> watch() => const Stream<UserLocationFix>.empty();
+  @override
+  Stream<bool> serviceEnabledChanges() => const Stream<bool>.empty();
+  @override
+  Future<void> openAppSettings() async {}
+  @override
+  Future<void> openLocationSettings() async {}
+}
+
+void main() {
+  ProviderContainer container() {
+    final c = ProviderContainer(overrides: [
+      locationServiceProvider.overrideWithValue(_RealService()),
+    ]);
+    addTearDown(c.dispose);
+    return c;
+  }
+
+  test('preview is off by default', () {
+    expect(container().read(previewLocationProvider), isFalse);
+  });
+
+  test('off, the effective service is the real one', () {
+    final c = container();
+    expect(c.read(effectiveLocationServiceProvider), isA<_RealService>());
+  });
+
+  test('on, the effective service is the preview one', () {
+    final c = container();
+    c.read(previewLocationProvider.notifier).set(true);
+    expect(c.read(effectiveLocationServiceProvider), isA<PreviewLocationService>());
+  });
+
+  test('the preview fix sits on campus and is granted', () async {
+    const svc = PreviewLocationService();
+    expect(await svc.status(), LocationStatus.granted);
+    final fix = await svc.watch().first;
+    expect(fix.position, MapConfig.campusCentre);
+    expect(fix.isLowAccuracy, isFalse,
+        reason: 'a simulated fix must not also simulate poor accuracy');
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/preview_location_test.dart`
+Expected: FAIL — `Couldn't resolve ... preview_location.dart`.
+
+- [ ] **Step 3: Write the minimal implementation**
+
+Create `lib/services/preview_location.dart`:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:aon2026/models/user_location_fix.dart';
+import 'package:aon2026/services/location_service.dart';
+import 'package:aon2026/widgets/map_config.dart';
+
+/// A simulated on-campus position, for people using the app before they arrive.
+///
+/// Spec §3c / D7. Deliberately a first-class, user-visible feature rather than a
+/// hidden review switch: guideline 2.3.1(a) forbids hidden or dormant
+/// functionality, and this is genuinely useful to an attendee planning a
+/// one-night event from home.
+class PreviewLocationService implements LocationService {
+  const PreviewLocationService();
+
+  @override
+  Future<LocationStatus> status() async => LocationStatus.granted;
+
+  @override
+  Future<LocationStatus> request() async => LocationStatus.granted;
+
+  /// One fix at the campus centre. The stream then closes; `LocationController`
+  /// has no `onDone` handler, so a closed stream simply means "no further
+  /// updates" — which is exactly true of a fixed simulated point.
+  @override
+  Stream<UserLocationFix> watch() => Stream<UserLocationFix>.value(
+        UserLocationFix(
+          position: MapConfig.campusCentre,
+          accuracyMeters: 8,
+        ),
+      );
+
+  @override
+  Stream<bool> serviceEnabledChanges() => const Stream<bool>.empty();
+
+  @override
+  Future<void> openAppSettings() async {}
+
+  @override
+  Future<void> openLocationSettings() async {}
+}
+
+/// Session-only: resets to off every launch, so it can never silently mislead a
+/// returning user into thinking a simulated dot is their real position.
+/// Riverpod 3 has no `StateProvider`, so this is a Notifier with a method.
+class PreviewLocationNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+  void set(bool enabled) {
+    if (state != enabled) state = enabled;
+  }
+}
+
+final previewLocationProvider =
+    NotifierProvider<PreviewLocationNotifier, bool>(PreviewLocationNotifier.new);
+```
+
+- [ ] **Step 4: Route the controller through the effective service**
+
+In `lib/services/location_providers.dart`, add below `locationServiceProvider`:
+
+```dart
+/// The service the app actually reads. Preview mode substitutes a simulated
+/// on-campus fix; everything downstream is unchanged and unaware.
+final effectiveLocationServiceProvider = Provider<LocationService>((ref) {
+  return ref.watch(previewLocationProvider)
+      ? const PreviewLocationService()
+      : ref.watch(locationServiceProvider);
+});
+```
+
+Change `LocationController`'s accessor from:
+
+```dart
+  LocationService get _svc => ref.read(locationServiceProvider);
+```
+
+to:
+
+```dart
+  LocationService get _svc => ref.read(effectiveLocationServiceProvider);
+```
+
+And inside `LocationController.build()`, next to the existing `ref.listen` calls,
+add one so a mid-session toggle re-subscribes:
+
+```dart
+    ref.listen(previewLocationProvider, (_, _) {
+      _cancel();
+      _sync();
+    });
+```
+
+Add the import to `location_providers.dart`:
+
+```dart
+import 'package:aon2026/services/preview_location.dart';
+```
+
+- [ ] **Step 5: Add the Settings toggle and its strings**
+
+`lib/l10n/app_en.arb`:
+
+```json
+  "settingsPreviewTitle": "Preview from anywhere",
+  "@settingsPreviewTitle": { "description": "Settings toggle that simulates an on-campus position." },
+  "settingsPreviewBody": "Not on campus yet? Turn this on to see the map, compass and nearby list as they'll look on the night. The position shown is simulated, not your real location.",
+  "@settingsPreviewBody": { "description": "Explains that the previewed position is simulated." },
+```
+
+`lib/l10n/app_fa.arb`:
+
+```json
+  "settingsPreviewTitle": "پیش‌نمایش از هر جایی",
+  "settingsPreviewBody": "هنوز در پردیس نیستید؟ این را روشن کنید تا نقشه، قطب‌نما و فهرست نزدیک را همان‌گونه که در شب برنامه خواهند بود ببینید. موقعیت نمایش‌داده‌شده شبیه‌سازی‌شده است، نه مکان واقعی شما.",
+```
+
+In `lib/screens/settings_screen.dart`, add:
+
+```dart
+            SwitchListTile(
+              key: const Key('settings-preview-toggle'),
+              contentPadding: EdgeInsets.zero,
+              value: ref.watch(previewLocationProvider),
+              onChanged: (v) => ref.read(previewLocationProvider.notifier).set(v),
+              title: Text(l.settingsPreviewTitle),
+              subtitle: Text(l.settingsPreviewBody),
+            ),
+```
+
+- [ ] **Step 6: Regenerate, test, gate, commit**
+
+```bash
+flutter gen-l10n
+flutter test test/unit/preview_location_test.dart
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/ test/unit/preview_location_test.dart
+  git commit -m "feat(location): add a visible preview-from-anywhere mode"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 12: Make iPad real
+
+`Info.plist` already declares all four iPad orientations, so Apple treats this as
+an iPad app and requires 13" screenshots plus a working layout — which no
+milestone has ever verified (decision D6).
+
+**Files:**
+- Create: `test/widget/ipad_layout_test.dart`
+- Modify: whichever screens overflow (unknown until the test runs — that is the
+  point of the task)
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/widget/ipad_layout_test.dart`:
+
+```dart
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/screens/info_screen.dart';
+import 'package:aon2026/screens/passport_screen.dart';
+import 'package:aon2026/screens/program_screen.dart';
+import 'package:aon2026/screens/settings_screen.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+/// 13-inch iPad, portrait and landscape, in logical pixels.
+const _portrait = Size(1032, 1376);
+const _landscape = Size(1376, 1032);
+
+Widget _host(Widget child) => ProviderScope(
+      child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: child,
+      ),
+    );
+
+Future<void> _expectNoOverflow(
+  WidgetTester t,
+  Widget screen,
+  Size size,
+  double textScale,
+) async {
+  t.view.physicalSize = size;
+  t.view.devicePixelRatio = 1.0;
+  addTearDown(t.view.reset);
+
+  await t.pumpWidget(_host(
+    MediaQuery(
+      data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+      child: screen,
+    ),
+  ));
+  await t.pumpAndSettle();
+
+  // A RenderFlex overflow is reported as a framework exception, so an empty
+  // exception queue IS the assertion.
+  expect(t.takeException(), isNull);
+}
+
+void main() {
+  final screens = <String, Widget>{
+    'program': const ProgramScreen(),
+    'passport': const PassportScreen(),
+    'info': const InfoScreen(),
+    'settings': const SettingsScreen(),
+  };
+
+  for (final entry in screens.entries) {
+    for (final scale in <double>[1.0, 2.0]) {
+      testWidgets('${entry.key} does not overflow on iPad portrait @${scale}x',
+          (t) async {
+        await _expectNoOverflow(t, entry.value, _portrait, scale);
+      });
+
+      testWidgets('${entry.key} does not overflow on iPad landscape @${scale}x',
+          (t) async {
+        await _expectNoOverflow(t, entry.value, _landscape, scale);
+      });
+    }
+  }
+}
+```
+
+- [ ] **Step 2: Run the test and record what actually breaks**
+
+Run: `flutter test test/widget/ipad_layout_test.dart`
+
+Expected: some subset FAILS with `A RenderFlex overflowed by N pixels`. **Write
+down which screens and which sizes** before changing anything — that list is the
+task's real scope, and guessing it in advance would be exactly the speculation
+this plan forbids.
+
+If a screen fails to construct because it needs provider overrides, copy the
+harness pattern from `test/widget/map_platform_wiring_test.dart` rather than
+weakening the assertion.
+
+- [ ] **Step 3: Fix each overflow at its source**
+
+For each failure, constrain the offending subtree rather than clamping text:
+wrap over-wide `Row`s in `Flexible`/`Expanded`, give unbounded `Column`s a
+`SingleChildScrollView`, and cap reading-width content with
+`ConstrainedBox(constraints: BoxConstraints(maxWidth: 720))` centred in the
+available space — a full-bleed 1376 px text column is unreadable regardless of
+whether it overflows.
+
+Never lower the text scale to pass. The 2.0 bar is a project constraint.
+
+- [ ] **Step 4: Re-run until green**
+
+Run: `flutter test test/widget/ipad_layout_test.dart`
+Expected: PASS — 16 tests.
+
+- [ ] **Step 5: Prove the last actionable row is reachable**
+
+For any screen you scrolled in step 3, add a `scrollUntilVisible` + `tap`
+assertion on its final actionable row. "No overflow" is not the project's bar —
+"the last actionable row is reachable *and* tappable" is.
+
+- [ ] **Step 6: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/ test/widget/ipad_layout_test.dart
+  git commit -m "fix(ipad): make every screen usable at 13-inch sizes"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+---
+
+### Task 13: Refuse Routes requests without consent
+
+**Gap found in self-review.** Spec §2c requires revocation to "cancel or block
+in-flight Routes requests, block all subsequent Google requests". Tasks 2 and 4
+stop a *surface* being built, but `navRouteProvider` would still issue a Routes
+call, because nothing between it and `GoogleRoutesService` reads consent.
+
+**Files:**
+- Modify: `lib/services/maps_nav_providers.dart`
+- Create: `test/unit/routes_consent_guard_test.dart`
+
+**Interfaces:**
+- Consumes: `mapsConsentProvider`, `MapsConsent`, `RoutesService`, `RouteResult`.
+- Produces: `ConsentGuardedRoutesService`, wrapping whatever
+  `routesServiceProvider` resolves.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/routes_consent_guard_test.dart`:
+
+```dart
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/maps_nav_providers.dart';
+import 'package:aon2026/services/routes_service.dart';
+
+class _SpyRoutes implements RoutesService {
+  int calls = 0;
+  @override
+  Future<RouteResult> walkingRoute({
+    required (double lat, double lng) origin,
+    required (double lat, double lng) destination,
+  }) async {
+    calls++;
+    return const RouteNetworkFailure();
+  }
+}
+
+void main() {
+  const origin = (-33.7737, 151.1134);
+  const dest = (-33.7738, 151.1126);
+
+  test('an unknown-consent request never reaches the network', () async {
+    final spy = _SpyRoutes();
+    final guarded = ConsentGuardedRoutesService(
+      inner: spy,
+      consent: () => MapsConsent.unknown,
+    );
+
+    final result = await guarded.walkingRoute(origin: origin, destination: dest);
+
+    expect(spy.calls, 0, reason: 'spec §2c: blocked, not merely hidden');
+    expect(result, isA<RouteConsentRefused>());
+  });
+
+  test('a declined-consent request never reaches the network', () async {
+    final spy = _SpyRoutes();
+    final guarded = ConsentGuardedRoutesService(
+      inner: spy,
+      consent: () => MapsConsent.declined,
+    );
+
+    await guarded.walkingRoute(origin: origin, destination: dest);
+    expect(spy.calls, 0);
+  });
+
+  test('an accepted-consent request passes through', () async {
+    final spy = _SpyRoutes();
+    final guarded = ConsentGuardedRoutesService(
+      inner: spy,
+      consent: () => MapsConsent.accepted,
+    );
+
+    await guarded.walkingRoute(origin: origin, destination: dest);
+    expect(spy.calls, 1);
+  });
+
+  test('consent is read per call, so revoking mid-session takes effect',
+      () async {
+    final spy = _SpyRoutes();
+    var consent = MapsConsent.accepted;
+    final guarded =
+        ConsentGuardedRoutesService(inner: spy, consent: () => consent);
+
+    await guarded.walkingRoute(origin: origin, destination: dest);
+    expect(spy.calls, 1);
+
+    consent = MapsConsent.unknown; // user revoked in Settings
+    await guarded.walkingRoute(origin: origin, destination: dest);
+    expect(spy.calls, 1, reason: 'a cached accepted value would leak a request');
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/routes_consent_guard_test.dart`
+Expected: FAIL — `Undefined name 'ConsentGuardedRoutesService'` and `'RouteConsentRefused'`.
+
+- [ ] **Step 3: Add the refusal result**
+
+In `lib/services/routes_service.dart`, alongside the existing `RouteNetworkFailure`
+/ `RouteApiFailure` / `RouteMalformed` result types, add:
+
+```dart
+/// The request was refused locally because maps consent is not `accepted`.
+/// Distinct from every network and parse outcome: nothing left the device.
+class RouteConsentRefused implements RouteResult {
+  const RouteConsentRefused();
+}
+```
+
+If `RouteResult` is a sealed class rather than an interface, add
+`RouteConsentRefused` as one of its permitted subtypes and fix the resulting
+non-exhaustive `switch` warnings — `flutter analyze` will name each site. Handle
+it wherever `RouteNetworkFailure` is handled in `google_nav_screen.dart`.
+
+- [ ] **Step 4: Write the guard**
+
+In `lib/services/maps_nav_providers.dart`, add:
+
+```dart
+/// Wraps a [RoutesService] so no request leaves the device unless maps consent
+/// is `accepted` at the moment of the call.
+///
+/// Consent is read through a callback rather than captured at construction:
+/// caching it would let a request slip out after the user revoked in Settings,
+/// which is precisely the leak spec §2c exists to close.
+class ConsentGuardedRoutesService implements RoutesService {
+  ConsentGuardedRoutesService({required this.inner, required this.consent});
+
+  final RoutesService inner;
+  final MapsConsent Function() consent;
+
+  @override
+  Future<RouteResult> walkingRoute({
+    required (double lat, double lng) origin,
+    required (double lat, double lng) destination,
+  }) async {
+    if (consent() != MapsConsent.accepted) return const RouteConsentRefused();
+    return inner.walkingRoute(origin: origin, destination: destination);
+  }
+}
+```
+
+Then wrap the production service — change the `return` at the end of
+`routesServiceProvider` from:
+
+```dart
+  return GoogleRoutesService(
+    client: client,
+    apiKey: key,
+    platformHeaders: identity.headers,
+  );
+```
+
+to:
+
+```dart
+  return ConsentGuardedRoutesService(
+    inner: GoogleRoutesService(
+      client: client,
+      apiKey: key,
+      platformHeaders: identity.headers,
+    ),
+    consent: () => ref.read(mapsConsentProvider),
+  );
+```
+
+Add the imports to `maps_nav_providers.dart`:
+
+```dart
+import 'maps_consent_providers.dart';
+import 'maps_consent_store.dart';
+```
+
+- [ ] **Step 5: Run the test, the gate, and commit**
+
+```bash
+flutter test test/unit/routes_consent_guard_test.dart
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/services/ test/unit/routes_consent_guard_test.dart
+  git commit -m "fix(consent): block Routes requests unless consent is accepted"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+---
+
+### Task 14: Show the Google SDK legal notices
+
+**Gap found in self-review.** Spec §5d point 3 requires the Maps SDK licence text
+from `GMSServices.openSourceLicenseInfo` to be reachable in Legal/About. Task 5
+handled attribution copy but not this.
+
+**Files:**
+- Modify: `lib/services/maps_sdk_initializer.dart`, `ios/Runner/AppDelegate.swift`,
+  `lib/screens/info_screen.dart`, both ARB files
+- Create: `test/unit/maps_legal_notices_test.dart`
+
+**Interfaces:**
+- Produces: `MapsSdkInitializer.openSourceLicenseInfo()` returning `Future<String?>`
+  (null where the platform has none), added to the interface from Task 1.
+
+- [ ] **Step 1: Write the failing test**
+
+Create `test/unit/maps_legal_notices_test.dart`:
+
+```dart
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+
+void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
+  const channel = MethodChannel('aon2026/maps_sdk');
+  final messenger =
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+
+  tearDown(() => messenger.setMockMethodCallHandler(channel, null));
+
+  test('licence text is fetched over the channel', () async {
+    messenger.setMockMethodCallHandler(channel, (call) async =>
+        call.method == 'openSourceLicenseInfo' ? 'Apache 2.0 …' : null);
+
+    final init = PlatformMapsSdkInitializer();
+    expect(await init.openSourceLicenseInfo(), startsWith('Apache 2.0'));
+  });
+
+  test('a platform without licence text yields null, not a crash', () async {
+    // No handler registered → MissingPluginException.
+    final init = PlatformMapsSdkInitializer();
+    expect(await init.openSourceLicenseInfo(), isNull);
+  });
+}
+```
+
+- [ ] **Step 2: Run the test to verify it fails**
+
+Run: `flutter test test/unit/maps_legal_notices_test.dart`
+Expected: FAIL — `The method 'openSourceLicenseInfo' isn't defined`.
+
+- [ ] **Step 3: Extend the Dart side**
+
+In `lib/services/maps_sdk_initializer.dart`, add to the `MapsSdkInitializer`
+interface:
+
+```dart
+  /// The Maps SDK's open-source licence text, for Legal/About. Null where the
+  /// platform supplies none.
+  Future<String?> openSourceLicenseInfo();
+```
+
+Implement it on `PlatformMapsSdkInitializer`:
+
+```dart
+  @override
+  Future<String?> openSourceLicenseInfo() async {
+    try {
+      return await _channel.invokeMethod<String>('openSourceLicenseInfo');
+    } on PlatformException {
+      return null;
+    } on MissingPluginException {
+      return null;
+    }
+  }
+```
+
+And on `NoopMapsSdkInitializer`:
+
+```dart
+  @override
+  Future<String?> openSourceLicenseInfo() async => null;
+```
+
+- [ ] **Step 4: Extend the iOS handler**
+
+In `ios/Runner/AppDelegate.swift`, replace the method-call handler body from
+Task 1 with:
+
+```swift
+    channel.setMethodCallHandler { [weak self] call, result in
+      switch call.method {
+      case "initialize":
+        result(self?.initializeMapsSdk() ?? false)
+      case "openSourceLicenseInfo":
+        // Available without keying the SDK — it is static bundled text, not a
+        // network call, so exposing it never contacts Google.
+        result(GMSServices.openSourceLicenseInfo())
+      default:
+        result(FlutterMethodNotImplemented)
+      }
+    }
+```
+
+On Android, add a `"openSourceLicenseInfo"` branch to `MainActivity.kt` returning
+`com.google.android.gms.common.GoogleApiAvailability.getInstance()
+.getOpenSourceSoftwareLicenseInfo(this)`.
+
+- [ ] **Step 5: Surface it in Credits**
+
+Add strings — `lib/l10n/app_en.arb`:
+
+```json
+  "creditsMapsLicences": "Google Maps licences",
+  "@creditsMapsLicences": { "description": "Credits entry opening the Maps SDK open-source licence text." },
+```
+
+`lib/l10n/app_fa.arb`:
+
+```json
+  "creditsMapsLicences": "مجوزهای نقشهٔ گوگل",
+```
+
+In `lib/screens/info_screen.dart`, after the `l.creditsMapDataBody` Text (around
+line 253), add a `TextButton` that reads
+`ref.read(mapsSdkInitializerProvider).openSourceLicenseInfo()` and, when the
+result is non-null, pushes a scrollable `Scaffold` showing it in a monospace
+`SelectableText`. When it is null, hide the button entirely rather than opening
+an empty page.
+
+- [ ] **Step 6: Regenerate, test, gate, commit**
+
+```bash
+flutter gen-l10n
+flutter test test/unit/maps_legal_notices_test.dart
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add lib/ ios/ android/ test/unit/maps_legal_notices_test.dart
+  git commit -m "feat(credits): expose the Google Maps SDK licence notices"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
+
+
+## Done means
+
+- `./scripts/check.sh` green, exit-gated.
+- No shipped string claims OpenStreetMap attribution, and none denies the Google
+  surface (Tasks 5, 7 — both locked by tests).
+- No Google surface can be constructed, **and no Routes request can leave the
+  device**, before consent is `accepted` (Task 2's
+  provider is the single path, and Task 4 proves it at the widget level).
+- App Review can exercise the app from Cupertino: off-campus notice, bounded
+  compass, pre-event programme message, preview mode, and — from the companion
+  release-mechanics plan — sample stamp codes in the Notes for Review.
+
+## Out of scope for this plan
+
+Release mechanics: Android upload keystore and the Play App Signing fingerprint
+chain, iOS production signing, `ITSAppUsesNonExemptEncryption`, version and build
+numbers, `PrivacyInfo.xcprivacy` and the archive privacy audit, GCP key creation
+and restriction-rejection proof, store metadata, screenshots, Notes for Review,
+privacy labels, Data Safety, age rating, and the hosted MQ URLs. Those are spec
+§4, §5a, §6 and §2d–g, and they get a checklist-shaped plan rather than TDD.

@@ -32,6 +32,10 @@ build/
 # also swallows tools/coverage/, which holds the policy the gate enforces.
 /coverage/
 
+# ── Python build tools (tools/reskin, tools/aon_map, tools/panorama, tools/coverage) ──
+__pycache__/
+*.py[cod]
+
 # ── Symbolication / obfuscation ───────────────────────────
 app.*.symbols
 app.*.map.json

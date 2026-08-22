@@ -96,12 +96,19 @@ void main() {
       // that someone who cannot read the current language can still find their
       // own. Translating them would defeat the control.
       //
+      // The 360° picker's card title is the other kind: "{letter} · {name}" is
+      // a punctuation pattern, not prose. Its letter is the one the official
+      // program map prints (A–I, Latin on the sheet in both languages) and its
+      // name is interpolated venue data. There is nothing in the value itself
+      // for a Persian reader to read.
+      //
       // Nothing else belongs here. If a key needs adding, the question to ask
       // is "would a Persian reader see English words?" — if yes, translate it
       // instead of allowlisting it.
       const allowedIdentical = <String>{
         'settingsLanguageEnglish',
         'settingsLanguagePersian',
+        'panoramaVenueWithMapLetter',
       };
       final identical = <String>[];
       for (final k in en.keys.where((k) => !k.startsWith('@'))) {

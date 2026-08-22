@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
@@ -10,9 +11,13 @@ import 'package:aon2026/widgets/glass_surface.dart';
 /// panorama — the imagery is a different building.
 const String kPanoramaDemoFlag = 'Demo 360° — sample imagery, not this venue';
 
-/// The 360° building picker: a card per venue. Venues with a tour are tappable
-/// (with the demo flag); the rest show "coming soon". No auto-select — the
-/// picker is always shown so availability + the disclosure stay visible.
+/// The 360° building picker: a card per *event* location — the A–I entries of
+/// the official AON program map's legend, in the order the sheet letters them.
+/// Unlettered service points (toilets, first aid, transport) are not offered.
+///
+/// Venues with a tour are tappable (with the demo flag); the rest show
+/// "coming soon". No auto-select — the picker is always shown so availability
+/// + the disclosure stay visible.
 class PanoramaBuildingPicker extends ConsumerWidget {
   const PanoramaBuildingPicker({super.key, required this.onOpen});
 
@@ -20,7 +25,8 @@ class PanoramaBuildingPicker extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final venues = ref.watch(venuesProvider);
+    final l10n = AonL10n.of(context);
+    final venues = ref.watch(panoramaPickerVenuesProvider);
     final withTour = ref.watch(venuesWithPanoramaProvider);
 
     return ListView(
@@ -30,7 +36,9 @@ class PanoramaBuildingPicker extends ConsumerWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: AonSpacing.space3),
             child: _VenueCard(
-              name: v.name,
+              // Every venue in this list carries a legend letter by
+              // construction — that is what put it in the list.
+              label: l10n.panoramaVenueWithMapLetter(v.mapReference!, v.name),
               hasTour: withTour.contains(v.id),
               onTap: withTour.contains(v.id) ? () => onOpen(v.id) : null,
             ),
@@ -41,9 +49,10 @@ class PanoramaBuildingPicker extends ConsumerWidget {
 }
 
 class _VenueCard extends StatelessWidget {
-  const _VenueCard({required this.name, required this.hasTour, this.onTap});
+  const _VenueCard({required this.label, required this.hasTour, this.onTap});
 
-  final String name;
+  /// Already letter-prefixed, e.g. "A · Macquarie Theatre".
+  final String label;
   final bool hasTour;
   final VoidCallback? onTap;
 
@@ -68,7 +77,7 @@ class _VenueCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Text(name, style: theme.textTheme.titleMedium),
+                  Text(label, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 2),
                   Text(
                     hasTour ? kPanoramaDemoFlag : 'Coming soon',
@@ -90,11 +99,11 @@ class _VenueCard extends StatelessWidget {
     );
 
     if (onTap == null) {
-      return Semantics(label: '$name, coming soon', child: card);
+      return Semantics(label: '$label, coming soon', child: card);
     }
     return Semantics(
       button: true,
-      label: '$name, demo 360 tour',
+      label: '$label, demo 360 tour',
       child: Material(
         color: Colors.transparent,
         child: InkWell(

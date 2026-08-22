@@ -396,6 +396,11 @@ class AonL10nEn extends AonL10n {
   String get panorama360Title => '360° preview';
 
   @override
+  String panoramaVenueWithMapLetter(String letter, String name) {
+    return '$letter · $name';
+  }
+
+  @override
   String get settingsTitle => 'Settings';
 
   @override

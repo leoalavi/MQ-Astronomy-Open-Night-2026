@@ -108,6 +108,7 @@
   "panorama360Unavailable": "نمای سه‌بعدی برای این مکان در دسترس نیست.",
   "panorama360Loading": "در حال بارگذاری نمای ۳۶۰ درجه…",
   "panorama360Title": "پیش‌نمای ۳۶۰ درجه",
+  "panoramaVenueWithMapLetter": "{letter} \u00b7 {name}",
   "settingsTitle": "تنظیمات",
   "settingsAppearance": "ظاهر",
   "settingsAppearanceSystem": "مطابق تنظیمات گوشی",

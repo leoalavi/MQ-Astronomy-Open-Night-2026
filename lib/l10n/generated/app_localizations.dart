@@ -745,6 +745,12 @@ abstract class AonL10n {
   /// **'360° preview'**
   String get panorama360Title;
 
+  /// 360° picker card title. Prefixes the venue with the letter the official AON program map prints for it, so the app list and the paper sheet read in the same alphabet.
+  ///
+  /// In en, this message translates to:
+  /// **'{letter} · {name}'**
+  String panoramaVenueWithMapLetter(String letter, String name);
+
   /// No description provided for @settingsTitle.
   ///
   /// In en, this message translates to:

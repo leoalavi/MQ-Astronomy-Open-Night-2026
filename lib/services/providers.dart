@@ -226,6 +226,25 @@ final venuesWithPanoramaProvider = Provider<Set<String>>(
   (ref) => PanoramaData.tours.map((t) => t.venueId).toSet(),
 );
 
+/// Matches the official AON program map's *event* legend: the single letters
+/// A–I. Registration and the information points carry 1/2/3, and every
+/// service point (toilets, first aid, transport) carries nothing.
+final RegExp _eventLegendLetter = RegExp(r'^[A-I]$');
+
+/// The venues the 360° picker offers, in the order the paper map letters them.
+///
+/// Derived from [Venue.mapReference] rather than a hand-kept id list, so the
+/// picker cannot drift from the printed sheet: give a venue a letter and it
+/// appears; the sheet's unlettered service points can never appear at all.
+final panoramaPickerVenuesProvider = Provider<List<Venue>>((ref) {
+  final lettered = ref
+      .watch(venuesProvider)
+      .where((v) => _eventLegendLetter.hasMatch(v.mapReference ?? ''))
+      .toList();
+  lettered.sort((a, b) => a.mapReference!.compareTo(b.mapReference!));
+  return List.unmodifiable(lettered);
+});
+
 /// Loads + caches a venue's indoor manifest. The asset path comes from an EXACT
 /// panorama_data lookup — never interpolated from [venueId]; an unknown id
 /// yields null (no arbitrary asset read).

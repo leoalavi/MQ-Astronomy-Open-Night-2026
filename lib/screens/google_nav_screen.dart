@@ -159,6 +159,26 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
             _successPanel(context, l, route, dest),
           ],
         ),
+      // Consent was withdrawn between opening this screen and the request
+      // returning. Nothing reached the UI, so offer the way back rather than
+      // showing a network error for a request that never counted.
+      RouteConsentRefused() => _panel(
+          context,
+          icon: Icons.privacy_tip_outlined,
+          message: l.mapNavDisclosureBody,
+          actions: [
+            FilledButton(
+              key: const Key('nav-reopen-disclosure'),
+              onPressed: () {
+                // Re-arm so the next build shows the disclosure again.
+                setState(() => _disclosureRequested = false);
+                ref.read(mapsConsentProvider.notifier).revoke();
+              },
+              child: Text(l.mapNavDisclosureAccept),
+            ),
+            _externalButton(context, l, dest),
+          ],
+        ),
       RouteNoRoute() => _panel(
           context,
           icon: Icons.directions_off_outlined,

@@ -55,6 +55,16 @@ class RouteMalformed extends RouteResult {
   const RouteMalformed();
 }
 
+/// The request was refused locally because maps consent is not `accepted`.
+///
+/// Distinct from every network and parse outcome: **nothing left the device**.
+/// Also returned when consent is withdrawn while a request is in flight — an
+/// HTTP request already on the wire cannot be recalled, but its response must
+/// never reach the UI or any cache (spec §2c).
+class RouteConsentRefused extends RouteResult {
+  const RouteConsentRefused();
+}
+
 /// The seam the rest of M4 depends on. [GoogleRoutesService] is one
 /// implementation; tests and `routesServiceProvider` inject fakes against this.
 abstract interface class RoutesService {

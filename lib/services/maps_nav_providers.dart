@@ -5,6 +5,8 @@ import 'package:http/http.dart' as http;
 import 'google_routes_service.dart';
 import 'location_providers.dart';
 import 'location_service.dart';
+import 'maps_consent_providers.dart';
+import 'maps_consent_store.dart';
 import 'routes_client_identity.dart';
 import 'routes_service.dart';
 
@@ -76,12 +78,46 @@ final routesServiceProvider = FutureProvider<RoutesService>((ref) async {
   final key = ref.watch(activeRoutesKeyProvider);
   final client = http.Client();
   ref.onDispose(client.close);
-  return GoogleRoutesService(
-    client: client,
-    apiKey: key,
-    platformHeaders: identity.headers,
+  return ConsentGuardedRoutesService(
+    inner: GoogleRoutesService(
+      client: client,
+      apiKey: key,
+      platformHeaders: identity.headers,
+    ),
+    consent: () => ref.read(mapsConsentProvider),
   );
 });
+
+/// Wraps a [RoutesService] so no request leaves the device unless maps consent
+/// is `accepted` at the moment of the call.
+///
+/// Consent is read through a callback rather than captured at construction:
+/// caching it would let a request slip out after the user revoked in Settings,
+/// which is precisely the leak spec §2c exists to close.
+class ConsentGuardedRoutesService implements RoutesService {
+  ConsentGuardedRoutesService({required this.inner, required this.consent});
+
+  final RoutesService inner;
+  final MapsConsent Function() consent;
+
+  @override
+  Future<RouteResult> walkingRoute({
+    required (double lat, double lng) origin,
+    required (double lat, double lng) destination,
+  }) async {
+    if (consent() != MapsConsent.accepted) return const RouteConsentRefused();
+
+    final result =
+        await inner.walkingRoute(origin: origin, destination: destination);
+
+    // Re-check AFTER the await. An HTTP request already on the wire cannot be
+    // recalled — claiming otherwise would be a lie — but its response must not
+    // reach the UI or any cache once the user has revoked. That is the
+    // enforceable half of "cancel or block in-flight requests".
+    if (consent() != MapsConsent.accepted) return const RouteConsentRefused();
+    return result;
+  }
+}
 
 /// One walking-route request per (origin, destination). `autoDispose` frees it
 /// when the nav screen closes; the family key dedups simultaneous consumers so

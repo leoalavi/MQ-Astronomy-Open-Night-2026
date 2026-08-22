@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/search_entry.dart';
 import 'package:aon2026/services/building_search.dart' show normalizeMapSearch;
@@ -76,7 +77,19 @@ List<NearbyTarget> nearestTargets(
   List<SearchEntry> index, {
   String filter = '',
   int maxBuildings = MapConfig.compassMaxBuildingTargets,
+  double maxDistanceMeters = MapConfig.locationCampusRadiusMeters,
 }) {
+  // Gate on the FIX, not on each target. §0R-2's venue-bias deliberately keeps
+  // ALL locatable venues however far across campus they are — a per-target
+  // ceiling would silently break that. What is absurd is not a distant venue,
+  // it is the whole list when the user is nowhere near Macquarie: from
+  // Cupertino every arrow points across the Pacific. Off campus the list is
+  // empty and `NearbyList` renders `compassNothingNearby`, which was
+  // unreachable before this gate because the list was never empty.
+  if (!MapConfig.isNearCampus(GpsPoint(fix), radiusMeters: maxDistanceMeters)) {
+    return const <NearbyTarget>[];
+  }
+
   final q = normalizeMapSearch(filter);
   final located = <NearbyTarget>[];
   for (final e in index) {

@@ -63,12 +63,147 @@ Every task's requirements implicitly include this section.
   wrapper; a `RouteMapForTest` test does not prove `GoogleNavScreen` is gated.
   **Every task must contain at least one test that drives the real widget or the
   real provider container.** If a task only asserts on a helper, it is not done.
-- **Riverpod legacy APIs are not used in this repo.** `StateProvider` still
-  exists in Riverpod 3 behind the legacy import — it was moved, not deleted. The
+- **Riverpod legacy APIs are not used in this repo.** `StateProvider`,
+  `StateNotifierProvider` and `ChangeNotifierProvider` were *moved* to
+  `package:flutter_riverpod/legacy.dart` in Riverpod 3, not deleted. The
   rule here is a project convention, not a language fact: use a `Notifier` with a
   method, and never reach for `package:flutter_riverpod/legacy.dart`.
 - **`dart format` is informational only.** The whole repo fails it under the 3.12
   tall style. Never blanket-reformat.
+
+## Sequencing, sizing, and the cut rule
+
+19 days remain to 19 Sep, shared with the release-mechanics plan. Sizes are
+working hours for one engineer, including the test cycle and the gate run.
+
+| Task | Size | Tier | Blocks |
+|---|---|---|---|
+| 0 · shared map test harness | 2h | 1 | 8, 12 |
+| 1 · defer Maps SDK init | 3h | 1 | 2, 4 |
+| 2 · readiness gated on consent | 2h | 1 | 4, 15 |
+| 3 · map-only disclosure | 2h | 1 | 4 |
+| 4 · wayfinding + nav on Google | 5h | 1 | 5 |
+| 5 · attribution truth-up | 3h | 1 | — |
+| 6 · delete local data | 6h | 1 | — |
+| 7 · privacy copy EN+FA | 2h | 1 | — |
+| 13 · Routes consent guard | 4h | 1 | — |
+| 15 · architecture test | 1h | 1 | — |
+| **Tier 1 subtotal** | **30h** | | **submission-blocking** |
+| 8 · off-campus notice | 3h | 2 | — |
+| 9 · campus radius + copy | 3h | 2 | — |
+| 10 · pre-event message | 2h | 2 | — |
+| 11 · preview from anywhere | 6h | 2 | — |
+| **Tier 2 subtotal** | **14h** | | **the Guideline 2.1 defence** |
+| 12 · iPad, 9 routes x EN/FA | 10h + fixes | 3 | — |
+| 14 · legal notices | 3h | 3 | — |
+| **Total** | **~57h ≈ 8 working days** | | |
+
+**Tier 1 is what makes the app truthful and consent-correct** — without it the
+app ships claims that are false. Tier 2 is what lets App Review exercise a
+campus app from Cupertino; skipping it risks a 2.1 rejection cycle costing 5-10
+days, which is worse than the 14 hours. Tier 3 is real but severable.
+
+**The cut rule, decided now rather than in week three.** Task 12 is the only
+task with an unbounded tail: the overflow fix count is unknown until it runs.
+If Tier 1 + 2 are not complete with 7 days left, **drop iPad** — set
+`TARGETED_DEVICE_FAMILY = "1"` in all three configurations. That is a one-line
+change per configuration, it removes the 13" screenshot requirement entirely,
+and it deletes Task 12 outright. The app is explicitly designed for one-handed
+use while walking in the dark; iPhone-only is a defensible product decision, not
+a retreat. Task 14 goes with it (iOS licence text is the only surviving half,
+and it is 3h whenever it happens).
+
+Nothing in Tier 1 is cuttable. If Tier 1 cannot land, the submission slips —
+that is the honest trade, and it is better made in advance.
+
+---
+
+### Task 0: Promote the map test harness to shared support
+
+Tasks 8 and 12 both need to pump `MapScreen` with a chosen fix.
+`test/widget/map_platform_wiring_test.dart:19` already has
+`ProviderContainer _container(FakeLocationService svc)` — private to that file.
+Copying it twice is how harnesses drift.
+
+**Files:**
+- Create: `test/support/map_harness.dart`
+- Modify: `test/widget/map_platform_wiring_test.dart`
+
+**Interfaces:**
+- Produces: `mapHarness({UserLocationFix? fix})` returning a `ProviderContainer`
+  with `locationServiceProvider` overridden by a `FakeLocationService` seeded
+  with `fix`, and `mapVisibleProvider` set true. Tasks 8 and 12 consume it.
+
+- [ ] **Step 1: Move the helper**
+
+Create `test/support/map_harness.dart` containing `FakeLocationService` and the
+container builder, lifted verbatim from `map_platform_wiring_test.dart` lines
+1-40 and widened:
+
+```dart
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:aon2026/models/user_location_fix.dart';
+import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/services/location_service.dart';
+
+/// The shared map harness. Lifted from map_platform_wiring_test.dart so Tasks 8
+/// and 12 do not each grow their own copy.
+class FakeLocationService implements LocationService {
+  FakeLocationService({this.fix});
+
+  final UserLocationFix? fix;
+
+  @override
+  Future<LocationStatus> status() async => LocationStatus.granted;
+  @override
+  Future<LocationStatus> request() async => LocationStatus.granted;
+  @override
+  Stream<UserLocationFix> watch() =>
+      fix == null ? const Stream<UserLocationFix>.empty() : Stream.value(fix!);
+  @override
+  Stream<bool> serviceEnabledChanges() => const Stream<bool>.empty();
+  @override
+  Future<void> openAppSettings() async {}
+  @override
+  Future<void> openLocationSettings() async {}
+}
+
+/// A container ready to pump `MapScreen` against a chosen position.
+ProviderContainer mapHarness({UserLocationFix? fix}) {
+  final container = ProviderContainer(overrides: [
+    locationServiceProvider.overrideWithValue(FakeLocationService(fix: fix)),
+  ]);
+  container.read(mapVisibleProvider.notifier).set(true);
+  container.read(locationControllerProvider);
+  return container;
+}
+```
+
+If the existing `FakeLocationService` in `map_platform_wiring_test.dart` has a
+different shape, move *that* one and add the `fix` parameter — do not invent a
+second implementation.
+
+- [ ] **Step 2: Point the existing test at it**
+
+In `test/widget/map_platform_wiring_test.dart`, delete the local
+`FakeLocationService` and `_container`, and
+`import 'package:aon2026/../test/support/map_harness.dart';` — use the package
+relative form the repo's other test helpers use.
+
+- [ ] **Step 3: Prove nothing regressed**
+
+Run: `flutter test test/widget/map_platform_wiring_test.dart`
+Expected: PASS, same test count as before the move.
+
+- [ ] **Step 4: Run the full gate and commit**
+
+```bash
+./scripts/check.sh > /tmp/gate.log 2>&1 && {
+  git add test/support/map_harness.dart test/widget/map_platform_wiring_test.dart
+  git commit -m "test: promote the map harness to shared support"
+} || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
+```
 
 ---
 
@@ -578,19 +713,18 @@ void main() {
   testWidgets('the navigation disclosure states that location is sent',
       (t) async {
     await t.pumpWidget(_host(MapsDisclosureKind.navigation));
-    expect(find.text('Use Google Maps for directions?'), findsOneWidget);
-    expect(
-      find.textContaining('your current location is sent to Google Maps'),
-      findsOneWidget,
-    );
+    final l = await AonL10n.delegate.load(const Locale('en'));
+    expect(find.text(l.mapNavDisclosureTitle), findsOneWidget);
+    expect(find.text(l.mapNavDisclosureBody), findsOneWidget);
   });
 
   testWidgets('the map-only disclosure does NOT claim this screen uses location',
       (t) async {
     await t.pumpWidget(_host(MapsDisclosureKind.mapDisplay));
-    expect(find.text('Load the Google map here?'), findsOneWidget);
+    final l = await AonL10n.delegate.load(const Locale('en'));
+    expect(find.text(l.mapDisplayDisclosureTitle), findsOneWidget);
     expect(
-      find.textContaining('This screen does not use your location'),
+      find.textContaining('does not use your location'),
       findsOneWidget,
       reason: 'wayfinding reads no location; the copy must not say otherwise',
     );
@@ -1364,7 +1498,8 @@ already transmitted to a third party.
 - [ ] **Step 1: Publish the keys from the stores that own them**
 
 Drift between this list and the stores is the whole defect, so the names come
-from one place. In `lib/services/passport_store.dart`, change line 22 from
+from one place. In `lib/services/passport_store.dart`, change line 22 (inside the **concrete**
+`SharedPrefsPassportStore`, not the `PassportStore` interface) from
 `static const String _key = ...` to a public constant and update its uses:
 
 ```dart
@@ -1372,7 +1507,7 @@ from one place. In `lib/services/passport_store.dart`, change line 22 from
   static const String storageKey = 'passport.collectedVenueIds';
 ```
 
-In `lib/services/favorites_store.dart`, replace the two private key members with:
+In `lib/services/favorites_store.dart`, inside `SharedPrefsFavoritesStore`, replace the two private key members with:
 
 ```dart
   static const String buildingsKey = 'map_favorites.buildings.v1';
@@ -1384,7 +1519,7 @@ In `lib/services/favorites_store.dart`, replace the two private key members with
   String get _venuesKey => venuesKeyFor(eventId);
 ```
 
-In `lib/services/maps_consent_store.dart`, change line 24 to:
+In `lib/services/maps_consent_store.dart`, inside `SharedPrefsMapsConsentStore`, change line 24 to:
 
 ```dart
   static const String storageKey = 'map_google_consent.v1';
@@ -1399,6 +1534,8 @@ Create `test/unit/local_data_eraser_test.dart`:
 ```dart
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences_platform_interface/in_memory_shared_preferences_async.dart';
+import 'package:shared_preferences_platform_interface/shared_preferences_async_platform_interface.dart';
 
 import 'package:aon2026/services/favorites_store.dart';
 import 'package:aon2026/services/local_data_eraser.dart';
@@ -1411,30 +1548,35 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   test('eraseAll clears every key the real stores actually write', () async {
-    // Seeded from the STORES' own constants, not from retyped literals — if the
-    // eraser and the stores ever disagree, this test fails instead of lying.
-    SharedPreferences.setMockInitialValues({
-      PassportStore.storageKey: 'v1|obs,lab',
-      FavoritesStore.buildingsKey: <String>['building:E7A'],
-      FavoritesStore.venuesKeyFor(_eventId): <String>['venue:obs'],
-      MapsConsentStore.storageKey: 'accepted',
+    // `SharedPreferencesAsync` is NOT mocked with setMockInitialValues — the
+    // repo's own pattern (passport_store_test.dart:44, favorites_test.dart:77)
+    // swaps the platform instance. Seeded from the STORES' own constants, not
+    // from retyped literals: if eraser and store ever disagree, this test fails
+    // instead of lying.
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.withData({
+      SharedPrefsPassportStore.storageKey: 'v1|obs,lab',
+      SharedPrefsFavoritesStore.buildingsKey: <String>['building:E7A'],
+      SharedPrefsFavoritesStore.venuesKeyFor(_eventId): <String>['venue:obs'],
+      SharedPrefsMapsConsentStore.storageKey: 'accepted',
     });
     final prefs = SharedPreferencesAsync();
     final eraser = SharedPrefsLocalDataEraser(prefs: prefs, eventId: _eventId);
 
     expect(await eraser.eraseAll(), isTrue);
 
-    expect(await prefs.getString(PassportStore.storageKey), isNull);
-    expect(await prefs.getStringList(FavoritesStore.buildingsKey), isNull);
-    expect(await prefs.getStringList(FavoritesStore.venuesKeyFor(_eventId)), isNull);
-    expect(await prefs.getString(MapsConsentStore.storageKey), isNull);
+    expect(await prefs.getString(SharedPrefsPassportStore.storageKey), isNull);
+    expect(await prefs.getStringList(SharedPrefsFavoritesStore.buildingsKey), isNull);
+    expect(await prefs.getStringList(SharedPrefsFavoritesStore.venuesKeyFor(_eventId)), isNull);
+    expect(await prefs.getString(SharedPrefsMapsConsentStore.storageKey), isNull);
   });
 
   test('preferences survive — they are settings, not user data', () async {
-    SharedPreferences.setMockInitialValues({
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.withData({
       'settings.locale': 'fa',
       'settings.themeMode': 'dark',
-      PassportStore.storageKey: 'v1|obs',
+      SharedPrefsPassportStore.storageKey: 'v1|obs',
     });
     final prefs = SharedPreferencesAsync();
     await SharedPrefsLocalDataEraser(prefs: prefs, eventId: _eventId).eraseAll();
@@ -1445,15 +1587,16 @@ void main() {
   });
 
   test('the venues key follows the event id it was constructed with', () async {
-    SharedPreferences.setMockInitialValues({
-      FavoritesStore.venuesKeyFor('other-event'): <String>['venue:x'],
-      FavoritesStore.venuesKeyFor(_eventId): <String>['venue:obs'],
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.withData({
+      SharedPrefsFavoritesStore.venuesKeyFor('other-event'): <String>['venue:x'],
+      SharedPrefsFavoritesStore.venuesKeyFor(_eventId): <String>['venue:obs'],
     });
     final prefs = SharedPreferencesAsync();
     await SharedPrefsLocalDataEraser(prefs: prefs, eventId: _eventId).eraseAll();
 
-    expect(await prefs.getStringList(FavoritesStore.venuesKeyFor(_eventId)), isNull);
-    expect(await prefs.getStringList(FavoritesStore.venuesKeyFor('other-event')),
+    expect(await prefs.getStringList(SharedPrefsFavoritesStore.venuesKeyFor(_eventId)), isNull);
+    expect(await prefs.getStringList(SharedPrefsFavoritesStore.venuesKeyFor('other-event')),
         isNull,
         reason: 'the control says "delete my data", not "delete this event\'s '
             'data" — a stale event\'s favourites are still the user\'s data');
@@ -1470,9 +1613,10 @@ void main() {
     // FavoritesController and PassportNotifier hold live state seeded at
     // startup. A storage-only wipe leaves the session showing deleted data, and
     // the next save writes it straight back. This drives the shipped widget.
-    SharedPreferences.setMockInitialValues({
-      PassportStore.storageKey: 'v1|obs',
-      FavoritesStore.buildingsKey: <String>['building:E7A'],
+    SharedPreferencesAsyncPlatform.instance =
+        InMemorySharedPreferencesAsync.withData({
+      SharedPrefsPassportStore.storageKey: 'v1|obs',
+      SharedPrefsFavoritesStore.buildingsKey: <String>['building:E7A'],
     });
     final container = ProviderContainer(overrides: [
       localDataEraserProvider.overrideWithValue(SharedPrefsLocalDataEraser(
@@ -1498,7 +1642,8 @@ void main() {
     await t.tap(find.byKey(const Key('settings-erase-confirm')));
     await t.pumpAndSettle();
 
-    expect(find.text('Deleted.'), findsOneWidget);
+    final l = await AonL10n.delegate.load(const Locale('en'));
+    expect(find.text(l.settingsEraseDone), findsOneWidget);
     expect(container.read(mapsConsentProvider), MapsConsent.unknown,
         reason: 'consent must be revoked in memory, not only in storage');
     expect(container.read(favoritesProvider).keys, isEmpty,
@@ -1527,9 +1672,9 @@ void main() {
     await t.tap(find.byKey(const Key('settings-erase-confirm')));
     await t.pumpAndSettle();
 
-    expect(find.text("Couldn't delete your data. Please try again."),
-        findsOneWidget);
-    expect(find.text('Deleted.'), findsNothing);
+    final l = await AonL10n.delegate.load(const Locale('en'));
+    expect(find.text(l.settingsEraseFailed), findsOneWidget);
+    expect(find.text(l.settingsEraseDone), findsNothing);
   });
 
   test('eraseAll never throws when the platform store fails', () async {
@@ -1587,10 +1732,10 @@ class SharedPrefsLocalDataEraser implements LocalDataEraser {
   /// `settings.*` is excluded on purpose: theme, motion and locale are
   /// preferences, not user data, and clearing them here would be a surprise.
   List<String> get ownedKeys => <String>[
-        PassportStore.storageKey,
-        FavoritesStore.buildingsKey,
-        FavoritesStore.venuesKeyFor(eventId),
-        MapsConsentStore.storageKey,
+        SharedPrefsPassportStore.storageKey,
+        SharedPrefsFavoritesStore.buildingsKey,
+        SharedPrefsFavoritesStore.venuesKeyFor(eventId),
+        SharedPrefsMapsConsentStore.storageKey,
       ];
 
   /// The control says "delete my data", not "delete this event's data", so any
@@ -1627,8 +1772,11 @@ final localDataEraserProvider =
     Provider<LocalDataEraser>((_) => const NoopLocalDataEraser());
 ```
 
-**If `PassportStore` / `FavoritesStore` / `MapsConsentStore` class names differ**,
-fix the import and reference — never fall back to retyping the key strings.
+Verified against the tree: the interfaces are `PassportStore` /
+`FavoritesStore` / `MapsConsentStore` (`passport_store.dart:9`,
+`favorites_store.dart:6`, `maps_consent_store.dart:15`) and the concrete
+implementations that own the keys are `SharedPrefsPassportStore` (`:18`),
+`SharedPrefsFavoritesStore` (`:11`) and `SharedPrefsMapsConsentStore` (`:20`).
 
 - [ ] **Step 5: Add the EN + FA strings**
 
@@ -1911,10 +2059,10 @@ void main() {
       supportedLocales: AonL10n.supportedLocales,
       home: Scaffold(body: MapOffCampusNotice()),
     ));
-    expect(
-      find.text("You're not on campus — showing the full map."),
-      findsOneWidget,
-    );
+    // Assert on the l10n value, not a copy of it: a literal here breaks on any
+    // wording change and silently stops testing the thing it names.
+    final l = await AonL10n.delegate.load(const Locale('en'));
+    expect(find.text(l.mapOffCampusNotice), findsOneWidget);
   });
 }
 ```
@@ -2053,10 +2201,10 @@ neither proves the map wires them together. Append to
   });
 ```
 
-`mapHarness` is whatever `map_platform_wiring_test.dart`'s `_container` helper is
-called — promote it to a shared `test/support/` helper rather than copying it.
-`runAsync` is required: `MapScreen` loads the basemap asset, and `rootBundle`
-does real I/O that hangs a fake-async zone.
+`mapHarness` comes from Task 0's `test/support/map_harness.dart`; import it
+rather than rebuilding a container here. `runAsync` is required: `MapScreen`
+loads the basemap asset, and `rootBundle` does real I/O that hangs a fake-async
+zone to a 10-minute timeout.
 
 - [ ] **Step 7: Run the test, then the full gate, then commit**
 
@@ -2100,7 +2248,8 @@ import 'package:aon2026/widgets/map_config.dart';
 
 List<SearchEntry> _index() => [
       BuildingEntry(
-        building: const Building(
+        // BuildingEntry(this.building) is POSITIONAL — search_entry.dart:32.
+        const Building(
           id: 'E7A',
           // `code` is REQUIRED (building.dart:18) — omitting it will not compile.
           code: 'E7A',
@@ -2143,8 +2292,9 @@ void main() {
 Run: `flutter test test/unit/nearby_targets_radius_test.dart`
 Expected: FAIL — the Cupertino test finds one target; `maxDistanceMeters` is not a named parameter.
 
-**If `Building`'s constructor signature differs from the tree**, fix the fixture
-to match the real model — never loosen the assertions.
+Verified against `lib/models/building.dart:16-32`: `id`, `code` and `name` are
+required; `latitude` / `longitude` are optional. `BuildingEntry(this.building)`
+takes its argument positionally (`search_entry.dart:32`).
 
 - [ ] **Step 3: Write the minimal implementation**
 
@@ -2321,17 +2471,29 @@ In `lib/screens/home_screen.dart:76`, replace:
                   emptyMessage: phase.isLive ? l.homeNothingRunningNow : null,
 ```
 
-with (the label comes from event configuration — if `eventConfigProvider` has no
-`startTimeLabel`, add one derived from the existing start `DateTime` and formatted
-with `intl`, rather than hard-coding a date in either language):
+`EventConfig` has `startsAt` (`event_config.dart:69`) but **no** label getter, so
+add one first. In `lib/config/event_config.dart`, beside the existing
+`Duration get duration` (line 89):
+
+```dart
+  /// A localised "4:00 pm, Saturday 19 September" for copy that must name the
+  /// start. Lives here, not in a translation, so next year's edition is a config
+  /// change rather than an edit to two ARB files.
+  String startTimeLabel(String localeName) =>
+      DateFormat("h:mm a, EEEE d MMMM", localeName).format(startsAt);
+```
+
+with `import 'package:intl/intl.dart';` at the top of the file. Then replace
+line 76 of `home_screen.dart`:
 
 ```dart
                   // Before the night, an empty section with no message reads as
                   // a bug — to attendees planning ahead and to App Review alike.
                   emptyMessage: phase.isLive
                       ? l.homeNothingRunningNow
-                      : l.homeNothingRunningYet(
-                          ref.watch(eventConfigProvider).startTimeLabel),
+                      : l.homeNothingRunningYet(ref
+                          .watch(eventConfigProvider)
+                          .startTimeLabel(Localizations.localeOf(context).toString())),
 ```
 
 - [ ] **Step 5: Run the test, the gate, and commit**
@@ -2838,7 +3000,8 @@ void main() {
     'info': const InfoScreen(),
     'settings': const SettingsScreen(),
     'wayfinding': const WayfindingScreen(),
-    'pointMe': const PointMeScreen(),
+    // point_me_screen.dart:18 — venueId is REQUIRED.
+    'pointMe': const PointMeScreen(venueId: 'observatory'),
   };
 
   for (final entry in screens.entries) {
@@ -3299,8 +3462,10 @@ Task 1 with:
 ```
 
 **Android: do not mirror this.** `GoogleApiAvailability.getOpenSourceSoftwareLicenseInfo`
-is deprecated, and the Maps SDK for Android no longer carries the same
-legal-notice requirement the iOS SDK documents. Return `null` from the Android
+has been deprecated since Google Play services v11.0, and Google states there is
+no longer a requirement to call it — Play services licences are surfaced by the
+OS at *Settings → Google → Open Source Licenses*. There is nothing for the app to
+render. Return `null` from the Android
 branch and let the Credits button hide itself:
 
 ```kotlin
@@ -3381,8 +3546,12 @@ The channel test above passes even if `info_screen.dart` was never touched. Add 
     ));
     await t.pumpAndSettle();
 
+    // scrollUntilVisible stops as soon as the target enters the viewport, which
+    // can leave it under an edge — quick_access_test.dart:63 hit exactly this.
     await t.scrollUntilVisible(
         find.byKey(const Key('credits-maps-licences')), 200);
+    await t.ensureVisible(find.byKey(const Key('credits-maps-licences')));
+    await t.pumpAndSettle();
     await t.tap(find.byKey(const Key('credits-maps-licences')));
     await t.pumpAndSettle();
 
@@ -3469,6 +3638,19 @@ void main() {
         reason: 'spec §2b is enforced by mapsSdkReadyProvider. Calling the '
             'initialiser directly bypasses the consent check — watch the '
             'provider instead.');
+  });
+
+  test('only embedded_map.dart may construct a GoogleMap', () async {
+    // The consent gate protects the paths we know about. This makes a NEW
+    // Google surface impossible to add without tripping a test — which is the
+    // failure mode that produced the google_nav_screen regression.
+    final offenders = (await _filesContaining('GoogleMap('))
+        .where((p) => !p.endsWith('embedded_map.dart'))
+        .toList();
+
+    expect(offenders, isEmpty,
+        reason: 'route every Google surface through EmbeddedMap so it inherits '
+            'the mapsSdkReadyProvider gate');
   });
 
   test('flutter_map is still in use — do NOT drop the dependency', () async {

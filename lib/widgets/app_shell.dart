@@ -26,7 +26,8 @@ class AppShell extends ConsumerWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  /// Branch order below: home, program, plan, MAP, info. The Map branch's index
+  /// Branch order below: home, program, plan, MAP, info, settings. The Map
+  /// branch's index
   /// is the authoritative "Map tab on-screen" signal for `mapVisibleProvider`.
   static const int mapBranchIndex = 3;
 
@@ -66,6 +67,12 @@ class AppShell extends ConsumerWidget {
       activeIcon: Icons.info_rounded,
       label: l.tabInfo,
       fx: TabFx.orbit,
+    ),
+    LiquidNavItem(
+      icon: Icons.settings_outlined,
+      activeIcon: Icons.settings_rounded,
+      label: l.tabSettings,
+      fx: TabFx.rotateOpen,
     ),
   ];
 

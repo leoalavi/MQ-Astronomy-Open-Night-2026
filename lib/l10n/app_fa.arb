@@ -210,7 +210,7 @@
   "settingsPreviewTitle": "پیش‌نمایش از هر جایی",
   "settingsPreviewBody": "هنوز در پردیس نیستید؟ این را روشن کنید تا نقشه، قطب‌نما و فهرست نزدیک را همان‌گونه که در شب برنامه خواهند بود ببینید. موقعیت نمایش‌داده‌شده شبیه‌سازی‌شده است، نه مکان واقعی شما.",
   "settingsEraseTitle": "حذف داده‌های من",
-  "settingsEraseBody": "مهرهای پاسپورت، علاقه‌مندی‌ها و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند. تنظیمات زبان و پوستهٔ شما حفظ می‌شود.",
+  "settingsEraseBody": "برنامهٔ ذخیره‌شده، مهرهای پاسپورت، علاقه‌مندی‌ها و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند. تنظیمات زبان و پوستهٔ شما حفظ می‌شود.",
   "settingsEraseConfirmTitle": "داده‌های ذخیره‌شده روی این دستگاه حذف شوند؟",
   "settingsEraseConfirmBody": "این کار داده‌هایی را که این برنامه روی این دستگاه ذخیره کرده برای همیشه حذف می‌کند. آنچه پیش‌تر به گوگل ارسال شده قابل بازگرداندن نیست.",
   "settingsEraseConfirmAction": "حذف",
@@ -245,7 +245,7 @@
   "homeFactParkingTitle": "پارکینگ رایگان",
   "homeFactParkingBody": "West 5، West 6 و South 2.",
   "homeFactMetroTitle": "مترو",
-  "homeFactMetroBody": "ایستگاه مترو Macquarie University حدود ۱۰ دقیقه پیاده از حیاط مرکزی فاصله دارد.",
+  "homeFactMetroBody": "خط مترو سیدنی در ایستگاه مترو Macquarie University در پردیس توقف دارد.",
   "programClearSearch": "پاک کردن جست‌وجو",
   "programBookedOnly": "فقط رزروشده",
   "detailNotFoundTitle": "پیدا نشد",
@@ -312,5 +312,12 @@
   "categoryFeaturedPresentations": "ارائه‌های ویژه",
   "bandEarlyEvening": "۴ تا ۶ بعدازظهر",
   "bandEvening": "۶ تا ۸ شب",
-  "bandLateEvening": "۸ تا ۱۰ شب"
+  "bandLateEvening": "۸ تا ۱۰ شب",
+  "tabSettings": "تنظیمات",
+  "creditsDevelopedBy": "ساخته‌شده توسط {first} و {second}",
+  "settingsHaptics": "لرزش لمسی",
+  "settingsHapticsBody": "با هر بار زدن دکمه‌ها و ذخیرهٔ فعالیت‌ها لرزش ملایمی حس می‌کنید. اگر لرزش را نمی‌خواهید، آن را خاموش کنید.",
+  "settingsCreditsDevelopers": "ساخته‌شده توسط",
+  "settingsYourData": "داده‌های شما",
+  "passportStampProgress": "{count} از {total} مهر"
 }

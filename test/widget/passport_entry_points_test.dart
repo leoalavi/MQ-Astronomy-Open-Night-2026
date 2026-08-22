@@ -34,7 +34,8 @@ void main() {
     await t.pumpAndSettle();
     final card = find.byType(PassportHomeCard);
     expect(card, findsOneWidget);
-    expect(find.textContaining('1 / 9'), findsWidgets);
+    // The Home card shows localised progress: "1 of 9 stamps" (EN).
+    expect(find.textContaining('1 of 9'), findsWidgets);
     await t.ensureVisible(card);
     await t.tap(card);
     await t.pumpAndSettle();

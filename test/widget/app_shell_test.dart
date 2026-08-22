@@ -21,12 +21,13 @@ late GoRouter _router;
 Finder _tabIcon(IconData icon) =>
     find.descendant(of: find.byType(LiquidTabBar), matching: find.byIcon(icon));
 
-Widget _app() {
+Widget _app({Locale? locale}) {
   _router = buildRouter();
   return ProviderScope(
     child: MaterialApp.router(
       localizationsDelegates: AonL10n.localizationsDelegates,
       supportedLocales: AonL10n.supportedLocales,
+      locale: locale,
       theme: AonTheme.build(),
       routerConfig: _router,
     ),
@@ -34,7 +35,9 @@ Widget _app() {
 }
 
 void main() {
-  testWidgets('shell shows the 5 tabs via LiquidTabBar', (tester) async {
+  testWidgets('shell shows the 6 primary tabs via LiquidTabBar', (
+    tester,
+  ) async {
     await tester.pumpWidget(_app());
     await tester.pumpAndSettle();
     expect(find.byType(LiquidTabBar), findsOneWidget);
@@ -46,7 +49,43 @@ void main() {
     expect(_tabIcon(Icons.star_outline_rounded), findsOneWidget); // My Night
     expect(_tabIcon(Icons.map_outlined), findsOneWidget); // Map
     expect(_tabIcon(Icons.info_outline_rounded), findsOneWidget); // Info
+    // Settings is now a PRIMARY destination, not a gear icon in a header.
+    expect(_tabIcon(Icons.settings_outlined), findsOneWidget); // Settings
     expect(find.text('Home'), findsWidgets); // the one selected label is shown
+  });
+
+  testWidgets('Settings is reachable as a tab and shows no back button', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await tester.tap(_tabIcon(Icons.settings_outlined));
+    await tester.pumpAndSettle();
+
+    // The Settings screen is up…
+    expect(find.text('Settings'), findsWidgets);
+    // …as a branch root, so there is no back arrow (it is a place, not a task).
+    expect(find.byType(BackButton), findsNothing);
+  });
+
+  testWidgets('Info no longer hides a Settings gear in its header', (
+    tester,
+  ) async {
+    await tester.pumpWidget(_app());
+    await tester.pumpAndSettle();
+
+    await tester.tap(_tabIcon(Icons.info_outline_rounded));
+    await tester.pumpAndSettle();
+
+    // The old top-right gear is gone; Settings has its own tab instead.
+    expect(
+      find.descendant(
+        of: find.byType(AppBar),
+        matching: find.byIcon(Icons.settings_outlined),
+      ),
+      findsNothing,
+    );
   });
 
   testWidgets(
@@ -122,4 +161,33 @@ void main() {
       expect(find.byType(LiquidTabBar), findsOneWidget);
     },
   );
+
+  group('the 6-tab bar survives narrow phones, large text and Persian', () {
+    // Adding Settings took the bar from five tabs to six. On a 320pt phone at
+    // 200% text — and again mirrored in Persian — the labels must ellipsize
+    // rather than overflow, and the bar must still render.
+    for (final locale in const [Locale('en'), Locale('fa')]) {
+      for (final scale in const [1.0, 1.5, 2.0]) {
+        testWidgets('${locale.languageCode} @ ${(scale * 100).round()}% '
+            'text, 320 wide', (tester) async {
+          tester.view.physicalSize = const Size(320, 640);
+          tester.view.devicePixelRatio = 1.0;
+          addTearDown(tester.view.reset);
+
+          await tester.pumpWidget(
+            MediaQuery(
+              data: MediaQueryData(textScaler: TextScaler.linear(scale)),
+              child: _app(locale: locale),
+            ),
+          );
+          await tester.pumpAndSettle();
+
+          expect(find.byType(LiquidTabBar), findsOneWidget);
+          expect(tester.takeException(), isNull,
+              reason: 'tab bar overflowed at '
+                  '${locale.languageCode}/${(scale * 100).round()}%');
+        });
+      }
+    }
+  });
 }

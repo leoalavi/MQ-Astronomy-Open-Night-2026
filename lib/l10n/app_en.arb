@@ -600,34 +600,64 @@
   },
   "@homeNothingRunningYet": {
     "description": "Empty state for 'Happening now' before the event has started. The date comes from event configuration, never from the translation.",
-    "placeholders": { "startTime": { "type": "String" } }
+    "placeholders": {
+      "startTime": {
+        "type": "String"
+      }
+    }
   },
   "mapNavDisclosureBodyPreview": "To show a walking route, the simulated preview location — not your real position — is sent to Google Maps.",
-  "@mapNavDisclosureBodyPreview": { "description": "Disclosure body while preview mode is active, so the copy names what is actually transmitted." },
+  "@mapNavDisclosureBodyPreview": {
+    "description": "Disclosure body while preview mode is active, so the copy names what is actually transmitted."
+  },
   "creditsMapsLicences": "Google Maps licences",
-  "@creditsMapsLicences": { "description": "Credits entry opening the Maps SDK open-source licence text." },
+  "@creditsMapsLicences": {
+    "description": "Credits entry opening the Maps SDK open-source licence text."
+  },
   "previewLocationBadge": "Simulated location",
-  "@previewLocationBadge": { "description": "Persistent badge shown wherever a previewed (simulated) position is visualised, so it is never mistaken for a real fix." },
+  "@previewLocationBadge": {
+    "description": "Persistent badge shown wherever a previewed (simulated) position is visualised, so it is never mistaken for a real fix."
+  },
   "settingsPreviewTitle": "Preview from anywhere",
-  "@settingsPreviewTitle": { "description": "Settings toggle that simulates an on-campus position." },
+  "@settingsPreviewTitle": {
+    "description": "Settings toggle that simulates an on-campus position."
+  },
   "settingsPreviewBody": "Not on campus yet? Turn this on to see the map, compass and nearby list as they'll look on the night. The position shown is simulated, not your real location.",
-  "@settingsPreviewBody": { "description": "Explains that the previewed position is simulated." },
+  "@settingsPreviewBody": {
+    "description": "Explains that the previewed position is simulated."
+  },
   "settingsEraseTitle": "Delete my data",
-  "@settingsEraseTitle": { "description": "Settings control that clears all locally stored app data." },
-  "settingsEraseBody": "Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.",
-  "@settingsEraseBody": { "description": "Explains the scope of the erase control." },
+  "@settingsEraseTitle": {
+    "description": "Settings control that clears all locally stored app data."
+  },
+  "settingsEraseBody": "Clears your saved plan, passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.",
+  "@settingsEraseBody": {
+    "description": "Explains the scope of the erase control."
+  },
   "settingsEraseConfirmTitle": "Delete data stored on this device?",
-  "@settingsEraseConfirmTitle": { "description": "Destructive confirmation dialog title." },
+  "@settingsEraseConfirmTitle": {
+    "description": "Destructive confirmation dialog title."
+  },
   "settingsEraseConfirmBody": "This permanently deletes data stored by this app on this device. It cannot undo anything already sent to Google.",
-  "@settingsEraseConfirmBody": { "description": "Destructive confirmation body. States the scope limit honestly." },
+  "@settingsEraseConfirmBody": {
+    "description": "Destructive confirmation body. States the scope limit honestly."
+  },
   "settingsEraseConfirmAction": "Delete",
-  "@settingsEraseConfirmAction": { "description": "Destructive confirm button." },
+  "@settingsEraseConfirmAction": {
+    "description": "Destructive confirm button."
+  },
   "settingsEraseCancel": "Cancel",
-  "@settingsEraseCancel": { "description": "Dismisses the destructive confirmation." },
+  "@settingsEraseCancel": {
+    "description": "Dismisses the destructive confirmation."
+  },
   "settingsEraseDone": "Deleted.",
-  "@settingsEraseDone": { "description": "Snackbar shown after a successful erase." },
+  "@settingsEraseDone": {
+    "description": "Snackbar shown after a successful erase."
+  },
   "settingsEraseFailed": "Couldn't delete your data. Please try again.",
-  "@settingsEraseFailed": { "description": "Shown when eraseAll returned false. Never claim a deletion that did not happen." },
+  "@settingsEraseFailed": {
+    "description": "Shown when eraseAll returned false. Never claim a deletion that did not happen."
+  },
   "mapDisplayDisclosureTitle": "Load the Google map here?",
   "@mapDisplayDisclosureTitle": {
     "description": "Title of the map-only disclosure shown before wayfinding renders a Google basemap."
@@ -671,7 +701,7 @@
   "homeFactParkingTitle": "Free parking",
   "homeFactParkingBody": "West 5, West 6 and South 2.",
   "homeFactMetroTitle": "Metro",
-  "homeFactMetroBody": "Macquarie University Metro Station is about a 10 minute walk from the Central Courtyard.",
+  "homeFactMetroBody": "Sydney Metro stops at Macquarie University Metro Station, on campus.",
   "programClearSearch": "Clear search",
   "programBookedOnly": "Pre-booked only",
   "detailNotFoundTitle": "Not found",
@@ -694,7 +724,7 @@
   "settingsPrivacyCardTitle": "What this app shares",
   "settingsMapDataAttribution": "Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.",
   "@settingsMapDataAttribution": {
-    "description": "Settings credits: where the map data actually comes from now that the OSM tiles are gone."
+    "description": "Settings credits: where the map data actually comes from now that walking directions use Google."
   },
   "infoFirstAid": "First aid",
   "infoToilets": "Toilets",
@@ -828,7 +858,7 @@
   },
   "creditsMapDataBody": "Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.",
   "@creditsMapDataBody": {
-    "description": "Required OSM attribution."
+    "description": "Map/navigation attribution: the illustrated campus map is Macquarie University; walking directions and their basemap come from Google."
   },
   "eventSourceNote": "Source: {note}",
   "@eventSourceNote": {
@@ -879,5 +909,51 @@
   "bandLateEvening": "8–10pm",
   "@bandLateEvening": {
     "description": "Time filter for the final two hours."
+  },
+  "tabSettings": "Settings",
+  "@tabSettings": {
+    "description": "Bottom-nav label for the Settings tab."
+  },
+  "creditsDevelopedBy": "Developed by {first} and {second}",
+  "@creditsDevelopedBy": {
+    "description": "Developer attribution. {first}/{second} are people’s names — proper nouns, never translated.",
+    "placeholders": {
+      "first": {
+        "type": "String"
+      },
+      "second": {
+        "type": "String"
+      }
+    }
+  },
+  "settingsHaptics": "Haptics",
+  "@settingsHaptics": {
+    "description": "Settings toggle: whether tactile controls vibrate."
+  },
+  "settingsHapticsBody": "A gentle vibration when you tap buttons and save activities. Turn it off if you prefer no vibration.",
+  "@settingsHapticsBody": {
+    "description": "Explains the haptics toggle."
+  },
+  "settingsCreditsDevelopers": "Developed by",
+  "@settingsCreditsDevelopers": {
+    "description": "Credits sub-heading above the two developer names."
+  },
+  "settingsYourData": "Your data",
+  "@settingsYourData": {
+    "description": "Settings section header for the delete-my-data control."
+  },
+  "passportStampProgress": "{count} of {total} stamps",
+  "@passportStampProgress": {
+    "description": "Astronomy Passport progress: how many stamps collected out of the total. count=collected, total=all stations.",
+    "placeholders": {
+      "count": {
+        "type": "int",
+        "format": "decimalPattern"
+      },
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
+    }
   }
 }

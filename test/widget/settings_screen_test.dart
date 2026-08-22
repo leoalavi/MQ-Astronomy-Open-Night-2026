@@ -29,7 +29,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('About Astronomy Open Night'),
+      find.textContaining('Saturday 19 September 2026'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
@@ -37,13 +37,32 @@ void main() {
     expect(find.textContaining('Saturday 19 September 2026'), findsOneWidget);
   });
 
+  testWidgets('developer attribution lives in the Credits section', (
+    tester,
+  ) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    // Credits is the last section; scroll to the developer line at the bottom.
+    await tester.scrollUntilVisible(
+      find.textContaining('Leo Alavi'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.textContaining('Leo Alavi'), findsOneWidget);
+    expect(find.textContaining('Mohammad Raouf Abedini'), findsOneWidget);
+  });
+
   testWidgets('reduce motion is a real, persisted switch', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
-    // Settings is a lazy ListView and the Language section now sits above
-    // Motion, so the switch starts off-screen on a test-sized viewport.
-    final toggle = find.byType(SwitchListTile);
+    // Settings is a lazy ListView with two switches now (Reduce motion +
+    // Haptics); target the Reduce-motion one by its title.
+    final toggle = find.ancestor(
+      of: find.text('Reduce motion'),
+      matching: find.byType(SwitchListTile),
+    );
     await tester.scrollUntilVisible(toggle, 200);
     await tester.ensureVisible(toggle);
     await tester.pumpAndSettle();
@@ -54,6 +73,30 @@ void main() {
 
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getBool('settings.reduceMotion'), isTrue);
+  });
+
+  testWidgets('haptics is a real, persisted switch (default on)', (
+    tester,
+  ) async {
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+
+    final toggle = find.ancestor(
+      of: find.text('Haptics'),
+      matching: find.byType(SwitchListTile),
+    );
+    await tester.scrollUntilVisible(toggle, 200);
+    await tester.ensureVisible(toggle);
+    await tester.pumpAndSettle();
+    expect(toggle, findsOneWidget);
+    // Defaults on, so it starts true.
+    expect(tester.widget<SwitchListTile>(toggle).value, isTrue);
+
+    await tester.tap(toggle);
+    await tester.pumpAndSettle();
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('settings.hapticsEnabled'), isFalse);
   });
 
   testWidgets('reduceMotionProvider reflects the stored value', (tester) async {

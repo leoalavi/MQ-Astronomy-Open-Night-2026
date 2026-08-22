@@ -43,9 +43,9 @@ void main() {
       await tester.pumpAndSettle();
     }
 
-    // The CRICOS line is the LAST text in Home's attribution card (its true
-    // bottom edge), so it is the right occlusion anchor.
-    final last = find.textContaining('CRICOS');
+    // The developer line is the LAST text in Home's footer (its true bottom
+    // edge), so it is the right occlusion anchor.
+    final last = find.textContaining('Leo Alavi');
     expect(last, findsOneWidget);
     final lastBottom = tester.getRect(last).bottom;
     final barTop = tester.getRect(find.byType(LiquidTabBar)).top;

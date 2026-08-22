@@ -1360,7 +1360,7 @@ abstract class AonL10n {
   /// Explains the scope of the erase control.
   ///
   /// In en, this message translates to:
-  /// **'Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.'**
+  /// **'Clears your saved plan, passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.'**
   String get settingsEraseBody;
 
   /// Destructive confirmation dialog title.
@@ -1570,7 +1570,7 @@ abstract class AonL10n {
   /// No description provided for @homeFactMetroBody.
   ///
   /// In en, this message translates to:
-  /// **'Macquarie University Metro Station is about a 10 minute walk from the Central Courtyard.'**
+  /// **'Sydney Metro stops at Macquarie University Metro Station, on campus.'**
   String get homeFactMetroBody;
 
   /// No description provided for @programClearSearch.
@@ -1651,7 +1651,7 @@ abstract class AonL10n {
   /// **'What this app shares'**
   String get settingsPrivacyCardTitle;
 
-  /// Settings credits: where the map data actually comes from now that the OSM tiles are gone.
+  /// Settings credits: where the map data actually comes from now that walking directions use Google.
   ///
   /// In en, this message translates to:
   /// **'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.'**
@@ -1909,7 +1909,7 @@ abstract class AonL10n {
   /// **'فارسی'**
   String get settingsLanguagePersian;
 
-  /// Required OSM attribution.
+  /// Map/navigation attribution: the illustrated campus map is Macquarie University; walking directions and their basemap come from Google.
   ///
   /// In en, this message translates to:
   /// **'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.'**
@@ -1974,6 +1974,48 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'8–10pm'**
   String get bandLateEvening;
+
+  /// Bottom-nav label for the Settings tab.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get tabSettings;
+
+  /// Developer attribution. {first}/{second} are people’s names — proper nouns, never translated.
+  ///
+  /// In en, this message translates to:
+  /// **'Developed by {first} and {second}'**
+  String creditsDevelopedBy(String first, String second);
+
+  /// Settings toggle: whether tactile controls vibrate.
+  ///
+  /// In en, this message translates to:
+  /// **'Haptics'**
+  String get settingsHaptics;
+
+  /// Explains the haptics toggle.
+  ///
+  /// In en, this message translates to:
+  /// **'A gentle vibration when you tap buttons and save activities. Turn it off if you prefer no vibration.'**
+  String get settingsHapticsBody;
+
+  /// Credits sub-heading above the two developer names.
+  ///
+  /// In en, this message translates to:
+  /// **'Developed by'**
+  String get settingsCreditsDevelopers;
+
+  /// Settings section header for the delete-my-data control.
+  ///
+  /// In en, this message translates to:
+  /// **'Your data'**
+  String get settingsYourData;
+
+  /// Astronomy Passport progress: how many stamps collected out of the total. count=collected, total=all stations.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} of {total} stamps'**
+  String passportStampProgress(int count, int total);
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

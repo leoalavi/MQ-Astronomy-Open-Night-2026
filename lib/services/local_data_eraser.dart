@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/services/favorites_store.dart';
+import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/services/passport_store.dart';
 
@@ -36,6 +37,9 @@ class SharedPrefsLocalDataEraser implements LocalDataEraser {
         SharedPrefsFavoritesStore.buildingsKey,
         SharedPrefsFavoritesStore.venuesKeyFor(eventId),
         SharedPrefsMapsConsentStore.storageKey,
+        // The saved "My Night" plan is the visitor's data too — "delete my
+        // data" must not leave it behind.
+        SavedEventsStorage.keyFor(eventId),
       ];
 
   /// The control says "delete my data", not "delete this event's data", so

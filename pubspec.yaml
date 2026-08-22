@@ -22,8 +22,10 @@ dependencies:
   # Declarative routing (deep-linkable screens, typed route names).
   go_router: ^17.3.0
 
-  # Map rendering. flutter_map is deliberately chosen over Google Maps:
-  # it needs NO API key, which keeps this repository free of secrets.
+  # Illustrated campus basemap + on-map markers/projection. flutter_map renders
+  # the bundled `aon_event_map.png` overlay (CrsSimple) and the location/route
+  # layers — it is NOT used for OpenStreetMap tiles (those were removed). Google
+  # Maps (below) powers turn-by-turn walking navigation only.
   flutter_map: ^8.3.0
   latlong2: ^0.9.1
 

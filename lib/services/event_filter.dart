@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:aon2026/models/event.dart';
+import 'package:aon2026/data/venues_data.dart';
 
 /// A time band used by the programme's time filter.
 ///
@@ -167,10 +168,19 @@ abstract final class EventFilterService {
   }
 
   static bool _matchesQuery(AonEvent event, String q) {
+    // Venue is resolved here so a visitor can search the official venue name
+    // ("Observatory", "Macquarie Theatre") — the name is data the event only
+    // references by id, so without this lookup those searches found nothing.
+    final venue = VenuesData.byId(event.venueId);
     return event.title.toLowerCase().contains(q) ||
         event.description.toLowerCase().contains(q) ||
         (event.presenter?.toLowerCase().contains(q) ?? false) ||
         (event.room?.toLowerCase().contains(q) ?? false) ||
+        (venue?.name.toLowerCase().contains(q) ?? false) ||
+        (venue?.shortName?.toLowerCase().contains(q) ?? false) ||
+        (venue?.building?.toLowerCase().contains(q) ?? false) ||
+        // The programme's own section names ("keynote", "short talk", …).
+        event.category.label.toLowerCase().contains(q) ||
         (event.mapReference?.toLowerCase() == q) ||
         event.tags.any((t) => t.toLowerCase().contains(q));
   }

@@ -755,7 +755,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get settingsEraseBody =>
-      'مهرهای پاسپورت، علاقه‌مندی‌ها و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند. تنظیمات زبان و پوستهٔ شما حفظ می‌شود.';
+      'برنامهٔ ذخیره‌شده، مهرهای پاسپورت، علاقه‌مندی‌ها و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند. تنظیمات زبان و پوستهٔ شما حفظ می‌شود.';
 
   @override
   String get settingsEraseConfirmTitle =>
@@ -871,7 +871,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get homeFactMetroBody =>
-      'ایستگاه مترو Macquarie University حدود ۱۰ دقیقه پیاده از حیاط مرکزی فاصله دارد.';
+      'خط مترو سیدنی در ایستگاه مترو Macquarie University در پردیس توقف دارد.';
 
   @override
   String get programClearSearch => 'پاک کردن جست‌وجو';
@@ -1103,4 +1103,37 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get bandLateEvening => '۸ تا ۱۰ شب';
+
+  @override
+  String get tabSettings => 'تنظیمات';
+
+  @override
+  String creditsDevelopedBy(String first, String second) {
+    return 'ساخته‌شده توسط $first و $second';
+  }
+
+  @override
+  String get settingsHaptics => 'لرزش لمسی';
+
+  @override
+  String get settingsHapticsBody =>
+      'با هر بار زدن دکمه‌ها و ذخیرهٔ فعالیت‌ها لرزش ملایمی حس می‌کنید. اگر لرزش را نمی‌خواهید، آن را خاموش کنید.';
+
+  @override
+  String get settingsCreditsDevelopers => 'ساخته‌شده توسط';
+
+  @override
+  String get settingsYourData => 'داده‌های شما';
+
+  @override
+  String passportStampProgress(int count, int total) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return '$countString از $totalString مهر';
+  }
 }

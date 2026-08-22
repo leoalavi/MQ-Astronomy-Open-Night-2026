@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/data/events_data.dart';
+import 'package:aon2026/models/event.dart';
 import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/passport_facts_data.dart';
 import 'package:aon2026/data/routes_data.dart';
@@ -291,6 +292,67 @@ void main() {
         expect(md, contains(ref),
             reason: '$ref not documented in docs/passport-fact-sources.md');
       }
+    });
+  });
+
+  group('programme size and provenance (PDF golden)', () {
+    test('the programme has exactly 36 entries, in the expected shape', () {
+      // Transcribed verbatim from the official A3 programme PDF. If this count
+      // changes, it must be a deliberate re-transcription, not a silent drift.
+      expect(EventsData.all.length, 36);
+
+      final byCategory = <EventCategory, int>{};
+      for (final e in EventsData.all) {
+        byCategory[e.category] = (byCategory[e.category] ?? 0) + 1;
+      }
+      expect(byCategory[EventCategory.activity], 20);
+      expect(byCategory[EventCategory.keynote], 1);
+      expect(byCategory[EventCategory.featuredPresentation], 3);
+      expect(byCategory[EventCategory.shortTalk], 12);
+    });
+
+    test('every entry records where it came from', () {
+      // sourceNote is the provenance link back to the PDF/email — no entry may
+      // exist without one, which is the guard against invented event facts.
+      final orphans = EventsData.all
+          .where((e) => e.sourceNote == null || e.sourceNote!.trim().isEmpty)
+          .map((e) => e.id)
+          .toList();
+      expect(orphans, isEmpty,
+          reason: 'these entries have no source provenance: $orphans');
+    });
+  });
+
+  group('venue assignments match the official PDF/email list', () {
+    // Liz's email + the A3 programme fix each activity to a building. Pinned so
+    // a data edit can never quietly move an activity to the wrong venue.
+    test('the enumerated activities sit at their official venues', () {
+      const expected = <String, String>{
+        'Physics magic show': 'macquarie-theatre',
+        'Chemistry magic show': 'mason-theatre',
+        'Exhibition Hall': '14-sir-christopher-ondaatje-avenue',
+        'Kids\u2019 space': '1-central-courtyard',
+        'Planetariums': 'sport-and-aquatic-centre',
+        'Telescope Park': 'astronomical-observatory',
+        'Laser Challenge': '11-wallys-walk',
+        'Capture the cosmos': '17-wallys-walk',
+      };
+      for (final entry in expected.entries) {
+        final matches =
+            EventsData.all.where((e) => e.title == entry.key).toList();
+        expect(matches, isNotEmpty, reason: 'missing activity "${entry.key}"');
+        for (final e in matches) {
+          expect(e.venueId, entry.value,
+              reason: '"${entry.key}" must be at ${entry.value}');
+        }
+      }
+    });
+
+    test('the keynote is Professor Fred Watson AM at Macquarie Theatre', () {
+      final keynote =
+          EventsData.all.firstWhere((e) => e.category == EventCategory.keynote);
+      expect(keynote.presenter, 'Professor Fred Watson AM');
+      expect(keynote.venueId, 'macquarie-theatre');
     });
   });
 }

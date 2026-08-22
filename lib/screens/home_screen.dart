@@ -54,6 +54,10 @@ class HomeScreen extends ConsumerWidget {
           SliverToBoxAdapter(
             child: _Hero(now: now, phase: phase),
           ),
+          // The hero image credit lives here — immediately under the image it
+          // describes — and nowhere else on Home. (A dedicated full credits
+          // list also carries it, on the Info screen.)
+          SliverToBoxAdapter(child: _HeroCredit(theme: theme)),
           SliverPadding(
             padding: EdgeInsets.fromLTRB(
               AonSpacing.space4,
@@ -447,18 +451,48 @@ class _FactRow extends StatelessWidget {
   }
 }
 
-class _Attribution extends ConsumerWidget {
-  const _Attribution({required this.theme});
+/// Small caption directly under the hero image — the image credit's single
+/// canonical placement on Home.
+class _HeroCredit extends ConsumerWidget {
+  const _HeroCredit({required this.theme});
 
   final ThemeData theme;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AonL10n.of(context);
-    // The credit text has exactly one home: EventConfig.heroCredit. It used to
-    // be duplicated as a literal here too, which is how the Info screen and the
-    // Home screen end up crediting the photographer differently after an edit.
     final config = ref.watch(eventConfigProvider);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AonSpacing.space4,
+        AonSpacing.space2,
+        AonSpacing.space4,
+        0,
+      ),
+      child: Text(
+        // e.g. "Image credit: <hero credit from config>"
+        '${l.homeImageCredit}: ${config.heroCredit}',
+        style: theme.textTheme.labelSmall?.copyWith(
+          color: context.aon.contentTertiary,
+        ),
+      ),
+    );
+  }
+}
+
+/// Understated Home footer: who built the app, plus the institutional line.
+///
+/// Deliberately NOT the hero image credit (that lives under the hero) and NOT
+/// framework/backend credits — the primary visitor journey stays about the
+/// event. Just a quiet, professional "made by" line.
+class _Attribution extends StatelessWidget {
+  const _Attribution({required this.theme});
+
+  final ThemeData theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     return Container(
       padding: const EdgeInsets.all(AonSpacing.space4),
       decoration: BoxDecoration(
@@ -466,31 +500,17 @@ class _Attribution extends ConsumerWidget {
         borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
         border: Border.all(color: context.aon.border),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            l.homeImageCredit,
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: context.aon.contentTertiary,
-            ),
-          ),
-          const SizedBox(height: AonSpacing.space1),
-          Text(
-            config.heroCredit,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: context.aon.contentSecondary,
-            ),
-          ),
-          const SizedBox(height: AonSpacing.space3),
-          Text(
-            '${EventInfo.faculty}, ${EventInfo.host}. '
-            '${EventInfo.cricosProvider}.',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: context.aon.contentTertiary,
-            ),
-          ),
-        ],
+      child: Text(
+        // Proper nouns isolated so they stay LTR inside Persian text. This is
+        // the ONLY credit block on Home; the full formal credits live at the
+        // bottom of Settings, and the hero image credit sits under the hero.
+        l.creditsDevelopedBy(
+          Bidi.isolate(EventInfo.developerPrimary),
+          Bidi.isolate(EventInfo.developerSecondary),
+        ),
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: context.aon.contentSecondary,
+        ),
       ),
     );
   }

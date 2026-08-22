@@ -119,6 +119,19 @@ GoRouter buildRouter() {
               ),
             ],
           ),
+          // Settings is a primary destination, not a gear icon buried in a
+          // header: Info answers "about the event", Settings answers "how the
+          // app behaves", and ordinary visitors must be able to tell them apart
+          // at a glance. Appended last so Map stays branch index 3 (the GPS
+          // lifecycle in AppShell keys off that index).
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: Routes.settings,
+                builder: (context, state) => const SettingsScreen(),
+              ),
+            ],
+          ),
         ],
       ),
 
@@ -136,11 +149,6 @@ GoRouter buildRouter() {
         builder: (context, state) => WayfindingScreen(
           initialDestinationId: state.uri.queryParameters['to'],
         ),
-      ),
-      GoRoute(
-        parentNavigatorKey: rootNavigatorKey,
-        path: Routes.settings,
-        builder: (context, state) => const SettingsScreen(),
       ),
       GoRoute(
         parentNavigatorKey: rootNavigatorKey,

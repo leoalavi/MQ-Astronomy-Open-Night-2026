@@ -13,6 +13,7 @@ import 'package:aon2026/screens/settings_screen.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/passport_store.dart';
+import 'package:aon2026/services/saved_events.dart';
 
 const _eventId = 'aon2026';
 
@@ -37,6 +38,7 @@ void main() {
       SharedPrefsFavoritesStore.buildingsKey: <String>['building:E7A'],
       SharedPrefsFavoritesStore.venuesKeyFor(_eventId): <String>['venue:obs'],
       SharedPrefsMapsConsentStore.storageKey: 'accepted',
+      SavedEventsStorage.keyFor(_eventId): <String>['keynote-artemis'],
     });
     final prefs = SharedPreferencesAsync();
     final eraser = SharedPrefsLocalDataEraser(prefs: prefs, eventId: _eventId);
@@ -50,6 +52,9 @@ void main() {
             .getStringList(SharedPrefsFavoritesStore.venuesKeyFor(_eventId)),
         isNull);
     expect(await prefs.getString(SharedPrefsMapsConsentStore.storageKey), isNull);
+    // The saved "My Night" plan is user data and must be gone too.
+    expect(await prefs.getStringList(SavedEventsStorage.keyFor(_eventId)), isNull,
+        reason: 'the saved plan survived "delete my data"');
   });
 
   test('preferences survive — they are settings, not user data', () async {
@@ -102,6 +107,9 @@ void main() {
 
   testWidgets('the real Settings control clears the SESSION, not just storage',
       (t) async {
+    // saved_events uses the legacy sync SharedPreferences API; give it a mock
+    // so clearing the saved plan during erase does not throw.
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     SharedPreferencesAsyncPlatform.instance =
         InMemorySharedPreferencesAsync.withData({
       SharedPrefsPassportStore.storageKey: <String>['obs'],
@@ -132,6 +140,7 @@ void main() {
   });
 
   testWidgets('a failed erase reports failure, never success', (t) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
     final c = ProviderContainer(overrides: [
       // The fail-closed default: a forgotten override must be visible.
       localDataEraserProvider.overrideWithValue(const NoopLocalDataEraser()),

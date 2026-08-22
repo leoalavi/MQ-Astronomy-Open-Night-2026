@@ -149,8 +149,7 @@ abstract final class VenuesData {
       mapReference: 'G',
       aliases: ['Telescope Park', 'Observatory', 'Telescopes'],
       notes:
-          'At the northern end of campus, about a 10 minute walk from the '
-          'Central Courtyard. Bring a jacket — it is open ground.',
+          'At the northern end of campus. Bring a jacket — it is open ground.',
     ),
     Venue(
       id: '11-wallys-walk',

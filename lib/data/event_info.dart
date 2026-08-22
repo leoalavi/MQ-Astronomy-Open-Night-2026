@@ -41,4 +41,13 @@ abstract final class EventInfo {
 
   static const String cricosProvider = 'CRICOS Provider 00002J';
   static const String materialReference = 'FSE26193';
+
+  // ── Attribution ──
+  //
+  // The two people who built the app. Single source of truth; rendered in the
+  // Info credits and as a subtle Home footer line. Exact spelling — do not
+  // alter. Kept as separate constants so the localised "Developed by A and B"
+  // join adapts per language while the proper nouns never change.
+  static const String developerPrimary = 'Leo Alavi';
+  static const String developerSecondary = 'Mohammad Raouf Abedini';
 }

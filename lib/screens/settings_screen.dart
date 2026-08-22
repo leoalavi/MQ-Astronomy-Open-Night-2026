@@ -6,9 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/app/text_scale.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/app_settings.dart';
+import 'package:aon2026/services/saved_events.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/local_data_eraser.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
@@ -42,6 +45,10 @@ class SettingsScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(title: Text(l.settingsTitle)),
+      // Each section = one heading + its card(s). SectionHeader supplies the
+      // 24pt gap *before* a heading; `_gap` supplies the 12pt gap *between*
+      // stacked cards inside a section. Without it the zero-margin cards fuse
+      // into one block (the "compressed" look this restructure fixes).
       body: ListView(
         padding: const EdgeInsets.fromLTRB(
           AonSpacing.space4,
@@ -72,23 +79,31 @@ class SettingsScreen extends ConsumerWidget {
             data: (s) => _LanguageCard(selected: s.localeCode),
           ),
 
-          // ── Motion ──
+          // ── Motion & feedback ──
           SectionHeader(title: l.settingsMotion, icon: Icons.animation_rounded),
           settings.when(
             loading: () => const _SettingSkeleton(),
             error: (_, _) => const _SettingUnavailable(),
-            data: (s) => Card(
-              child: SwitchListTile.adaptive(
-                value: s.reduceMotion,
-                onChanged: (v) =>
-                    ref.read(appSettingsProvider.notifier).setReduceMotion(v),
-                title: Text(l.settingsReduceMotion),
-                subtitle: Text(l.settingsReduceMotionBody),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: AonSpacing.space4,
-                  vertical: AonSpacing.space2,
-                ),
-              ),
+            data: (s) => _SwitchCard(
+              value: s.reduceMotion,
+              onChanged: (v) =>
+                  ref.read(appSettingsProvider.notifier).setReduceMotion(v),
+              icon: Icons.motion_photos_off_outlined,
+              title: l.settingsReduceMotion,
+              body: l.settingsReduceMotionBody,
+            ),
+          ),
+          _gap,
+          settings.when(
+            loading: () => const _SettingSkeleton(),
+            error: (_, _) => const _SettingUnavailable(),
+            data: (s) => _SwitchCard(
+              value: s.hapticsEnabled,
+              onChanged: (v) =>
+                  ref.read(appSettingsProvider.notifier).setHapticsEnabled(v),
+              icon: Icons.vibration_rounded,
+              title: l.settingsHaptics,
+              body: l.settingsHapticsBody,
             ),
           ),
 
@@ -103,13 +118,6 @@ class SettingsScreen extends ConsumerWidget {
             body: l.settingsTextSizeBody((kMaxTextScale * 100).round()),
           ),
 
-          // ── About ──
-          SectionHeader(
-            title: l.settingsAbout(config.name),
-            icon: Icons.info_outline_rounded,
-          ),
-          _AboutCard(config: config),
-
           // ── Privacy ──
           SectionHeader(
             title: l.settingsPrivacy,
@@ -121,28 +129,82 @@ class SettingsScreen extends ConsumerWidget {
             // Every clause here is a fact about this build, not marketing.
             body: l.settingsPrivacyBody,
           ),
-          // M4: the one exception to "nothing leaves your phone" — surfaced
+          _gap,
+          // The one exception to "nothing leaves your phone" — surfaced
           // honestly, with a revoke control once consent has been given.
           const _GoogleMapsPrivacyCard(),
-          const _DeleteMyDataCard(),
-          const _PreviewLocationCard(),
 
-          // ── Event-night preview ──
+          // ── Your data ──
+          SectionHeader(
+            title: l.settingsYourData,
+            icon: Icons.delete_outline_rounded,
+          ),
+          const _DeleteMyDataCard(),
+
+          // ── Preview (organiser tools) ──
           //
-          // Deliberately the LAST thing on the screen. It is a review tool for
-          // the organisers before the night, not something a visitor needs
-          // during it — it used to sit in the app bar of the visitor's main
-          // flow, which was the wrong place entirely.
+          // Both are "see it before the night" simulations: one fakes your
+          // position, the other the clock. Grouped, and kept low on the page —
+          // they are review tools, not something a visitor needs on the night.
           SectionHeader(title: l.previewSection, icon: Icons.science_outlined),
+          const _PreviewLocationCard(),
+          _gap,
           const EventTimePreviewCard(),
 
-          // ── Credits ──
+          // ── About ──
+          SectionHeader(
+            title: l.settingsAbout(config.name),
+            icon: Icons.info_outline_rounded,
+          ),
+          _AboutCard(config: config),
+
+          // ── Credits (always last) ──
           SectionHeader(
             title: l.settingsCredits,
             icon: Icons.copyright_rounded,
           ),
           _CreditsCard(config: config),
         ],
+      ),
+    );
+  }
+}
+
+/// Consistent 12pt gap between stacked cards inside a single section.
+const _gap = SizedBox(height: AonSpacing.space3);
+
+/// A settings row that is a real toggle, in a card with a leading icon.
+///
+/// One widget for every on/off setting (Reduce motion, Haptics) so they are
+/// visually identical and equally spaced.
+class _SwitchCard extends StatelessWidget {
+  const _SwitchCard({
+    required this.value,
+    required this.onChanged,
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final bool value;
+  final ValueChanged<bool> onChanged;
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: SwitchListTile.adaptive(
+        value: value,
+        onChanged: onChanged,
+        secondary: Icon(icon),
+        title: Text(title),
+        subtitle: Text(body),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AonSpacing.space4,
+          vertical: AonSpacing.space2,
+        ),
       ),
     );
   }
@@ -395,6 +457,7 @@ class _DeleteMyDataCard extends ConsumerWidget {
     ref.read(passportProvider.notifier).reset();
     ref.read(favoritesProvider.notifier).clearAll();
     ref.read(mapsConsentProvider.notifier).revoke();
+    await ref.read(savedEventsProvider.notifier).clear();
     await ref.read(favoritesProvider.notifier).flush();
     await ref.read(passportProvider.notifier).flush();
 
@@ -543,6 +606,21 @@ class _CreditsCard extends StatelessWidget {
             Text(l.settingsCreditsMapData, style: theme.textTheme.titleSmall),
             const SizedBox(height: 2),
             Text(l.settingsMapDataAttribution, style: body),
+            const Divider(height: AonSpacing.space6),
+            Text(l.settingsCreditsDevelopers, style: theme.textTheme.titleSmall),
+            const SizedBox(height: 2),
+            // Names are proper nouns — isolate them so they stay LTR in Persian.
+            Text(
+              l.creditsDevelopedBy(
+                Bidi.isolate(EventInfo.developerPrimary),
+                Bidi.isolate(EventInfo.developerSecondary),
+              ),
+              style: body,
+            ),
+            // Google Maps SDK open-source licences — a legal requirement of
+            // using the SDK. Static bundled text; reading it never contacts
+            // Google, so it is safe to surface before consent.
+            const _MapsLicenceLink(),
           ],
         ),
       ),
@@ -625,3 +703,42 @@ class _SettingUnavailable extends StatelessWidget {
     );
   }
 }
+
+class _MapsLicenceLink extends ConsumerWidget {
+  const _MapsLicenceLink();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    return FutureBuilder<String?>(
+      future: ref.read(mapsSdkInitializerProvider).openSourceLicenseInfo(),
+      builder: (context, snapshot) {
+        final text = snapshot.data;
+        if (text == null || text.isEmpty) return const SizedBox.shrink();
+        return Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton(
+            key: const Key('credits-maps-licences'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: Text(l.creditsMapsLicences)),
+                  body: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AonSpacing.space4),
+                    child: SelectableText(
+                      text,
+                      key: const Key('maps-licence-text'),
+                      style: const TextStyle(fontFamily: 'monospace'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            child: Text(l.creditsMapsLicences),
+          ),
+        );
+      },
+    );
+  }
+}
+

@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
+import 'package:aon2026/utils/haptics.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/config/event_config.dart';
@@ -143,6 +144,10 @@ class _AonAppState extends ConsumerState<AonApp> {
     // OS asks for — the app never re-enables animations the platform has
     // turned off.
     final reduceMotion = ref.watch(reduceMotionProvider);
+    // Mirror the haptics preference into the AonHaptics master switch (same
+    // static-sync pattern as TimeFormat.locale below), so every tactile
+    // control across the app — including shared ones — respects it.
+    AonHaptics.globalEnabled = ref.watch(hapticsEnabledProvider);
 
     return MaterialApp.router(
       title: config.name,

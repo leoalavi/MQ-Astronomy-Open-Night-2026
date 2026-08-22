@@ -754,7 +754,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get settingsEraseBody =>
-      'Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.';
+      'Clears your saved plan, passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.';
 
   @override
   String get settingsEraseConfirmTitle => 'Delete data stored on this device?';
@@ -868,7 +868,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get homeFactMetroBody =>
-      'Macquarie University Metro Station is about a 10 minute walk from the Central Courtyard.';
+      'Sydney Metro stops at Macquarie University Metro Station, on campus.';
 
   @override
   String get programClearSearch => 'Clear search';
@@ -1098,4 +1098,37 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get bandLateEvening => '8–10pm';
+
+  @override
+  String get tabSettings => 'Settings';
+
+  @override
+  String creditsDevelopedBy(String first, String second) {
+    return 'Developed by $first and $second';
+  }
+
+  @override
+  String get settingsHaptics => 'Haptics';
+
+  @override
+  String get settingsHapticsBody =>
+      'A gentle vibration when you tap buttons and save activities. Turn it off if you prefer no vibration.';
+
+  @override
+  String get settingsCreditsDevelopers => 'Developed by';
+
+  @override
+  String get settingsYourData => 'Your data';
+
+  @override
+  String passportStampProgress(int count, int total) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return '$countString of $totalString stamps';
+  }
 }

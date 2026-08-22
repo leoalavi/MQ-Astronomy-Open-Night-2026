@@ -211,19 +211,31 @@ void main() {
   });
 
   group('attribution', () {
-    testWidgets('credits the hero image on the Home screen', (tester) async {
+    testWidgets('credits the hero image exactly once, under the hero', (
+      tester,
+    ) async {
       seedSaved([]);
       await tester.pumpWidget(harness(EventInfo.at(19, 0)));
       await tester.pumpAndSettle();
 
-      await scrollTo(
-        tester,
-        find.text('A Deep Triangulum Galaxy — Aleix Roig, 2026'),
-      );
-      expect(
-        find.text('A Deep Triangulum Galaxy — Aleix Roig, 2026'),
-        findsOneWidget,
-      );
+      // The credit is a caption directly under the hero image now, so it is
+      // prefixed ("Image credit: …") rather than a bare string — and it must
+      // appear exactly once on Home (no bottom-of-page duplicate).
+      final credit = find.textContaining('Aleix Roig, 2026');
+      await scrollTo(tester, credit);
+      expect(credit, findsOneWidget);
+    });
+
+    testWidgets('the Home footer credits the two developers', (tester) async {
+      seedSaved([]);
+      await tester.pumpWidget(harness(EventInfo.at(19, 0)));
+      await tester.pumpAndSettle();
+
+      // Names are proper nouns and must appear verbatim, spelling intact.
+      final footer = find.textContaining('Leo Alavi');
+      await scrollTo(tester, footer);
+      expect(footer, findsOneWidget);
+      expect(find.textContaining('Mohammad Raouf Abedini'), findsOneWidget);
     });
   });
 

@@ -23,6 +23,7 @@ class AppSettings {
   const AppSettings({
     required this.themeMode,
     required this.reduceMotion,
+    this.hapticsEnabled = true,
     this.localeCode,
   });
 
@@ -33,18 +34,25 @@ class AppSettings {
   /// the OS allows.
   final bool reduceMotion;
 
+  /// Whether tactile controls fire a small vibration. On by default; some
+  /// visitors (and some phones) are better without it. Brought over from MQ
+  /// Journey's accessibility settings — see [AonHaptics].
+  final bool hapticsEnabled;
+
   /// `null` follows the device language.
   final String? localeCode;
 
   AppSettings copyWith({
     AppThemeMode? themeMode,
     bool? reduceMotion,
+    bool? hapticsEnabled,
     String? localeCode,
     bool clearLocale = false,
   }) {
     return AppSettings(
       themeMode: themeMode ?? this.themeMode,
       reduceMotion: reduceMotion ?? this.reduceMotion,
+      hapticsEnabled: hapticsEnabled ?? this.hapticsEnabled,
       localeCode: clearLocale ? null : (localeCode ?? this.localeCode),
     );
   }
@@ -53,6 +61,7 @@ class AppSettings {
 class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
   static const _kThemeMode = 'settings.themeMode';
   static const _kReduceMotion = 'settings.reduceMotion';
+  static const _kHaptics = 'settings.hapticsEnabled';
   static const _kLocale = 'settings.locale';
 
   @override
@@ -67,6 +76,7 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
           ? AppThemeMode.fromName(prefs.getString(_kThemeMode))
           : defaultMode,
       reduceMotion: prefs.getBool(_kReduceMotion) ?? false,
+      hapticsEnabled: prefs.getBool(_kHaptics) ?? true,
       localeCode: prefs.getString(_kLocale),
     );
   }
@@ -82,6 +92,13 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
         AsyncData((state.value ?? _fallback).copyWith(reduceMotion: value));
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kReduceMotion, value);
+  }
+
+  Future<void> setHapticsEnabled(bool value) async {
+    state =
+        AsyncData((state.value ?? _fallback).copyWith(hapticsEnabled: value));
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_kHaptics, value);
   }
 
   /// `null` restores "follow device language".
@@ -120,6 +137,11 @@ final themeModeProvider = Provider<AppThemeMode>((ref) {
 /// Whether animations should be reduced — the app setting OR the OS setting.
 final reduceMotionProvider = Provider<bool>(
   (ref) => ref.watch(appSettingsProvider).value?.reduceMotion ?? false,
+);
+
+/// Whether tactile controls should vibrate. Defaults on while settings load.
+final hapticsEnabledProvider = Provider<bool>(
+  (ref) => ref.watch(appSettingsProvider).value?.hapticsEnabled ?? true,
 );
 
 /// The app's locale override, or null to follow the device.

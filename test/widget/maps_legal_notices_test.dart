@@ -3,7 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
-import 'package:aon2026/screens/info_screen.dart';
+import 'package:aon2026/screens/settings_screen.dart';
 import 'package:aon2026/services/maps_sdk_initializer.dart';
 
 class _LicenceInitializer implements MapsSdkInitializer {
@@ -22,7 +22,7 @@ Widget _host(ProviderContainer c) => UncontrolledProviderScope(
       child: const MaterialApp(
         localizationsDelegates: AonL10n.localizationsDelegates,
         supportedLocales: AonL10n.supportedLocales,
-        home: InfoScreen(),
+        home: SettingsScreen(),
       ),
     );
 

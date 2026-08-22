@@ -1,7 +1,8 @@
 # Public store release program — design
 
 **Date:** 2026-08-22
-**Status:** proposed (awaiting user review)
+**Status:** proposed — revision 2 (awaiting user review)
+**Revisions:** r1 `f9b5747`; r2 folds in design review 2026-08-22 (§5a Play App Signing + Routes restriction model, D1/§8 redistribution contradiction, Terms of Use dependency, revocation invariant, manifest ownership, attribution split, three release gates)
 **Baseline:** `main@ea59d90`
 **Target:** App Store + Google Play, public download, live before **Sat 19 Sep 2026**
 
@@ -31,14 +32,14 @@ Recorded so the plan does not relitigate them.
 
 | # | Decision | Made by | Consequence |
 |---|---|---|---|
-| D1 | Ships under **Macquarie University's own Apple Developer Program organisation account** | user | Resolves 5.2.1 IP, 4.1(c) brand, and the standing redistribution IOU on `buildings.json` + the vendored AON artwork. Publishing **is** the redistribution event that IOU gated. |
+| D1 | Ships under **Macquarie University's own Apple Developer Program organisation account** | user | Resolves publisher identity and brand provenance under 5.2.1 / 4.1(c). It does **not** by itself grant redistribution rights over `buildings.json` or the vendored AON artwork — written MQ approval remains a release blocker under §8.6. Publishing **is** the redistribution event the standing IOU gated. |
 | D2 | **Both stores, public, before 19 Sep 2026** | user | ~3 weeks. Schedule risk is review latency plus one rejection cycle, not engineering. |
 | D3 | **Bundle ID stays `au.edu.mq.astronomy.aon2026`** | user, after the 4.3 risk was raised | Accepted trade-off — see §7. |
 | D4 | **Google walking nav ships live** | user | GCP keys become a hard release blocker for the whole app, not one feature. |
 | D5 | **Wayfinding's OSM tiles are replaced with Google Maps** | user | Removes the last OSM dependency; moves the third-party data-sharing surface onto Google. Forces §2b. |
 | D6 | **iPad is supported properly** | user | 13" screenshots required; iPad layout must be verified. |
 | D7 | **"Preview from anywhere" mode ships in 1.0** | user | The Guideline 2.1 answer. See §3c. |
-| D8 | GCP keys available this week | user | Unblocks D4/D5. Note the ordering dependency in §5a. |
+| D8 | GCP keys available this week | user | Unblocks D4/D5. The credential model and its two chains are in §5a; the Android fingerprint chain is the longest internal dependency in the plan. |
 
 ---
 
@@ -92,6 +93,18 @@ is constructed) but must be held to the same invariant.
 Consent is presently enforced at exactly one site, `google_nav_screen.dart:76`.
 It must also gate the wayfinding route.
 
+**Acceptance is network-based, not inferred.** Whether `provideAPIKey` transmits
+anything by itself is not established here; Google documents that application and
+version information, authentication information and an anonymous cross-app
+identifier accompany SDK *requests*. Deferring the call is defence-in-depth, not
+the proof. The gate is a packet-level observation:
+
+| Scenario | Required result |
+|---|---|
+| Cold launch, consent never given | **Zero** Google traffic |
+| Consent accepted | Google traffic permitted |
+| Consent revoked | **Zero** further Google traffic |
+
 ### 2c. Delete local data + revoke consent
 
 Not an Apple requirement — 5.1.1(i) governs what the *policy* must explain, and
@@ -106,13 +119,26 @@ transmitted to third-party services.
 
 Today Settings offers only a consent revoke (`settings_screen.dart:330`).
 
+**Revocation is a runtime invariant, not merely stored state.** On revoke the app
+must dispose any active Google map surface, cancel or block in-flight Routes
+requests, block all subsequent Google requests, and require fresh consent before
+Google functionality is reconstructed. Do not depend on being able to
+un-initialise `GMSServices` — the invariant is enforced by the app, above the SDK.
+
 ### 2d. Live privacy policy + support URLs — **start first**
 
 - **Apple requires:** a Privacy Policy URL in App Store Connect, the policy
   reachable from inside the app, and a Support URL in the app-version metadata.
-- **Project/Macquarie requires:** both hosted on approved `mq.edu.au` URLs.
+- **Google Maps Platform terms require:** the application's own terms notify users
+  that Google Maps features and content are present, and that their use is subject
+  to Google Maps' additional terms and Google's privacy policy. This flow-down
+  language needs somewhere to live, so a **Terms of Use URL** is a third hosted
+  document, not an optional extra.
+- **Project/Macquarie requires:** all three hosted on approved `mq.edu.au` URLs.
 
-Apple does not mandate the domain; MQ does. This item is first in the schedule
+Apple does not mandate the domain; MQ does. Request **all three URLs in one go** —
+Privacy Policy, Support, Terms of Use — rather than discovering the third after the
+first two clear approval. This item is first in the schedule
 because university CMS and approval lead times are the one thing on this plan that
 cannot be compressed by engineering.
 
@@ -137,16 +163,24 @@ Release IPA / AAB
 
 `ios/Runner/PrivacyInfo.xcprivacy` does not exist and must be created.
 
-**Expected declarations — expectations, not a freeze.** The audit is the
-authority; any deviation is adopted and justified in writing, not argued away.
+**Ownership rule.** A third-party SDK supplies its **own** privacy manifest; the
+app manifest does not duplicate what a linked SDK already declares, and Xcode
+aggregates them into the privacy report. Every declaration is therefore attributed
+to the component actually responsible — Runner's manifest covers first-party app
+code, and the Flutter engine, `shared_preferences`, `google_maps_flutter` and the
+Maps SDK each answer for themselves. Runner's manifest may end up close to empty;
+that is a correct outcome, not a missing one.
+
+**Expected declarations — expectations, not a freeze.** The aggregated archive
+report is the authority; any deviation is adopted and justified in writing, not
+argued away.
 
 - `NSPrivacyTracking`: `false`
-- `NSPrivacyTrackingDomains`: empty
+- `NSPrivacyTrackingDomains`: omit unless a domain genuinely needs declaring
 - Collected data types: Precise Location → App Functionality, not linked to
   identity, not used for tracking
-- Required-reason APIs: whatever the engine and plugins actually reference
-  (`shared_preferences` → UserDefaults is certain; file-timestamp, disk-space and
-  boot-time categories are likely but must be read off the binary)
+- Required-reason APIs: attributed per component and read off the built binary,
+  never predicted from the dependency list
 
 ### 2f. Cross-surface privacy reconciliation
 
@@ -160,10 +194,14 @@ These five surfaces must agree, and are reconciled as one gate after §2e:
 
 **Consequence of D4/D5 that predates any manifest key:** with the Maps SDK shipping
 live, the App Store nutrition label almost certainly can no longer read "Data Not
-Collected". Apple's label covers third-party SDK collection. If the SDK reports a
-cross-app identifier, that lands under **Identifiers**, which in turn drives the
-tracking question. Determine this from §2e's audit before answering the
-questionnaire.
+Collected", because Apple's label covers third-party SDK collection and Google's
+SDK manifests disclose automatic collection that the app developer must then
+reconcile.
+
+**Do not infer tracking from an identifier.** An Identifiers disclosure and
+Apple-defined *tracking* are separate determinations: tracking is a use-purpose
+test, not a consequence of declaring an identifier. Answer both from §2e's
+aggregated report, not by reasoning forward from one to the other.
 
 ### 2g. Age rating
 
@@ -231,27 +269,96 @@ arrive, not only on the night.
   `signingConfig = signingConfigs.getByName("debug")` — cannot ship. Introduce an
   MQ-held upload keystore with a git-ignored `key.properties` and a committed
   `.sample`, matching the existing `secrets.properties` pattern.
-- `ITSAppUsesNonExemptEncryption = false` in `Info.plist` (HTTPS-only use is
-  exempt). Absent today, so every upload stalls on the export-compliance prompt.
-- Version `0.1.0+1` → `1.0.0+1`.
+- `ITSAppUsesNonExemptEncryption` set in `Info.plist` — absent today, so every
+  upload stalls on the export-compliance prompt. The value is an **audited
+  conclusion, not an assumption**: the key covers the app *and its linked
+  third-party libraries*, so `false` is only correct once those have been checked
+  for non-exempt encryption. HTTPS-only use is exempt.
+- **iOS production signing and provisioning** under MQ's Developer Team, proven by
+  a successful archive and export against the registered bundle ID — not just a
+  local debug run.
+- Version `1.0.0+1` for the first upload, and **build numbers are monotonic**: any
+  replacement binary is `+2`, `+3`, … Numbers are never reused, even for a build
+  that was rejected or never released.
 - `./scripts/check.sh full` green, **exit-gated**, never through a pipe.
 - App Store Connect and Play Console records created under MQ's organisation
   accounts (D1).
-- First build to TestFlight internal before any public submission.
+- First build to TestFlight internal before any public App Store submission.
+- **Google Play Internal testing using the Play-signed artifact** before
+  Production, mirroring the TestFlight gate. This is not ceremony: it is the only
+  way to verify §5a's app-signing fingerprint actually works for delivered
+  builds.
 
 ---
 
 ## 5. Feature completion
 
-### 5a. GCP keys — note the ordering dependency
+### 5a. Credentials — two restriction models, and the plan's longest chain
 
-Four restricted keys: Maps SDK (iOS, Android) and Routes API (iOS, Android).
-Restrictions are iOS bundle ID `au.edu.mq.astronomy.aon2026`, and Android package
-plus **release** SHA-1.
+Revision 1 described "four restricted keys" with a single ordering note. Both
+halves were wrong in ways that would have surfaced only after a real user
+installed a real build.
 
-**The release SHA-1 does not exist until the upload keystore from §4 is created.**
-Keystore precedes key restriction, which precedes on-device verification. This is
-the longest internal chain in the plan.
+#### Maps SDK keys (Android, iOS) — application restrictions
+
+The correct model. iOS restricts on bundle ID `au.edu.mq.astronomy.aon2026`.
+Android restricts on package name plus certificate fingerprint — and **that
+fingerprint is not the upload key.**
+
+Under Play App Signing, which new apps are enrolled in automatically, the upload
+keystore only authenticates uploads to Play. Google re-signs the artifact
+delivered to users with a separate **app-signing key** that Google holds. A Maps
+key restricted to the upload certificate works on locally-signed builds and fails
+for every user who installs from Play — a defect invisible to every test that does
+not go through Play.
+
+The real chain:
+
+```
+Play app record
+   -> upload keystore (§4)
+   -> first AAB upload / Play App Signing enrolment
+   -> read the Google-held app-signing certificate fingerprint(s) from Play Console
+   -> restrict the Maps Android key to package + EVERY certificate that can sign
+      a distributed APK
+   -> verify against a Play-DELIVERED build (§4 internal testing), never a
+      locally-signed one
+```
+
+Where internal or local builds must also work, register the upload certificate
+alongside the app-signing certificate. If Play exposes more than one applicable
+signing certificate, register all of them.
+
+This — not the keystore alone — is the longest internal dependency in the plan.
+
+#### Routes API — direct call retained, with conditions
+
+Google's security guidance groups Routes API with web services and prefers either
+an IP-restricted key or a proxy. It also documents the direct-call fallback
+explicitly: if a secure proxy is not available, secure the client with the
+`X-Android-Package` + `X-Android-Cert` headers on Android and
+`X-Ios-Bundle-Identifier` on iOS. `google_routes_service.dart:44-50` already sends
+exactly that header map, assembled by `routesClientIdentityProvider`.
+
+The caveat Google attaches — that application restrictions "may not be fully
+supported on older legacy Google Maps Platform services" — does not describe
+Routes v2, which is the current service rather than a legacy one.
+
+So the direct call stays. It is a documented path, and standing up an
+MQ-controlled proxy service inside a three-week window on the strength of a stated
+preference would buy schedule risk, not safety. Three conditions attach:
+
+1. **Enforcement is proven, not assumed.** A Routes request carrying a wrong
+   bundle ID, or a wrong package/certificate pair, must be **rejected**. This is
+   already part of the M4 on-device IOU; it is now a release gate.
+2. **Cap the blast radius.** The key ships inside the binary and is extractable —
+   inherent to the documented fallback, not a flaw in it. Set Routes API quota
+   limits and a GCP budget alert on MQ's project so an extracted key cannot run up
+   a bill against the university.
+3. **The proxy is a costed contingency, not the plan.** If (1) fails, fall back to
+   an MQ-hosted Routes proxy behind an IP-restricted server key — and note that
+   doing so puts MQ infrastructure into the location-data path, which re-opens
+   §2d, §2e and §2f.
 
 ### 5b. Move Maps SDK init behind consent
 
@@ -272,8 +379,20 @@ OSM attribution currently sits on Credits (`info_screen.dart:253`) and Settings
 (`settings_screen.dart:420`) — screens that render no OSM tiles — while the screen
 that did render them said nothing. With §5c removing OSM entirely, both claims
 must go. `map_screen.dart`'s `_MapAttribution` prints a hardcoded, un-l10n'd string
-and must use the orphaned `mapAttribution` ARB key. Add Google's required
-attribution wherever a Google surface renders.
+and must use the orphaned `mapAttribution` ARB key.
+
+Google's attribution is **three distinct requirements**, not one blanket rule:
+
+1. **Map UI.** When Google Maps content is displayed on a Google map, the SDK's
+   built-in attribution is sufficient and no second attribution is added. The
+   obligation is that it must not be hidden, obscured or clipped — which is a
+   layout constraint on anything drawn over `EmbeddedMap`.
+2. **Routes content outside a map.** `_RouteDetail` (`wayfinding_screen.dart:207`)
+   renders distance, duration and step text outside any Google map surface. That
+   content carries its own compliant Google Maps attribution requirement.
+3. **SDK legal notices.** Expose the licence text from
+   `GMSServices.openSourceLicenseInfo` in Legal/About — the natural home is the
+   existing credits section of `info_screen.dart`.
 
 ### 5e. Reviewability features
 
@@ -321,7 +440,7 @@ evidence.
 
 | Risk | Status |
 |---|---|
-| Bundle ID keeps `aon2026` (D3) | User's call after the 4.3(a)/(b) staleness risk was put to them. Mitigation: **one app record, updated annually** — the ID is invisible to users and to review; the 4.3 exposure is behavioural, not the string. |
+| Bundle ID keeps `aon2026` (D3) | User's call after the 4.3(a)/(b) staleness risk was put to them. Mitigation: **one app record, updated annually**. The ID is not user-facing, though it is visible in developer and review tooling; the 4.3 exposure is behavioural — whether a second app appears next year — not the literal string. |
 | Basemap ships bright, not night-reskinned | Pre-existing user decision (brand fidelity over scotopic dimming). If revisited, dim at runtime with a `ColorFiltered` over `CampusBasemapLayer` — never bake a darker asset. |
 | Baked English legend on the artwork cannot be localised | Carried M0 IOU-P1. Disclosed, not fixed. |
 | `Macquarie Centre` falls outside the AON crop (1 of 170) | Pinned by `test/unit/aon_basemap_georef_test.dart`. Honest, documented. |
@@ -335,14 +454,17 @@ evidence.
 
 1. **MQ-hosted privacy policy URL** (§2d) — longest lead; start immediately.
 2. **MQ-hosted support URL** (§2d).
-3. **MQ Apple Developer + Play Console organisation accounts** (D1), including
+3. **MQ-hosted Terms of Use URL** (§2d) — carries the Google Maps flow-down
+   language. Request it in the same approval round as 1 and 2, not after them.
+4. **MQ Apple Developer + Play Console organisation accounts** (D1), including
    Play's developer verification and D-U-N-S.
-4. **Four restricted GCP keys** (D8), gated behind §5a's keystore.
-5. **Written MQ sign-off** on redistributing `buildings.json` and the official AON
-   artwork publicly. D1 makes this internal rather than a licence negotiation, but
-   it must be recorded — the repo being private was never permission.
-
----
+5. **Four restricted GCP keys** (D8), gated behind §5a's Play App Signing chain.
+6. **Written MQ sign-off** on redistributing `buildings.json` and the official AON
+   artwork publicly. D1 makes this an internal approval rather than a licence
+   negotiation, but publishing from MQ's account is not itself the grant: the
+   approval must be recorded. The repo being private was never permission.
+7. **Contingent only:** MQ-hosted Routes proxy, if §5a condition (1) fails. Not
+   scheduled; costed now so the decision is fast if it fires.
 
 ## 9. Out of scope
 

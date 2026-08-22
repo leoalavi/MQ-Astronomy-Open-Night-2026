@@ -121,7 +121,7 @@ void main() {
     expect(find.textContaining('collects no analytics'), findsOneWidget);
   });
 
-  testWidgets('credits the hero image and OpenStreetMap', (tester) async {
+  testWidgets('credits the hero image and the real map sources', (tester) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
@@ -134,7 +134,13 @@ void main() {
       find.text('A Deep Triangulum Galaxy — Aleix Roig, 2026'),
       findsOneWidget,
     );
-    expect(find.text('© OpenStreetMap contributors.'), findsOneWidget);
+    // Task 5: the app makes no OSM tile requests, so it no longer credits OSM.
+    expect(find.textContaining('OpenStreetMap'), findsNothing);
+    expect(
+      find.text('Campus map: Macquarie University. Walking directions and the '
+          'map they appear on are provided by Google.'),
+      findsOneWidget,
+    );
   });
 
   testWidgets('reduce motion actually reaches the widget tree', (tester) async {

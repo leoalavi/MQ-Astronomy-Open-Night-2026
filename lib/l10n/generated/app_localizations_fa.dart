@@ -295,7 +295,7 @@ class AonL10nFa extends AonL10n {
   String get mapOnHereTonight => 'امشب در این مکان';
 
   @override
-  String get mapAttribution => '© مشارکت‌کنندگان OpenStreetMap';
+  String get mapAttributionCampus => 'نقشهٔ پردیس: دانشگاه مکواری';
 
   @override
   String get mapRecentre => 'بازگشت به مرکز';
@@ -865,7 +865,8 @@ class AonL10nFa extends AonL10n {
   String get settingsPrivacyCardTitle => 'هیچ داده‌ای از گوشی شما خارج نمی‌شود';
 
   @override
-  String get settingsOsmAttribution => '© مشارکت‌کنندگان OpenStreetMap.';
+  String get settingsMapDataAttribution =>
+      'نقشهٔ پردیس: دانشگاه مکواری. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.';
 
   @override
   String get infoFirstAid => 'کمک‌های اولیه';
@@ -1013,7 +1014,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get creditsMapDataBody =>
-      'داده‌های نقشه © مشارکت‌کنندگان OpenStreetMap.';
+      'نقشهٔ پردیس: دانشگاه مکواری. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.';
 
   @override
   String eventSourceNote(String note) {

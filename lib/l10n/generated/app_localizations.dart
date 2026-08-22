@@ -553,11 +553,11 @@ abstract class AonL10n {
   /// **'On here tonight'**
   String get mapOnHereTonight;
 
-  /// No description provided for @mapAttribution.
+  /// Attribution overlaid on the AON campus basemap. Names the SOURCE, not a copyright holder: MQ ownership of the cartographic master is unconfirmed under spec §8.6, so asserting © on their behalf is a claim we cannot back.
   ///
   /// In en, this message translates to:
-  /// **'© OpenStreetMap contributors'**
-  String get mapAttribution;
+  /// **'Campus map: Macquarie University'**
+  String get mapAttributionCampus;
 
   /// No description provided for @mapRecentre.
   ///
@@ -1561,11 +1561,11 @@ abstract class AonL10n {
   /// **'Nothing leaves your phone'**
   String get settingsPrivacyCardTitle;
 
-  /// No description provided for @settingsOsmAttribution.
+  /// Settings credits: where the map data actually comes from now that the OSM tiles are gone.
   ///
   /// In en, this message translates to:
-  /// **'© OpenStreetMap contributors.'**
-  String get settingsOsmAttribution;
+  /// **'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.'**
+  String get settingsMapDataAttribution;
 
   /// No description provided for @infoFirstAid.
   ///
@@ -1822,7 +1822,7 @@ abstract class AonL10n {
   /// Required OSM attribution.
   ///
   /// In en, this message translates to:
-  /// **'Map data © OpenStreetMap contributors.'**
+  /// **'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.'**
   String get creditsMapDataBody;
 
   /// Provenance line under an activity — which published document this entry came from.

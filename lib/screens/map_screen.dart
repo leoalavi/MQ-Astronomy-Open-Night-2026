@@ -585,7 +585,7 @@ class _MapAttribution extends StatelessWidget {
         borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
       ),
       child: Text(
-        'Campus map © Macquarie University',
+        AonL10n.of(context).mapAttributionCampus,
         style: Theme.of(context)
             .textTheme
             .labelSmall

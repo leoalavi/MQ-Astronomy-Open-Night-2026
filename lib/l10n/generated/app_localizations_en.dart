@@ -295,7 +295,7 @@ class AonL10nEn extends AonL10n {
   String get mapOnHereTonight => 'On here tonight';
 
   @override
-  String get mapAttribution => '© OpenStreetMap contributors';
+  String get mapAttributionCampus => 'Campus map: Macquarie University';
 
   @override
   String get mapRecentre => 'Recentre';
@@ -862,7 +862,8 @@ class AonL10nEn extends AonL10n {
   String get settingsPrivacyCardTitle => 'Nothing leaves your phone';
 
   @override
-  String get settingsOsmAttribution => '© OpenStreetMap contributors.';
+  String get settingsMapDataAttribution =>
+      'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.';
 
   @override
   String get infoFirstAid => 'First aid';
@@ -1009,7 +1010,8 @@ class AonL10nEn extends AonL10n {
   String get settingsLanguagePersian => 'فارسی';
 
   @override
-  String get creditsMapDataBody => 'Map data © OpenStreetMap contributors.';
+  String get creditsMapDataBody =>
+      'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.';
 
   @override
   String eventSourceNote(String note) {

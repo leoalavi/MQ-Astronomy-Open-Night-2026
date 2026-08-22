@@ -141,7 +141,9 @@ void main() {
     svc.emit(_far());
     await t.pump();
     await t.pump();
-    expect(find.textContaining('پردیس'), findsOneWidget); // FA "campus"
+    // "کیلومتر با پردیس فاصله دارید" — the distance banner specifically. Plain
+    // 'پردیس' now also matches the campus-map attribution added in Task 5.
+    expect(find.textContaining('فاصله دارید'), findsOneWidget);
     expect(t.takeException(), isNull);
   });
 }

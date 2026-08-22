@@ -417,7 +417,7 @@ class _CreditsCard extends StatelessWidget {
             const SizedBox(height: AonSpacing.space4),
             Text(l.settingsCreditsMapData, style: theme.textTheme.titleSmall),
             const SizedBox(height: 2),
-            Text(l.settingsOsmAttribution, style: body),
+            Text(l.settingsMapDataAttribution, style: body),
           ],
         ),
       ),

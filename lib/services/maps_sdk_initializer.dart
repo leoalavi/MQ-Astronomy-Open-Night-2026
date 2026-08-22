@@ -1,4 +1,8 @@
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'maps_consent_providers.dart';
+import 'maps_consent_store.dart';
 
 /// Initialises the native Google Maps SDK on demand.
 ///
@@ -65,3 +69,29 @@ class NoopMapsSdkInitializer implements MapsSdkInitializer {
   @override
   Future<String?> openSourceLicenseInfo() async => null;
 }
+
+// ---------------------------------------------------------------------------
+// Providers
+// ---------------------------------------------------------------------------
+
+/// Overridden in `main.dart` with [PlatformMapsSdkInitializer]; tests inject a
+/// fake. Defaults to the no-op so a forgotten override fails closed (no Google
+/// surface) rather than open.
+final mapsSdkInitializerProvider =
+    Provider<MapsSdkInitializer>((_) => const NoopMapsSdkInitializer());
+
+/// Whether a Google map surface may be constructed.
+///
+/// This provider is the spec §2b invariant's single enforcement point: it
+/// short-circuits on consent before touching the initialiser, so every call site
+/// that goes through it is safe by construction.
+///
+/// It is not a hermetic seal — [mapsSdkInitializerProvider] is still readable,
+/// so a call site could bypass this and call `ensureInitialized()` directly.
+/// `test/unit/maps_sdk_boundary_test.dart` fails if anything outside this file
+/// does.
+final mapsSdkReadyProvider = FutureProvider<bool>((ref) async {
+  final consent = ref.watch(mapsConsentProvider);
+  if (consent != MapsConsent.accepted) return false;
+  return ref.read(mapsSdkInitializerProvider).ensureInitialized();
+});

@@ -18,6 +18,7 @@ import 'package:aon2026/services/passport_store.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/favorites_store.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 
 import 'package:aon2026/widgets/glass_shader.dart';
@@ -104,6 +105,9 @@ Future<void> main() async {
         favoritesStoreProvider.overrideWithValue(favoritesStore),
         mapsConsentSnapshotProvider.overrideWithValue(mapsConsentSnapshot),
         mapsConsentStoreProvider.overrideWithValue(mapsConsentStore),
+        // Spec §2b: the SDK is keyed on demand, never at launch. The provider
+        // short-circuits on consent before this is ever reached.
+        mapsSdkInitializerProvider.overrideWithValue(PlatformMapsSdkInitializer()),
         locationServiceProvider.overrideWithValue(GeolocatorLocationService()),
         headingServiceProvider.overrideWithValue(SensorsHeadingService()),
       ],

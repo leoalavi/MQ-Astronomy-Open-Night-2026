@@ -2,7 +2,7 @@
 
 **Date:** 2026-08-22
 **Status:** proposed — revision 2 (awaiting user review)
-**Revisions:** r1 `f9b5747`; r2 folds in design review 2026-08-22; r3 corrects two factual errors found by reading the code during planning — wayfinding has NO location access and its routes are hand-authored, not Google's (§5a Play App Signing + Routes restriction model, D1/§8 redistribution contradiction, Terms of Use dependency, revocation invariant, manifest ownership, attribution split, three release gates)
+**Revisions:** r1 `f9b5747`; r2 folds in design review 2026-08-22; r4 fixes the iPad causality (device family, not orientations) and restates §2c's in-flight contract honestly; r3 corrects two factual errors found by reading the code during planning — wayfinding has NO location access and its routes are hand-authored, not Google's (§5a Play App Signing + Routes restriction model, D1/§8 redistribution contradiction, Terms of Use dependency, revocation invariant, manifest ownership, attribution split, three release gates)
 **Baseline:** `main@ea59d90`
 **Target:** App Store + Google Play, public download, live before **Sat 19 Sep 2026**
 
@@ -138,9 +138,14 @@ transmitted to third-party services.
 Today Settings offers only a consent revoke (`settings_screen.dart:330`).
 
 **Revocation is a runtime invariant, not merely stored state.** On revoke the app
-must dispose any active Google map surface, cancel or block in-flight Routes
-requests, block all subsequent Google requests, and require fresh consent before
-Google functionality is reconstructed. Do not depend on being able to
+must dispose any active Google map surface, block all subsequent Google requests,
+and require fresh consent before Google functionality is reconstructed.
+
+r2 said "cancel or block in-flight". A request already on the wire cannot be
+recalled, and a guard claiming to would be the kind of overclaim this project
+refuses. The enforceable contract is: **no new Routes request starts after
+revocation; a request already transmitted cannot be recalled, and its response is
+discarded rather than reaching the UI or any cache.** Do not depend on being able to
 un-initialise `GMSServices` — the invariant is enforced by the app, above the SDK.
 
 ### 2d. Live privacy policy + support URLs — **start first**
@@ -446,8 +451,9 @@ Google's attribution is **three distinct requirements**, not one blanket rule:
 
 ### 5g. iPad (D6)
 
-`Info.plist` already declares all four iPad orientations, so Apple treats this as
-an iPad app. Verify layout at iPad sizes under the repo's existing accessibility
+`ios/Runner.xcodeproj/project.pbxproj` sets `TARGETED_DEVICE_FAMILY = "1,2"` at
+three configurations — that, not the orientation keys, is what makes this an iPad
+app. Verify layout at iPad sizes under the repo's existing accessibility
 bar (320×568 / textScale 2.0 must not overflow; prove the last actionable row is
 reachable *and* tappable). Fix what overflows.
 

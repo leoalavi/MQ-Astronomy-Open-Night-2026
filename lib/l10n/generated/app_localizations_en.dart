@@ -721,6 +721,10 @@ class AonL10nEn extends AonL10n {
   String get mapNavDisclosureAccept => 'Use Google Maps';
 
   @override
+  String get wayfindingMapUnavailable =>
+      'Map not shown. The written directions below are complete on their own.';
+
+  @override
   String get mapDisplayDisclosureTitle => 'Load the Google map here?';
 
   @override

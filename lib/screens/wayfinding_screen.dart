@@ -1,20 +1,21 @@
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
-import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/walking_route.dart';
+import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+import 'package:aon2026/widgets/embedded_map.dart';
+import 'package:aon2026/widgets/maps_nav_disclosure.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
-import 'package:aon2026/widgets/dark_tile_layer.dart';
 import 'package:aon2026/widgets/empty_state.dart';
-import 'package:aon2026/widgets/map_config.dart';
 
 /// Parking-to-venue walking directions.
 ///
@@ -345,14 +346,38 @@ class _RouteDetail extends StatelessWidget {
   }
 }
 
-class _RouteMap extends StatelessWidget {
-  const _RouteMap({required this.route});
+/// Test seam: `_RouteMap` is private, so widget tests construct this instead.
+/// Same arguments plus an injectable [EmbeddedMapSurface].
+@visibleForTesting
+class RouteMapForTest extends StatelessWidget {
+  const RouteMapForTest({required this.route, required this.surface, super.key});
 
   final WalkingRoute route;
+  final EmbeddedMapSurface surface;
+
+  @override
+  Widget build(BuildContext context) => _RouteMap(route: route, surface: surface);
+}
+
+class _RouteMap extends ConsumerStatefulWidget {
+  const _RouteMap({required this.route, this.surface});
+
+  final WalkingRoute route;
+
+  /// Null in production → the real Google surface. Injected in tests.
+  final EmbeddedMapSurface? surface;
+
+  @override
+  ConsumerState<_RouteMap> createState() => _RouteMapState();
+}
+
+class _RouteMapState extends ConsumerState<_RouteMap> {
+  bool _disclosureRequested = false;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final route = widget.route;
     final isDraftGeometry = route.pathConfidence == DataConfidence.placeholder;
 
     return Column(
@@ -360,54 +385,7 @@ class _RouteMap extends StatelessWidget {
       children: [
         ClipRRect(
           borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
-          child: SizedBox(
-            height: 220,
-            child: FlutterMap(
-              options: MapOptions(
-                initialCameraFit: CameraFit.coordinates(
-                  coordinates: route.points,
-                  padding: const EdgeInsets.all(AonSpacing.space8),
-                ),
-                minZoom: MapConfig.minZoom,
-                maxZoom: MapConfig.maxZoom,
-                backgroundColor: context.aon.surfaceBase,
-                // A static preview — panning it would just get people lost.
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.none,
-                ),
-              ),
-              children: [
-                const DarkTileLayer(),
-                PolylineLayer(
-                  polylines: [
-                    // Dark casing first, so the route stays legible over any
-                    // tile colour.
-                    Polyline(
-                      points: route.points,
-                      strokeWidth: 9,
-                      color: context.aon.mapRouteCasing,
-                    ),
-                    Polyline(
-                      points: route.points,
-                      strokeWidth: 5,
-                      color: context.aon.mapRoute,
-                      // Dashed while the geometry is unverified — a solid
-                      // line would claim a precision we don't have.
-                      pattern: isDraftGeometry
-                          ? const StrokePattern.dotted()
-                          : const StrokePattern.solid(),
-                    ),
-                  ],
-                ),
-                MarkerLayer(
-                  markers: [
-                    _endpoint(context, route.points.first, context.aon.info),
-                    _endpoint(context, route.points.last, context.aon.accent),
-                  ],
-                ),
-              ],
-            ),
-          ),
+          child: SizedBox(height: 220, child: _surface(context)),
         ),
         if (isDraftGeometry) ...[
           const SizedBox(height: AonSpacing.space2),
@@ -423,19 +401,72 @@ class _RouteMap extends StatelessWidget {
     );
   }
 
-  Marker _endpoint(BuildContext context, LatLng point, Color color) {
-    return Marker(
-      point: point,
-      width: 20,
-      height: 20,
-      child: Container(
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: Border.all(color: context.aon.surfaceBase, width: 3),
-        ),
-      ),
+  Widget _surface(BuildContext context) {
+    final consent = ref.watch(mapsConsentProvider);
+
+    // Spec §2b — nothing Google-shaped is constructed before consent resolves
+    // positively. The written steps below remain the primary output either way.
+    if (consentNeedsDisclosure(consent)) {
+      _ensureDisclosure();
+      return _placeholder(context);
+    }
+
+    // Consent alone is not enough: Task 1 deferred provideAPIKey off launch, so
+    // a GoogleMap built against an unkeyed SDK would render blank.
+    if (ref.watch(mapsSdkReadyProvider).asData?.value != true) {
+      return _placeholder(context);
+    }
+
+    final pts = widget.route.points
+        .map<(double, double)>((p) => (p.latitude, p.longitude))
+        .toList();
+    return EmbeddedMap(
+      origin: pts.first,
+      destination: pts.last,
+      route: pts,
+      surface: widget.surface ?? const GoogleEmbeddedMapSurface(),
     );
+  }
+
+  /// Stands in for the map so the layout does not jump. Deliberately NOT an
+  /// animating spinner: a pending disclosure dialog would never let tests settle.
+  ///
+  /// A blank rectangle would read as a bug, so it says what it is. The written
+  /// steps below are the primary output and are unaffected.
+  Widget _placeholder(BuildContext context) => ColoredBox(
+        key: const Key('wayfinding-map-declined'),
+        color: context.aon.surfaceBase,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(AonSpacing.space3),
+            child: Text(
+              AonL10n.of(context).wayfindingMapUnavailable,
+              textAlign: TextAlign.center,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(color: context.aon.contentTertiary),
+            ),
+          ),
+        ),
+      );
+
+  void _ensureDisclosure() {
+    if (_disclosureRequested) return;
+    _disclosureRequested = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!mounted) return;
+      final accepted = await showMapsNavDisclosure(
+        context,
+        kind: MapsDisclosureKind.mapDisplay,
+      );
+      if (!mounted) return;
+      final notifier = ref.read(mapsConsentProvider.notifier);
+      accepted ? notifier.accept() : notifier.decline();
+      // Re-arm so a later revoke (via Settings) re-asks instead of leaving a
+      // permanent placeholder — same fix as google_nav_screen (map audit P2).
+      if (mounted) _disclosureRequested = false;
+    });
   }
 }
 

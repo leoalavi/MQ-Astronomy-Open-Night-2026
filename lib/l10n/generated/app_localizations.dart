@@ -1303,6 +1303,12 @@ abstract class AonL10n {
   /// **'Use Google Maps'**
   String get mapNavDisclosureAccept;
 
+  /// Placeholder where the Google map would be, when consent was declined or the SDK is unkeyed.
+  ///
+  /// In en, this message translates to:
+  /// **'Map not shown. The written directions below are complete on their own.'**
+  String get wayfindingMapUnavailable;
+
   /// Title of the map-only disclosure shown before wayfinding renders a Google basemap.
   ///
   /// In en, this message translates to:

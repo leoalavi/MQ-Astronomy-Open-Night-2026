@@ -8,6 +8,7 @@ import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/services/routes_service.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/embedded_map.dart';
@@ -71,15 +72,29 @@ Widget _app(ProviderContainer c, {EmbeddedMapSurface? surface}) => UncontrolledP
       ),
     );
 
+class _ReadyMapsSdk implements MapsSdkInitializer {
+  const _ReadyMapsSdk(this.ready);
+  final bool ready;
+  @override
+  Future<bool> ensureInitialized() async => ready;
+  @override
+  Future<String?> openSourceLicenseInfo() async => null;
+}
+
 ProviderContainer _c({
   required _StubService service,
   MapsConsent consent = MapsConsent.accepted,
   (double, double)? origin = const (-33.77, 151.11),
   bool enabled = true,
   ExternalMapsLauncher? launcher,
+  bool sdkReady = true,
 }) {
   final c = ProviderContainer(overrides: [
     googleNavEnabledProvider.overrideWithValue(enabled),
+    // Task 1 deferred GMSServices.provideAPIKey off app launch, so rendering a
+    // Google surface now needs a KEYED SDK as well as consent. The default
+    // initialiser fails closed, so these tests must say the SDK is ready.
+    mapsSdkInitializerProvider.overrideWithValue(_ReadyMapsSdk(sdkReady)),
     mapsConsentSnapshotProvider.overrideWithValue(consent),
     placeResolverProvider(_key).overrideWithValue(_resolved),
     navOriginProvider.overrideWith((ref) async => origin),

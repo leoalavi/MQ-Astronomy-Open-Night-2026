@@ -98,18 +98,4 @@ abstract final class MapConfig {
   /// bearing/distance).
   static const double compassMinAngularSepDegrees = 8;
 
-  /// Standard OpenStreetMap raster tiles.
-  ///
-  /// **No API key.** That is the point — see `docs/architecture.md`. Usage is
-  /// subject to the OSM Foundation Tile Usage Policy, which requires visible
-  /// attribution and a genuine User-Agent, both of which we provide.
-  ///
-  /// For an event that could put thousands of devices on these tiles in one
-  /// evening, the polite and more reliable path before the night is either a
-  /// self-hosted tile server or a commercial provider. Flagged as a risk in
-  /// the README.
-  static const String tileUrlTemplate =
-      'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-
-  static const String userAgentPackageName = 'au.edu.mq.astronomy.aon2026';
 }

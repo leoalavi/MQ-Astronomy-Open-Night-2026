@@ -9,6 +9,7 @@ import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/services/maps_url.dart';
 import 'package:aon2026/services/nav_format.dart';
 import 'package:aon2026/services/routes_service.dart';
@@ -143,14 +144,18 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     return switch (result) {
       RouteSuccess(:final route) => Column(
           children: [
-            Expanded(
-              child: EmbeddedMap(
-                origin: origin,
-                destination: dest,
-                route: route.polyline,
-                surface: widget.surface,
+            // Task 1 deferred GMSServices.provideAPIKey off app launch, so a
+            // GoogleMap constructed against an unkeyed SDK would render blank.
+            // Consent alone is not sufficient — readiness must be true.
+            if (ref.watch(mapsSdkReadyProvider).asData?.value == true)
+              Expanded(
+                child: EmbeddedMap(
+                  origin: origin,
+                  destination: dest,
+                  route: route.polyline,
+                  surface: widget.surface,
+                ),
               ),
-            ),
             _successPanel(context, l, route, dest),
           ],
         ),

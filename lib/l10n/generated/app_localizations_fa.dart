@@ -722,6 +722,10 @@ class AonL10nFa extends AonL10n {
   String get mapNavDisclosureAccept => 'استفاده از نقشهٔ گوگل';
 
   @override
+  String get wayfindingMapUnavailable =>
+      'نقشه نمایش داده نمی‌شود. راهنمای نوشتاری زیر به‌تنهایی کامل است.';
+
+  @override
   String get mapDisplayDisclosureTitle => 'نقشهٔ گوگل در اینجا بارگذاری شود؟';
 
   @override

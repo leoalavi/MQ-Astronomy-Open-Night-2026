@@ -573,6 +573,10 @@
   "@mapNavDisclosureAccept": {
     "description": "Consent accept button"
   },
+  "wayfindingMapUnavailable": "Map not shown. The written directions below are complete on their own.",
+  "@wayfindingMapUnavailable": {
+    "description": "Placeholder where the Google map would be, when consent was declined or the SDK is unkeyed."
+  },
   "mapDisplayDisclosureTitle": "Load the Google map here?",
   "@mapDisplayDisclosureTitle": {
     "description": "Title of the map-only disclosure shown before wayfinding renders a Google basemap."

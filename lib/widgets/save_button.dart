@@ -88,7 +88,7 @@ class SaveButton extends ConsumerWidget {
           child: OutlinedButton.icon(
             onPressed: onPressed,
             icon: Icon(icon, color: colour),
-            label: Text(saved ? 'Saved' : 'Save'),
+            label: Text(saved ? l.actionSaved : l.actionSave),
             style: OutlinedButton.styleFrom(
               foregroundColor: colour,
               side: BorderSide(

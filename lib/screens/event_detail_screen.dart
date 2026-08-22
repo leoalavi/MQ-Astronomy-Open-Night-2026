@@ -118,7 +118,7 @@ class EventDetailScreen extends ConsumerWidget {
           const SizedBox(height: AonSpacing.space5),
 
           // ── Description ──
-          Text(event.description, style: theme.textTheme.bodyLarge),
+          Text(Bidi.isolate(event.description), style: theme.textTheme.bodyLarge),
 
           const SizedBox(height: AonSpacing.space6),
 
@@ -147,7 +147,7 @@ class EventDetailScreen extends ConsumerWidget {
                 if (session.note != null) ...[
                   const SizedBox(height: AonSpacing.space1),
                   Text(
-                    session.note!,
+                    Bidi.isolate(session.note),
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: context.aon.contentTertiary,
                     ),
@@ -198,7 +198,7 @@ class EventDetailScreen extends ConsumerWidget {
                           if (event.bookingNote != null) ...[
                             const SizedBox(height: AonSpacing.space1),
                             Text(
-                              event.bookingNote!,
+                              Bidi.isolate(event.bookingNote),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: context.aon.contentSecondary,
                               ),
@@ -308,7 +308,7 @@ class _LocationBlock extends StatelessWidget {
             style: theme.textTheme.titleMedium,
           ),
         Text(
-          v.name,
+          Bidi.isolate(v.name),
           style: event.room == null
               ? theme.textTheme.titleMedium
               : theme.textTheme.bodyMedium?.copyWith(
@@ -317,7 +317,7 @@ class _LocationBlock extends StatelessWidget {
         ),
         if (v.building != null && v.building != v.name)
           Text(
-            v.building!,
+            Bidi.isolate(v.building),
             style: theme.textTheme.bodySmall?.copyWith(
               color: context.aon.contentTertiary,
             ),

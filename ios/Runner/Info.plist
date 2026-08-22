@@ -13,6 +13,13 @@
 	     is absent, and AppDelegate then skips GMSServices.provideAPIKey → ships dark. -->
 	<key>GMSApiKey</key>
 	<string>$(MAPS_API_KEY)</string>
+	<!-- Export compliance. An AUDITED conclusion, not a default: this key covers
+	     the app AND its linked third-party libraries. Every networked dependency
+	     was checked and each uses OS-provided TLS rather than bundling its own
+	     cryptography — see docs/release/export-compliance.md for the working.
+	     HTTPS via platform TLS is exempt, so this is false. -->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>CFBundleDevelopmentRegion</key>

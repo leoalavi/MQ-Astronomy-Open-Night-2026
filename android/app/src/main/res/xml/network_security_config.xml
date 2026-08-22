@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The panorama viewer is served from an in-process HTTP server on loopback
+  (`InAppLocalhostServer`, lib/services/panorama_server.dart) and loaded into a
+  WebView as http://localhost:8459/web/indoor_viewer.html.
+
+  Android denies cleartext for every domain by default at targetSdk >= 28, and
+  WebView honours that policy. This app targets 36 and previously declared
+  neither `usesCleartextTraffic` nor a network security config, so that load had
+  no permission to succeed.
+
+  The exception below is deliberately the NARROWEST that unblocks it: loopback
+  only, base config still denying cleartext everywhere else. Do NOT "fix" a
+  future cleartext problem with android:usesCleartextTraffic="true" — that
+  re-permits plaintext to every host on the internet to solve a loopback problem.
+  test/unit/android_cleartext_policy_test.dart fails if anyone does.
+-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="false" />
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="false">localhost</domain>
+        <domain includeSubdomains="false">127.0.0.1</domain>
+    </domain-config>
+</network-security-config>

@@ -426,9 +426,22 @@ Simulator-verified is the standing release IOU. These pay it.
   possible** localhost exception — never `android:usesCleartextTraffic="true"`
   globally.*
 
-  *Evidence: a panorama actually opening on physical iOS and physical Android,
-  both from release builds. Any fix here is an app-code delta and re-triggers
-  Final Binary Cut.*
+  **Status (2026-08-22): the Android fix is APPLIED, the on-device confirmation
+  is NOT yet done.** `res/xml/network_security_config.xml` now permits cleartext
+  to `localhost`/`127.0.0.1` only, with `base-config` still denying everything
+  else, and `test/unit/android_cleartext_policy_test.dart` fails if anyone widens
+  it to `usesCleartextTraffic="true"`. Verified only that the config **merges
+  into the packaged manifest**.
+
+  **Be precise about what that does and does not establish.** The fix rests on
+  documented platform behaviour (cleartext denied by default at targetSdk ≥ 28,
+  honoured by WebView) plus a verified manifest that carried no override — not on
+  an observed failure. Nobody has yet watched a panorama fail without it or
+  succeed with it. iOS is untouched, because nothing has shown it to be broken.
+
+  *Evidence still owed: a panorama actually opening on physical iOS and physical
+  Android, both from release builds. Any further fix is an app-code delta and
+  re-triggers Final Binary Cut.*
 
 - [ ] **D4. Physical smoke test** of the Plan A changes most visible to a user:
   the wayfinding map now requires consent and shows a labelled placeholder when

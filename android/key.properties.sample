@@ -1,0 +1,19 @@
+# Release signing credentials for the Android upload key.
+#
+# Copy to android/key.properties (git-ignored, see .gitignore:68) and fill every
+# field. A release build FAILS if any is missing — never falls back to the debug
+# key, because a debug-signed release uploads happily and then fails every Google
+# Maps key restriction for every real user.
+#
+# The keystore itself is held by Macquarie University, not in this repository and
+# not in a personal password manager. It cannot be regenerated: losing it means
+# losing the ability to update the app.
+#
+# Record the upload certificate's SHA-1 AND SHA-256 when you generate it —
+# Plan B step C3 needs them:
+#   keytool -list -v -keystore <path> -alias <alias>
+
+storeFile=/absolute/path/to/aon2026-upload.jks
+storePassword=
+keyAlias=aon2026-upload
+keyPassword=

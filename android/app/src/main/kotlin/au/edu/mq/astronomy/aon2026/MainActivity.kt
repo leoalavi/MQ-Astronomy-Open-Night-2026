@@ -14,6 +14,14 @@ class MainActivity : FlutterActivity() {
     // constant) guarantees the header always matches the shipped signature.
     private val routesIdentityChannel = "au.edu.mq.astronomy.aon2026/routes_identity"
 
+    // Spec §2b. Android has no deferrable Maps SDK init: the SDK reads
+    // com.google.android.geo.API_KEY from the manifest when a MapView is first
+    // constructed. The invariant is therefore enforced by not CONSTRUCTING a map
+    // view before consent — mapsSdkReadyProvider does that. This handler only
+    // reports whether a key is present, so "ready" means the same thing on both
+    // platforms.
+    private val mapsSdkChannel = "aon2026/maps_sdk"
+
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, routesIdentityChannel)
@@ -23,6 +31,29 @@ class MainActivity : FlutterActivity() {
                     else -> result.notImplemented()
                 }
             }
+        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, mapsSdkChannel)
+            .setMethodCallHandler { call, result ->
+                when (call.method) {
+                    "initialize" -> result.success(hasMapsApiKey())
+                    // GoogleApiAvailability.getOpenSourceSoftwareLicenseInfo has
+                    // been deprecated since Play services v11.0 and Google states
+                    // it is no longer required — Android surfaces Play services
+                    // licences at Settings > Google > Open Source Licenses. There
+                    // is nothing for the app to render, so the Credits button
+                    // hides itself on this platform.
+                    "openSourceLicenseInfo" -> result.success(null)
+                    else -> result.notImplemented()
+                }
+            }
+    }
+
+    private fun hasMapsApiKey(): Boolean = try {
+        val info = packageManager.getApplicationInfo(
+            packageName, PackageManager.GET_META_DATA
+        )
+        !info.metaData?.getString("com.google.android.geo.API_KEY").isNullOrEmpty()
+    } catch (e: PackageManager.NameNotFoundException) {
+        false
     }
 
     private fun signingCertSha1(): String? {

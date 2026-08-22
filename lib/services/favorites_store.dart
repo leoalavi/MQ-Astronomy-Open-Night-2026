@@ -14,13 +14,19 @@ class SharedPrefsFavoritesStore implements FavoritesStore {
   final SharedPreferencesAsync prefs;
   final String eventId;
 
-  static const _buildingsKey = 'map_favorites.buildings.v1';
-  String get _venuesKey => 'map_favorites.venues.$eventId';
+  /// Public so `LocalDataEraser` cannot drift from the real keys.
+  static const String buildingsKey = 'map_favorites.buildings.v1';
+
+  /// Per-event, so it cannot be a constant — this is exactly what a hand-typed
+  /// key list gets wrong.
+  static String venuesKeyFor(String eventId) => 'map_favorites.venues.$eventId';
+
+  String get _venuesKey => venuesKeyFor(eventId);
 
   @override
   Future<Set<String>> loadSnapshot() async {
     try {
-      final b = await prefs.getStringList(_buildingsKey) ?? const <String>[];
+      final b = await prefs.getStringList(buildingsKey) ?? const <String>[];
       final v = await prefs.getStringList(_venuesKey) ?? const <String>[];
       return {...b, ...v};
     } catch (_) {
@@ -33,7 +39,7 @@ class SharedPrefsFavoritesStore implements FavoritesStore {
     try {
       final buildings = keys.where((k) => k.startsWith('building:')).toList();
       final venues = keys.where((k) => k.startsWith('venue:')).toList();
-      await prefs.setStringList(_buildingsKey, buildings);
+      await prefs.setStringList(buildingsKey, buildings);
       await prefs.setStringList(_venuesKey, venues);
       return true;
     } catch (_) {

@@ -1309,6 +1309,54 @@ abstract class AonL10n {
   /// **'Map not shown. The written directions below are complete on their own.'**
   String get wayfindingMapUnavailable;
 
+  /// Settings control that clears all locally stored app data.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete my data'**
+  String get settingsEraseTitle;
+
+  /// Explains the scope of the erase control.
+  ///
+  /// In en, this message translates to:
+  /// **'Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.'**
+  String get settingsEraseBody;
+
+  /// Destructive confirmation dialog title.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete data stored on this device?'**
+  String get settingsEraseConfirmTitle;
+
+  /// Destructive confirmation body. States the scope limit honestly.
+  ///
+  /// In en, this message translates to:
+  /// **'This permanently deletes data stored by this app on this device. It cannot undo anything already sent to Google.'**
+  String get settingsEraseConfirmBody;
+
+  /// Destructive confirm button.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get settingsEraseConfirmAction;
+
+  /// Dismisses the destructive confirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get settingsEraseCancel;
+
+  /// Snackbar shown after a successful erase.
+  ///
+  /// In en, this message translates to:
+  /// **'Deleted.'**
+  String get settingsEraseDone;
+
+  /// Shown when eraseAll returned false. Never claim a deletion that did not happen.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t delete your data. Please try again.'**
+  String get settingsEraseFailed;
+
   /// Title of the map-only disclosure shown before wayfinding renders a Google basemap.
   ///
   /// In en, this message translates to:

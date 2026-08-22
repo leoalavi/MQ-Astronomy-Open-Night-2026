@@ -725,6 +725,33 @@ class AonL10nEn extends AonL10n {
       'Map not shown. The written directions below are complete on their own.';
 
   @override
+  String get settingsEraseTitle => 'Delete my data';
+
+  @override
+  String get settingsEraseBody =>
+      'Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.';
+
+  @override
+  String get settingsEraseConfirmTitle => 'Delete data stored on this device?';
+
+  @override
+  String get settingsEraseConfirmBody =>
+      'This permanently deletes data stored by this app on this device. It cannot undo anything already sent to Google.';
+
+  @override
+  String get settingsEraseConfirmAction => 'Delete';
+
+  @override
+  String get settingsEraseCancel => 'Cancel';
+
+  @override
+  String get settingsEraseDone => 'Deleted.';
+
+  @override
+  String get settingsEraseFailed =>
+      'Couldn\'t delete your data. Please try again.';
+
+  @override
   String get mapDisplayDisclosureTitle => 'Load the Google map here?';
 
   @override

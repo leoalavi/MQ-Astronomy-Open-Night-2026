@@ -21,12 +21,12 @@ class SharedPrefsMapsConsentStore implements MapsConsentStore {
   SharedPrefsMapsConsentStore({required this.prefs});
 
   final SharedPreferencesAsync prefs;
-  static const _key = 'map_google_consent.v1';
+  static const String storageKey = 'map_google_consent.v1';
 
   @override
   Future<MapsConsent> loadSnapshot() async {
     try {
-      return switch (await prefs.getString(_key)) {
+      return switch (await prefs.getString(storageKey)) {
         'accepted' => MapsConsent.accepted,
         'declined' => MapsConsent.declined,
         _ => MapsConsent.unknown,
@@ -39,7 +39,7 @@ class SharedPrefsMapsConsentStore implements MapsConsentStore {
   @override
   Future<bool> save(MapsConsent consent) async {
     try {
-      await prefs.setString(_key, consent.name);
+      await prefs.setString(storageKey, consent.name);
       return true;
     } catch (_) {
       return false;

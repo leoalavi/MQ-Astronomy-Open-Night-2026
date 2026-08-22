@@ -10,6 +10,7 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/app_settings.dart';
 import 'package:aon2026/services/heading_service.dart';
+import 'package:aon2026/services/local_data_eraser.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/location_service.dart';
 import 'package:aon2026/services/point_me_controller.dart';
@@ -108,6 +109,12 @@ Future<void> main() async {
         // Spec §2b: the SDK is keyed on demand, never at launch. The provider
         // short-circuits on consent before this is ever reached.
         mapsSdkInitializerProvider.overrideWithValue(PlatformMapsSdkInitializer()),
+        localDataEraserProvider.overrideWithValue(SharedPrefsLocalDataEraser(
+          prefs: SharedPreferencesAsync(),
+          // Same id SharedPrefsFavoritesStore is built with, so the per-event
+          // favourites key matches.
+          eventId: EventConfig.astronomyOpenNight.id,
+        )),
         locationServiceProvider.overrideWithValue(GeolocatorLocationService()),
         headingServiceProvider.overrideWithValue(SensorsHeadingService()),
       ],

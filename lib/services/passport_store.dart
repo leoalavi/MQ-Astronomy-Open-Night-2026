@@ -19,12 +19,13 @@ class SharedPrefsPassportStore implements PassportStore {
   SharedPrefsPassportStore(this._prefs);
 
   final SharedPreferencesAsync _prefs;
-  static const String _key = 'passport.collectedVenueIds';
+  /// Public so `LocalDataEraser` can never drift from the real key.
+  static const String storageKey = 'passport.collectedVenueIds';
 
   @override
   Future<Set<String>> loadSnapshot() async {
     try {
-      final list = await _prefs.getStringList(_key);
+      final list = await _prefs.getStringList(storageKey);
       return list?.toSet() ?? <String>{};
     } catch (_) {
       return <String>{};
@@ -34,7 +35,7 @@ class SharedPrefsPassportStore implements PassportStore {
   @override
   Future<bool> save(Set<String> venueIds) async {
     try {
-      await _prefs.setStringList(_key, venueIds.toList());
+      await _prefs.setStringList(storageKey, venueIds.toList());
       return true;
     } catch (_) {
       return false;

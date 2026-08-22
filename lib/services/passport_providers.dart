@@ -96,6 +96,11 @@ class PassportNotifier extends Notifier<PassportState> {
 
   /// Serializes writes so two saves can never complete out of order; each write
   /// persists the CURRENT set, so the last write always reflects final state.
+  /// Awaitable completion of the serialized write chain, so a caller that must
+  /// order storage work after a session reset (Settings' "Delete my data") can
+  /// wait rather than race it.
+  Future<void> flush() => _writes;
+
   void _scheduleSave() {
     _writes = _writes.then((_) async {
       final ok = await ref.read(passportStoreProvider).save(

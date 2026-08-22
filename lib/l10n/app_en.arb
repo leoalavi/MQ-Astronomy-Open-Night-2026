@@ -580,6 +580,22 @@
   "@wayfindingMapUnavailable": {
     "description": "Placeholder where the Google map would be, when consent was declined or the SDK is unkeyed."
   },
+  "settingsEraseTitle": "Delete my data",
+  "@settingsEraseTitle": { "description": "Settings control that clears all locally stored app data." },
+  "settingsEraseBody": "Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.",
+  "@settingsEraseBody": { "description": "Explains the scope of the erase control." },
+  "settingsEraseConfirmTitle": "Delete data stored on this device?",
+  "@settingsEraseConfirmTitle": { "description": "Destructive confirmation dialog title." },
+  "settingsEraseConfirmBody": "This permanently deletes data stored by this app on this device. It cannot undo anything already sent to Google.",
+  "@settingsEraseConfirmBody": { "description": "Destructive confirmation body. States the scope limit honestly." },
+  "settingsEraseConfirmAction": "Delete",
+  "@settingsEraseConfirmAction": { "description": "Destructive confirm button." },
+  "settingsEraseCancel": "Cancel",
+  "@settingsEraseCancel": { "description": "Dismisses the destructive confirmation." },
+  "settingsEraseDone": "Deleted.",
+  "@settingsEraseDone": { "description": "Snackbar shown after a successful erase." },
+  "settingsEraseFailed": "Couldn't delete your data. Please try again.",
+  "@settingsEraseFailed": { "description": "Shown when eraseAll returned false. Never claim a deletion that did not happen." },
   "mapDisplayDisclosureTitle": "Load the Google map here?",
   "@mapDisplayDisclosureTitle": {
     "description": "Title of the map-only disclosure shown before wayfinding renders a Google basemap."

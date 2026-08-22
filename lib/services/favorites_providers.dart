@@ -37,6 +37,17 @@ class FavoritesController extends Notifier<FavoritesState> {
     _scheduleSave();
   }
 
+  /// Drops every favourite in the CURRENT session and persists the empty set.
+  ///
+  /// `ref.invalidate` is not a substitute: `build()` re-seeds from
+  /// `favoritesSnapshotProvider`, which still holds the startup snapshot, so
+  /// invalidating would restore the very data a "delete my data" tap removed.
+  void clearAll() {
+    if (state.keys.isEmpty) return;
+    state = state.copyWith(keys: <String>{});
+    _scheduleSave();
+  }
+
   void _scheduleSave() {
     final store = ref.read(favoritesStoreProvider);
     _chain = _chain.then((_) async {

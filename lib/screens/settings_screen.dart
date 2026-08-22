@@ -9,7 +9,10 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/app_settings.dart';
+import 'package:aon2026/services/favorites_providers.dart';
+import 'package:aon2026/services/local_data_eraser.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/widgets/event_time_preview.dart';
@@ -120,6 +123,7 @@ class SettingsScreen extends ConsumerWidget {
           // M4: the one exception to "nothing leaves your phone" — surfaced
           // honestly, with a revoke control once consent has been given.
           const _GoogleMapsPrivacyCard(),
+          const _DeleteMyDataCard(),
 
           // ── Event-night preview ──
           //
@@ -280,6 +284,98 @@ class _LanguageCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+}
+
+/// "Delete my data" — clears everything this app stores on this device.
+///
+/// NOT an Apple requirement: 5.1.1(i) governs what the privacy POLICY must
+/// explain, and 5.1.1(v)'s in-app deletion rule is conditional on account
+/// creation, which this app has none of. It is here because the data is local,
+/// so the control is cheap, transparent and testable.
+///
+/// Deletion is an orchestration, not a storage wipe: FavoritesController and
+/// PassportNotifier hold live in-memory state seeded at startup, so clearing
+/// SharedPreferences alone would leave the session showing deleted data and the
+/// next save would write it straight back.
+class _DeleteMyDataCard extends ConsumerWidget {
+  const _DeleteMyDataCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    final theme = Theme.of(context);
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AonSpacing.space4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(l.settingsEraseTitle, style: theme.textTheme.titleSmall),
+            const SizedBox(height: AonSpacing.space2),
+            Text(
+              l.settingsEraseBody,
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: context.aon.contentSecondary),
+            ),
+            const SizedBox(height: AonSpacing.space2),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: TextButton(
+                key: const Key('settings-erase-button'),
+                onPressed: () => _confirmErase(context, ref, l),
+                child: Text(l.settingsEraseConfirmAction),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmErase(
+      BuildContext context, WidgetRef ref, AonL10n l) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        scrollable: true,
+        backgroundColor: context.aon.surface,
+        title: Text(l.settingsEraseConfirmTitle),
+        content: Text(l.settingsEraseConfirmBody),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: Text(l.settingsEraseCancel),
+          ),
+          FilledButton(
+            key: const Key('settings-erase-confirm'),
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: Text(l.settingsEraseConfirmAction),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    // Session FIRST, storage second. Both notifiers persist through a serialized
+    // save chain, so erasing storage before clearing them would let a queued
+    // write put the keys straight back. And `ref.invalidate` is not a
+    // substitute for a clear: build() re-seeds from the startup snapshot, which
+    // would restore exactly the data this control just removed.
+    ref.read(passportProvider.notifier).reset();
+    ref.read(favoritesProvider.notifier).clearAll();
+    ref.read(mapsConsentProvider.notifier).revoke();
+    await ref.read(favoritesProvider.notifier).flush();
+    await ref.read(passportProvider.notifier).flush();
+
+    final ok = await ref.read(localDataEraserProvider).eraseAll();
+    if (!context.mounted) return;
+
+    // Never claim a success we did not verify.
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(ok ? l.settingsEraseDone : l.settingsEraseFailed),
+    ));
   }
 }
 

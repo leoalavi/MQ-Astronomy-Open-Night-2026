@@ -726,6 +726,34 @@ class AonL10nFa extends AonL10n {
       'نقشه نمایش داده نمی‌شود. راهنمای نوشتاری زیر به‌تنهایی کامل است.';
 
   @override
+  String get settingsEraseTitle => 'حذف داده‌های من';
+
+  @override
+  String get settingsEraseBody =>
+      'مهرهای پاسپورت، علاقه‌مندی‌ها و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند. تنظیمات زبان و پوستهٔ شما حفظ می‌شود.';
+
+  @override
+  String get settingsEraseConfirmTitle =>
+      'داده‌های ذخیره‌شده روی این دستگاه حذف شوند؟';
+
+  @override
+  String get settingsEraseConfirmBody =>
+      'این کار داده‌هایی را که این برنامه روی این دستگاه ذخیره کرده برای همیشه حذف می‌کند. آنچه پیش‌تر به گوگل ارسال شده قابل بازگرداندن نیست.';
+
+  @override
+  String get settingsEraseConfirmAction => 'حذف';
+
+  @override
+  String get settingsEraseCancel => 'انصراف';
+
+  @override
+  String get settingsEraseDone => 'حذف شد.';
+
+  @override
+  String get settingsEraseFailed =>
+      'حذف داده‌های شما ممکن نشد. لطفاً دوباره تلاش کنید.';
+
+  @override
   String get mapDisplayDisclosureTitle => 'نقشهٔ گوگل در اینجا بارگذاری شود؟';
 
   @override

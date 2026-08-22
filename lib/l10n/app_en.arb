@@ -580,6 +580,10 @@
   "@wayfindingMapUnavailable": {
     "description": "Placeholder where the Google map would be, when consent was declined or the SDK is unkeyed."
   },
+  "@homeNothingRunningYet": {
+    "description": "Empty state for 'Happening now' before the event has started. The date comes from event configuration, never from the translation.",
+    "placeholders": { "startTime": { "type": "String" } }
+  },
   "settingsEraseTitle": "Delete my data",
   "@settingsEraseTitle": { "description": "Settings control that clears all locally stored app data." },
   "settingsEraseBody": "Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.",

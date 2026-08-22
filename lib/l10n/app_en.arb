@@ -277,6 +277,10 @@
   },
   "panorama360Loading": "Loading the 360° view…",
   "panorama360Title": "360° preview",
+  "panoramaTapToExplore": "Tap to explore in 360°",
+  "@panoramaTapToExplore": {
+    "description": "360\u00b0 picker card subtitle for a venue with real photography. Replaces the demo disclosure, which now shows only for placeholder tours."
+  },
   "panoramaVenueWithMapLetter": "{letter} \u00b7 {name}",
   "@panoramaVenueWithMapLetter": {
     "description": "360\u00b0 picker card title. Prefixes the venue with the letter the official AON program map prints for it, so the app list and the paper sheet read in the same alphabet.",

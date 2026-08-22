@@ -3,12 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/data/panorama_data.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
-/// Demo-content disclosure shown on every placeholder tour card and inside the
-/// panorama — the imagery is a different building.
+/// Demo-content disclosure for a PLACEHOLDER tour — the imagery is a different
+/// building. Nothing shipped is a placeholder any more (see [PanoramaData]);
+/// this exists so that if one ever returns it cannot pass as the real venue.
 const String kPanoramaDemoFlag = 'Demo 360° — sample imagery, not this venue';
 
 /// The 360° building picker: a card per *event* location — the A–I entries of
@@ -27,7 +29,7 @@ class PanoramaBuildingPicker extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AonL10n.of(context);
     final venues = ref.watch(panoramaPickerVenuesProvider);
-    final withTour = ref.watch(venuesWithPanoramaProvider);
+    final tours = ref.watch(panoramaToursProvider);
 
     return ListView(
       padding: const EdgeInsets.all(AonSpacing.space4),
@@ -39,8 +41,8 @@ class PanoramaBuildingPicker extends ConsumerWidget {
               // Every venue in this list carries a legend letter by
               // construction — that is what put it in the list.
               label: l10n.panoramaVenueWithMapLetter(v.mapReference!, v.name),
-              hasTour: withTour.contains(v.id),
-              onTap: withTour.contains(v.id) ? () => onOpen(v.id) : null,
+              tour: tours[v.id],
+              onTap: tours.containsKey(v.id) ? () => onOpen(v.id) : null,
             ),
           ),
       ],
@@ -49,16 +51,24 @@ class PanoramaBuildingPicker extends ConsumerWidget {
 }
 
 class _VenueCard extends StatelessWidget {
-  const _VenueCard({required this.label, required this.hasTour, this.onTap});
+  const _VenueCard({required this.label, required this.tour, this.onTap});
 
   /// Already letter-prefixed, e.g. "A · Macquarie Theatre".
   final String label;
-  final bool hasTour;
+
+  /// Null when this venue has no tour yet.
+  final PanoramaTour? tour;
   final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = AonL10n.of(context);
+    final hasTour = tour != null;
+    final isDemo = tour?.placeholder ?? false;
+    final subtitle = tour == null
+        ? 'Coming soon'
+        : (isDemo ? kPanoramaDemoFlag : l10n.panoramaTapToExplore);
     final card = GlassSurface(
       variant: GlassVariant.control,
       borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
@@ -80,7 +90,7 @@ class _VenueCard extends StatelessWidget {
                   Text(label, style: theme.textTheme.titleMedium),
                   const SizedBox(height: 2),
                   Text(
-                    hasTour ? kPanoramaDemoFlag : 'Coming soon',
+                    subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: hasTour
                           ? context.aon.soon
@@ -103,7 +113,7 @@ class _VenueCard extends StatelessWidget {
     }
     return Semantics(
       button: true,
-      label: '$label, demo 360 tour',
+      label: isDemo ? '$label, demo 360 tour' : '$label, 360 tour',
       child: Material(
         color: Colors.transparent,
         child: InkWell(

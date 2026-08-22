@@ -1,0 +1,10 @@
+{
+  "nodes": [
+    {
+      "id": "foyer",
+      "image": "indoor/mason-theatre_foyer.jpg",
+      "description": "Foyer outside Mason Theatre",
+      "neighbours": []
+    }
+  ]
+}

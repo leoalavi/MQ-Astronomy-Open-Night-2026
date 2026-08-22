@@ -220,10 +220,19 @@ final selectedRouteProvider = Provider<WalkingRoute?>((ref) {
   return null;
 });
 
-/// Which venues have a 360 tour (synchronous — no manifest I/O; the picker
+/// Every 360 tour, keyed by venue (synchronous — no manifest I/O; the picker
 /// reads this, not every JSON file).
+///
+/// The picker needs the tour itself, not merely "has one": a placeholder tour
+/// must still disclose that its imagery is a different building, and a real
+/// one must not carry that disclaimer.
+final panoramaToursProvider = Provider<Map<String, PanoramaTour>>(
+  (ref) => {for (final t in PanoramaData.tours) t.venueId: t},
+);
+
+/// Which venues have a 360 tour.
 final venuesWithPanoramaProvider = Provider<Set<String>>(
-  (ref) => PanoramaData.tours.map((t) => t.venueId).toSet(),
+  (ref) => ref.watch(panoramaToursProvider).keys.toSet(),
 );
 
 /// Matches the official AON program map's *event* legend: the single letters

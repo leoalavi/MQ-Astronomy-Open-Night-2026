@@ -745,6 +745,12 @@ abstract class AonL10n {
   /// **'360° preview'**
   String get panorama360Title;
 
+  /// 360° picker card subtitle for a venue with real photography. Replaces the demo disclosure, which now shows only for placeholder tours.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to explore in 360°'**
+  String get panoramaTapToExplore;
+
   /// 360° picker card title. Prefixes the venue with the letter the official AON program map prints for it, so the app list and the paper sheet read in the same alphabet.
   ///
   /// In en, this message translates to:

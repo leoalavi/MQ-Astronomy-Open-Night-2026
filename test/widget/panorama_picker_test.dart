@@ -4,83 +4,111 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
+import 'package:aon2026/data/panorama_data.dart';
+import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/panorama_building_picker.dart';
 
+const String _explore = 'Tap to explore in 360°';
+
 void main() {
-  testWidgets(
-    'tour venue tappable + demo flag; others coming soon; no auto-select',
-    (tester) async {
-      String? opened;
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            localizationsDelegates: AonL10n.localizationsDelegates,
-            supportedLocales: AonL10n.supportedLocales,
-            theme: AonTheme.build(),
-            home: Scaffold(
-              body: PanoramaBuildingPicker(onOpen: (id) => opened = id),
-            ),
-          ),
-        ),
-      );
-      await tester.pump();
-      // The demo flag appears for the one tour venue; coming-soon for others.
-      expect(find.text(kPanoramaDemoFlag), findsOneWidget);
-      expect(find.text('Coming soon'), findsWidgets);
-      // Picker is shown, nothing auto-opened.
-      expect(opened, isNull);
-      // Tapping the demo flag's card opens that venue.
-      await tester.tap(find.text(kPanoramaDemoFlag));
-      expect(opened, 'macquarie-theatre');
-    },
+  // `tours` swaps the shipped tour table — the only way to exercise the
+  // placeholder branch now that nothing shipped is a placeholder.
+  Widget picker({
+    void Function(String)? onOpen,
+    Map<String, PanoramaTour>? tours,
+  }) => ProviderScope(
+    overrides: [
+      if (tours != null) panoramaToursProvider.overrideWithValue(tours),
+    ],
+    child: MaterialApp(
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
+      theme: AonTheme.build(),
+      home: Scaffold(
+        body: PanoramaBuildingPicker(onOpen: onOpen ?? (_) {}),
+      ),
+    ),
   );
+
+  // A tall surface: the picker is a lazy ListView, so a short viewport would
+  // let "card X is absent" pass for the wrong reason.
+  void tall(WidgetTester tester) {
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1.0;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+  }
+
+  testWidgets('real tours invite exploring; the demo disclosure is gone', (
+    tester,
+  ) async {
+    tall(tester);
+    String? opened;
+    await tester.pumpWidget(picker(onOpen: (id) => opened = id));
+    await tester.pump();
+
+    // Six legend venues have photography; three do not.
+    expect(find.text(_explore), findsNWidgets(6));
+    expect(find.text('Coming soon'), findsNWidgets(3));
+    // Nothing shipped is sample imagery any more.
+    expect(find.text(kPanoramaDemoFlag), findsNothing);
+
+    // Nothing auto-opens; tapping a tour card opens that venue.
+    expect(opened, isNull);
+    await tester.tap(find.text('A · Macquarie Theatre'));
+    expect(opened, 'macquarie-theatre');
+  });
+
+  testWidgets('a placeholder tour still discloses itself as demo content', (
+    tester,
+  ) async {
+    tall(tester);
+    await tester.pumpWidget(
+      picker(
+        tours: {
+          'mason-theatre': const PanoramaTour(
+            venueId: 'mason-theatre',
+            manifestAsset: 'assets/data/indoor/mason-theatre.json',
+            placeholder: true,
+          ),
+        },
+      ),
+    );
+    await tester.pump();
+
+    expect(find.text(kPanoramaDemoFlag), findsOneWidget);
+    expect(find.text(_explore), findsNothing);
+  });
 
   testWidgets(
     'lists only the map legend A-I venues, each prefixed with its letter',
     (tester) async {
-      // Tall surface: the picker is a lazy ListView, so a short viewport
-      // would make "venue X is absent" pass for the wrong reason.
-      tester.view.physicalSize = const Size(800, 2400);
-      tester.view.devicePixelRatio = 1.0;
-      addTearDown(tester.view.resetPhysicalSize);
-      addTearDown(tester.view.resetDevicePixelRatio);
-
-      await tester.pumpWidget(
-        ProviderScope(
-          child: MaterialApp(
-            localizationsDelegates: AonL10n.localizationsDelegates,
-            supportedLocales: AonL10n.supportedLocales,
-            theme: AonTheme.build(),
-            home: Scaffold(
-              body: PanoramaBuildingPicker(onOpen: (_) {}),
-            ),
-          ),
-        ),
-      );
+      tall(tester);
+      await tester.pumpWidget(picker());
       await tester.pump();
 
       // Every card reads as the paper map letters it.
       const lettered = [
-        'A \u00b7 Macquarie Theatre',
-        'B \u00b7 Mason Theatre',
-        'C \u00b7 Food and drink',
-        'D \u00b7 14 Sir Christopher Ondaatje Avenue',
-        'E \u00b7 1 Central Courtyard',
-        'F \u00b7 Macquarie University Sport and Aquatic Centre',
-        'G \u00b7 Macquarie University Astronomical Observatory',
-        'H \u00b7 11 Wally\u2019s Walk',
-        'I \u00b7 17 Wally\u2019s Walk',
+        'A · Macquarie Theatre',
+        'B · Mason Theatre',
+        'C · Food and drink',
+        'D · 14 Sir Christopher Ondaatje Avenue',
+        'E · 1 Central Courtyard',
+        'F · Macquarie University Sport and Aquatic Centre',
+        'G · Macquarie University Astronomical Observatory',
+        'H · 11 Wally’s Walk',
+        'I · 17 Wally’s Walk',
       ];
       for (final label in lettered) {
         expect(find.text(label), findsOneWidget, reason: 'missing $label');
       }
-      // Nine cards, no more: one tourable + eight coming soon.
-      expect(find.byIcon(Icons.panorama_photosphere), findsOneWidget);
-      expect(find.byIcon(Icons.lock_outline_rounded), findsNWidgets(8));
+      // Nine cards, no more: six tourable + three coming soon.
+      expect(find.byIcon(Icons.panorama_photosphere), findsNWidgets(6));
+      expect(find.byIcon(Icons.lock_outline_rounded), findsNWidgets(3));
 
       // Unlettered service points are gone, not merely scrolled away.
       for (final gone in [
-        'Toilets \u2014 Macquarie Theatre',
+        'Toilets — Macquarie Theatre',
         'First aid',
         'Registration point',
         'Macquarie University Metro Station',

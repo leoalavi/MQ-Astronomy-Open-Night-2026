@@ -722,6 +722,13 @@ class AonL10nFa extends AonL10n {
   String get mapNavDisclosureAccept => 'استفاده از نقشهٔ گوگل';
 
   @override
+  String get mapDisplayDisclosureTitle => 'نقشهٔ گوگل در اینجا بارگذاری شود؟';
+
+  @override
+  String get mapDisplayDisclosureBody =>
+      'این صفحه مسیر پیاده‌روی شما را روی نقشهٔ گوگل رسم می‌کند. گوگل درخواست نقشه و اطلاعات فنی درخواست و دستگاه لازم برای ارائهٔ آن را دریافت می‌کند. این صفحه از موقعیت مکانی شما استفاده نمی‌کند.\n\nهمین انتخاب، مسیریابی پیاده در بخش‌های دیگر برنامه را هم در بر می‌گیرد — اگر آن را بخواهید، موقعیت شما به گوگل ارسال می‌شود.';
+
+  @override
   String get mapNavDisclosureDecline => 'الان نه';
 
   @override

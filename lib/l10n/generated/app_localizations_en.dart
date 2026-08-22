@@ -721,6 +721,13 @@ class AonL10nEn extends AonL10n {
   String get mapNavDisclosureAccept => 'Use Google Maps';
 
   @override
+  String get mapDisplayDisclosureTitle => 'Load the Google map here?';
+
+  @override
+  String get mapDisplayDisclosureBody =>
+      'This screen draws your walking route on a Google map. Google receives the map request and the technical request and device information it needs to serve it. This screen does not use your location.\n\nThe same choice also covers walking directions elsewhere in the app — if you ask for those, your location is sent to Google.';
+
+  @override
   String get mapNavDisclosureDecline => 'Not now';
 
   @override

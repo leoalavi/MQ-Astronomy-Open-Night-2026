@@ -1303,6 +1303,18 @@ abstract class AonL10n {
   /// **'Use Google Maps'**
   String get mapNavDisclosureAccept;
 
+  /// Title of the map-only disclosure shown before wayfinding renders a Google basemap.
+  ///
+  /// In en, this message translates to:
+  /// **'Load the Google map here?'**
+  String get mapDisplayDisclosureTitle;
+
+  /// Body of the map-only disclosure. States what THIS screen does, then what the same consent grant covers elsewhere, so accepting is informed for both.
+  ///
+  /// In en, this message translates to:
+  /// **'This screen draws your walking route on a Google map. Google receives the map request and the technical request and device information it needs to serve it. This screen does not use your location.\n\nThe same choice also covers walking directions elsewhere in the app — if you ask for those, your location is sent to Google.'**
+  String get mapDisplayDisclosureBody;
+
   /// Consent decline button
   ///
   /// In en, this message translates to:

@@ -7,21 +7,46 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 /// the user their current location will be sent to Google Maps to compute a
 /// walking route. Returns `true` (accept) / `false` (decline). The caller maps
 /// the result onto [MapsConsent] and only then proceeds.
+/// Which truth this disclosure is telling.
+///
+/// [navigation] — the surface captures a location snapshot and sends it to the
+/// Routes API. [mapDisplay] — the surface renders a Google basemap but reads no
+/// location (wayfinding, whose routes are hand-authored and bundled offline).
+/// One [MapsConsent] covers both, so [mapDisplay]'s copy also discloses what the
+/// grant permits on the navigation surface: otherwise accepting here would
+/// silently authorise sending location there.
+enum MapsDisclosureKind { navigation, mapDisplay }
+
 class MapsNavDisclosure extends StatelessWidget {
-  const MapsNavDisclosure({super.key});
+  const MapsNavDisclosure({
+    super.key,
+    this.kind = MapsDisclosureKind.navigation,
+  });
+
+  final MapsDisclosureKind kind;
 
   @override
   Widget build(BuildContext context) {
     final l = AonL10n.of(context);
     final theme = Theme.of(context);
+    final (title, body) = switch (kind) {
+      MapsDisclosureKind.navigation => (
+          l.mapNavDisclosureTitle,
+          l.mapNavDisclosureBody
+        ),
+      MapsDisclosureKind.mapDisplay => (
+          l.mapDisplayDisclosureTitle,
+          l.mapDisplayDisclosureBody
+        ),
+    };
     return AlertDialog(
       // scrollable so title + body + actions scroll together rather than
       // overflowing at small screens / large text scale (320×568 @ 2.0).
       scrollable: true,
       backgroundColor: context.aon.surface,
-      title: Text(l.mapNavDisclosureTitle),
+      title: Text(title),
       content: Text(
-        l.mapNavDisclosureBody,
+        body,
         style: theme.textTheme.bodyMedium?.copyWith(color: context.aon.contentSecondary),
       ),
       actionsPadding: const EdgeInsets.fromLTRB(
@@ -42,10 +67,13 @@ class MapsNavDisclosure extends StatelessWidget {
 
 /// Shows [MapsNavDisclosure] and resolves to whether the user accepted.
 /// A barrier dismiss counts as decline (`false`).
-Future<bool> showMapsNavDisclosure(BuildContext context) async {
+Future<bool> showMapsNavDisclosure(
+  BuildContext context, {
+  MapsDisclosureKind kind = MapsDisclosureKind.navigation,
+}) async {
   final accepted = await showDialog<bool>(
     context: context,
-    builder: (_) => const MapsNavDisclosure(),
+    builder: (_) => MapsNavDisclosure(kind: kind),
   );
   return accepted ?? false;
 }

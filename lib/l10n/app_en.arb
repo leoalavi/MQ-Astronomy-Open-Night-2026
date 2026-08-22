@@ -573,6 +573,14 @@
   "@mapNavDisclosureAccept": {
     "description": "Consent accept button"
   },
+  "mapDisplayDisclosureTitle": "Load the Google map here?",
+  "@mapDisplayDisclosureTitle": {
+    "description": "Title of the map-only disclosure shown before wayfinding renders a Google basemap."
+  },
+  "mapDisplayDisclosureBody": "This screen draws your walking route on a Google map. Google receives the map request and the technical request and device information it needs to serve it. This screen does not use your location.\n\nThe same choice also covers walking directions elsewhere in the app — if you ask for those, your location is sent to Google.",
+  "@mapDisplayDisclosureBody": {
+    "description": "Body of the map-only disclosure. States what THIS screen does, then what the same consent grant covers elsewhere, so accepting is informed for both."
+  },
   "mapNavDisclosureDecline": "Not now",
   "@mapNavDisclosureDecline": {
     "description": "Consent decline button"

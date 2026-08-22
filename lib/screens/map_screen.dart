@@ -13,6 +13,7 @@ import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/widgets/compass_mode_view.dart';
 import 'package:aon2026/widgets/map_mode_toggle.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
+import 'package:aon2026/widgets/preview_location_badge.dart';
 import 'package:aon2026/widgets/panorama_building_picker.dart';
 import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/venue.dart';
@@ -284,7 +285,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 Positioned(
                   left: AonSpacing.space2,
                   bottom: AonNavMetrics.clearance(context) - AonSpacing.space4,
-                  child: const _MapAttribution(),
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      _MapAttribution(),
+                      SizedBox(width: AonSpacing.space2),
+                      // §3c: the dot may be simulated, and the Settings toggle
+                      // that says so is not on this screen.
+                      PreviewLocationBadge(),
+                    ],
+                  ),
                 ),
                 // Floating glass control island over the live tiles — the Phase 2
                 // refraction payoff. Right edge, upper map area: clear of the

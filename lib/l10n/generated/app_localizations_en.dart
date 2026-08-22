@@ -725,6 +725,20 @@ class AonL10nEn extends AonL10n {
       'Map not shown. The written directions below are complete on their own.';
 
   @override
+  String get mapNavDisclosureBodyPreview =>
+      'To show a walking route, the simulated preview location — not your real position — is sent to Google Maps.';
+
+  @override
+  String get previewLocationBadge => 'Simulated location';
+
+  @override
+  String get settingsPreviewTitle => 'Preview from anywhere';
+
+  @override
+  String get settingsPreviewBody =>
+      'Not on campus yet? Turn this on to see the map, compass and nearby list as they\'ll look on the night. The position shown is simulated, not your real location.';
+
+  @override
   String get settingsEraseTitle => 'Delete my data';
 
   @override

@@ -1309,6 +1309,30 @@ abstract class AonL10n {
   /// **'Map not shown. The written directions below are complete on their own.'**
   String get wayfindingMapUnavailable;
 
+  /// Disclosure body while preview mode is active, so the copy names what is actually transmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'To show a walking route, the simulated preview location — not your real position — is sent to Google Maps.'**
+  String get mapNavDisclosureBodyPreview;
+
+  /// Persistent badge shown wherever a previewed (simulated) position is visualised, so it is never mistaken for a real fix.
+  ///
+  /// In en, this message translates to:
+  /// **'Simulated location'**
+  String get previewLocationBadge;
+
+  /// Settings toggle that simulates an on-campus position.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview from anywhere'**
+  String get settingsPreviewTitle;
+
+  /// Explains that the previewed position is simulated.
+  ///
+  /// In en, this message translates to:
+  /// **'Not on campus yet? Turn this on to see the map, compass and nearby list as they\'ll look on the night. The position shown is simulated, not your real location.'**
+  String get settingsPreviewBody;
+
   /// Settings control that clears all locally stored app data.
   ///
   /// In en, this message translates to:

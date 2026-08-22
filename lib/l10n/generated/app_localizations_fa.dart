@@ -726,6 +726,20 @@ class AonL10nFa extends AonL10n {
       'نقشه نمایش داده نمی‌شود. راهنمای نوشتاری زیر به‌تنهایی کامل است.';
 
   @override
+  String get mapNavDisclosureBodyPreview =>
+      'برای نمایش مسیر پیاده، موقعیت شبیه‌سازی‌شدهٔ پیش‌نمایش — نه مکان واقعی شما — به نقشهٔ گوگل ارسال می‌شود.';
+
+  @override
+  String get previewLocationBadge => 'موقعیت شبیه‌سازی‌شده';
+
+  @override
+  String get settingsPreviewTitle => 'پیش‌نمایش از هر جایی';
+
+  @override
+  String get settingsPreviewBody =>
+      'هنوز در پردیس نیستید؟ این را روشن کنید تا نقشه، قطب‌نما و فهرست نزدیک را همان‌گونه که در شب برنامه خواهند بود ببینید. موقعیت نمایش‌داده‌شده شبیه‌سازی‌شده است، نه مکان واقعی شما.';
+
+  @override
   String get settingsEraseTitle => 'حذف داده‌های من';
 
   @override

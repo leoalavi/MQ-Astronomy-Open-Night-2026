@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/location_service.dart';
+import 'package:aon2026/services/preview_location.dart';
 
 class LocationSnapshot {
   const LocationSnapshot({
@@ -36,6 +37,17 @@ class LocationSnapshot {
 final locationServiceProvider =
     Provider<LocationService>((ref) => throw UnimplementedError(
         'override with GeolocatorLocationService in main / a fake in tests'));
+
+/// The service the app actually reads.
+///
+/// Preview mode (§3c) substitutes a simulated on-campus fix; everything
+/// downstream is unchanged and unaware, and `PreviewLocationBadge` is what keeps
+/// the substitution visible to the visitor.
+final effectiveLocationServiceProvider = Provider<LocationService>((ref) {
+  return ref.watch(previewLocationProvider)
+      ? const PreviewLocationService()
+      : ref.watch(locationServiceProvider);
+});
 
 /// Whether the Map shell branch is on-screen. Driven by [AppShell] from
 /// `StatefulNavigationShell.currentIndex` (the authoritative branch signal),
@@ -95,13 +107,30 @@ class LocationController extends Notifier<LocationSnapshot> {
   StreamSubscription<UserLocationFix>? _sub;
   StreamSubscription<bool>? _serviceSub;
 
-  LocationService get _svc => ref.read(locationServiceProvider);
+  LocationService get _svc => ref.read(effectiveLocationServiceProvider);
 
   @override
   LocationSnapshot build() {
     ref.onDispose(_cancel);
     ref.listen(mapVisibleProvider, (_, _) => _sync());
     ref.listen(pointMeActiveProvider, (_, _) => _sync());
+    ref.listen(previewLocationProvider, (_, next) {
+      // Swap services cleanly: drop the old stream first, then re-establish.
+      _cancel();
+      if (next) {
+        // The preview service always grants, so this activates immediately and
+        // without an OS prompt. Gating on `state.active` instead would leave
+        // preview inert for exactly the visitors it exists to serve — the ones
+        // who never granted location.
+        unawaited(ensureLocationActive());
+      } else {
+        // Back to the real service: drop the simulated fix rather than letting
+        // it linger as if it were a real one.
+        state = state.copyWith(
+            active: false, following: false, clearFix: true);
+        _sync();
+      }
+    });
     return const LocationSnapshot();
   }
 

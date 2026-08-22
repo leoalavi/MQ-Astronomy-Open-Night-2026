@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:aon2026/services/preview_location.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
@@ -17,7 +20,7 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 /// silently authorise sending location there.
 enum MapsDisclosureKind { navigation, mapDisplay }
 
-class MapsNavDisclosure extends StatelessWidget {
+class MapsNavDisclosure extends ConsumerWidget {
   const MapsNavDisclosure({
     super.key,
     this.kind = MapsDisclosureKind.navigation,
@@ -26,13 +29,17 @@ class MapsNavDisclosure extends StatelessWidget {
   final MapsDisclosureKind kind;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final l = AonL10n.of(context);
     final theme = Theme.of(context);
+    // Under preview mode `navOriginProvider` reads the effective service and
+    // sends the SIMULATED coordinate to Google. Saying "your current location"
+    // then would misdescribe what is actually transmitted.
+    final previewing = ref.watch(previewLocationProvider);
     final (title, body) = switch (kind) {
       MapsDisclosureKind.navigation => (
           l.mapNavDisclosureTitle,
-          l.mapNavDisclosureBody
+          previewing ? l.mapNavDisclosureBodyPreview : l.mapNavDisclosureBody
         ),
       MapsDisclosureKind.mapDisplay => (
           l.mapDisplayDisclosureTitle,

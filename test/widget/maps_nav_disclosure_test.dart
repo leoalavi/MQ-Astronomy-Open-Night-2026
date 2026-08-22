@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/widgets/maps_nav_disclosure.dart';
 
-Widget _host({required Locale locale, required void Function(bool) onResult}) => MaterialApp(
+/// MapsNavDisclosure reads `previewLocationProvider` (Task 11) to name the
+/// simulated location, so it needs a scope.
+Widget _host({required Locale locale, required void Function(bool) onResult}) =>
+    ProviderScope(
+        child: MaterialApp(
       locale: locale,
       localizationsDelegates: AonL10n.localizationsDelegates,
       supportedLocales: AonL10n.supportedLocales,
@@ -17,7 +22,7 @@ Widget _host({required Locale locale, required void Function(bool) onResult}) =>
           ),
         ),
       ),
-    );
+    ));
 
 void main() {
   testWidgets('EN: renders title/body/accept/decline; Accept → true', (t) async {

@@ -1,14 +1,21 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/services/preview_location.dart';
 import 'package:aon2026/widgets/maps_nav_disclosure.dart';
 
-Widget _host(MapsDisclosureKind kind) => MaterialApp(
-      localizationsDelegates: AonL10n.localizationsDelegates,
-      supportedLocales: AonL10n.supportedLocales,
-      home: Scaffold(body: MapsNavDisclosure(kind: kind)),
-    );
+Widget _host(MapsDisclosureKind kind, {ProviderContainer? container}) {
+  final app = MaterialApp(
+    localizationsDelegates: AonL10n.localizationsDelegates,
+    supportedLocales: AonL10n.supportedLocales,
+    home: Scaffold(body: MapsNavDisclosure(kind: kind)),
+  );
+  return container == null
+      ? ProviderScope(child: app)
+      : UncontrolledProviderScope(container: container, child: app);
+}
 
 void main() {
   testWidgets('the navigation disclosure states that location is sent',
@@ -43,6 +50,21 @@ void main() {
       reason: 'one MapsConsent covers both surfaces, so accepting here must be '
           'informed about the nav surface too',
     );
+  });
+
+  testWidgets('under preview, the nav disclosure names the SIMULATED location',
+      (t) async {
+    final c = ProviderContainer();
+    addTearDown(c.dispose);
+    c.read(previewLocationProvider.notifier).set(true);
+
+    await t.pumpWidget(_host(MapsDisclosureKind.navigation, container: c));
+    final l = await AonL10n.delegate.load(const Locale('en'));
+
+    expect(find.text(l.mapNavDisclosureBodyPreview), findsOneWidget,
+        reason: 'navOriginProvider sends the simulated coordinate, so saying '
+            '"your current location" would misdescribe what is transmitted');
+    expect(find.text(l.mapNavDisclosureBody), findsNothing);
   });
 
   testWidgets('the map-only disclosure names the request metadata Google gets',

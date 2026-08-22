@@ -13,6 +13,7 @@ import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/local_data_eraser.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/passport_providers.dart';
+import 'package:aon2026/services/preview_location.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/widgets/event_time_preview.dart';
@@ -124,6 +125,7 @@ class SettingsScreen extends ConsumerWidget {
           // honestly, with a revoke control once consent has been given.
           const _GoogleMapsPrivacyCard(),
           const _DeleteMyDataCard(),
+          const _PreviewLocationCard(),
 
           // ── Event-night preview ──
           //
@@ -281,6 +283,33 @@ class _LanguageCard extends ConsumerWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "Preview from anywhere" — a simulated on-campus position (§3c / D7).
+///
+/// Visible and documented, therefore not a 2.3.1(a) hidden or dormant feature.
+/// Session-only and off by default, and `PreviewLocationBadge` keeps the
+/// substitution visible on every screen that draws a position.
+class _PreviewLocationCard extends ConsumerWidget {
+  const _PreviewLocationCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    return Card(
+      child: SwitchListTile.adaptive(
+        key: const Key('settings-preview-toggle'),
+        value: ref.watch(previewLocationProvider),
+        onChanged: (v) => ref.read(previewLocationProvider.notifier).set(v),
+        title: Text(l.settingsPreviewTitle),
+        subtitle: Text(l.settingsPreviewBody),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AonSpacing.space4,
+          vertical: AonSpacing.space2,
         ),
       ),
     );

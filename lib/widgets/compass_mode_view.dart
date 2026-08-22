@@ -9,6 +9,7 @@ import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/nearby_targets.dart';
 import 'package:aon2026/widgets/compass_radar_view.dart';
 import 'package:aon2026/widgets/nearby_list.dart';
+import 'package:aon2026/widgets/preview_location_badge.dart';
 
 /// The compass/radar mode container. Owns the visibility gate (post-frame +
 /// captured notifiers, §0.3), triggers follow-free location activation (§0R-11),
@@ -77,6 +78,12 @@ class _CompassModeViewState extends ConsumerState<CompassModeView> {
       HeadingAvailability.unavailable || HeadingAvailability.unsupported => const NearbyList(),
     };
     return Column(children: [
+      // §3c: the bearings below may be computed from a simulated fix. Sits
+      // above the filter so it covers the radar AND the NearbyList fallback.
+      const Padding(
+        padding: EdgeInsets.only(bottom: AonSpacing.space2),
+        child: PreviewLocationBadge(),
+      ),
       _FilterField(
         hint: l.compassFilterHint,
         onChanged: (q) => ref.read(compassFilterProvider.notifier).set(q),

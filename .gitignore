@@ -28,7 +28,9 @@ migrate_working_dir/
 .pub-cache/
 .pub/
 build/
-coverage/
+# Anchored: the lcov output at the repo root only. An unanchored `coverage/`
+# also swallows tools/coverage/, which holds the policy the gate enforces.
+/coverage/
 
 # ── Symbolication / obfuscation ───────────────────────────
 app.*.symbols

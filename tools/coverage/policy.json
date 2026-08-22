@@ -1,0 +1,36 @@
+{
+  "_": [
+    "Coverage policy for scripts/check.sh. Line coverage only: Flutter's",
+    "`--coverage` emits DA (line) records and no FN/FNDA records at all, so",
+    "there is no function-level number for this toolchain to enforce.",
+    "",
+    "Generated l10n (lib/l10n/generated/) is excluded from both numerator and",
+    "denominator: covering it means calling every string getter, which moves",
+    "the percentage without testing anything.",
+    "",
+    "The thresholds only ever go UP. Raise them when coverage improves; the",
+    "gate fails if a debt entry has been paid off but left in place, so the",
+    "list cannot rot."
+  ],
+  "minimum_total_pct": 87.9,
+  "per_file_minimum_pct": 80.0,
+  "platform_exempt": {
+    "lib/services/location_service.dart": "geolocator platform channel; permission + GPS stream only exist on a device",
+    "lib/widgets/passport_scanner_view.dart": "mobile_scanner camera preview; no camera in the Flutter test VM",
+    "lib/widgets/panorama_web_view.dart": "InAppWebView platform view; the panorama only renders on a real engine",
+    "lib/widgets/embedded_map.dart": "GoogleMap platform view; needs a keyed native SDK",
+    "lib/widgets/glass_shader.dart": "FragmentProgram; shader compilation is a real-GPU path",
+    "lib/services/external_maps_launcher.dart": "url_launcher hand-off to another app",
+    "lib/main.dart": "runApp bootstrap: startup snapshot loads and ProviderScope wiring that a test replaces rather than executes"
+  },
+  "debt": {
+    "lib/app/router/app_router.dart": 78.9,
+    "lib/screens/passport_screen.dart": 67.3,
+    "lib/screens/wayfinding_screen.dart": 39.4,
+    "lib/services/maps_nav_providers.dart": 78.7,
+    "lib/widgets/building_sheet.dart": 79.3,
+    "lib/widgets/glass_surface.dart": 61.3,
+    "lib/widgets/liquid_tab_bar.dart": 74.3,
+    "lib/widgets/venue_info_sheet.dart": 75.7
+  }
+}

@@ -6,6 +6,11 @@
 #   ./scripts/check.sh full     # + web / apk / iOS-sim builds
 #   ./scripts/check.sh quick    # explicit quick
 #
+# Coverage: the test gate runs with `--coverage` and tools/coverage/policy.json
+# is enforced against the result — a whole-repo floor, an 80% per-file minimum,
+# a named platform-exemption list, and a per-file debt list that may only be
+# paid down. Line coverage, because Flutter emits no function records at all.
+#
 # Blocking gates fail the script (non-zero exit). `dart format` is REPORTED but
 # never blocks: the repo carries pre-existing Dart 3.12 tall-style drift
 # (~99/187 files), so a blanket format gate would fail on code we deliberately
@@ -56,6 +61,26 @@ run_gate() {
     end="$(now_ms)"
     printf '  %s✗ %s%s %s(%sms)%s\n' "$R" "$name" "$X" "$DIM" "$((end-start))" "$X"
     printf '%s' "$DIM"; tail -n 25 "$log" | sed 's/^/    /'; printf '%s' "$X"
+    FAILED+=("$name"); rm -f "$log"; return 1
+  fi
+}
+
+# run_gate_verbose "Name" cmd args...  → as run_gate, but echoes the gate's own
+# output on success too. For gates whose summary line is the point (coverage).
+run_gate_verbose() {
+  local name="$1"; shift
+  printf '%s▶ %s%s\n' "$B" "$name" "$X"
+  local log start end
+  log="$(mktemp)"; start="$(now_ms)"
+  if "$@" >"$log" 2>&1; then
+    end="$(now_ms)"
+    printf '%s' "$DIM"; sed 's/^/    /' "$log"; printf '%s' "$X"
+    printf '  %s✓ %s%s %s(%sms)%s\n' "$G" "$name" "$X" "$DIM" "$((end-start))" "$X"
+    PASSED=$((PASSED+1)); rm -f "$log"; return 0
+  else
+    end="$(now_ms)"
+    printf '  %s✗ %s%s %s(%sms)%s\n' "$R" "$name" "$X" "$DIM" "$((end-start))" "$X"
+    printf '%s' "$DIM"; tail -n 30 "$log" | sed 's/^/    /'; printf '%s' "$X"
     FAILED+=("$name"); rm -f "$log"; return 1
   fi
 }
@@ -117,8 +142,21 @@ l10n_gate() {
 }
 run_gate "l10n complete (EN+FA)" l10n_gate
 
-# ── 4. tests (Dart) ─────────────────────────────────────────────────────────
-run_gate "flutter test" flutter test
+# ── 4. tests (Dart) + coverage policy ───────────────────────────────────────
+# `--coverage` rather than a bare run so the suite executes ONCE and the policy
+# gate below reads the lcov it produces. Costs roughly 90s over a plain run —
+# paid so that a coverage regression cannot land quietly.
+run_gate "flutter test (with coverage)" flutter test --coverage
+
+# Line coverage only: `flutter test --coverage` emits DA records and NO
+# FN/FNDA records, so there is no function-level number for any gate to read.
+# The thresholds, the platform exemptions and the per-file debt list all live
+# in tools/coverage/policy.json, and every one of them ratchets upward only.
+if command -v python3 >/dev/null 2>&1 && [ -f tools/coverage/check_coverage.py ]; then
+  run_gate_verbose "coverage policy" python3 tools/coverage/check_coverage.py
+else
+  SKIPPED+=("coverage policy (python3 or checker missing)")
+fi
 
 # ── 5. reskin asset-transform tests (Python) ────────────────────────────────
 if command -v python3 >/dev/null 2>&1 && [ -f tools/reskin/test_reskin.py ]; then

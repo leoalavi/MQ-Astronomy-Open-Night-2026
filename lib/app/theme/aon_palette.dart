@@ -313,9 +313,11 @@ class AonPalette extends ThemeExtension<AonPalette> {
 
 /// `context.aon` — the palette for the current theme.
 ///
-/// Falls back to [AonPalette.dark] rather than throwing if the extension is
-/// missing. A widget mounted under a bare `MaterialApp` in a test should render
-/// in the Astronomy identity, not crash.
+/// Falls back to the AON palette matching the ambient `Theme.brightness`
+/// rather than throwing if the extension is missing. A widget mounted under a
+/// bare `MaterialApp` in a test should render in the Astronomy identity, not
+/// crash — and it should not flip to a dark palette on a light scaffold while
+/// doing it.
 extension AonPaletteContext on BuildContext {
   AonPalette get aon =>
       Theme.of(this).extension<AonPalette>() ??

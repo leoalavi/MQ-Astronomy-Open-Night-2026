@@ -956,11 +956,69 @@ import 'package:aon2026/widgets/maps_nav_disclosure.dart';
 Run: `flutter test test/widget/wayfinding_google_map_test.dart`
 Expected: PASS — 3 tests.
 
-- [ ] **Step 5: Run the full gate and commit**
+- [ ] **Step 5: Gate the OTHER Google surface too — regression from Task 1**
+
+> **Gauntlet finding (P0).** Task 1 removed `provideAPIKey` from app launch, but
+> `google_nav_screen.dart:147` renders `EmbeddedMap` gated only on
+> `googleNavEnabledProvider` + consent — never on SDK readiness. On iOS that
+> means a `GoogleMap` constructed against an **unkeyed** SDK: a blank or broken
+> map. Task 1 introduces this regression; nothing else in the plan caught it.
+
+In `lib/screens/google_nav_screen.dart`, in the `data: (result)` branch that
+builds `_resultBody`, wrap the `EmbeddedMap` at line 147 so it only renders once
+the SDK is ready. Immediately before the `EmbeddedMap(` call, read:
+
+```dart
+              // Task 1 deferred provideAPIKey off launch, so a Google map may
+              // not be constructed until the SDK has actually been keyed.
+              if (ref.watch(mapsSdkReadyProvider).asData?.value != true)
+                const SizedBox.shrink()
+              else
+```
+
+and add the import:
+
+```dart
+import 'package:aon2026/services/maps_sdk_initializer.dart';
+```
+
+- [ ] **Step 6: Prove it with a test**
+
+Append to `test/widget/wayfinding_google_map_test.dart`:
+
+```dart
+  testWidgets('an unkeyed SDK yields no Google surface anywhere', (t) async {
+    final surface = _RecordingSurface();
+    final c = ProviderContainer(overrides: [
+      mapsConsentSnapshotProvider.overrideWithValue(MapsConsent.accepted),
+      // Consent given, but the platform refuses to key the SDK (no secret file).
+      mapsSdkInitializerProvider.overrideWithValue(_UnkeyedInitializer()),
+    ]);
+    addTearDown(c.dispose);
+
+    await t.pumpWidget(_host(c, RouteMapForTest(route: _route, surface: surface)));
+    await t.pumpAndSettle();
+
+    expect(surface.builds, 0,
+        reason: 'consent alone is not enough — the SDK must be keyed');
+  });
+```
+
+and add the fake next to `_ReadyInitializer`:
+
+```dart
+class _UnkeyedInitializer implements MapsSdkInitializer {
+  @override
+  Future<bool> ensureInitialized() async => false;
+}
+```
+
+- [ ] **Step 7: Run the tests, the gate, and commit**
 
 ```bash
+flutter test test/widget/wayfinding_google_map_test.dart
 ./scripts/check.sh > /tmp/gate.log 2>&1 && {
-  git add lib/screens/wayfinding_screen.dart \
+  git add lib/screens/wayfinding_screen.dart lib/screens/google_nav_screen.dart \
           test/widget/wayfinding_google_map_test.dart
   git commit -m "feat(wayfinding): render the route on a consented Google basemap"
 } || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
@@ -1137,7 +1195,59 @@ already transmitted to a third party.
 **Interfaces:**
 - Produces: `LocalDataEraser.eraseAll()` and `localDataEraserProvider`.
 
-- [ ] **Step 1: Write the failing test**
+> **Gauntlet correction (P0).** The first draft of this task invented four
+> storage keys. Three were wrong, one of the real keys is **dynamic**, and the
+> test seeded the same invented keys it asserted on — so it would have gone
+> green while the shipped eraser deleted nothing. That is a test passing for the
+> wrong reason, and it is why the key list below is *derived from the stores*
+> rather than retyped.
+>
+> The real keys, read off the tree:
+>
+> | Key | Type | Owner |
+> |---|---|---|
+> | `passport.collectedVenueIds` | String | `passport_store.dart:22` |
+> | `map_favorites.buildings.v1` | StringList | `favorites_store.dart:17` |
+> | `map_favorites.venues.$eventId` | StringList | `favorites_store.dart:18` — **per-event, not a constant** |
+> | `map_google_consent.v1` | String | `maps_consent_store.dart:24` |
+>
+> `settings.themeMode` / `settings.reduceMotion` / `settings.locale` are
+> deliberately **not** erased: they are preferences, not user data, and wiping
+> someone's language on a "delete my data" tap would be a surprise. Say so in
+> the code comment so a later reader does not "fix" it.
+
+- [ ] **Step 1: Publish the keys from the stores that own them**
+
+Drift between this list and the stores is the whole defect, so the names come
+from one place. In `lib/services/passport_store.dart`, change line 22 from
+`static const String _key = ...` to a public constant and update its uses:
+
+```dart
+  /// Public so `LocalDataEraser` can never drift from the real key.
+  static const String storageKey = 'passport.collectedVenueIds';
+```
+
+In `lib/services/favorites_store.dart`, replace the two private key members with:
+
+```dart
+  static const String buildingsKey = 'map_favorites.buildings.v1';
+
+  /// Per-event, so it cannot be a constant — this is exactly what a hand-typed
+  /// key list gets wrong.
+  static String venuesKeyFor(String eventId) => 'map_favorites.venues.$eventId';
+
+  String get _venuesKey => venuesKeyFor(eventId);
+```
+
+In `lib/services/maps_consent_store.dart`, change line 24 to:
+
+```dart
+  static const String storageKey = 'map_google_consent.v1';
+```
+
+and update its internal uses from `_key` to `storageKey`.
+
+- [ ] **Step 2: Write the failing test**
 
 Create `test/unit/local_data_eraser_test.dart`:
 
@@ -1145,32 +1255,67 @@ Create `test/unit/local_data_eraser_test.dart`:
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:aon2026/services/favorites_store.dart';
 import 'package:aon2026/services/local_data_eraser.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/passport_store.dart';
+
+const _eventId = 'aon2026';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  setUp(() => SharedPreferencesAsyncPlatform.instance = null);
-
-  test('eraseAll clears every app-owned key and reports success', () async {
+  test('eraseAll clears every key the real stores actually write', () async {
+    // Seeded from the STORES' own constants, not from retyped literals — if the
+    // eraser and the stores ever disagree, this test fails instead of lying.
     SharedPreferences.setMockInitialValues({
-      'passport.v1': '["a","b"]',
-      'favorites.v1': '["obs"]',
-      'my_night.v1': '["e1"]',
-      'map_google_consent.v1': 'accepted',
+      PassportStore.storageKey: 'v1|obs,lab',
+      FavoritesStore.buildingsKey: <String>['building:E7A'],
+      FavoritesStore.venuesKeyFor(_eventId): <String>['venue:obs'],
+      MapsConsentStore.storageKey: 'accepted',
     });
     final prefs = SharedPreferencesAsync();
-    final eraser = SharedPrefsLocalDataEraser(prefs: prefs);
+    final eraser = SharedPrefsLocalDataEraser(prefs: prefs, eventId: _eventId);
 
     expect(await eraser.eraseAll(), isTrue);
 
-    for (final key in SharedPrefsLocalDataEraser.ownedKeys) {
-      expect(await prefs.getString(key), isNull, reason: '$key survived erase');
-    }
+    expect(await prefs.getString(PassportStore.storageKey), isNull);
+    expect(await prefs.getStringList(FavoritesStore.buildingsKey), isNull);
+    expect(await prefs.getStringList(FavoritesStore.venuesKeyFor(_eventId)), isNull);
+    expect(await prefs.getString(MapsConsentStore.storageKey), isNull);
+  });
+
+  test('preferences survive — they are settings, not user data', () async {
+    SharedPreferences.setMockInitialValues({
+      'settings.locale': 'fa',
+      'settings.themeMode': 'dark',
+      PassportStore.storageKey: 'v1|obs',
+    });
+    final prefs = SharedPreferencesAsync();
+    await SharedPrefsLocalDataEraser(prefs: prefs, eventId: _eventId).eraseAll();
+
+    expect(await prefs.getString('settings.locale'), 'fa',
+        reason: 'wiping someone\'s language on "delete my data" is a surprise');
+    expect(await prefs.getString('settings.themeMode'), 'dark');
+  });
+
+  test('the venues key follows the event id it was constructed with', () async {
+    SharedPreferences.setMockInitialValues({
+      FavoritesStore.venuesKeyFor('other-event'): <String>['venue:x'],
+      FavoritesStore.venuesKeyFor(_eventId): <String>['venue:obs'],
+    });
+    final prefs = SharedPreferencesAsync();
+    await SharedPrefsLocalDataEraser(prefs: prefs, eventId: _eventId).eraseAll();
+
+    expect(await prefs.getStringList(FavoritesStore.venuesKeyFor(_eventId)), isNull);
+    expect(await prefs.getStringList(FavoritesStore.venuesKeyFor('other-event')),
+        isNotNull,
+        reason: 'a static key list would have missed the dynamic key entirely');
   });
 
   test('eraseAll never throws when the platform store fails', () async {
-    final eraser = SharedPrefsLocalDataEraser(prefs: _ThrowingPrefs());
+    final eraser =
+        SharedPrefsLocalDataEraser(prefs: _ThrowingPrefs(), eventId: _eventId);
     expect(await eraser.eraseAll(), isFalse);
   });
 }
@@ -1182,12 +1327,12 @@ class _ThrowingPrefs implements SharedPreferencesAsync {
 }
 ```
 
-- [ ] **Step 2: Run the test to verify it fails**
+- [ ] **Step 3: Run the test to verify it fails**
 
 Run: `flutter test test/unit/local_data_eraser_test.dart`
 Expected: FAIL — `Couldn't resolve ... local_data_eraser.dart`.
 
-- [ ] **Step 3: Write the minimal implementation**
+- [ ] **Step 4: Write the minimal implementation**
 
 Create `lib/services/local_data_eraser.dart`:
 
@@ -1195,29 +1340,39 @@ Create `lib/services/local_data_eraser.dart`:
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:aon2026/services/favorites_store.dart';
+import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/passport_store.dart';
+
 /// Erases everything this app stores on this device.
 ///
-/// Scope is deliberately narrow and stated: it clears local storage only. It
-/// does NOT and must not claim to erase anything already transmitted to a third
-/// party (spec §2c) — the Settings copy says so in both languages.
+/// Scope is deliberately narrow and stated: local storage only. It does NOT and
+/// must not claim to erase anything already transmitted to a third party
+/// (spec §2c) — the Settings copy says so in both languages.
 abstract interface class LocalDataEraser {
   /// Never throws. Returns false when the platform store refused.
   Future<bool> eraseAll();
 }
 
 class SharedPrefsLocalDataEraser implements LocalDataEraser {
-  SharedPrefsLocalDataEraser({required this.prefs});
+  SharedPrefsLocalDataEraser({required this.prefs, required this.eventId});
 
   final SharedPreferencesAsync prefs;
 
-  /// Every key this app owns. Enumerated rather than wildcard-cleared so an
-  /// unrelated key written by a plugin is never collateral damage.
-  static const List<String> ownedKeys = <String>[
-    'passport.v1',
-    'favorites.v1',
-    'my_night.v1',
-    'map_google_consent.v1',
-  ];
+  /// Needed because the favourites venue key is per-event. A constant list
+  /// cannot express it, which is precisely how the first draft of this class
+  /// erased nothing.
+  final String eventId;
+
+  /// Sourced from each store's own constant so the two can never drift.
+  /// `settings.*` is excluded on purpose: theme, motion and locale are
+  /// preferences, not user data, and clearing them here would be a surprise.
+  List<String> get ownedKeys => <String>[
+        PassportStore.storageKey,
+        FavoritesStore.buildingsKey,
+        FavoritesStore.venuesKeyFor(eventId),
+        MapsConsentStore.storageKey,
+      ];
 
   @override
   Future<bool> eraseAll() async {
@@ -1243,14 +1398,8 @@ final localDataEraserProvider =
     Provider<LocalDataEraser>((_) => const NoopLocalDataEraser());
 ```
 
-- [ ] **Step 4: Run the test to verify it passes**
-
-Run: `flutter test test/unit/local_data_eraser_test.dart`
-Expected: PASS — 2 tests.
-
-**Note:** if `ownedKeys` does not match the real storage keys, fix the list, not
-the test. Confirm with:
-`grep -rn "static const _key\|const _key =" lib/services/`
+**If `PassportStore` / `FavoritesStore` / `MapsConsentStore` class names differ**,
+fix the import and reference — never fall back to retyping the key strings.
 
 - [ ] **Step 5: Add the EN + FA strings**
 
@@ -1259,7 +1408,7 @@ the test. Confirm with:
 ```json
   "settingsEraseTitle": "Delete my data",
   "@settingsEraseTitle": { "description": "Settings control that clears all locally stored app data." },
-  "settingsEraseBody": "Clears your passport stamps, favourites, saved plan and your Google Maps choice.",
+  "settingsEraseBody": "Clears your passport stamps, favourites and your Google Maps choice. Your language and theme settings are kept.",
   "@settingsEraseBody": { "description": "Explains the scope of the erase control." },
   "settingsEraseConfirmTitle": "Delete data stored on this device?",
   "@settingsEraseConfirmTitle": { "description": "Destructive confirmation dialog title." },
@@ -1277,7 +1426,7 @@ the test. Confirm with:
 
 ```json
   "settingsEraseTitle": "حذف داده‌های من",
-  "settingsEraseBody": "مهرهای پاسپورت، علاقه‌مندی‌ها، برنامهٔ ذخیره‌شده و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند.",
+  "settingsEraseBody": "مهرهای پاسپورت، علاقه‌مندی‌ها و انتخاب شما دربارهٔ نقشهٔ گوگل را پاک می‌کند. تنظیمات زبان و پوستهٔ شما حفظ می‌شود.",
   "settingsEraseConfirmTitle": "داده‌های ذخیره‌شده روی این دستگاه حذف شوند؟",
   "settingsEraseConfirmBody": "این کار داده‌هایی را که این برنامه روی این دستگاه ذخیره کرده برای همیشه حذف می‌کند. آنچه پیش‌تر به گوگل ارسال شده قابل بازگرداندن نیست.",
   "settingsEraseConfirmAction": "حذف",
@@ -1340,8 +1489,10 @@ And add this method to the same widget's class:
 Add to `lib/main.dart`'s override list:
 
 ```dart
-        localDataEraserProvider.overrideWithValue(
-            SharedPrefsLocalDataEraser(prefs: SharedPreferencesAsync())),
+        localDataEraserProvider.overrideWithValue(SharedPrefsLocalDataEraser(
+          prefs: SharedPreferencesAsync(),
+          eventId: eventConfig.id, // the same id FavoritesStore is built with
+        )),
 ```
 
 - [ ] **Step 7: Regenerate and run the full gate, then commit**
@@ -1639,6 +1790,8 @@ List<SearchEntry> _index() => [
       BuildingEntry(
         building: const Building(
           id: 'E7A',
+          // `code` is REQUIRED (building.dart:18) — omitting it will not compile.
+          code: 'E7A',
           name: 'Observatory',
           latitude: -33.7738,
           longitude: 151.1126,
@@ -1678,8 +1831,8 @@ void main() {
 Run: `flutter test test/unit/nearby_targets_radius_test.dart`
 Expected: FAIL — the Cupertino test finds one target; `maxDistanceMeters` is not a named parameter.
 
-**If `Building`'s constructor signature differs**, fix the fixture to match the
-real model — never loosen the assertions.
+**If `Building`'s constructor signature differs from the tree**, fix the fixture
+to match the real model — never loosen the assertions.
 
 - [ ] **Step 3: Write the minimal implementation**
 
@@ -1993,6 +2146,13 @@ final effectiveLocationServiceProvider = Provider<LocationService>((ref) {
 });
 ```
 
+> **Gauntlet finding (P1).** `location_providers.dart:153` computes
+> `wantStream = state.active && (...)`, and `state.active` only becomes true
+> after a granted `request()`. Toggling preview on a device where location was
+> never granted would therefore do **nothing** — defeating the entire purpose,
+> since the feature exists for people who are not on campus and may have
+> declined location. Enabling preview must also activate.
+
 Change `LocationController`'s accessor from:
 
 ```dart
@@ -2009,10 +2169,35 @@ And inside `LocationController.build()`, next to the existing `ref.listen` calls
 add one so a mid-session toggle re-subscribes:
 
 ```dart
-    ref.listen(previewLocationProvider, (_, _) {
+    ref.listen(previewLocationProvider, (previous, next) {
       _cancel();
-      _sync();
+      if (next) {
+        // The preview service always grants, so this activates immediately and
+        // without an OS prompt. Without it, preview is inert for exactly the
+        // users it exists to serve.
+        unawaited(ensureLocationActive());
+      } else {
+        _sync();
+      }
     });
+```
+
+`unawaited` comes from `dart:async`, which `location_providers.dart` already
+imports.
+
+Add a test for it in `test/unit/preview_location_test.dart`:
+
+```dart
+  test('enabling preview activates location without a prior grant', () async {
+    final c = container();
+    expect(c.read(locationControllerProvider).active, isFalse);
+
+    c.read(previewLocationProvider.notifier).set(true);
+    await Future<void>.delayed(Duration.zero);
+
+    expect(c.read(locationControllerProvider).active, isTrue,
+        reason: 'preview exists for users who never granted location');
+  });
 ```
 
 Add the import to `location_providers.dart`:
@@ -2303,18 +2488,32 @@ Expected: FAIL — `Undefined name 'ConsentGuardedRoutesService'` and `'RouteCon
 In `lib/services/routes_service.dart`, alongside the existing `RouteNetworkFailure`
 / `RouteApiFailure` / `RouteMalformed` result types, add:
 
+`RouteResult` is **`sealed`** (`routes_service.dart:25`), so the new type must
+`extend` it and must live in that same file — `implements` will not compile:
+
 ```dart
 /// The request was refused locally because maps consent is not `accepted`.
 /// Distinct from every network and parse outcome: nothing left the device.
-class RouteConsentRefused implements RouteResult {
+class RouteConsentRefused extends RouteResult {
   const RouteConsentRefused();
 }
 ```
 
-If `RouteResult` is a sealed class rather than an interface, add
-`RouteConsentRefused` as one of its permitted subtypes and fix the resulting
-non-exhaustive `switch` warnings — `flutter analyze` will name each site. Handle
-it wherever `RouteNetworkFailure` is handled in `google_nav_screen.dart`.
+Sealing also means the blast radius is known, not guessed. There is exactly one
+exhaustive switch over `RouteResult`, at `google_nav_screen.dart:144-171`. Add an
+arm beside `RouteNoRoute()`:
+
+```dart
+      // Consent was revoked between opening the screen and the request. Send the
+      // user back through the disclosure rather than showing a network error for
+      // a request that never left the device.
+      RouteConsentRefused() => _panel(
+          context,
+          icon: Icons.privacy_tip_outlined,
+          message: l.mapNavDisclosureBody,
+          actions: [if (dest != null) _externalButton(context, l, dest)],
+        ),
+```
 
 - [ ] **Step 4: Write the guard**
 

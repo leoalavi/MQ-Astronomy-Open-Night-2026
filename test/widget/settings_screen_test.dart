@@ -113,12 +113,17 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('Nothing leaves your phone'),
+      find.text('What this app shares'),
       300,
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.textContaining('no account and no sign-in'), findsOneWidget);
     expect(find.textContaining('collects no analytics'), findsOneWidget);
+    // Task 7: the card no longer promises 'Nothing leaves your phone', because
+    // location does reach Google once the visitor asks for directions.
+    expect(find.textContaining('Nothing leaves your phone'), findsNothing);
+    expect(find.textContaining('sent to Google only when you ask'),
+        findsOneWidget);
   });
 
   testWidgets('credits the hero image and the real map sources', (tester) async {

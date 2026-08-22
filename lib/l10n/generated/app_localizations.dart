@@ -844,13 +844,13 @@ abstract class AonL10n {
   /// No description provided for @settingsPrivacyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Nothing leaves your phone'**
+  /// **'What this app shares'**
   String get settingsPrivacyTitle;
 
   /// No description provided for @settingsPrivacyBody.
   ///
   /// In en, this message translates to:
-  /// **'There is no account and no sign-in. Your saved activities are stored on this device only. The app collects no analytics and tracks no location.\n\nThe only thing it fetches from the internet is map imagery.'**
+  /// **'There is no account and no sign-in. Your passport stamps, favourites and saved plan stay on this device. The app collects no analytics.\n\nThe camera is used only to read a QR code, and the image is never stored or sent anywhere.\n\nYour location is used on this device to show where you are on the campus map. It is sent to Google only when you ask for walking directions — and only after you agree.\n\nWayfinding draws its route on a Google map. Loading any Google map sends Google the map request plus the technical request and device information it needs to serve it — but not your location.'**
   String get settingsPrivacyBody;
 
   /// No description provided for @settingsCredits.
@@ -1606,7 +1606,7 @@ abstract class AonL10n {
   /// No description provided for @settingsPrivacyCardTitle.
   ///
   /// In en, this message translates to:
-  /// **'Nothing leaves your phone'**
+  /// **'What this app shares'**
   String get settingsPrivacyCardTitle;
 
   /// Settings credits: where the map data actually comes from now that the OSM tiles are gone.

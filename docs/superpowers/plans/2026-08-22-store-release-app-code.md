@@ -78,7 +78,7 @@ working hours for one engineer, including the test cycle and the gate run.
 
 | Task | Size | Tier | Blocks |
 |---|---|---|---|
-| 0 · shared map test harness | 2h | 1 | 8, 12 |
+| 0 · shared map container | 1h | 1 | 12 |
 | 1 · defer Maps SDK init | 3h | 1 | 2, 4 |
 | 2 · readiness gated on consent | 2h | 1 | 4, 15 |
 | 3 · map-only disclosure | 2h | 1 | 4 |
@@ -88,15 +88,15 @@ working hours for one engineer, including the test cycle and the gate run.
 | 7 · privacy copy EN+FA | 2h | 1 | — |
 | 13 · Routes consent guard | 4h | 1 | — |
 | 15 · architecture test | 1h | 1 | — |
-| **Tier 1 subtotal** | **30h** | | **submission-blocking** |
-| 8 · off-campus notice | 3h | 2 | — |
+| **Tier 1 subtotal** | **29h** | | **submission-blocking** |
+| 8 · off-campus regression test | 1h | 2 | — |
 | 9 · campus radius + copy | 3h | 2 | — |
 | 10 · pre-event message | 2h | 2 | — |
 | 11 · preview from anywhere | 6h | 2 | — |
-| **Tier 2 subtotal** | **14h** | | **the Guideline 2.1 defence** |
+| **Tier 2 subtotal** | **11h** | | **the Guideline 2.1 defence** |
 | 12 · iPad, 9 routes x EN/FA | 10h + fixes | 3 | — |
 | 14 · legal notices | 3h | 3 | — |
-| **Total** | **~57h ≈ 8 working days** | | |
+| **Total** | **~53h ≈ 7 working days** | | |
 
 **Tier 1 is what makes the app truthful and consent-correct** — without it the
 app ships claims that are false. Tier 2 is what lets App Review exercise a
@@ -120,10 +120,11 @@ that is the honest trade, and it is better made in advance.
 
 ### Task 0: Promote the map test harness to shared support
 
-Tasks 8 and 12 both need to pump `MapScreen` with a chosen fix.
-`test/widget/map_platform_wiring_test.dart:19` already has
-`ProviderContainer _container(FakeLocationService svc)` — private to that file.
-Copying it twice is how harnesses drift.
+**Smaller than first written.** `FakeLocationService` is *already* shared at
+`test/support/fake_location_service.dart` and is stream-based (`emit(fix)`), not
+constructor-seeded. Only the container builder is private —
+`map_platform_wiring_test.dart:19`, `ProviderContainer _container(FakeLocationService svc)`.
+Task 12 needs it; Task 8 no longer exists. Promote just the container.
 
 **Files:**
 - Create: `test/support/map_harness.dart`
@@ -136,60 +137,35 @@ Copying it twice is how harnesses drift.
 
 - [ ] **Step 1: Move the helper**
 
-Create `test/support/map_harness.dart` containing `FakeLocationService` and the
-container builder, lifted verbatim from `map_platform_wiring_test.dart` lines
-1-40 and widened:
+Create `test/support/map_harness.dart` with only the container builder — reuse
+the existing `FakeLocationService`:
 
 ```dart
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/location_providers.dart';
-import 'package:aon2026/services/location_service.dart';
 
-/// The shared map harness. Lifted from map_platform_wiring_test.dart so Tasks 8
-/// and 12 do not each grow their own copy.
-class FakeLocationService implements LocationService {
-  FakeLocationService({this.fix});
+import 'fake_location_service.dart';
 
-  final UserLocationFix? fix;
-
-  @override
-  Future<LocationStatus> status() async => LocationStatus.granted;
-  @override
-  Future<LocationStatus> request() async => LocationStatus.granted;
-  @override
-  Stream<UserLocationFix> watch() =>
-      fix == null ? const Stream<UserLocationFix>.empty() : Stream.value(fix!);
-  @override
-  Stream<bool> serviceEnabledChanges() => const Stream<bool>.empty();
-  @override
-  Future<void> openAppSettings() async {}
-  @override
-  Future<void> openLocationSettings() async {}
-}
-
-/// A container ready to pump `MapScreen` against a chosen position.
-ProviderContainer mapHarness({UserLocationFix? fix}) {
-  final container = ProviderContainer(overrides: [
-    locationServiceProvider.overrideWithValue(FakeLocationService(fix: fix)),
-  ]);
-  container.read(mapVisibleProvider.notifier).set(true);
-  container.read(locationControllerProvider);
-  return container;
+/// A container ready to pump `MapScreen`. Lifted from
+/// map_platform_wiring_test.dart:19 so Task 12 does not grow a second copy.
+/// Fixes are delivered by `svc.emit(...)` after pumping, matching the existing
+/// stream-based fake.
+ProviderContainer mapContainer(FakeLocationService svc) {
+  final c = ProviderContainer(
+      overrides: [locationServiceProvider.overrideWithValue(svc)]);
+  c.read(mapVisibleProvider.notifier).set(true);
+  return c;
 }
 ```
 
-If the existing `FakeLocationService` in `map_platform_wiring_test.dart` has a
-different shape, move *that* one and add the `fix` parameter — do not invent a
-second implementation.
-
 - [ ] **Step 2: Point the existing test at it**
 
-In `test/widget/map_platform_wiring_test.dart`, delete the local
-`FakeLocationService` and `_container`, and
-`import 'package:aon2026/../test/support/map_harness.dart';` — use the package
-relative form the repo's other test helpers use.
+In `test/widget/map_platform_wiring_test.dart`, delete the local `_container`
+and add `import '../support/map_harness.dart';` (the relative form the file
+already uses for `fake_location_service.dart`). Replace `_container(svc)` calls
+with `mapContainer(svc)` and keep the `addTearDown(c.dispose)` at each call site,
+since the helper no longer registers it.
 
 - [ ] **Step 3: Prove nothing regressed**
 
@@ -2001,218 +1977,92 @@ Expected: PASS — 2 tests.
 
 ---
 
-### Task 8: Say so when the user is off campus
+### Task 8: Guard the off-campus note that already exists
 
-`map_screen.dart:77` projects the fix once and gets null off the illustrated
-footprint. Today the dot simply vanishes with no explanation — which to App
-Review, sitting in Cupertino, reads as broken rather than as designed.
+> **RETRACTED, and replaced with a regression test.** Revisions 1-4 of this plan
+> claimed the position dot "silently vanishes with no explanation" off campus.
+> **That is false.** `map_screen.dart:250-266` already renders
+> `_MapNote(text: l.mapOffCampus(km))` — *"You're about 42.1 km from campus"* —
+> in EN and FA, with the real distance, and `map_platform_wiring_test.dart:137`
+> already covers the near-campus-off-footprint case at 320x568 / textScale 2.0.
+>
+> The defect was mine: I read `final projected = ...` at line 77 and never read
+> the note chain forty lines below it. Three review passes missed it because all
+> three read the plan rather than the app. Nothing to build. What remains is
+> worth two tests: proving the note fires for App Review's actual coordinates,
+> so nobody "fixes" this again.
 
 **Files:**
-- Modify: `lib/screens/map_screen.dart`, `lib/l10n/app_en.arb`, `lib/l10n/app_fa.arb`
-- Create: `test/widget/map_off_campus_banner_test.dart`
+- Create: `test/widget/map_off_campus_regression_test.dart`
 
-- [ ] **Step 1: Add the EN + FA strings**
-
-`lib/l10n/app_en.arb`:
-
-```json
-  "mapOffCampusNotice": "You're not on campus — showing the full map.",
-  "@mapOffCampusNotice": {
-    "description": "Shown when a valid GPS fix falls outside the campus artwork, so the position dot cannot be drawn."
-  },
-```
-
-`lib/l10n/app_fa.arb`:
-
-```json
-  "mapOffCampusNotice": "شما در پردیس نیستید — کل نقشه نمایش داده می‌شود.",
-```
-
-Then run `flutter gen-l10n`.
-
-- [ ] **Step 2: Write the failing test**
-
-Create `test/widget/map_off_campus_banner_test.dart`:
+- [ ] **Step 1: Write the test**
 
 ```dart
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/campus_geometry.dart';
+import 'package:aon2026/models/user_location_fix.dart';
+import 'package:aon2026/screens/map_screen.dart';
 import 'package:aon2026/services/campus_projection.dart';
-import 'package:aon2026/widgets/map_off_campus_notice.dart';
+import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/widgets/map_config.dart';
+import 'package:aon2026/widgets/user_location_layer.dart';
+import '../support/fake_location_service.dart';
+
+/// App Review, Cupertino.
+const _cupertino = LatLng(37.3349, -122.0090);
 
 void main() {
-  final proj = CampusProjection();
+  testWidgets('a Cupertino fix shows the distance note, not a fake dot',
+      (t) async {
+    expect(MapConfig.isNearCampus(const GpsPoint(_cupertino)), isFalse);
+    expect(const CampusProjection().canProject(const GpsPoint(_cupertino)),
+        isFalse);
 
-  test('a Cupertino fix does not project onto the campus artwork', () {
-    // App Review's actual latitude/longitude. The non-clamping projector must
-    // return null rather than pinning them to the edge of Macquarie.
-    expect(proj.project(const GpsPoint(LatLng(37.3349, -122.0090))), isNull);
-  });
+    final svc = FakeLocationService();
+    final c = ProviderContainer(
+        overrides: [locationServiceProvider.overrideWithValue(svc)]);
+    addTearDown(c.dispose);
+    c.read(mapVisibleProvider.notifier).set(true);
 
-  testWidgets('the notice renders the off-campus explanation', (t) async {
-    await t.pumpWidget(const MaterialApp(
-      localizationsDelegates: AonL10n.localizationsDelegates,
-      supportedLocales: AonL10n.supportedLocales,
-      home: Scaffold(body: MapOffCampusNotice()),
+    await t.pumpWidget(UncontrolledProviderScope(
+      container: c,
+      child: const MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: MapScreen(),
+      ),
     ));
-    // Assert on the l10n value, not a copy of it: a literal here breaks on any
-    // wording change and silently stops testing the thing it names.
-    final l = await AonL10n.delegate.load(const Locale('en'));
-    expect(find.text(l.mapOffCampusNotice), findsOneWidget);
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emit(UserLocationFix(position: _cupertino, accuracyMeters: 10));
+    await t.pump();
+    await t.pump();
+
+    expect(find.byType(UserLocationDot), findsNothing,
+        reason: 'never a fake dot clamped to the artwork edge');
+    expect(find.textContaining('km from campus'), findsOneWidget,
+        reason: 'App Review must see a deliberate, explained state');
+    expect(t.takeException(), isNull);
   });
 }
 ```
 
-- [ ] **Step 3: Run the test to verify it fails**
+- [ ] **Step 2: Run it**
 
-Run: `flutter test test/widget/map_off_campus_banner_test.dart`
-Expected: FAIL — `Couldn't resolve ... map_off_campus_notice.dart`.
+Run: `flutter test test/widget/map_off_campus_regression_test.dart`
+Expected: **PASS immediately** — this documents existing behaviour rather than
+driving new code. If it fails, the behaviour regressed and that is the bug.
 
-- [ ] **Step 4: Write the minimal implementation**
-
-Create `lib/widgets/map_off_campus_notice.dart`:
-
-```dart
-import 'package:flutter/material.dart';
-
-import 'package:aon2026/app/theme/aon_palette.dart';
-import 'package:aon2026/app/theme/aon_spacing.dart';
-import 'package:aon2026/l10n/generated/app_localizations.dart';
-
-/// Shown when there IS a valid fix but it falls outside the campus artwork.
-///
-/// This is a statement of fact, not an error: the projector is deliberately
-/// non-clamping, so a position off the illustrated footprint has nowhere
-/// truthful to be drawn. Saying so is what separates "designed" from "broken"
-/// for anyone using the app away from Macquarie — App Review included.
-class MapOffCampusNotice extends StatelessWidget {
-  const MapOffCampusNotice({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AonSpacing.space3,
-        vertical: AonSpacing.space2,
-      ),
-      decoration: BoxDecoration(
-        color: context.aon.surface.withValues(alpha: 0.92),
-        borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
-      ),
-      child: Text(
-        AonL10n.of(context).mapOffCampusNotice,
-        style: theme.textTheme.bodySmall
-            ?.copyWith(color: context.aon.contentSecondary),
-      ),
-    );
-  }
-}
-```
-
-- [ ] **Step 5: Render it on the map**
-
-In `lib/screens/map_screen.dart`, just after line 77's `projected` assignment, add:
-
-```dart
-    // A fix we HAVE but cannot draw. Distinct from "no fix yet", which is
-    // already covered by the locate control's own states.
-    final offCampus = fix != null && projected == null;
-```
-
-Then, in the same `Stack` that already positions `_MapAttribution`, add a sibling
-positioned above it:
-
-```dart
-          if (offCampus)
-            Positioned(
-              left: AonSpacing.space3,
-              right: AonSpacing.space3,
-              bottom: AonSpacing.space8,
-              child: const MapOffCampusNotice(),
-            ),
-```
-
-Add the import:
-
-```dart
-import 'package:aon2026/widgets/map_off_campus_notice.dart';
-```
-
-- [ ] **Step 6: Prove MapScreen actually chooses to render it**
-
-The two tests above check the projection and the notice widget separately;
-neither proves the map wires them together. Append to
-`test/widget/map_off_campus_banner_test.dart`, using the harness from
-`test/widget/map_platform_wiring_test.dart`:
-
-```dart
-  testWidgets('MapScreen shows the notice for an off-campus fix', (t) async {
-    // FakeLocationService seeded with App Review's coordinates.
-    final container = mapHarness(
-      fix: UserLocationFix(
-        position: const LatLng(37.3349, -122.0090),
-        accuracyMeters: 10,
-      ),
-    );
-    addTearDown(container.dispose);
-
-    await t.runAsync(() async {
-      await t.pumpWidget(UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          localizationsDelegates: AonL10n.localizationsDelegates,
-          supportedLocales: AonL10n.supportedLocales,
-          home: MapScreen(),
-        ),
-      ));
-      await t.pumpAndSettle();
-    });
-
-    expect(find.byType(MapOffCampusNotice), findsOneWidget);
-  });
-
-  testWidgets('MapScreen shows no notice for an on-campus fix', (t) async {
-    final container = mapHarness(
-      fix: UserLocationFix(
-        position: MapConfig.campusCentre,
-        accuracyMeters: 10,
-      ),
-    );
-    addTearDown(container.dispose);
-
-    await t.runAsync(() async {
-      await t.pumpWidget(UncontrolledProviderScope(
-        container: container,
-        child: const MaterialApp(
-          localizationsDelegates: AonL10n.localizationsDelegates,
-          supportedLocales: AonL10n.supportedLocales,
-          home: MapScreen(),
-        ),
-      ));
-      await t.pumpAndSettle();
-    });
-
-    expect(find.byType(MapOffCampusNotice), findsNothing);
-  });
-```
-
-`mapHarness` comes from Task 0's `test/support/map_harness.dart`; import it
-rather than rebuilding a container here. `runAsync` is required: `MapScreen`
-loads the basemap asset, and `rootBundle` does real I/O that hangs a fake-async
-zone to a 10-minute timeout.
-
-- [ ] **Step 7: Run the test, then the full gate, then commit**
+- [ ] **Step 3: Run the full gate and commit**
 
 ```bash
-flutter test test/widget/map_off_campus_banner_test.dart
 ./scripts/check.sh > /tmp/gate.log 2>&1 && {
-  git add lib/ test/widget/map_off_campus_banner_test.dart
-  git commit -m "feat(map): explain an off-campus fix instead of hiding the dot"
+  git add test/widget/map_off_campus_regression_test.dart
+  git commit -m "test(map): pin the off-campus note for App Review coordinates"
 } || { echo "GATE FAILED"; tail -30 /tmp/gate.log; }
 ```
 
@@ -2342,26 +2192,26 @@ Then run the existing compass suites, which may assume unbounded targets:
 If one fails because its fixture sits outside 2500 m, move the fixture onto
 campus. Do **not** raise the ceiling to make an old fixture pass.
 
-- [ ] **Step 5: Say why the list is empty**
+- [ ] **Step 5: Prove the EXISTING empty state now fires**
 
-Bounding the list without explaining it just moves the confusion. Add —
-`lib/l10n/app_en.arb`:
+> **Corrected.** Review round 2 asked for new nearby-list copy. It already
+> exists: `nearby_list.dart:36-44` renders `l.compassNothingNearby`
+> ("Nothing nearby to point to yet.", EN + FA). The reason nobody ever saw it is
+> this task's bug — without a radius ceiling `targets` is never empty, so the
+> empty state was unreachable. The ceiling makes existing copy work; no new
+> strings.
 
-```json
-  "nearbyOffCampus": "Nearby places appear when you're on or near campus.",
-  "@nearbyOffCampus": { "description": "Empty state for the compass nearby list when every target is beyond the campus radius." },
+Add to `test/unit/nearby_targets_radius_test.dart`:
+
+```dart
+  testWidgets('the compass empty state is reachable from off campus', (t) async {
+    // Before the ceiling, targets was never empty and this copy was dead.
+    final l = await AonL10n.delegate.load(const Locale('en'));
+    expect(l.compassNothingNearby.trim(), isNotEmpty);
+    expect(nearestTargets(const LatLng(37.3349, -122.0090), _index()), isEmpty,
+        reason: 'an empty target list is what makes NearbyList render it');
+  });
 ```
-
-`lib/l10n/app_fa.arb`:
-
-```json
-  "nearbyOffCampus": "مکان‌های نزدیک زمانی نمایش داده می‌شوند که در پردیس یا نزدیک آن باشید.",
-```
-
-In `lib/widgets/nearby_list.dart`, render `l.nearbyOffCampus` when the target list
-is empty *and* there is a fix (an empty list with no fix is already covered by the
-existing no-location state). Prove it with a widget test that drives the real
-`NearbyList` from a Cupertino fix and expects the string.
 
 - [ ] **Step 6: Run the full gate and commit**
 

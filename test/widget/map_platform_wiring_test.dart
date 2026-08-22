@@ -13,16 +13,9 @@ import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/user_location_layer.dart';
 import 'package:aon2026/screens/map_screen.dart';
 import '../support/fake_location_service.dart';
+import '../support/map_harness.dart';
 
 const _proj = CampusProjection();
-
-ProviderContainer _container(FakeLocationService svc) {
-  final c = ProviderContainer(
-      overrides: [locationServiceProvider.overrideWithValue(svc)]);
-  addTearDown(c.dispose);
-  c.read(mapVisibleProvider.notifier).set(true);
-  return c;
-}
 
 Widget _app(ProviderContainer c) => UncontrolledProviderScope(
       container: c,
@@ -74,7 +67,7 @@ void main() {
   testWidgets('near fix: base + dot render; ALL markers inside map bounds',
       (t) async {
     final svc = FakeLocationService();
-    final c = _container(svc);
+    final c = mapContainer(svc);
     await _activate(t, c, svc, _near());
     expect(find.byType(CampusBasemapLayer), findsOneWidget);
     expect(find.byType(UserLocationDot), findsOneWidget);
@@ -91,7 +84,7 @@ void main() {
 
   testWidgets('active + null fix → no crash, no dot', (t) async {
     final svc = FakeLocationService();
-    final c = _container(svc);
+    final c = mapContainer(svc);
     await t.pumpWidget(_app(c));
     await c.read(locationControllerProvider.notifier).onLocateTapped();
     await t.pump(); // active, but no fix emitted yet
@@ -101,7 +94,7 @@ void main() {
 
   testWidgets('off-footprint fix → no dot (not a clamped edge dot)', (t) async {
     final svc = FakeLocationService();
-    final c = _container(svc);
+    final c = mapContainer(svc);
     await _activate(t, c, svc, _far()); // 5.5 km away → projects to null
     expect(_proj.project(GpsPoint(_far().position)), isNull); // fixture guard
     expect(find.byType(UserLocationDot), findsNothing);
@@ -110,7 +103,7 @@ void main() {
   testWidgets('follow-me moves the camera to the PROJECTED point, not raw',
       (t) async {
     final svc = FakeLocationService();
-    final c = _container(svc);
+    final c = mapContainer(svc);
     await _activate(t, c, svc, _near());
     final expected = _proj.project(GpsPoint(_nearPoint))!.value;
     expect(_cam(t).center.latitude, closeTo(expected.latitude, 0.5));
@@ -119,7 +112,7 @@ void main() {
 
   testWidgets('panorama toggle still switches modes', (t) async {
     final svc = FakeLocationService();
-    final c = _container(svc);
+    final c = mapContainer(svc);
     await t.pumpWidget(_app(c));
     await t.tap(find.text('360°'));
     await t.pumpAndSettle();
@@ -143,7 +136,7 @@ void main() {
     addTearDown(t.view.resetDevicePixelRatio);
     addTearDown(t.platformDispatcher.clearTextScaleFactorTestValue);
     final svc = FakeLocationService();
-    final c = _container(svc);
+    final c = mapContainer(svc);
     await _activate(t, c, svc, _nearOff());
     expect(find.byType(UserLocationDot), findsNothing); // not a fake dot
     expect(find.textContaining('campus map'), findsOneWidget); // EN note
@@ -153,7 +146,7 @@ void main() {
 
   testWidgets('off-illustration note renders under FA', (t) async {
     final svc = FakeLocationService();
-    final c = _container(svc);
+    final c = mapContainer(svc);
     await t.pumpWidget(_appL(c, const Locale('fa')));
     await c.read(locationControllerProvider.notifier).onLocateTapped();
     svc.emit(_nearOff());
@@ -170,7 +163,7 @@ void main() {
       t.view.physicalSize = size;
       t.view.devicePixelRatio = 1.0;
       final svc = FakeLocationService();
-      final c = _container(svc);
+      final c = mapContainer(svc);
       await t.pumpWidget(_app(c));
       await t.pump();
       final cam = _cam(t);

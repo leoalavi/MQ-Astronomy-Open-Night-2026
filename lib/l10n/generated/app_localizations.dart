@@ -1315,6 +1315,12 @@ abstract class AonL10n {
   /// **'To show a walking route, the simulated preview location — not your real position — is sent to Google Maps.'**
   String get mapNavDisclosureBodyPreview;
 
+  /// Credits entry opening the Maps SDK open-source licence text.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Maps licences'**
+  String get creditsMapsLicences;
+
   /// Persistent badge shown wherever a previewed (simulated) position is visualised, so it is never mistaken for a real fix.
   ///
   /// In en, this message translates to:

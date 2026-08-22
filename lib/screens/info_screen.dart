@@ -9,6 +9,7 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/models/data_confidence.dart';
@@ -255,6 +256,12 @@ class InfoScreen extends ConsumerWidget {
               color: context.aon.contentTertiary,
             ),
           ),
+          // Google documents GMSServices.openSourceLicenseInfo() as the way to
+          // surface the Maps SDK's legal notices. Static bundled text, so
+          // reading it never contacts Google — safe before consent. Android
+          // returns null: getOpenSourceSoftwareLicenseInfo has been deprecated
+          // since Play services v11.0 and the OS shows those licences itself.
+          const _MapsLicenceLink(),
           const SizedBox(height: AonSpacing.space2),
           Text(
             '${EventInfo.socialHandle}  ${EventInfo.hashtag}',
@@ -374,6 +381,46 @@ class _Guidance extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// Opens the Maps SDK's open-source licence text. Renders nothing when the
+/// platform has none, because an empty legal page is worse than no button.
+class _MapsLicenceLink extends ConsumerWidget {
+  const _MapsLicenceLink();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    return FutureBuilder<String?>(
+      future: ref.read(mapsSdkInitializerProvider).openSourceLicenseInfo(),
+      builder: (context, snapshot) {
+        final text = snapshot.data;
+        if (text == null || text.isEmpty) return const SizedBox.shrink();
+        return Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: TextButton(
+            key: const Key('credits-maps-licences'),
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute<void>(
+                builder: (_) => Scaffold(
+                  appBar: AppBar(title: Text(l.creditsMapsLicences)),
+                  body: SingleChildScrollView(
+                    padding: const EdgeInsets.all(AonSpacing.space4),
+                    child: SelectableText(
+                      text,
+                      key: const Key('maps-licence-text'),
+                      style: const TextStyle(fontFamily: 'monospace'),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            child: Text(l.creditsMapsLicences),
+          ),
+        );
+      },
     );
   }
 }

@@ -586,6 +586,8 @@
   },
   "mapNavDisclosureBodyPreview": "To show a walking route, the simulated preview location — not your real position — is sent to Google Maps.",
   "@mapNavDisclosureBodyPreview": { "description": "Disclosure body while preview mode is active, so the copy names what is actually transmitted." },
+  "creditsMapsLicences": "Google Maps licences",
+  "@creditsMapsLicences": { "description": "Credits entry opening the Maps SDK open-source licence text." },
   "previewLocationBadge": "Simulated location",
   "@previewLocationBadge": { "description": "Persistent badge shown wherever a previewed (simulated) position is visualised, so it is never mistaken for a real fix." },
   "settingsPreviewTitle": "Preview from anywhere",

@@ -729,6 +729,9 @@ class AonL10nEn extends AonL10n {
       'To show a walking route, the simulated preview location — not your real position — is sent to Google Maps.';
 
   @override
+  String get creditsMapsLicences => 'Google Maps licences';
+
+  @override
   String get previewLocationBadge => 'Simulated location';
 
   @override

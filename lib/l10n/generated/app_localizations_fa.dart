@@ -730,6 +730,9 @@ class AonL10nFa extends AonL10n {
       'برای نمایش مسیر پیاده، موقعیت شبیه‌سازی‌شدهٔ پیش‌نمایش — نه مکان واقعی شما — به نقشهٔ گوگل ارسال می‌شود.';
 
   @override
+  String get creditsMapsLicences => 'مجوزهای نقشهٔ گوگل';
+
+  @override
   String get previewLocationBadge => 'موقعیت شبیه‌سازی‌شده';
 
   @override

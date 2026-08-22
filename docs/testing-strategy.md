@@ -1,10 +1,11 @@
 # Testing strategy
 
 ```bash
-flutter test
+flutter test                  # the suite
+./scripts/check.sh            # the suite with coverage, plus the coverage gate
 ```
 
-109 tests. No network, no golden files, no device required.
+1131 tests. No network, no golden files, no device required.
 
 ## What is worth testing here
 
@@ -85,6 +86,42 @@ friendly message rather than an exception.
 `tester.scrollUntilVisible`. The programme filter bar carries
 `Key('program-filter-bar')` for exactly this reason.
 
+## Coverage, and why it is not 100%
+
+`scripts/check.sh` runs the suite with `--coverage` and enforces
+`tools/coverage/policy.json` against the result. Current figure:
+**87.96% of hand-written `lib/` lines** (5624/6394), 75 of 133 files at 100%.
+
+**There is no function-coverage number to report.** `flutter test --coverage`
+writes only `DA:` (line) records — `grep -c '^FN:' coverage/lcov.info` returns
+`0`. Any claim of "100% of functions" for a Flutter project is measuring
+something the toolchain does not emit.
+
+Three rules, each a one-way ratchet:
+
+1. hand-written `lib/` coverage may not fall below `minimum_total_pct`
+2. every hand-written file reaches 80%, unless it is `platform_exempt` or
+   carries its own lower floor in `debt`
+3. a `debt` entry that has been paid off, or an exemption naming a file that
+   no longer exists, **fails** — so neither list can rot into an amnesty
+
+Rule 3 is the one doing the work. Without it, `debt` is permanent; with it,
+covering a file forces you to delete its entry and live under the 80% minimum
+from then on. Raise a floor when coverage improves; lowering one to go green
+defeats the point of having it.
+
+Seven files are exempt by name, each with its reason recorded, rather than
+hidden inside a lower global number: the geolocator service, the camera
+scanner, the WebView panorama host, the native map view, the GPU shader, the
+`url_launcher` hand-off, and the `runApp` bootstrap. None of them can execute
+in the Flutter test VM. Generated l10n is excluded from both numerator and
+denominator — covering it means calling every string getter, which moves the
+percentage and tests nothing.
+
+Eight ordinary Flutter files sit on `debt` at their current values. They have
+no platform obstacle, only missing widget tests; `lib/screens/wayfinding_screen.dart`
+is the largest at 39%. See `tools/coverage/README.md`.
+
 ## Not covered, and why
 
 | Not tested | Reason |
@@ -94,10 +131,11 @@ friendly message rather than an exception.
 | Integration / E2E | MQ Journey uses Maestro. Worth adding for the wayfinding flow once routes are confirmed |
 | Accessibility automation | A manual pass is on the v1.0 checklist. Contrast ratios are documented in `aon_colors.dart` but not asserted |
 | Real-device outdoor testing | Cannot be automated, and is the single most valuable test for this product. On the v1.0 checklist |
+| 360° panorama rendering | The viewer is an `InAppWebView` over a localhost asset server; it needs a real engine. The manifests, the tour table and every bundled image ARE asserted (`test/unit/panorama_data_test.dart`), so only the render itself is unproven |
 
 ## Before the event
 
-1. Run `flutter test` on CI for every PR.
+1. Run `./scripts/check.sh` on CI for every PR — it carries the coverage gate.
 2. Add golden tests once the design is frozen.
 3. Manual accessibility pass — TalkBack/VoiceOver, 200% text, contrast.
 4. **Walk the campus at night with the app.** Nothing above substitutes for it.

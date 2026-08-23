@@ -18,11 +18,29 @@ authorisation when an app carries an institution's material.
 
 Three assets are affected:
 
-| Asset | What it is |
-|---|---|
-| `assets/maps/aon_event_map.png` + `tools/aon_map/source/*.pdf` | Page 1 of the published AON 2026 Program and Map A3 PDF, used as the app's basemap |
-| `assets/data/buildings.json` | 170 campus buildings with names and coordinates, ported from the university's Open Day app |
-| `assets/panorama/**` (28 images) | Photographs of six campus venues |
+| Asset | What it is | Whose permission |
+|---|---|---|
+| `assets/maps/aon_event_map.png` + `tools/aon_map/source/*.pdf` | Page 1 of the published AON 2026 Program and Map A3 PDF, used as the app's basemap | Macquarie University |
+| `assets/data/buildings.json` | 170 campus buildings with names and coordinates, ported from the university's Open Day app | Macquarie University |
+| `assets/panorama/**` (28 images) | Photographs of six campus venues | Macquarie University |
+| `assets/images/hero_deep_triangulum_galaxy.jpg` | "A Deep Triangulum Galaxy" — the Home screen hero | **Aleix Roig (the photographer), not MQ** |
+
+> **The hero image is the one that is not the University's to grant.** This
+> repo's own README says it plainly: *"Supplied for this project by the event
+> organisers… Not covered by any licence applied to this repository's source
+> code. Rights remain with the photographer. Do not reuse it outside this
+> project without permission."*
+>
+> Publishing the app is arguably still "this project"; using the image on a
+> **store listing** is not obviously within it. Two concrete consequences:
+>
+> 1. The App Store screenshot `01-home.png` and the iPad `01-home.png` both show
+>    the hero image. A store listing is a marketing surface, not the app.
+> 2. It must **not** be used for the Play Store's 1024 × 500 feature graphic.
+>
+> Get the photographer's written permission covering (a) distribution inside a
+> free public app on both stores and (b) appearance in store screenshots — or
+> substitute a different hero. Do not decide this by assuming.
 
 > **Subject: Permission to publish MQ campus assets in the Astronomy Open Night app**
 >
@@ -43,6 +61,12 @@ Three assets are affected:
 > Apple and Google both hold the submitter responsible for third-party content,
 > and App Review can ask us to produce this authorisation. A short written "yes,
 > the University authorises publication of these assets in this app" is enough.
+>
+> Separately: the Home screen hero photograph ("A Deep Triangulum Galaxy" by
+> Aleix Roig) was supplied by the organisers, but our records say the rights
+> remain with the photographer. Could you put us in touch, or confirm that the
+> permission you obtained covers publishing the app on the App Store and Google
+> Play and showing the image in store screenshots?
 >
 > Could you also confirm who owns the copyright line for the campus map? The app
 > currently credits it as a source ("Campus map: Macquarie University") rather

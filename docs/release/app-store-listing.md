@@ -165,14 +165,18 @@ Captured at exact device resolution and committed under
 | Size | Device | Required | Status |
 |---|---|---|---|
 | 1320 × 2868 | iPhone 17 Pro Max (6.9") | **Yes** | 6 captured |
-| 2064 × 2752 | iPad Pro 13-inch (M5) | **Yes** — the app runs on iPad | **1 captured; more needed** |
+| 2064 × 2752 | iPad Pro 13-inch (M5) | **Yes** — the app runs on iPad | 4 captured |
 
 No alpha channel, no transparency — `simctl io screenshot` produces opaque PNGs.
 
-**iPad is not finished.** One home screenshot exists at the correct size. The
-Maestro driver stopped connecting to the iPad simulator part-way through, so the
-map / passport / panorama iPad shots were not captured. Finish these before
-submitting; the size and pipeline are already proven by the one that exists.
+### The iPad set
+
+| File | Screen |
+|---|---|
+| `01-home.png` | Hero and multi-column layout — the iPad gets a genuinely different grid, not a stretched phone |
+| `02-map.png` | The whole official AON sheet, legend included, at a size you can actually read |
+| `03-panorama.png` | A 360° tour, with the title-clearance fix visible |
+| `04-settings-preview.png` | Settings → Preview, showing the passport preview switch |
 
 ### What the iPhone set shows
 

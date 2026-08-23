@@ -133,8 +133,6 @@ Run on an iPhone 17 Pro Max (iOS 26.5) with the release-configuration Dart code.
 - **On-device smoke tests on real hardware are still outstanding** — everything
   above is a simulator. The M5 compass heading proof still needs a magnetometer,
   and the M4 live Google Maps render still needs the GCP keys.
-- **iPad screenshots are incomplete.** One home shot at the correct 2064×2752
-  exists; the Maestro driver stopped connecting to the iPad part-way through.
 - `EventFeatures.scan` and `EventFeatures.stamps` are `false` in
   `event_config.dart` and documented as meaning "hidden, not stubbed" — but
   **neither flag is read anywhere in `lib/`**. They are dead config. They do

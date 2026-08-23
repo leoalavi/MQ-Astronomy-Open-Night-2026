@@ -5,10 +5,12 @@ import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/stamp_service.dart';
 import 'package:aon2026/widgets/passport_fact_sheet.dart';
 import 'package:aon2026/widgets/passport_grid.dart';
+import 'package:aon2026/widgets/passport_preview_badge.dart';
 
 /// The passport progress line, disabled-state-aware (design §14).
 ///
@@ -16,37 +18,41 @@ import 'package:aon2026/widgets/passport_grid.dart';
 /// must not be relabelled "opens on event night" just because a release build
 /// currently disables NEW collection. The gate blocks new collection, it does
 /// not rewrite history.
-String passportProgressLine({
+String passportProgressLine(
+  AonL10n l, {
   required bool collectionEnabled,
   required int count,
   required int total,
 }) {
-  if (count >= total) return '$total / $total stamps'; // completed — always
-  if (!collectionEnabled) return 'Astronomy Passport opens on event night';
-  if (count == 0) return 'Scan or enter a venue code to start';
-  if (count == total - 1) return 'Just 1 more to go!';
-  return '$count / $total stamps';
+  if (count >= total) return l.passportProgress(total, total); // done — always
+  if (!collectionEnabled) return l.passportOpensOnEventNight;
+  if (count == 0) return l.passportStartHint;
+  if (count == total - 1) return l.passportOneMoreToGo;
+  return l.passportProgress(count, total);
 }
 
 /// The Astronomy Passport: progress, the 9-cell grid, and the capture entry.
 class PassportScreen extends ConsumerWidget {
   const PassportScreen({super.key});
 
-  Future<void> _confirmReset(BuildContext context, WidgetRef ref) async {
+  Future<void> _confirmReset(
+    BuildContext context,
+    WidgetRef ref,
+    AonL10n l,
+  ) async {
     final yes = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset passport?'),
-        content:
-            const Text('This clears all collected stamps on this device.'),
+        title: Text(l.passportResetTitle),
+        content: Text(l.passportResetBody),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(l.actionCancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Reset'),
+            child: Text(l.passportResetConfirm),
           ),
         ],
       ),
@@ -57,27 +63,35 @@ class PassportScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
     final state = ref.watch(passportProvider);
     final enabled = ref.watch(passportCollectionEnabledProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Astronomy Passport'),
+        title: Text(l.passportTitle),
         actions: [
           // Reset is a demo/QA control, compiled out of release builds.
           if (kDebugMode)
             IconButton(
               tooltip: 'Reset passport (debug)',
               icon: const Icon(Icons.restart_alt_rounded),
-              onPressed: () => _confirmReset(context, ref),
+              onPressed: () => _confirmReset(context, ref, l),
             ),
         ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(AonSpacing.space4),
         children: [
+          // Travels with the stamps, not with the switch: a practice stamp must
+          // never read as one earned at a venue.
+          const Align(
+            alignment: AlignmentDirectional.centerStart,
+            child: PassportPreviewBadge(),
+          ),
           Text(
             passportProgressLine(
+              l,
               collectionEnabled: enabled,
               count: state.count,
               total: PassportPolicy.stationCount,
@@ -90,10 +104,7 @@ class PassportScreen extends ConsumerWidget {
           ),
           if (state.saveFailed) ...[
             const SizedBox(height: AonSpacing.space3),
-            Text(
-              'Your progress may not be saved on this device.',
-              style: theme.textTheme.bodySmall,
-            ),
+            Text(l.passportSaveFailed, style: theme.textTheme.bodySmall),
           ],
           const SizedBox(height: AonSpacing.space5),
           PassportGrid(
@@ -107,13 +118,13 @@ class PassportScreen extends ConsumerWidget {
             FilledButton.icon(
               onPressed: () => context.push(Routes.passportReward),
               icon: const Icon(Icons.celebration_rounded),
-              label: const Text('View your reward'),
+              label: Text(l.passportViewReward),
             )
           else
             FilledButton.icon(
               onPressed: () => context.push(Routes.passportScan),
               icon: const Icon(Icons.qr_code_scanner_rounded),
-              label: const Text('Scan or enter a code'),
+              label: Text(l.passportScanOrEnter),
             ),
         ],
       ),

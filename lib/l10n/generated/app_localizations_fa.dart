@@ -1136,4 +1136,84 @@ class AonL10nFa extends AonL10n {
 
     return '$countString از $totalString مهر';
   }
+
+  @override
+  String get settingsPassportPreviewTitle => 'پیش‌نمایش پاسپورت نجوم';
+
+  @override
+  String get settingsPassportPreviewBody =>
+      'کدهای محل‌ها هنوز نهایی نشده‌اند، بنابراین جمع‌کردن مهر تا شب رویداد خاموش است. برای امتحان‌کردن مسیر با کدهای پیش‌نمایش، این را روشن کنید. مهرهای تمرینی روی همین دستگاه می‌مانند — با «پاک‌کردن داده‌های من» آن‌ها را پاک کنید.';
+
+  @override
+  String get passportPreviewBadge => 'مهرهای پیش‌نمایش';
+
+  @override
+  String passportProgress(int count, int total) {
+    return '$count / $total مهر';
+  }
+
+  @override
+  String get passportOpensOnEventNight =>
+      'پاسپورت نجوم در شب رویداد باز می‌شود';
+
+  @override
+  String get passportStartHint =>
+      'برای شروع، کد یکی از محل‌ها را اسکن یا وارد کنید';
+
+  @override
+  String get passportOneMoreToGo => 'فقط یکی دیگر مانده!';
+
+  @override
+  String get passportSaveFailed =>
+      'ممکن است پیشرفت شما روی این دستگاه ذخیره نشود.';
+
+  @override
+  String get passportViewReward => 'جایزه‌تان را ببینید';
+
+  @override
+  String get passportScanOrEnter => 'یک کد را اسکن یا وارد کنید';
+
+  @override
+  String get passportResetTitle => 'پاسپورت بازنشانی شود؟';
+
+  @override
+  String get passportResetBody =>
+      'این کار همهٔ مهرهای جمع‌شده روی این دستگاه را پاک می‌کند.';
+
+  @override
+  String get passportResetConfirm => 'بازنشانی';
+
+  @override
+  String get passportScanTitle => 'گرفتن یک مهر';
+
+  @override
+  String get passportScanCollected => 'مهر گرفته شد!';
+
+  @override
+  String get passportScanAlready => 'این یکی را از قبل دارید.';
+
+  @override
+  String get passportScanUnknown => 'این کد مربوط به شب باز نجوم نیست.';
+
+  @override
+  String get passportScanDisabled =>
+      'پاسپورت هنوز فعال نیست — به کارکنان یکی از باجه‌های اطلاعات مراجعه کنید.';
+
+  @override
+  String get passportScanQrButton => 'اسکن کد QR';
+
+  @override
+  String get passportEnterCodeButton => 'وارد کردن کد';
+
+  @override
+  String get passportEnterCodeHint => 'کد روی تابلوی محل را وارد کنید';
+
+  @override
+  String get passportCodeLabel => 'کد';
+
+  @override
+  String get passportAddStamp => 'افزودن مهر';
+
+  @override
+  String get passportScanAnother => 'اسکن یکی دیگر';
 }

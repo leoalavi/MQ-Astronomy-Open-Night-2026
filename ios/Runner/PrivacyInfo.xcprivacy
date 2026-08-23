@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- The app has no account, no analytics and no advertising SDK. Nothing it
+	     stores (passport stamps, favourites, saved plan, settings) ever leaves
+	     the device, so there is no collected data type to declare. -->
+	<key>NSPrivacyCollectedDataTypes</key>
+	<array/>
+
+	<!-- No tracking, and therefore no tracking domains. Declaring a domain here
+	     while the app makes no such request would be a false statement; the one
+	     network destination the app can reach (Google Routes, and only after
+	     explicit consent) is a functional request, not tracking. -->
+	<key>NSPrivacyTracking</key>
+	<false/>
+	<key>NSPrivacyTrackingDomains</key>
+	<array/>
+
+	<!-- No required-reason API is called by this target's own code.
+	     AppDelegate.swift and SceneDelegate.swift touch none of the covered
+	     categories; the engine and plugins declare their own:
+	       Flutter.framework             FileTimestamp (0A2A.1, C617.1),
+	                                     SystemBootTime (35F9.1)
+	       shared_preferences_foundation UserDefaults (1C8F.1)
+	     Adding entries here for APIs this target does not call would be
+	     inaccurate, so the array stays empty. -->
+	<key>NSPrivacyAccessedAPITypes</key>
+	<array/>
+</dict>
+</plist>

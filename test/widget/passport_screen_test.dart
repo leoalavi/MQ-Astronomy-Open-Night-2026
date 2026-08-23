@@ -57,7 +57,11 @@ void main() {
         passportSnapshotProvider.overrideWithValue(<String>{}),
         passportCollectionEnabledProvider.overrideWithValue(false),
       ],
-      child: const MaterialApp(home: PassportScreen()),
+      child: const MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: PassportScreen(),
+      ),
     ));
     await t.pumpAndSettle();
     expect(
@@ -72,5 +76,46 @@ void main() {
     await t.pumpAndSettle();
     expect(find.text('Just 1 more to go!'), findsOneWidget);
     expect(t.takeException(), isNull);
+  });
+
+  // The reset control is compiled out of release builds, but `flutter test`
+  // runs in debug, so the confirm/cancel paths are reachable — and worth
+  // holding: a stamp trail that silently wipes on a mis-tap would be a bad
+  // night for someone eight stamps in.
+  group('reset (debug-only control)', () {
+    Finder resetButton() => find.byTooltip('Reset passport (debug)');
+
+    testWidgets('cancelling leaves every stamp in place', (t) async {
+      await t.pumpWidget(_host({'macquarie-theatre', 'mason-theatre'}));
+      await t.pumpAndSettle();
+      expect(find.textContaining('2 / 9'), findsOneWidget);
+
+      await t.tap(resetButton());
+      await t.pumpAndSettle();
+      expect(find.text('Reset passport?'), findsOneWidget);
+      expect(
+        find.text('This clears all collected stamps on this device.'),
+        findsOneWidget,
+      );
+
+      await t.tap(find.text('Cancel'));
+      await t.pumpAndSettle();
+      expect(find.text('Reset passport?'), findsNothing);
+      expect(find.textContaining('2 / 9'), findsOneWidget);
+    });
+
+    testWidgets('confirming clears the passport', (t) async {
+      await t.pumpWidget(_host({'macquarie-theatre', 'mason-theatre'}));
+      await t.pumpAndSettle();
+
+      await t.tap(resetButton());
+      await t.pumpAndSettle();
+      await t.tap(find.widgetWithText(FilledButton, 'Reset'));
+      await t.pumpAndSettle();
+
+      expect(find.text('Reset passport?'), findsNothing);
+      // Back to the zero state, which is the "start" copy, not "0 / 9".
+      expect(find.text('Scan or enter a venue code to start'), findsOneWidget);
+    });
   });
 }

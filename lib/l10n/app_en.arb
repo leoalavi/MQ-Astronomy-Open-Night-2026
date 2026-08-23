@@ -279,11 +279,11 @@
   "panorama360Title": "360° preview",
   "panoramaTapToExplore": "Tap to explore in 360°",
   "@panoramaTapToExplore": {
-    "description": "360\u00b0 picker card subtitle for a venue with real photography. Replaces the demo disclosure, which now shows only for placeholder tours."
+    "description": "360° picker card subtitle for a venue with real photography. Replaces the demo disclosure, which now shows only for placeholder tours."
   },
-  "panoramaVenueWithMapLetter": "{letter} \u00b7 {name}",
+  "panoramaVenueWithMapLetter": "{letter} · {name}",
   "@panoramaVenueWithMapLetter": {
-    "description": "360\u00b0 picker card title. Prefixes the venue with the letter the official AON program map prints for it, so the app list and the paper sheet read in the same alphabet.",
+    "description": "360° picker card title. Prefixes the venue with the letter the official AON program map prints for it, so the app list and the paper sheet read in the same alphabet.",
     "placeholders": {
       "letter": {
         "type": "String",
@@ -955,5 +955,109 @@
         "format": "decimalPattern"
       }
     }
+  },
+  "settingsPassportPreviewTitle": "Preview the Astronomy Passport",
+  "@settingsPassportPreviewTitle": {
+    "description": "Settings card title for the passport preview switch."
+  },
+  "settingsPassportPreviewBody": "The venue codes aren't final yet, so collecting stamps is off until event night. Turn this on to try the rally now using preview codes. Practice stamps are kept on this device — clear them with Delete my data.",
+  "@settingsPassportPreviewBody": {
+    "description": "Explains why the passport is gated and what preview does. Guideline 2.3.1(a): the passport must be reachable, not dormant."
+  },
+  "passportPreviewBadge": "Preview stamps",
+  "@passportPreviewBadge": {
+    "description": "Badge shown on the passport whenever preview collection is engaged, so a practice stamp is never mistaken for a real one."
+  },
+  "passportProgress": "{count} / {total} stamps",
+  "@passportProgress": {
+    "description": "Passport progress line.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "passportOpensOnEventNight": "Astronomy Passport opens on event night",
+  "@passportOpensOnEventNight": {
+    "description": "Shown when collection is gated and preview is off."
+  },
+  "passportStartHint": "Scan or enter a venue code to start",
+  "@passportStartHint": {
+    "description": "Progress line at zero stamps."
+  },
+  "passportOneMoreToGo": "Just 1 more to go!",
+  "@passportOneMoreToGo": {
+    "description": "Progress line with exactly one station left."
+  },
+  "passportSaveFailed": "Your progress may not be saved on this device.",
+  "@passportSaveFailed": {
+    "description": "Non-blocking note after a persistence write failed."
+  },
+  "passportViewReward": "View your reward",
+  "@passportViewReward": {
+    "description": "Button shown once the passport is complete."
+  },
+  "passportScanOrEnter": "Scan or enter a code",
+  "@passportScanOrEnter": {
+    "description": "Primary button opening the capture screen."
+  },
+  "passportResetTitle": "Reset passport?",
+  "@passportResetTitle": {
+    "description": "Confirm dialog title for clearing stamps."
+  },
+  "passportResetBody": "This clears all collected stamps on this device.",
+  "@passportResetBody": {
+    "description": "Confirm dialog body for clearing stamps."
+  },
+  "passportResetConfirm": "Reset",
+  "@passportResetConfirm": {
+    "description": "Confirm action for clearing stamps."
+  },
+  "passportScanTitle": "Collect a stamp",
+  "@passportScanTitle": {
+    "description": "App bar title of the capture screen."
+  },
+  "passportScanCollected": "Stamp collected!",
+  "@passportScanCollected": {
+    "description": "Outcome: a new stamp was captured."
+  },
+  "passportScanAlready": "You already have this one.",
+  "@passportScanAlready": {
+    "description": "Outcome: this station was already stamped."
+  },
+  "passportScanUnknown": "That's not an Astronomy Open Night code.",
+  "@passportScanUnknown": {
+    "description": "Outcome: the code is foreign to this event."
+  },
+  "passportScanDisabled": "The passport isn't live yet — see staff at an information point.",
+  "@passportScanDisabled": {
+    "description": "Outcome: collection is gated and preview is off."
+  },
+  "passportScanQrButton": "Scan QR code",
+  "@passportScanQrButton": {
+    "description": "Opens the camera scanner."
+  },
+  "passportEnterCodeButton": "Enter a code",
+  "@passportEnterCodeButton": {
+    "description": "Reveals the manual code field."
+  },
+  "passportEnterCodeHint": "Enter the code from the venue sign",
+  "@passportEnterCodeHint": {
+    "description": "Instruction above the manual code field."
+  },
+  "passportCodeLabel": "Code",
+  "@passportCodeLabel": {
+    "description": "Label of the manual code text field."
+  },
+  "passportAddStamp": "Add stamp",
+  "@passportAddStamp": {
+    "description": "Submits a manually typed code."
+  },
+  "passportScanAnother": "Scan another",
+  "@passportScanAnother": {
+    "description": "Returns to the capture options after an outcome."
   }
 }

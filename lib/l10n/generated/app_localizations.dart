@@ -2016,6 +2016,150 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'{count} of {total} stamps'**
   String passportStampProgress(int count, int total);
+
+  /// Settings card title for the passport preview switch.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview the Astronomy Passport'**
+  String get settingsPassportPreviewTitle;
+
+  /// Explains why the passport is gated and what preview does. Guideline 2.3.1(a): the passport must be reachable, not dormant.
+  ///
+  /// In en, this message translates to:
+  /// **'The venue codes aren\'t final yet, so collecting stamps is off until event night. Turn this on to try the rally now using preview codes. Practice stamps are kept on this device — clear them with Delete my data.'**
+  String get settingsPassportPreviewBody;
+
+  /// Badge shown on the passport whenever preview collection is engaged, so a practice stamp is never mistaken for a real one.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview stamps'**
+  String get passportPreviewBadge;
+
+  /// Passport progress line.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} / {total} stamps'**
+  String passportProgress(int count, int total);
+
+  /// Shown when collection is gated and preview is off.
+  ///
+  /// In en, this message translates to:
+  /// **'Astronomy Passport opens on event night'**
+  String get passportOpensOnEventNight;
+
+  /// Progress line at zero stamps.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan or enter a venue code to start'**
+  String get passportStartHint;
+
+  /// Progress line with exactly one station left.
+  ///
+  /// In en, this message translates to:
+  /// **'Just 1 more to go!'**
+  String get passportOneMoreToGo;
+
+  /// Non-blocking note after a persistence write failed.
+  ///
+  /// In en, this message translates to:
+  /// **'Your progress may not be saved on this device.'**
+  String get passportSaveFailed;
+
+  /// Button shown once the passport is complete.
+  ///
+  /// In en, this message translates to:
+  /// **'View your reward'**
+  String get passportViewReward;
+
+  /// Primary button opening the capture screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan or enter a code'**
+  String get passportScanOrEnter;
+
+  /// Confirm dialog title for clearing stamps.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset passport?'**
+  String get passportResetTitle;
+
+  /// Confirm dialog body for clearing stamps.
+  ///
+  /// In en, this message translates to:
+  /// **'This clears all collected stamps on this device.'**
+  String get passportResetBody;
+
+  /// Confirm action for clearing stamps.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get passportResetConfirm;
+
+  /// App bar title of the capture screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Collect a stamp'**
+  String get passportScanTitle;
+
+  /// Outcome: a new stamp was captured.
+  ///
+  /// In en, this message translates to:
+  /// **'Stamp collected!'**
+  String get passportScanCollected;
+
+  /// Outcome: this station was already stamped.
+  ///
+  /// In en, this message translates to:
+  /// **'You already have this one.'**
+  String get passportScanAlready;
+
+  /// Outcome: the code is foreign to this event.
+  ///
+  /// In en, this message translates to:
+  /// **'That\'s not an Astronomy Open Night code.'**
+  String get passportScanUnknown;
+
+  /// Outcome: collection is gated and preview is off.
+  ///
+  /// In en, this message translates to:
+  /// **'The passport isn\'t live yet — see staff at an information point.'**
+  String get passportScanDisabled;
+
+  /// Opens the camera scanner.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan QR code'**
+  String get passportScanQrButton;
+
+  /// Reveals the manual code field.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter a code'**
+  String get passportEnterCodeButton;
+
+  /// Instruction above the manual code field.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the code from the venue sign'**
+  String get passportEnterCodeHint;
+
+  /// Label of the manual code text field.
+  ///
+  /// In en, this message translates to:
+  /// **'Code'**
+  String get passportCodeLabel;
+
+  /// Submits a manually typed code.
+  ///
+  /// In en, this message translates to:
+  /// **'Add stamp'**
+  String get passportAddStamp;
+
+  /// Returns to the capture options after an outcome.
+  ///
+  /// In en, this message translates to:
+  /// **'Scan another'**
+  String get passportScanAnother;
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

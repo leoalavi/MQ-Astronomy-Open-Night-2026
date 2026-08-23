@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/data/stamp_stations_data.dart';
 import 'package:aon2026/models/stamp_io.dart';
+import 'package:aon2026/services/passport_preview.dart';
 import 'package:aon2026/services/passport_store.dart';
 import 'package:aon2026/services/stamp_service.dart';
 
@@ -50,11 +51,22 @@ final passportStoreProvider =
 
 /// The DOMAIN release gate. Default: disabled in release while any code is a
 /// placeholder; always enabled in debug. Overridable for tests.
-final passportCollectionEnabledProvider = Provider<bool>(
+final releaseCollectionEnabledProvider = Provider<bool>(
   (ref) => PassportPolicy.isCollectionEnabled(
     StampStationsData.all,
     isRelease: kReleaseMode,
   ),
+);
+
+/// Whether a stamp can be captured right now.
+///
+/// The domain gate above, OR the user-visible preview in Settings. Preview only
+/// ever *opens* the gate — see `passport_preview.dart` for why a dormant
+/// passport was a guideline 2.3.1(a) problem as well as a worse app.
+final passportCollectionEnabledProvider = Provider<bool>(
+  (ref) =>
+      ref.watch(releaseCollectionEnabledProvider) ||
+      ref.watch(passportPreviewProvider),
 );
 
 final passportProvider =

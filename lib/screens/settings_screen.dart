@@ -16,6 +16,7 @@ import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/local_data_eraser.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/passport_providers.dart';
+import 'package:aon2026/services/passport_preview.dart';
 import 'package:aon2026/services/preview_location.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/utils/time_format.dart';
@@ -150,6 +151,8 @@ class SettingsScreen extends ConsumerWidget {
           const _PreviewLocationCard(),
           _gap,
           const EventTimePreviewCard(),
+          _gap,
+          const _PassportPreviewCard(),
 
           // ── About ──
           SectionHeader(
@@ -369,6 +372,35 @@ class _PreviewLocationCard extends ConsumerWidget {
         onChanged: (v) => ref.read(previewLocationProvider.notifier).set(v),
         title: Text(l.settingsPreviewTitle),
         subtitle: Text(l.settingsPreviewBody),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AonSpacing.space4,
+          vertical: AonSpacing.space2,
+        ),
+      ),
+    );
+  }
+}
+
+/// Opens passport collection while the nine station codes are still `AON-*-TBC`.
+///
+/// Without this the Passport tab is inert in every release build — a dormant
+/// feature, which guideline 2.3.1(a) forbids and which no reviewer or visitor
+/// could evaluate. Deliberately here, beside the other preview controls, rather
+/// than behind a hidden gesture: the same reasoning `PreviewLocationService`
+/// records for the simulated position.
+class _PassportPreviewCard extends ConsumerWidget {
+  const _PassportPreviewCard();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    return Card(
+      child: SwitchListTile.adaptive(
+        key: const Key('settings-passport-preview-toggle'),
+        value: ref.watch(passportPreviewProvider),
+        onChanged: (v) => ref.read(passportPreviewProvider.notifier).set(v),
+        title: Text(l.settingsPassportPreviewTitle),
+        subtitle: Text(l.settingsPassportPreviewBody),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AonSpacing.space4,
           vertical: AonSpacing.space2,

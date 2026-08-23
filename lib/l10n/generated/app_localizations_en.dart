@@ -1131,4 +1131,83 @@ class AonL10nEn extends AonL10n {
 
     return '$countString of $totalString stamps';
   }
+
+  @override
+  String get settingsPassportPreviewTitle => 'Preview the Astronomy Passport';
+
+  @override
+  String get settingsPassportPreviewBody =>
+      'The venue codes aren\'t final yet, so collecting stamps is off until event night. Turn this on to try the rally now using preview codes. Practice stamps are kept on this device — clear them with Delete my data.';
+
+  @override
+  String get passportPreviewBadge => 'Preview stamps';
+
+  @override
+  String passportProgress(int count, int total) {
+    return '$count / $total stamps';
+  }
+
+  @override
+  String get passportOpensOnEventNight =>
+      'Astronomy Passport opens on event night';
+
+  @override
+  String get passportStartHint => 'Scan or enter a venue code to start';
+
+  @override
+  String get passportOneMoreToGo => 'Just 1 more to go!';
+
+  @override
+  String get passportSaveFailed =>
+      'Your progress may not be saved on this device.';
+
+  @override
+  String get passportViewReward => 'View your reward';
+
+  @override
+  String get passportScanOrEnter => 'Scan or enter a code';
+
+  @override
+  String get passportResetTitle => 'Reset passport?';
+
+  @override
+  String get passportResetBody =>
+      'This clears all collected stamps on this device.';
+
+  @override
+  String get passportResetConfirm => 'Reset';
+
+  @override
+  String get passportScanTitle => 'Collect a stamp';
+
+  @override
+  String get passportScanCollected => 'Stamp collected!';
+
+  @override
+  String get passportScanAlready => 'You already have this one.';
+
+  @override
+  String get passportScanUnknown => 'That\'s not an Astronomy Open Night code.';
+
+  @override
+  String get passportScanDisabled =>
+      'The passport isn\'t live yet — see staff at an information point.';
+
+  @override
+  String get passportScanQrButton => 'Scan QR code';
+
+  @override
+  String get passportEnterCodeButton => 'Enter a code';
+
+  @override
+  String get passportEnterCodeHint => 'Enter the code from the venue sign';
+
+  @override
+  String get passportCodeLabel => 'Code';
+
+  @override
+  String get passportAddStamp => 'Add stamp';
+
+  @override
+  String get passportScanAnother => 'Scan another';
 }

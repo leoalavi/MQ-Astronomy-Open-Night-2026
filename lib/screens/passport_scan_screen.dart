@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/stamp_io.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/utils/haptics.dart';
@@ -31,7 +32,7 @@ class PassportScanScreen extends ConsumerStatefulWidget {
 class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
   final _controller = TextEditingController();
   _Mode _mode = _Mode.choosing;
-  String? _message;
+  StampResult? _outcome;
 
   @override
   void dispose() {
@@ -41,15 +42,7 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
 
   void handleInput(StampInput input) {
     final outcome = ref.read(passportProvider.notifier).collect(input);
-    setState(() {
-      _message = switch (outcome.result) {
-        StampCollected() => 'Stamp collected!',
-        StampAlreadyHave() => 'You already have this one.',
-        StampUnknown() => 'That\'s not an Astronomy Open Night code.',
-        StampDisabled() =>
-          'The passport isn\'t live yet — see staff at an information point.',
-      };
-    });
+    setState(() => _outcome = outcome.result);
 
     // Learning layer: only a real new stamp. Never touches scanner lifecycle.
     if (outcome.result is StampCollected) {
@@ -79,8 +72,16 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
+    final message = switch (_outcome) {
+      null => null,
+      StampCollected() => l.passportScanCollected,
+      StampAlreadyHave() => l.passportScanAlready,
+      StampUnknown() => l.passportScanUnknown,
+      StampDisabled() => l.passportScanDisabled,
+    };
     return Scaffold(
-      appBar: AppBar(title: const Text('Collect a stamp')),
+      appBar: AppBar(title: Text(l.passportScanTitle)),
       body: ListView(
         padding: const EdgeInsets.all(AonSpacing.space4),
         children: [
@@ -92,11 +93,11 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
                   onPressed: kIsWeb
                       ? null
                       : () => setState(() {
-                            _message = null;
+                            _outcome = null;
                             _mode = _Mode.scanning;
                           }),
                   icon: const Icon(Icons.qr_code_scanner_rounded),
-                  label: const Text('Scan QR code'),
+                  label: Text(l.passportScanQrButton),
                 ),
               ),
               const SizedBox(width: AonSpacing.space3),
@@ -104,7 +105,7 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
                 child: OutlinedButton.icon(
                   onPressed: () => setState(() => _mode = _Mode.manual),
                   icon: const Icon(Icons.keyboard_rounded),
-                  label: const Text('Enter a code'),
+                  label: Text(l.passportEnterCodeButton),
                 ),
               ),
             ],
@@ -114,39 +115,36 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
           if (_mode == _Mode.scanning) _scanner(),
 
           if (_mode == _Mode.manual) ...[
-            Text(
-              'Enter the code from the venue sign',
-              style: theme.textTheme.titleMedium,
-            ),
+            Text(l.passportEnterCodeHint, style: theme.textTheme.titleMedium),
             const SizedBox(height: AonSpacing.space3),
             TextField(
               key: const Key('passport-manual-field'),
               controller: _controller,
               textCapitalization: TextCapitalization.characters,
-              decoration: const InputDecoration(
-                labelText: 'Code',
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l.passportCodeLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: AonSpacing.space3),
             FilledButton(
               key: const Key('passport-manual-submit'),
               onPressed: _submitManual,
-              child: const Text('Add stamp'),
+              child: Text(l.passportAddStamp),
             ),
           ],
 
-          if (_message != null) ...[
+          if (message != null) ...[
             const SizedBox(height: AonSpacing.space4),
-            Text(_message!, style: theme.textTheme.bodyLarge),
+            Text(message, style: theme.textTheme.bodyLarge),
             const SizedBox(height: AonSpacing.space3),
             // Resume affordance after any scan result (design §7.1).
             OutlinedButton(
               onPressed: () => setState(() {
-                _message = null;
+                _outcome = null;
                 _mode = _Mode.scanning;
               }),
-              child: const Text('Scan another'),
+              child: Text(l.passportScanAnother),
             ),
           ],
         ],

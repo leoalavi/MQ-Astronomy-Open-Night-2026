@@ -34,7 +34,8 @@ abstract final class VenuesData {
       longitude: 151.1122714,
       coordinateConfidence: DataConfidence.derived,
       mapReference: 'A',
-      aliases: ['MQ Theatre', 'Keynote', 'Physics magic show'],
+      aliases: ['MQ Theatre', 'Keynote', 'Physics magic show',
+        'تئاتر مکواری', 'سخنرانی کلیدی', 'نمایش فیزیک'],
       notes: 'Toilets available in this building.',
     ),
     Venue(
@@ -48,7 +49,8 @@ abstract final class VenuesData {
       longitude: 151.114706,
       coordinateConfidence: DataConfidence.derived,
       mapReference: 'B',
-      aliases: ['Chemistry magic show', 'Destination Moon'],
+      aliases: ['Chemistry magic show', 'Destination Moon',
+        'تئاتر میسون', 'نمایش شیمی'],
       notes: 'Toilets available in this building.',
     ),
     Venue(
@@ -71,6 +73,7 @@ abstract final class VenuesData {
         'Laser graffiti',
         'Laser guide star',
         'Registration',
+        'حیاط مرکزی', 'مرکز حیاط', 'ثبت‌نام', 'اطلاعات', 'غذا',
       ],
       notes:
           'Open-air courtyard. Registration and information points, food and '
@@ -96,6 +99,7 @@ abstract final class VenuesData {
         'Theatre 3',
         'Theatre 4',
         'Theatre 100',
+        'سخنرانی‌های کوتاه', 'نمایشگاه', 'ارائه‌ها',
         'Mason Theatre',
       ],
       notes:
@@ -114,7 +118,8 @@ abstract final class VenuesData {
       longitude: 151.1135164,
       coordinateConfidence: DataConfidence.derived,
       mapReference: 'E',
-      aliases: ['1CC', 'The Hub', 'Kids’ space', 'Science demos'],
+      aliases: ['1CC', 'The Hub', 'Kids’ space', 'Science demos',
+        'فضای کودکان', 'کودکان', 'نمایش علمی'],
       notes:
           'Indoor activity rooms (101–116). Toilets available in this '
           'building.',
@@ -132,7 +137,8 @@ abstract final class VenuesData {
       longitude: 151.1105693,
       coordinateConfidence: DataConfidence.derived,
       mapReference: 'F',
-      aliases: ['MUSAC', 'Planetariums', 'Sport & Aquatic Centre'],
+      aliases: ['MUSAC', 'Planetariums', 'Sport & Aquatic Centre',
+        'سیاره‌نما', 'آسمان‌نما', 'پلنتاریوم', 'ورزشی'],
     ),
     Venue(
       id: 'astronomical-observatory',
@@ -147,7 +153,8 @@ abstract final class VenuesData {
       longitude: 151.1111248,
       coordinateConfidence: DataConfidence.derived,
       mapReference: 'G',
-      aliases: ['Telescope Park', 'Observatory', 'Telescopes'],
+      aliases: ['Telescope Park', 'Observatory', 'Telescopes',
+        'رصدخانه', 'تلسکوپ', 'رصد', 'پارک تلسکوپ'],
       notes:
           'At the northern end of campus. Bring a jacket — it is open ground.',
     ),
@@ -163,7 +170,7 @@ abstract final class VenuesData {
       longitude: 151.1151193,
       coordinateConfidence: DataConfidence.derived,
       mapReference: 'H',
-      aliases: ['11WW', 'Laser Challenge'],
+      aliases: ['11WW', 'Laser Challenge', 'چالش لیزری', 'لیزر'],
     ),
     Venue(
       id: '17-wallys-walk',
@@ -209,6 +216,7 @@ abstract final class VenuesData {
       artworkX: 2894, artworkY: 1665, // official map: marker "1"
       shortName: 'Registration',
       name: 'Registration point',
+      aliases: ['ثبت‌نام', 'باجه ثبت‌نام'],
       category: VenueCategory.registration,
       building: 'Central Courtyard',
       latitude: -33.7733531,
@@ -223,6 +231,7 @@ abstract final class VenuesData {
       id: 'information-point-2',
       artworkX: 2907, artworkY: 1857, // official map: marker "2"
       name: 'Information point 2',
+      aliases: ['اطلاعات', 'باجه اطلاعات', 'راهنما'],
       category: VenueCategory.informationPoint,
       building: 'Central Courtyard',
       latitude: -33.7733531,
@@ -251,6 +260,7 @@ abstract final class VenuesData {
       id: 'toilets-macquarie-theatre',
       artworkX: 2338, artworkY: 1949, // official map: marker "T"
       name: 'Toilets — Macquarie Theatre',
+      aliases: ['Toilets', 'توالت', 'دستشویی', 'سرویس بهداشتی'],
       category: VenueCategory.toilets,
       building: 'Macquarie Theatre',
       latitude: -33.7746334,
@@ -262,6 +272,7 @@ abstract final class VenuesData {
       id: 'toilets-1-central-courtyard',
       artworkX: 2591, artworkY: 1416, // official map: marker "T"
       name: 'Toilets — 1 Central Courtyard',
+      aliases: ['Toilets', 'توالت', 'دستشویی', 'سرویس بهداشتی'],
       category: VenueCategory.toilets,
       building: '1 Central Courtyard',
       latitude: -33.7738842,
@@ -273,6 +284,7 @@ abstract final class VenuesData {
       id: 'toilets-mason-theatre',
       artworkX: 3006, artworkY: 1665, // official map: marker "T"
       name: 'Toilets — Mason Theatre',
+      aliases: ['Toilets', 'توالت', 'دستشویی', 'سرویس بهداشتی'],
       category: VenueCategory.toilets,
       building: 'Mason Theatre',
       latitude: -33.773899,
@@ -284,6 +296,7 @@ abstract final class VenuesData {
       id: 'first-aid',
       artworkX: 2544, artworkY: 1665, // official map: marker "+"
       name: 'First aid',
+      aliases: ['کمک‌های اولیه', 'اورژانس', 'امداد'],
       category: VenueCategory.firstAid,
       // PLACEHOLDER: the map shows a first-aid symbol but the supplied
       // materials give no address or building for it, and this is exactly the
@@ -297,6 +310,7 @@ abstract final class VenuesData {
       id: 'food-and-drink',
       artworkX: 2594, artworkY: 1506, // official map: marker "C"
       name: 'Food and drink',
+      aliases: ['Food', 'غذا', 'خوراکی', 'نوشیدنی', 'کافه'],
       category: VenueCategory.foodAndDrink,
       building: 'Central Courtyard',
       latitude: -33.7733531,
@@ -318,7 +332,8 @@ abstract final class VenuesData {
       latitude: -33.7768086,
       longitude: 151.1175848,
       coordinateConfidence: DataConfidence.placeholder,
-      aliases: ['Metro', 'Train', 'Macquarie University Station'],
+      aliases: ['Metro', 'Train', 'Macquarie University Station',
+        'مترو', 'ایستگاه مترو', 'قطار'],
       notes:
           'Sydney Metro. The station sits at the south-eastern corner of '
           'campus, next to Macquarie Centre.',
@@ -330,7 +345,7 @@ abstract final class VenuesData {
       category: VenueCategory.shuttleStop,
       // PLACEHOLDER: the map legend lists a complimentary shuttle bus, but no
       // stop locations, route or timetable are given in the supplied material.
-      aliases: ['Shuttle', 'Free bus'],
+      aliases: ['Shuttle', 'Free bus', 'شاتل', 'اتوبوس رایگان'],
       notes:
           'A complimentary shuttle bus is shown on the official map. Stop '
           'locations and timetable are still to be confirmed with the event '
@@ -342,7 +357,7 @@ abstract final class VenuesData {
       name: 'Transport NSW bus stop',
       category: VenueCategory.busStop,
       // PLACEHOLDER: marked on the map legend without a listed location.
-      aliases: ['Bus'],
+      aliases: ['Bus', 'اتوبوس', 'ایستگاه اتوبوس'],
       notes:
           'Transport NSW bus stops are marked on the official printed map. '
           'Exact stop locations still to be confirmed.',

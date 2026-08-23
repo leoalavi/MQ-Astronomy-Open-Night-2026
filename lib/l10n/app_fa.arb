@@ -196,7 +196,7 @@
   "mapNavOffline": "آفلاین هستید — دریافت مسیر ممکن نیست.",
   "mapNavError": "بارگیری مسیر ممکن نشد. دوباره تلاش کنید.",
   "mapNavNeedLocation": "برای دریافت مسیر پیاده‌روی، موقعیت مکانی را روشن کنید.",
-  "mapNavUnavailable": "مسیریابی گوگل در این نسخه در دسترس نیست.",
+  "mapNavUnavailable": "نقشهٔ گوگل هنوز پیکربندی نشده است. برای فعال شدن مسیریابی، کلید API نقشهٔ گوگل را اضافه کنید.",
   "mapNavRetry": "تلاش دوباره",
   "mapNavWalkingWarning": "مسیرهای پیاده‌روی آزمایشی‌اند — ممکن است پیاده‌رو یا مسیر مشخصی نداشته باشند؛ با احتیاط حرکت کنید.",
   "mapNavWarningsTitle": "نکات مسیر",
@@ -343,5 +343,8 @@
   "passportEnterCodeHint": "کد روی تابلوی محل را وارد کنید",
   "passportCodeLabel": "کد",
   "passportAddStamp": "افزودن مهر",
-  "passportScanAnother": "اسکن یکی دیگر"
+  "passportScanAnother": "اسکن یکی دیگر",
+  "mapSearchParkingTitle": "پارکینگ و مسیرهای پیاده",
+  "mapSearchParkingBody": "وست ۵، وست ۶ و ساوث ۲ — راهنمای پیادهٔ رفت‌وبرگشت با حیاط مرکزی.",
+  "mapDirections": "مسیریابی"
 }

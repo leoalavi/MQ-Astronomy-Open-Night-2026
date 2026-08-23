@@ -31,6 +31,21 @@
 
   <title>Astronomy Open Night 2026</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    GOOGLE MAPS (WEB) — API KEY PLACEHOLDER.
+
+    Turn-by-turn walking navigation uses google_maps_flutter. On Android and iOS
+    the key is injected from the MAPS_API_KEY build secret (see
+    docs/google-maps-setup.md); the app degrades gracefully to "map unavailable"
+    when the key is absent, so it is safe to ship without one.
+
+    To enable the Google map on the WEB build, uncomment the line below and
+    replace YOUR_WEB_MAPS_API_KEY with a browser-restricted Maps JavaScript API
+    key. Leave it commented (the default) to ship web without Google Maps — the
+    illustrated campus basemap works regardless. Do NOT commit a real key here.
+  -->
+  <!-- <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_WEB_MAPS_API_KEY"></script> -->
 </head>
 <body>
   <!--

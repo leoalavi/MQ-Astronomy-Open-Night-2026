@@ -167,7 +167,7 @@ class InfoScreen extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
-              onPressed: () => context.push(Routes.wayfinding),
+              onPressed: () => context.push(Routes.googleNavTo('parking:west-5')),
               icon: const Icon(Icons.directions_walk_rounded),
               label: Text(l.infoWalkingFromParking),
             ),

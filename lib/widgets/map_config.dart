@@ -52,14 +52,20 @@ abstract final class MapConfig {
     final ne = proj.aonPixel(CampusProjection.aonRenderWidth, 0);
     return LatLngBounds(sw.value, ne.value);
   }();
-  // Zoom range for the CrsSimple campus map. CrsSimple scale = 256·2^zoom, so on
-  // a phone the whole 120×85-unit campus frames at zoom ≈ -6.3 (verified
-  // on-device). minZoom must sit BELOW that or initialCameraFit clamps and the
-  // map opens far too zoomed-in; maxZoom must sit ABOVE the widget-test's
-  // 0-size-viewport fit (0.0) or the camera throws (Map Parity M1, on-device
-  // finding). Bracketed to satisfy both: whole campus at open, room to zoom in.
-  static const double mapMinZoom = -8;
-  static const double mapMaxZoom = 1;
+  // Zoom range for the CrsSimple campus map. CrsSimple screen-px per map-unit =
+  // 256·2^zoom, so the ~123×87-unit AON artwork frames on a phone at zoom ≈
+  // -6.3 (390 px) to -6.6 (320 px), and the 4680-px raster reaches its native
+  // 1:1 (beyond which it upscales/pixelates) at zoom ≈ -2.75.
+  //
+  //   minZoom -7  : just below the tightest phone fit, so the opening fit never
+  //                 clamps, yet the furthest zoom-out still shows the whole map
+  //                 large and readable — not the tiny thumbnail -8 allowed.
+  //   maxZoom -2  : just inside the 1:1 raster limit, so the closest zoom-in
+  //                 keeps labels legible without the heavy pixelation +1 gave.
+  // Tuned against the CrsSimple math above and the on-device screenshots; the
+  // initial fit (≈ -6.3) sits comfortably inside the range so it is authoritative.
+  static const double mapMinZoom = -7;
+  static const double mapMaxZoom = -2;
 
   static const Distance _distance = Distance();
 

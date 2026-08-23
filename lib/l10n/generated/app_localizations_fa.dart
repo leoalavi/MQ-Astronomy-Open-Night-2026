@@ -706,7 +706,8 @@ class AonL10nFa extends AonL10n {
       'برای دریافت مسیر پیاده‌روی، موقعیت مکانی را روشن کنید.';
 
   @override
-  String get mapNavUnavailable => 'مسیریابی گوگل در این نسخه در دسترس نیست.';
+  String get mapNavUnavailable =>
+      'نقشهٔ گوگل هنوز پیکربندی نشده است. برای فعال شدن مسیریابی، کلید API نقشهٔ گوگل را اضافه کنید.';
 
   @override
   String get mapNavRetry => 'تلاش دوباره';
@@ -1216,4 +1217,14 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get passportScanAnother => 'اسکن یکی دیگر';
+
+  @override
+  String get mapSearchParkingTitle => 'پارکینگ و مسیرهای پیاده';
+
+  @override
+  String get mapSearchParkingBody =>
+      'وست ۵، وست ۶ و ساوث ۲ — راهنمای پیادهٔ رفت‌وبرگشت با حیاط مرکزی.';
+
+  @override
+  String get mapDirections => 'مسیریابی';
 }

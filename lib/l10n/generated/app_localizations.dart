@@ -1276,7 +1276,7 @@ abstract class AonL10n {
   /// Capability flag off (no keys) — deep-link landed here
   ///
   /// In en, this message translates to:
-  /// **'Google navigation isn\'t available in this build.'**
+  /// **'Google Maps is not configured yet. Please add the Google Maps API key to enable directions.'**
   String get mapNavUnavailable;
 
   /// Retry a failed route fetch
@@ -2160,6 +2160,24 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Scan another'**
   String get passportScanAnother;
+
+  /// Search-sheet action card shown when a visitor searches for parking.
+  ///
+  /// In en, this message translates to:
+  /// **'Parking & walking routes'**
+  String get mapSearchParkingTitle;
+
+  /// Body of the parking search action card.
+  ///
+  /// In en, this message translates to:
+  /// **'West 5, West 6 and South 2 — get walking directions to and from the Central Courtyard.'**
+  String get mapSearchParkingBody;
+
+  /// Primary button that opens Google Maps walking directions to a place.
+  ///
+  /// In en, this message translates to:
+  /// **'Directions'**
+  String get mapDirections;
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

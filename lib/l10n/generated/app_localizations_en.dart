@@ -706,7 +706,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get mapNavUnavailable =>
-      'Google navigation isn\'t available in this build.';
+      'Google Maps is not configured yet. Please add the Google Maps API key to enable directions.';
 
   @override
   String get mapNavRetry => 'Retry';
@@ -1210,4 +1210,14 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get passportScanAnother => 'Scan another';
+
+  @override
+  String get mapSearchParkingTitle => 'Parking & walking routes';
+
+  @override
+  String get mapSearchParkingBody =>
+      'West 5, West 6 and South 2 — get walking directions to and from the Central Courtyard.';
+
+  @override
+  String get mapDirections => 'Directions';
 }

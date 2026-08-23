@@ -256,7 +256,7 @@ class EventDetailScreen extends ConsumerWidget {
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: () =>
-                        context.push(Routes.wayfindingTo(venue.id)),
+                        context.push(Routes.googleNavTo('venue:${venue.id}')),
                     icon: const Icon(Icons.directions_walk_rounded),
                     label: Text(l.actionWalkThere),
                   ),

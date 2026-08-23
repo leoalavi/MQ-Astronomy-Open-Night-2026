@@ -126,21 +126,25 @@ void main() {
     expect(find.text('CURATED'), findsNothing); // must NOT route to the curated wayfinding screen
   });
 
-  testWidgets('venue sheet: flag ON → curated Walking directions AND Google nav', (t) async {
+  testWidgets('venue sheet: one Google Directions action, flag ON', (t) async {
     await t.pumpWidget(_venueHarness(_c(enabled: true), const VenueSheet(venueId: 'astronomical-observatory')));
     await t.pumpAndSettle();
     final l = await _en();
-    await _scrollTo(t, find.text(l.mapNavGoogle));
-    expect(find.text(l.mapWalkingDirections), findsOneWidget); // curated kept
-    expect(find.text(l.mapNavGoogle), findsOneWidget); // google added
+    await _scrollTo(t, find.text(l.mapDirections));
+    // Google-only: a single Directions action, no curated/draft option.
+    expect(find.text(l.mapDirections), findsOneWidget);
+    expect(find.text(l.mapWalkingDirections), findsNothing);
   });
 
-  testWidgets('venue sheet: flag OFF → curated only, no Google nav button', (t) async {
+  testWidgets('venue sheet: still one Google Directions action, flag OFF', (t) async {
+    // Even without the key the Directions button is present — it routes to the
+    // Google nav screen, which shows a "not configured yet" message. Never a
+    // curated/draft screen, never a dead-end.
     await t.pumpWidget(_venueHarness(_c(enabled: false), const VenueSheet(venueId: 'astronomical-observatory')));
     await t.pumpAndSettle();
     final l = await _en();
-    await _scrollTo(t, find.text(l.mapWalkingDirections));
-    expect(find.text(l.mapWalkingDirections), findsOneWidget);
-    expect(find.text(l.mapNavGoogle), findsNothing); // not in tree when flag off
+    await _scrollTo(t, find.text(l.mapDirections));
+    expect(find.text(l.mapDirections), findsOneWidget);
+    expect(find.text(l.mapWalkingDirections), findsNothing);
   });
 }

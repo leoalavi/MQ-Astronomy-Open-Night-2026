@@ -566,7 +566,7 @@
   "@mapNavNeedLocation": {
     "description": "No location permission/fix for Google nav"
   },
-  "mapNavUnavailable": "Google navigation isn't available in this build.",
+  "mapNavUnavailable": "Google Maps is not configured yet. Please add the Google Maps API key to enable directions.",
   "@mapNavUnavailable": {
     "description": "Capability flag off (no keys) — deep-link landed here"
   },
@@ -1059,5 +1059,17 @@
   "passportScanAnother": "Scan another",
   "@passportScanAnother": {
     "description": "Returns to the capture options after an outcome."
+  },
+  "mapSearchParkingTitle": "Parking & walking routes",
+  "@mapSearchParkingTitle": {
+    "description": "Search-sheet action card shown when a visitor searches for parking."
+  },
+  "mapSearchParkingBody": "West 5, West 6 and South 2 — get walking directions to and from the Central Courtyard.",
+  "@mapSearchParkingBody": {
+    "description": "Body of the parking search action card."
+  },
+  "mapDirections": "Directions",
+  "@mapDirections": {
+    "description": "Primary button that opens Google Maps walking directions to a place."
   }
 }

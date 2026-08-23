@@ -584,13 +584,6 @@ class _AboutCard extends StatelessWidget {
                 color: context.aon.contentSecondary,
               ),
             ),
-            const SizedBox(height: AonSpacing.space3),
-            Text(
-              config.faculty,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: context.aon.contentTertiary,
-              ),
-            ),
           ],
         ),
       ),

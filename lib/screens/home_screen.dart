@@ -837,9 +837,8 @@ class _QuickAccessTile extends ConsumerWidget {
       accent: accent,
       onTap: () {
         if (isParking) {
-          // Parking is the one shortcut whose answer really is the planner:
-          // the visitor picks which car park they used.
-          context.push(Routes.wayfinding);
+          // Google walking/driving directions to the primary free car park.
+          context.push(Routes.googleNavTo('parking:west-5'));
         } else {
           // Everything else opens the venue sheet, which answers "where is
           // this and what's on here" and offers walking directions only when

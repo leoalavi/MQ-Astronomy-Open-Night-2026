@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -19,7 +20,6 @@ import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/campus_projection.dart';
 import 'package:aon2026/services/location_providers.dart';
-import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
@@ -362,7 +362,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           bottom: AonNavMetrics.clearance(context) - AonSpacing.space3,
         ),
         child: FloatingActionButton.extended(
-          onPressed: () => context.push(Routes.wayfinding),
+          onPressed: () =>
+              context.push(Routes.googleNavTo('venue:central-courtyard')),
           backgroundColor: context.aon.accent,
           foregroundColor: context.aon.onAccent,
           icon: const Icon(Icons.directions_walk_rounded),
@@ -421,7 +422,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       builder: (_) => const CampusSearchSheet(),
     );
     ref.read(mapSearchQueryProvider.notifier).setQuery(''); // G16: fresh next open
-    if (key != null && mounted) await _onPlaceSelected(key);
+    if (key == null || !mounted) return;
+    // Parking search hands off to the Wayfinding planner (every car park + its
+    // walking route) rather than a map pin — the carparks are at the campus
+    // edges and West 6 has no confirmed coordinate, so a pin would be false.
+    if (key == kParkingSearchAction) {
+      // Google walking/driving directions to the primary free car park.
+      unawaited(context.push(Routes.googleNavTo('parking:west-5')));
+      return;
+    }
+    await _onPlaceSelected(key);
   }
 
   Future<void> _openFavorites() async {
@@ -581,8 +591,8 @@ class _MapNote extends StatelessWidget {
   }
 }
 
-/// The campus basemap is Macquarie University's illustrated map (Map Parity M1
-/// replaced the OSM tiles), so it — not OSM — is credited on the map.
+/// The campus basemap is Macquarie University's own illustrated map, so it is
+/// what the map credits.
 class _MapAttribution extends StatelessWidget {
   const _MapAttribution();
 
@@ -665,34 +675,20 @@ class VenueSheet extends ConsumerWidget {
           ConfidenceNote(confidence: venue.coordinateConfidence),
 
           const SizedBox(height: AonSpacing.space4),
+          // One directions action, always Google Maps. The GoogleNavScreen
+          // shows the interactive route when the key is present, or a clear
+          // "not configured yet" message when it is not — never a draft screen.
           SizedBox(
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: () {
                 Navigator.of(context).pop();
-                context.push(Routes.wayfindingTo(venue.id));
+                context.push(Routes.googleNavTo('venue:${venue.id}'));
               },
               icon: const Icon(Icons.directions_walk_rounded),
-              label: Text(l.mapWalkingDirections),
+              label: Text(l.mapDirections),
             ),
           ),
-
-          // M4 augment: an embedded Google walking route, in ADDITION to the
-          // curated wayfinding above — only when Google nav is configured.
-          if (ref.watch(googleNavEnabledProvider)) ...[
-            const SizedBox(height: AonSpacing.space3),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  context.push(Routes.googleNavTo('venue:${venue.id}'));
-                },
-                icon: const Icon(Icons.map_outlined),
-                label: Text(l.mapNavGoogle),
-              ),
-            ),
-          ],
 
           if (venue.hasCoordinates) ...[
             const SizedBox(height: AonSpacing.space3),
@@ -765,7 +761,6 @@ class ParkingSheet extends ConsumerWidget {
 
     final l = AonL10n.of(context);
     final theme = Theme.of(context);
-    final routes = ref.watch(routesFromProvider(parkingId));
 
     return SafeArea(
       child: SingleChildScrollView(
@@ -811,17 +806,19 @@ class ParkingSheet extends ConsumerWidget {
               ],
               const SizedBox(height: AonSpacing.space3),
               ConfidenceNote(confidence: parking.coordinateConfidence),
-              if (routes.isNotEmpty) ...[
+              // Google directions to this car park (only when it has a confirmed
+              // coordinate — West 6 does not, so no false destination).
+              if (parking.hasCoordinates) ...[
                 const SizedBox(height: AonSpacing.space4),
                 SizedBox(
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: () {
                       Navigator.of(context).pop();
-                      context.push(Routes.wayfinding);
+                      context.push(Routes.googleNavTo('parking:${parking.id}'));
                     },
                     icon: const Icon(Icons.directions_walk_rounded),
-                    label: Text('${routes.length} walking routes from here'),
+                    label: Text(l.mapDirections),
                   ),
                 ),
               ],

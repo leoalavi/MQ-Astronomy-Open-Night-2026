@@ -10,6 +10,7 @@ import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/data/routes_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/screens/google_nav_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/saved_events.dart';
@@ -106,21 +107,18 @@ void main() {
       expect(find.byType(WayfindingScreen), findsNothing);
     });
 
-    testWidgets('the sheet says what it cannot do instead of offering a dead '
-        'directions button', (tester) async {
+    testWidgets('the sheet offers Google directions for every venue', (
+      tester,
+    ) async {
+      // Google Maps routes anywhere, so there is no "no route" dead-end any
+      // more — every venue sheet offers one Directions action.
       await openQuickAccess(tester, 'First aid');
 
       expect(find.byType(VenueInfoSheet), findsOneWidget);
-      await scrollInSheet(
-        tester,
-        find.textContaining('don’t have written walking directions'),
-      );
-      expect(
-        find.textContaining('don’t have written walking directions'),
-        findsOneWidget,
-      );
-      // No directions button at all — absent, not disabled.
-      expect(find.text('Walking directions'), findsNothing);
+      await scrollInSheet(tester, find.text('Directions'));
+      expect(find.text('Directions'), findsOneWidget);
+      expect(find.textContaining('don’t have written walking directions'),
+          findsNothing);
     });
 
     testWidgets('the sheet still offers the map as a fallback', (tester) async {
@@ -137,16 +135,12 @@ void main() {
   });
 
   group('shortcuts WITH a walking route', () {
-    testWidgets('Telescopes offers real walking directions', (tester) async {
-      expect(
-        RoutesData.all.any((r) => r.toId == 'astronomical-observatory'),
-        isTrue,
-      );
-
+    testWidgets('Telescopes offers Google directions', (tester) async {
       await openQuickAccess(tester, 'Telescopes');
 
       expect(find.byType(VenueInfoSheet), findsOneWidget);
-      expect(find.text('Walking directions'), findsOneWidget);
+      await scrollInSheet(tester, find.text('Directions'));
+      expect(find.text('Directions'), findsOneWidget);
     });
 
     testWidgets('the sheet lists what is on at that venue', (tester) async {
@@ -158,12 +152,15 @@ void main() {
   });
 
   group('parking', () {
-    testWidgets('Parking opens the planner — that IS its answer', (
+    testWidgets('Parking opens Google directions to a car park', (
       tester,
     ) async {
       await openQuickAccess(tester, 'Parking');
-      expect(find.byType(WayfindingScreen), findsOneWidget);
-      expect(find.byType(VenueInfoSheet), findsNothing);
+      // Google-only navigation: parking hands off to the Google nav screen
+      // (route with a key, or a config message without one), never the old
+      // draft planner.
+      expect(find.byType(WayfindingScreen), findsNothing);
+      expect(find.byType(GoogleNavScreen), findsOneWidget);
     });
   });
 }

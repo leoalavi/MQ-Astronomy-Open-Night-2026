@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/models/building.dart';
 import 'package:aon2026/models/search_entry.dart';
@@ -111,6 +112,19 @@ final placeResolverProvider =
       kind: PlaceKind.venue, placeKey: key, title: v.name, subtitle: v.category.label,
       renderPoint: placeVenue(v, _proj),
       routingLat: v.routingLatitude, routingLng: v.routingLongitude,
+    ));
+  }
+  if (key.startsWith('parking:')) {
+    // Navigation-flow only: resolve a car park to its Google-routing target.
+    // Reads ParkingData's existing coordinates — never modifies them. A car
+    // park with no confirmed coordinate (West 6) resolves with null routing, so
+    // GoogleNavScreen shows it without inventing a route.
+    final park = ParkingData.byId(key.substring('parking:'.length));
+    if (park == null) return const AsyncData(null);
+    return AsyncData(ResolvedPlace(
+      kind: PlaceKind.venue, placeKey: key, title: park.name, subtitle: null,
+      renderPoint: null,
+      routingLat: park.latitude, routingLng: park.longitude,
     ));
   }
   if (key.startsWith('building:')) {

@@ -61,7 +61,6 @@ class VenueInfoSheet extends ConsumerWidget {
     final events = ref.watch(eventsAtVenueProvider(venueId));
     // Only offer directions we actually have. `routesToProvider` is a pure
     // frontend lookup over the authored route list — no map internals.
-    final hasRoute = ref.watch(hasRouteToProvider(venueId));
 
     return DraggableScrollableSheet(
       expand: false,
@@ -140,40 +139,20 @@ class VenueInfoSheet extends ConsumerWidget {
 
           // ── Actions ──
           const SizedBox(height: AonSpacing.space4),
-          if (hasRoute)
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  context.push(Routes.wayfindingTo(venueId));
-                },
-                icon: const Icon(Icons.directions_walk_rounded),
-                label: Text(l.mapWalkingDirections),
-              ),
-            )
-          else
-            // Honest instead of a dead button: say what we don't have, and
-            // point at the desk that can answer.
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: AonSpacing.iconSm,
-                  color: context.aon.contentTertiary,
-                ),
-                const SizedBox(width: AonSpacing.space2),
-                Expanded(
-                  child: Text(
-                    l.venueNoDirections,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: context.aon.contentTertiary,
-                    ),
-                  ),
-                ),
-              ],
+          // One directions action, always Google Maps. GoogleNavScreen shows the
+          // interactive route with a key, or a clear "not configured yet"
+          // message without one — never a dead button or a draft screen.
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () {
+                Navigator.of(context).pop();
+                context.push(Routes.googleNavTo('venue:$venueId'));
+              },
+              icon: const Icon(Icons.directions_walk_rounded),
+              label: Text(l.mapDirections),
             ),
+          ),
 
           const SizedBox(height: AonSpacing.space3),
           SizedBox(

@@ -9,6 +9,13 @@ appId: au.edu.mq.astronomy.aon2026
 # `tapOn: "Map"` silently hits the wrong one. The tab bar is also an animated
 # LiquidTabBar whose pill expands on selection, shifting its neighbours, so
 # bounds read from the hierarchy go stale mid-tap.
+#
+# The percentage is TAB-COUNT DEPENDENT and was 68% while there were five tabs.
+# Settings became a sixth, first-class tab, which moved Map from slot 4-of-5 to
+# slot 4-of-6 and silently pointed 68% at Info instead — every map flow then ran
+# against the wrong screen. Verified from the hierarchy: Map occupies [220,288]
+# of a 440pt-wide bar, so its centre is 254/440 = 57.7%.
+# If a tab is ever added or removed again, recompute this.
 - stopApp
 - launchApp
 # XCTest can crash on cold boot if the a11y tree is touched before first render.
@@ -16,5 +23,5 @@ appId: au.edu.mq.astronomy.aon2026
     direction: DOWN
     duration: 100
 - tapOn:
-    point: "68%,91%"
+    point: "58%,91%"
 - assertVisible: "Zoom in"

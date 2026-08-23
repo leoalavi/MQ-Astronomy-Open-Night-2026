@@ -1023,7 +1023,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String creditsEventMaterialsBody(String host, String faculty, String cricos) {
-    return 'Event materials, campus map and branding © $host, $faculty. $cricos.';
+    return 'Event materials and branding © $host, $faculty. $cricos.';
   }
 
   @override

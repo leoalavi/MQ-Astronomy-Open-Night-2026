@@ -774,7 +774,7 @@
   "venueNoDirections": "We don’t have written walking directions to here yet. Ask at an information point in the Central Courtyard.",
   "venueNothingScheduled": "Nothing scheduled here tonight.",
   "parkingNoConfirmedPosition": "We don’t have a confirmed position for this car park yet — follow on-site signage.",
-  "creditsEventMaterialsBody": "Event materials, campus map and branding © {host}, {faculty}. {cricos}.",
+  "creditsEventMaterialsBody": "Event materials and branding © {host}, {faculty}. {cricos}.",
   "@creditsEventMaterialsBody": {
     "placeholders": {
       "host": {

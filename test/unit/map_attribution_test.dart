@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -31,6 +32,36 @@ void main() {
     expect(en.mapAttributionCampus, isNot(contains('©')),
         reason: "MQ's ownership of the cartographic master is unconfirmed "
             'under spec §8.6 — we do not assert copyright on their behalf');
+  });
+
+  // The © ban has to hold across EVERY shipped string, not just the one on the
+  // basemap overlay. It did not: a Credits line arrived reading "Event
+  // materials, campus map and branding © {host}" — asserting, in the same
+  // build, exactly the ownership `mapAttributionCampus` refuses to assert.
+  // The campus map is still credited, as a SOURCE, in creditsMapDataBody.
+  test('no shipped string claims © over the campus map', () async {
+    const mapPhrases = ['campus map', 'نقشهٔ پردیس'];
+
+    for (final path in ['lib/l10n/app_en.arb', 'lib/l10n/app_fa.arb']) {
+      final decoded =
+          jsonDecode(await File(path).readAsString()) as Map<String, dynamic>;
+
+      decoded.forEach((key, value) {
+        if (key.startsWith('@') || value is! String) return;
+        if (!value.contains('©')) return;
+
+        for (final phrase in mapPhrases) {
+          expect(
+            value.toLowerCase().contains(phrase.toLowerCase()),
+            isFalse,
+            reason: '$path: "$key" asserts © over the campus map. MQ\'s '
+                'ownership of the cartographic master is unconfirmed under '
+                'spec §8.6 — credit it as a source, as creditsMapDataBody '
+                'does, until the written sign-off lands.',
+          );
+        }
+      });
+    }
   });
 
   test('NO shipped ARB string mentions OpenStreetMap', () async {

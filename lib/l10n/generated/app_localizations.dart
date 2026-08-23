@@ -1846,7 +1846,7 @@ abstract class AonL10n {
   /// No description provided for @creditsEventMaterialsBody.
   ///
   /// In en, this message translates to:
-  /// **'Event materials, campus map and branding © {host}, {faculty}. {cricos}.'**
+  /// **'Event materials and branding © {host}, {faculty}. {cricos}.'**
   String creditsEventMaterialsBody(String host, String faculty, String cricos);
 
   /// No description provided for @creditsHeroImageBody.

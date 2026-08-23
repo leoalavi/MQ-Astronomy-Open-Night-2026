@@ -35,12 +35,22 @@ class PanoramaTourView extends StatefulWidget {
     super.key,
     required this.manifest,
     this.title,
+    this.titleLeadingInset = 0,
     this.firstSceneId,
     this.viewerBuilder,
   });
 
   final IndoorManifest manifest;
   final String? title;
+
+  /// Horizontal space reserved at the START of the title island for a back
+  /// affordance that a PARENT stacks over this widget.
+  ///
+  /// `PanoramaScreen` floats its back button at the same top/left as this
+  /// island, so without a reservation the button covers the title's first
+  /// glyph — "Macquarie Theatre" rendered as "◄acquarie Theatre" on a device.
+  /// Opt-in rather than baked in, so the tour view stays usable on its own.
+  final double titleLeadingInset;
   final String? firstSceneId;
   final PanoramaViewerBuilder? viewerBuilder;
 
@@ -75,8 +85,12 @@ class _PanoramaTourViewState extends State<PanoramaTourView> {
             child: GlassSurface(
               variant: GlassVariant.control,
               allowShader: false,
-              padding: const EdgeInsets.symmetric(
-                  horizontal: AonSpacing.space4, vertical: AonSpacing.space3),
+              padding: EdgeInsetsDirectional.only(
+                start: AonSpacing.space4 + widget.titleLeadingInset,
+                end: AonSpacing.space4,
+                top: AonSpacing.space3,
+                bottom: AonSpacing.space3,
+              ),
               child: Text(
                 widget.title!,
                 style: Theme.of(context)

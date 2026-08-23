@@ -40,6 +40,9 @@ class PanoramaScreen extends ConsumerWidget {
                 : PanoramaTourView(
                     manifest: m,
                     title: title,
+                    // Reserve room for the back button this screen floats over
+                    // the title island; both sit at the same top/left.
+                    titleLeadingInset: AonSpacing.minTapTarget,
                     firstSceneId: m.nodes.first.id,
                   ),
             loading: () => const PanoramaUnavailable(loading: true),

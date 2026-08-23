@@ -33,4 +33,4 @@ tags: [map]
     index: 1
 - assertVisible: "Zoom in"
 - assertVisible: "Directions"
-- assertVisible: "Campus map © Macquarie University"
+- assertVisible: "Campus map: Macquarie University"

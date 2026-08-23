@@ -1028,7 +1028,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String creditsEventMaterialsBody(String host, String faculty, String cricos) {
-    return 'مواد رویداد، نقشهٔ پردیس و نشان‌ها © $host، $faculty. $cricos.';
+    return 'مواد رویداد و نشان‌ها © $host، $faculty. $cricos.';
   }
 
   @override

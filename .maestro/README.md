@@ -49,6 +49,25 @@ in the flows, with comments at each site.
 `leftOf:` / `rightOf:` do **not** disambiguate 1 and 3 — they ignore row
 alignment and still match the AppBar title.
 
+4. **The tab-tap percentage is tab-count dependent.** `flows/open-map.yaml` taps
+   Map by point. That point was `68%` while the app had five tabs. Settings
+   became a sixth, first-class tab, which moved Map into slot 4-of-6 and pointed
+   68% at **Info** — every flow in this suite then ran against the wrong screen
+   and the failures looked like unrelated assertion bugs. It is now `58%`
+   (Map occupies [220,288] of a 440pt bar → centre 57.7%). **If a tab is added
+   or removed, recompute it.**
+
+5. **Merged semantics can swallow an entire panel.** Trap 1 gets far worse than
+   a two-line row: the wayfinding route panel merges origin, destination,
+   duration, distance, every note and every numbered step into ONE newline-
+   separated string. Maestro's regex is full-string and `.` does not cross a
+   newline, so matching anything inside it needs `(?s)` (DOTALL):
+   `assertVisible: "(?s).*Map not shown\\..*"`.
+
+6. **A dialog button's label is not its hit target.** `tapOn: "Not now"` on the
+   Google consent dialog reports success and does nothing — Maestro taps the
+   Text node rather than the button. Tap it by point.
+
 ## Findings this suite surfaced
 
 - The **Directions FAB covers the Metro Station and South 2 pins** at the
@@ -58,6 +77,19 @@ alignment and still match the AppBar title.
   3, Food and drink, Central Courtyard all sit at `-33.7733531,151.1133796`), so
   they stack into identical bounds and only the topmost is tappable. The same
   happens for each toilet paired with its parent venue.
-- The wayfinding route preview is the app's **last live-network surface** — it
-  still renders OpenStreetMap tiles with no visible attribution. See the note in
-  `map-wayfinding.yaml`.
+- ~~The wayfinding route preview still renders unattributed OpenStreetMap
+  tiles.~~ **RESOLVED 2026-08-23.** Re-verified on an iPhone 17 Pro Max
+  simulator: there are no OSM tiles. Choosing a destination now raises the
+  Google consent disclosure *before* any map is drawn, and declining leaves the
+  screen with no map plus the honest line "Map not shown. The written directions
+  below are complete on their own." This is also the first on-device evidence
+  for the spec §2b consent invariant — the UI half of it, at least; a packet
+  capture is still the only thing that can prove zero traffic.
+- **The 360° tours render.** Tour A (Macquarie Theatre) loads its equirectangular
+  image in the WKWebView and the scene rail switches Entrance ↔ Theatre foyer.
+  Until 2026-08-23 no one had ever seen them run.
+- Opening a tour on a device exposed a defect no widget test could see: the
+  floating back button and the title island were positioned at the same
+  top/left, so the title rendered as "◄acquarie Theatre". Fixed via
+  `PanoramaTourView.titleLeadingInset`, guarded by
+  `test/widget/panorama_title_clearance_test.dart`.

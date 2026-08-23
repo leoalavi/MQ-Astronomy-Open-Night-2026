@@ -15,7 +15,7 @@ tags: [map, smoke]
 - assertVisible: "Search"
 - assertVisible: "Favourites"
 - assertVisible: "Directions"
-- assertVisible: "Campus map © Macquarie University"
+- assertVisible: "Campus map: Macquarie University"
 - assertVisible: "Show my location"
 
 # Mode toggle

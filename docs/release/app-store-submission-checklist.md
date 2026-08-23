@@ -102,17 +102,49 @@ These are not code. They are the critical path.
 
 ---
 
-## 6. Known limitations to state honestly
+## 6. Verified on a simulator, 2026-08-23
 
-- **The 360° tours have never been rendered on a device.** Unit tests resolve
-  all 28 images and validate every manifest; the WebView render is unproven on
-  both platforms. They load over `http://localhost` in a WKWebView — worth
-  confirming on a real device before submission, because a blank viewer that a
-  reviewer taps into is a 2.1 rejection.
-- **On-device smoke tests are still outstanding** (simulator-verified only),
-  including the M5 compass heading proof and the M4 live Google Maps render.
+Run on an iPhone 17 Pro Max (iOS 26.5) with the release-configuration Dart code.
+
+| Claim | Result |
+|---|---|
+| **The 360° tours render** | **YES — first time ever observed.** Tour A loads its equirectangular image in the WKWebView over `http://localhost` and the scene rail switches Entrance ↔ Theatre foyer. |
+| The passport is reachable by a reviewer | **YES.** Settings → Preview → on, then `AON-A-TBC` → "Stamp collected!", fact sheet opens, "Preview stamps" badge shows, progress reads 1 / 9. |
+| Wayfinding renders no OSM tiles | **Confirmed gone.** Choosing a destination raises the Google consent disclosure *before* any map is drawn. |
+| The consent gate holds on a device | **YES** for the UI half of spec §2b — declining leaves no map and says "Map not shown. The written directions below are complete on their own." A packet capture is still the only thing that can prove zero traffic. |
+| Map E2E suite | **6/6 flows, 130 commands.** |
+
+### Defects this found and fixed
+
+- **The whole Maestro suite was silently broken.** `flows/open-map.yaml` taps the
+  Map tab at `68%`, correct while the app had five tabs. Settings became a sixth
+  tab, so 68% landed on **Info** and every map flow ran against the wrong screen.
+  Now `58%`, verified from the hierarchy.
+- **The panorama title was covered by the back button** — "Macquarie Theatre"
+  rendered as "◄acquarie Theatre", because the floating back button and the title
+  island were positioned at the same top/left. Fixed with
+  `PanoramaTourView.titleLeadingInset`; the back button now ends at x=64 and the
+  title starts at x=88. No widget test could have seen this.
+- **Two stale E2E assertions** expected `Campus map © Macquarie University`; the
+  `©` was deliberately removed and a unit test forbids it.
+
+## 7. Known limitations to state honestly
+
+- **On-device smoke tests on real hardware are still outstanding** — everything
+  above is a simulator. The M5 compass heading proof still needs a magnetometer,
+  and the M4 live Google Maps render still needs the GCP keys.
+- **iPad screenshots are incomplete.** One home shot at the correct 2064×2752
+  exists; the Maestro driver stopped connecting to the iPad part-way through.
 - `EventFeatures.scan` and `EventFeatures.stamps` are `false` in
   `event_config.dart` and documented as meaning "hidden, not stubbed" — but
   **neither flag is read anywhere in `lib/`**. They are dead config. They do
   not hide the passport (verified), so they did not affect this audit, but the
   comment is misleading and should be reconciled.
+- **A copyright claim was contradicting itself.** `mapAttributionCampus`
+  deliberately avoids `©` because MQ's ownership of the cartographic master is
+  unconfirmed (spec §8.6), while a newer Credits line asserted
+  "campus map … © {host}". The Credits line no longer names the campus map, which
+  is still credited as a source in `creditsMapDataBody`; a new test in
+  `map_attribution_test.dart` now enforces the rule across every shipped string.
+  **Reverse this if the ownership sign-off lands** — see
+  `docs/release/organiser-requests.md`.

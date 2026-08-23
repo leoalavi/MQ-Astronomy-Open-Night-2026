@@ -291,7 +291,7 @@
   "venueNoDirections": "هنوز راهنمای نوشتاری برای رسیدن به اینجا نداریم. از باجهٔ اطلاعات در حیاط مرکزی بپرسید.",
   "venueNothingScheduled": "امشب برنامه‌ای در اینجا نیست.",
   "parkingNoConfirmedPosition": "هنوز موقعیت تأییدشده‌ای برای این پارکینگ نداریم — تابلوهای محل را دنبال کنید.",
-  "creditsEventMaterialsBody": "مواد رویداد، نقشهٔ پردیس و نشان‌ها © {host}، {faculty}. {cricos}.",
+  "creditsEventMaterialsBody": "مواد رویداد و نشان‌ها © {host}، {faculty}. {cricos}.",
   "creditsHeroImageBody": "تصویر اصلی: «{credit}». با اجازه برای این پروژه استفاده شده است.",
   "wayfindingReset": "بازنشانی",
   "wayfindingNoPairTitle": "هنوز مسیری برای این دو نقطه نداریم",

@@ -3,11 +3,12 @@
 # Tests: the campus-map-only Directions FAB reaches the wayfinding screen and a
 # start/destination pair produces a route preview with written steps.
 #
-# AUDIT NOTE: that preview map is the app's LAST live-network surface — it still
-# renders OpenStreetMap raster tiles (DarkTileLayer), so it shows different
-# cartography from the official AON basemap AND carries no visible OSM
-# attribution, which the OSM Tile Usage Policy requires. Screenshot
-# wayfinding-02-route is the evidence.
+# AUDIT NOTE (RESOLVED 2026-08-23): this used to be the app's last live-network
+# surface, rendering unattributed OpenStreetMap raster tiles via DarkTileLayer.
+# That is gone. The screen now asks for consent first ("Load the Google map
+# here?") and, if declined, draws NO map at all and says so. Verified on an
+# iPhone 17 Pro Max simulator; this flow now exercises the declined path, which
+# is both the honest fallback and the one that needs no network.
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
@@ -27,5 +28,28 @@ tags: [map]
 # The literal text is therefore "\u2068Observatory\u2069" and an exact match
 # fails. Wrap in .* so the isolates are absorbed.
 - tapOn: ".*Observatory.*"
+
+# Choosing a destination arms the route map, which is a Google surface — so the
+# consent disclosure appears BEFORE any route is drawn. That is the invariant
+# (spec §2b): no Google surface initialises until consent resolves positively.
+#
+# Tapped by POINT. `tapOn: "Not now"` reports success and does nothing: the
+# label's semantics node is not the button's hit target, so Maestro taps the
+# Text and the dialog stays up — which is how this flow started failing without
+# an obvious cause. The dialog is centred and fixed-height; "Not now" sits at
+# [105,632]-[197,688] of a 440x956 frame.
+- assertVisible: "Load the Google map here?"
+- tapOn:
+    point: "34%,69%"
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Declined: written directions still stand on their own, and the app SAYS the
+# map is missing rather than showing an empty grey box.
 - assertVisible: "Reset"
-- takeScreenshot: .maestro/screenshots/wayfinding-02-route
+# Trap 1 (see .maestro/README.md) at its worst: the ENTIRE route panel — origin,
+# destination, duration, distance, every note and every numbered step — merges
+# into ONE a11y string separated by newlines. Maestro's `text:` is a full-string
+# regex, and `.` does not cross a newline, so `(?s)` (DOTALL) is required.
+- assertVisible: "(?s).*Map not shown\\. The written directions below are complete on their own\\..*"
+- takeScreenshot: .maestro/screenshots/wayfinding-02-route-no-map

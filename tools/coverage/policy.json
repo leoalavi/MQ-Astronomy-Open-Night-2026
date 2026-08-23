@@ -24,7 +24,6 @@
     "lib/main.dart": "runApp bootstrap: startup snapshot loads and ProviderScope wiring that a test replaces rather than executes"
   },
   "debt": {
-    "lib/app/router/app_router.dart": 78.9,
     "lib/screens/wayfinding_screen.dart": 39.4,
     "lib/services/maps_nav_providers.dart": 78.7,
     "lib/widgets/building_sheet.dart": 79.3,

@@ -37,6 +37,9 @@ class _Initializer implements MapsSdkInitializer {
 
   @override
   Future<String?> openSourceLicenseInfo() async => null;
+
+  @override
+  Future<String> resolveKey() async => '';
 }
 
 const _route = WalkingRoute(

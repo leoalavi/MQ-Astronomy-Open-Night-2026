@@ -7,6 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/itinerary_service.dart';
@@ -110,11 +111,12 @@ class _Timeline extends ConsumerWidget {
     }
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(
+      // Shell clearance, not a fixed 64 — see AonNavMetrics.clearance.
+      padding: EdgeInsets.fromLTRB(
         AonSpacing.space4,
         AonSpacing.space2,
         AonSpacing.space4,
-        AonSpacing.space16,
+        AonNavMetrics.clearance(context),
       ),
       children: [
         if (hasConflict) const _ConflictBanner(),
@@ -203,11 +205,14 @@ class _ItineraryCard extends ConsumerWidget {
                   TimingBadge(
                     timing: entry.timing,
                     trailingText: switch (entry.timing) {
-                      EventTiming.happeningNow => TimeFormat.remaining(
-                        l,
-                        now,
-                        entry.session.end,
-                      ),
+// Only count down to a PUBLISHED finish — see activity_rail_card.
+EventTiming.happeningNow => entry.session.hasPublishedEnd
+    ? TimeFormat.remaining(
+        l,
+        now,
+        entry.session.end,
+      ).replaceFirst('ends ', '')
+    : null,
                       EventTiming.startingSoon => TimeFormat.until(
                         l,
                         now,

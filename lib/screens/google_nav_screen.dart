@@ -5,6 +5,7 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/search_entry.dart';
+import 'package:aon2026/services/campus_scope.dart';
 import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
@@ -71,6 +72,28 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           return _scaffold(l, title: place?.title, body: _errorBack(context, l));
         }
 
+        // (2b) Destination scope — a place off the AON campus map is never
+        // routed to (defensive: every curated destination sits inside the
+        // campus extent by construction, but nothing downstream should assume
+        // it). Honest message instead of a kilometres-long walk-out.
+        if (!const CampusScope().contains(dest.$1, dest.$2)) {
+          return _scaffold(
+            l,
+            title: place.title,
+            body: _panel(
+              context,
+              icon: Icons.wrong_location_outlined,
+              message: l.mapNavDestinationOffCampus,
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).maybePop(),
+                  child: Text(MaterialLocalizations.of(context).backButtonTooltip),
+                ),
+              ],
+            ),
+          );
+        }
+
         // (3) Consent gate — only `accepted` proceeds; unknown/declined show the
         // disclosure before any location read or Google call.
         final consent = ref.watch(mapsConsentProvider);
@@ -82,35 +105,54 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           return _scaffold(l, title: place.title, body: const SizedBox.shrink());
         }
 
-        // (4) Location origin, captured once (snapshot).
+        // (4) Location origin, captured once (snapshot), scope-validated.
         final originAsync = ref.watch(navOriginProvider);
         return originAsync.when(
           loading: () => _scaffold(l, title: place.title, body: _spinner(context)),
           error: (_, _) => _scaffold(
               l, title: place.title, body: _needLocation(context, l, dest)),
-          data: (origin) {
-            if (origin == null) {
-              return _scaffold(
-                  l, title: place.title, body: _needLocation(context, l, dest));
-            }
-
-            // (5) Route request → (6) map / typed error panels.
-            final routeAsync = ref.watch(navRouteProvider((origin, dest)));
-            return routeAsync.when(
-              loading: () => _scaffold(l, title: place.title, body: _spinner(context)),
-              error: (_, _) => _scaffold(
-                  l, title: place.title, body: _routeError(context, l, dest, origin)),
-              data: (result) => _scaffold(
-                l,
-                title: place.title,
-                body: _resultBody(context, l, result, origin, dest),
-              ),
-            );
+          data: (origin) => switch (origin) {
+            // No permission / no fix — external Maps can still start from the
+            // device location, so offer that.
+            NavOriginUnavailable() =>
+              _scaffold(l, title: place.title, body: _needLocation(context, l, dest)),
+            // A real fix, but off campus. Do NOT route a long walk-in; say so.
+            NavOriginOffCampus() =>
+              _scaffold(l, title: place.title, body: _offCampusOrigin(context, l)),
+            // On campus — (5) route request → (6) map / typed error panels.
+            NavOriginOnCampus(:final point) => _routeFlow(context, l, place.title, point, dest),
           },
         );
       },
     );
   }
+
+  /// (5) → (6): request the walking route for an on-campus origin and render
+  /// the map / typed error panel. Split out so the origin `switch` stays flat.
+  Widget _routeFlow(BuildContext context, AonL10n l, String? title,
+      (double, double) origin, (double, double) dest) {
+    final routeAsync = ref.watch(navRouteProvider((origin, dest)));
+    return routeAsync.when(
+      loading: () => _scaffold(l, title: title, body: _spinner(context)),
+      error: (_, _) =>
+          _scaffold(l, title: title, body: _routeError(context, l, dest, origin)),
+      data: (result) => _scaffold(
+        l,
+        title: title,
+        body: _resultBody(context, l, result, origin, dest),
+      ),
+    );
+  }
+
+  /// The GPS fix is real but outside campus. The in-app walking flow is
+  /// campus-only, so route nothing — tell the visitor to come to campus. The
+  /// keyless external hand-off is NOT offered here: it would start the very
+  /// long off-campus walk this scope gate exists to prevent.
+  Widget _offCampusOrigin(BuildContext context, AonL10n l) => _panel(
+        context,
+        icon: Icons.explore_off_outlined,
+        message: l.mapNavOffCampusOrigin,
+      );
 
   (double, double)? _destOf(ResolvedPlace? place) {
     if (place?.routingLat == null || place?.routingLng == null) return null;

@@ -160,7 +160,7 @@ class VenueInfoSheet extends ConsumerWidget {
             child: OutlinedButton.icon(
               onPressed: () {
                 Navigator.of(context).pop();
-                context.go(Routes.map);
+                context.go(Routes.mapFocus('venue:$venueId'));
               },
               icon: const Icon(Icons.map_rounded),
               label: Text(l.actionShowOnMap),

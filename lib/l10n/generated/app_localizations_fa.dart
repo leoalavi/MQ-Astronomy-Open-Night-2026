@@ -110,6 +110,19 @@ class AonL10nFa extends AonL10n {
   String get timingFinished => 'پایان‌یافته';
 
   @override
+  String get timingTimeNotPublished => 'زمان اعلام نشده';
+
+  @override
+  String get programTimeNotPublishedHeading => 'زمان اعلام نشده';
+
+  @override
+  String get programTimeNotPublishedBlurb =>
+      'برنامهٔ رسمی برای این‌ها زمانی اعلام نکرده است. در شب برنامه از باجهٔ اطلاعات بپرسید.';
+
+  @override
+  String get timingEndNotPublished => 'زمان پایان اعلام نشده';
+
+  @override
   String get timingOpenAllEvening => 'تمام شب باز است';
 
   @override
@@ -758,6 +771,14 @@ class AonL10nFa extends AonL10n {
       'نقشهٔ گوگل هنوز پیکربندی نشده است. برای فعال شدن مسیریابی، کلید API نقشهٔ گوگل را اضافه کنید.';
 
   @override
+  String get mapNavOffCampusOrigin =>
+      'مسیریابی پیاده‌روی زمانی در دسترس است که در محوطهٔ دانشگاه باشید.';
+
+  @override
+  String get mapNavDestinationOffCampus =>
+      'این مکان روی نقشهٔ محوطهٔ شب باز نجوم نیست.';
+
+  @override
   String get mapNavRetry => 'تلاش دوباره';
 
   @override
@@ -874,6 +895,25 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get compassNothingNearby => 'هنوز جایی برای نشان‌دادن نزدیک نیست.';
+
+  @override
+  String compassUnconfirmedHeading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count مکان بدون موقعیت تأییدشده',
+      one: '۱ مکان بدون موقعیت تأییدشده',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get compassUnconfirmedBlurb =>
+      'موقعیت تأییدشده‌ای برای این‌ها نداریم، بنابراین قطب‌نما نمی‌تواند به آن‌ها اشاره کند. نقشهٔ چاپی را ببینید یا از باجهٔ اطلاعات بپرسید.';
+
+  @override
+  String get compassNoConfirmedTargets =>
+      'از اینجا مکان تأییدشده‌ای برای اشاره وجود ندارد.';
 
   @override
   String get compassLocationNeeded =>

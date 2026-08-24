@@ -16,6 +16,9 @@ class _CountingInitializer implements MapsSdkInitializer {
 
   @override
   Future<String?> openSourceLicenseInfo() async => null;
+
+  @override
+  Future<String> resolveKey() async => '';
 }
 
 ProviderContainer _container(_CountingInitializer init, MapsConsent seed) {

@@ -51,6 +51,11 @@ class TimingBadge extends ConsumerWidget {
           context.aon.contentTertiary,
           Icons.check_circle_outline_rounded
         ),
+      // Neutral, not "live": nothing is claimed about whether it is running.
+      EventTiming.unscheduled => (
+          context.aon.contentTertiary,
+          Icons.help_outline_rounded
+        ),
     };
 
     // Phase-aware: "Later tonight" is only true on the event date.

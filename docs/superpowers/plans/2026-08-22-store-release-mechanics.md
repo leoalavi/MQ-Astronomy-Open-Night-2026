@@ -330,10 +330,13 @@ Nothing here is engineering, and nothing downstream can be finished without it.
   The Routes keys are extractable from the shipped binary anyway — which is no
   reason to *additionally* leak them into shell history, CI logs, process
   listings and pasted terminal transcripts. Use
-  **`--dart-define-from-file=<git-ignored release json>`** carrying
-  `MAPS_NATIVE_CONFIGURED`, `GOOGLE_MAPS_ANDROID_ROUTES_KEY` and
-  `GOOGLE_MAPS_IOS_ROUTES_KEY`, or masked CI secret injection — not inline
-  `--dart-define=KEY=value` on the command line.
+  **`--dart-define-from-file=<git-ignored release json/.env>`** carrying
+  `MAPS_API_KEY` (enables the native map + flips the capability gate),
+  `GOOGLE_MAPS_ANDROID_ROUTES_KEY` and `GOOGLE_MAPS_IOS_ROUTES_KEY`, or masked CI
+  secret injection — not inline `--dart-define=KEY=value` on the command line.
+  (`MAPS_NATIVE_CONFIGURED` was retired: supplying `MAPS_API_KEY` is now the one
+  action that both keys the native map and enables the flow — see
+  docs/google-maps-setup.md.)
 
 - [ ] **C6. Prove the restriction REJECTS — positively and negatively.** Not an
   assumption; the M4 IOU made a release gate.

@@ -373,6 +373,9 @@ class _TonightSliver extends ConsumerWidget {
     final soon = WhatsOnService.inBucket(timed, EventTiming.startingSoon);
     final later = WhatsOnService.inBucket(timed, EventTiming.upcoming);
     final finished = WhatsOnService.inBucket(timed, EventTiming.finished);
+    // Activities the official programme gives no time for. They stay fully
+    // discoverable here — just never claimed to be running or upcoming.
+    final unscheduled = WhatsOnService.inBucket(timed, EventTiming.unscheduled);
 
     // A sliver, not a ListView: ProgramScreen owns the single scroll view so
     // its header can scroll away. These children were never lazily built (this
@@ -415,6 +418,17 @@ class _TonightSliver extends ConsumerWidget {
             timing: EventTiming.upcoming,
             now: now,
             icon: Icons.more_time_rounded,
+            iconColor: context.aon.contentTertiary,
+          ),
+          // Before "Finished": these may well be running, so burying them under
+          // finished items would read as though they were over.
+          _Bucket(
+            title: l.programTimeNotPublishedHeading,
+            subtitle: l.programTimeNotPublishedBlurb,
+            items: unscheduled,
+            timing: EventTiming.unscheduled,
+            now: now,
+            icon: Icons.help_outline_rounded,
             iconColor: context.aon.contentTertiary,
           ),
           _Bucket(

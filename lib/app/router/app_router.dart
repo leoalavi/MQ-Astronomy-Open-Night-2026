@@ -24,6 +24,16 @@ abstract final class Routes {
   static String program = '/program';
   static String myNight = '/my-night';
   static String map = '/map';
+
+  /// The Map tab, opened focused on one place ("venue:x" / "building:y").
+  ///
+  /// "Show on map" used to `go(Routes.map)` and drop the place entirely, which
+  /// dumped the visitor on an unchanged campus map with nothing selected and no
+  /// clue which pin they came for. The focus key is what lets the Map tab
+  /// select the place, move the camera to it and open its sheet.
+  static String mapFocus(String placeKey) =>
+      '/map?focus=${Uri.encodeComponent(placeKey)}';
+
   static String info = '/info';
 
   /// Full-screen pages pushed above the tab shell.
@@ -107,7 +117,11 @@ GoRouter buildRouter() {
             routes: [
               GoRoute(
                 path: Routes.map,
-                builder: (context, state) => const MapScreen(),
+                builder: (context, state) => MapScreen(
+                  // Set by Routes.mapFocus — "Show on map" hands the place over
+                  // so the tab opens ON it rather than merely switching tabs.
+                  focusPlaceKey: state.uri.queryParameters['focus'],
+                ),
               ),
             ],
           ),

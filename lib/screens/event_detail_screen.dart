@@ -422,7 +422,9 @@ class _VenueActions extends ConsumerWidget {
       children: [
         Expanded(
           child: OutlinedButton.icon(
-            onPressed: () => context.go(Routes.map),
+            // Hand the venue over so the Map tab opens ON it — selected,
+            // camera moved, sheet open — instead of just switching tabs.
+            onPressed: () => context.go(Routes.mapFocus('venue:$venueId')),
             icon: const Icon(Icons.map_rounded, size: AonSpacing.iconSm),
             label: Text(l.actionShowOnMap),
           ),

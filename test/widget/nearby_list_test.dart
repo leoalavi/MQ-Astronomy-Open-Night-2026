@@ -47,9 +47,15 @@ void main() {
   });
 
   testWidgets('unlocatable venue → DISABLED "see printed map" row (§0R-4 safety)', (t) async {
+    // Still guarantees a safety venue is never silently dropped. It now lives
+    // inside the collapsed "no confirmed location" group rather than flat in
+    // the main list, so expand that first — the claim is that it is REACHABLE,
+    // not that it crowds out the pointable targets.
     final c = _c(index: [VenueEntry(const Venue(id: 'first-aid', name: 'First Aid', category: VenueCategory.firstAid))]);
     await t.pumpWidget(_app(c));
     final l = await AonL10n.delegate.load(const Locale('en'));
+    await t.pumpAndSettle();
+    await t.tap(find.text(l.compassUnconfirmedHeading(1)));
     await t.pumpAndSettle();
     expect(find.text('First Aid'), findsOneWidget);
     expect(find.text(l.compassUnlocatable), findsOneWidget);

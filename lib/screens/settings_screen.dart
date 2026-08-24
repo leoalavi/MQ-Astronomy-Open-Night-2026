@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/app/text_scale.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/config/event_config.dart';
@@ -51,11 +52,15 @@ class SettingsScreen extends ConsumerWidget {
       // stacked cards inside a section. Without it the zero-margin cards fuse
       // into one block (the "compressed" look this restructure fixes).
       body: ListView(
-        padding: const EdgeInsets.fromLTRB(
+        // Bottom inset is the SHELL's clearance, not a fixed 64: the floating
+        // glass tab bar is 66pt tall and sits above the home indicator, so a
+        // constant smaller than that hides the last row (the Google Maps
+        // licences button) behind the island. See AonNavMetrics.clearance.
+        padding: EdgeInsets.fromLTRB(
           AonSpacing.space4,
           0,
           AonSpacing.space4,
-          AonSpacing.space16,
+          AonNavMetrics.clearance(context),
         ),
         children: [
           // ── Appearance ──

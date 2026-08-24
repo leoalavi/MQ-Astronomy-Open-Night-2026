@@ -197,10 +197,14 @@ class EventCard extends ConsumerWidget {
     if (session == null) return null;
 
     return switch (timing!) {
-      EventTiming.happeningNow => TimeFormat.remaining(l, now!, session.end),
-      EventTiming.startingSoon => TimeFormat.until(l, now!, session.start),
+// Only count down to a PUBLISHED finish — see activity_rail_card.
+EventTiming.happeningNow => session.hasPublishedEnd
+    ? TimeFormat.remaining(l, now!, session.end).replaceFirst('ends ', '')
+    : null,
+EventTiming.startingSoon => TimeFormat.until(l, now!, session.start),
       EventTiming.upcoming => TimeFormat.time(session.start),
       EventTiming.finished => null,
+      EventTiming.unscheduled => null,
     };
   }
 }

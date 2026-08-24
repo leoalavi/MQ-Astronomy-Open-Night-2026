@@ -151,10 +151,16 @@ class ActivityRailCard extends ConsumerWidget {
     final session = timed.session;
     if (session == null) return null;
     return switch (timed.timing) {
-      EventTiming.happeningNow => TimeFormat.remaining(l, now, session.end),
-      EventTiming.startingSoon => TimeFormat.until(l, now, session.start),
+// A countdown to the finish is only honest when the finish is published.
+// For a "4.15pm start, no finish time" entry the end is our own bound, so
+// "ends in 2 hr" would be a number the programme never printed.
+EventTiming.happeningNow => session.hasPublishedEnd
+    ? TimeFormat.remaining(l, now, session.end).replaceFirst('ends ', '')
+    : null,
+EventTiming.startingSoon => TimeFormat.until(l, now, session.start),
       EventTiming.upcoming => TimeFormat.time(session.start),
       EventTiming.finished => null,
+      EventTiming.unscheduled => null, // nothing to count down to
     };
   }
 }

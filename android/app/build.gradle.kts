@@ -14,6 +14,25 @@ val secretsProperties = Properties().apply {
     if (f.exists()) f.inputStream().use { load(it) }
 }
 
+// One-key wiring: when secrets.properties does not supply MAPS_API_KEY, fall back to
+// the project-root .env (the SAME file `flutter run --dart-define-from-file=.env` reads
+// for the Routes keys). This lets a single key in .env drive BOTH the Routes API (Dart)
+// and the native Android map, with no second file to maintain. .env is git-ignored, so
+// no secret is committed. secrets.properties still wins when present.
+fun envValue(name: String): String {
+    val env = rootProject.file("../.env")
+    if (!env.exists()) return ""
+    return env.readLines()
+        .map { it.trim() }
+        .firstOrNull { !it.startsWith("#") && it.substringBefore('=').trim() == name }
+        ?.substringAfter('=')?.trim()
+        ?: ""
+}
+
+val mapsApiKey: String = secretsProperties.getProperty("MAPS_API_KEY").takeUnless { it.isNullOrBlank() }
+    ?: envValue("MAPS_API_KEY").takeUnless { it.isBlank() }
+    ?: ""
+
 // Release signing credentials, from the git-ignored android/key.properties (see
 // key.properties.sample). Presence of the FILE proves nothing — a half-filled
 // key.properties is how a release gets signed with the wrong identity — so all
@@ -46,8 +65,9 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         // Substituted into AndroidManifest's com.google.android.geo.API_KEY meta-data.
-        // Empty when secrets.properties is absent → build stays green, feature stays dark.
-        manifestPlaceholders["MAPS_API_KEY"] = secretsProperties.getProperty("MAPS_API_KEY", "")
+        // From secrets.properties, else the project-root .env; empty when neither
+        // supplies it → build stays green, feature stays dark.
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     signingConfigs {

@@ -78,6 +78,11 @@ abstract final class ItineraryService {
     }
 
     entries.sort((a, b) {
+      // Unscheduled entries have no real start, so they cannot take a place in
+      // the chronological run — they collect at the end, alphabetically.
+      final aUn = a.session.isUnscheduled, bUn = b.session.isUnscheduled;
+      if (aUn != bUn) return aUn ? 1 : -1;
+      if (aUn && bUn) return a.event.title.compareTo(b.event.title);
       final byStart = a.session.start.compareTo(b.session.start);
       if (byStart != 0) return byStart;
       return a.event.title.compareTo(b.event.title);
@@ -92,6 +97,10 @@ abstract final class ItineraryService {
   /// answers for a whole event. On a timeline the visitor is looking at one
   /// specific 5:00pm slot, not "is this show on at some point".
   static EventTiming _timingFor(EventSession session, DateTime now) {
+    // No published time → it belongs at no point on the timeline. Checked
+    // first: without this it would fall through to `upcoming` and the plan
+    // would announce a "later tonight" start the programme never printed.
+    if (session.isUnscheduled) return EventTiming.unscheduled;
     if (session.containsTime(now)) return EventTiming.happeningNow;
     if (!session.end.isAfter(now)) return EventTiming.finished;
     if (session.startsWithin(now, WhatsOnService.soonWindow)) {
@@ -140,8 +149,13 @@ abstract final class ItineraryService {
   /// Half-open overlap: sessions that merely touch (one ends exactly as the
   /// next begins) do **not** conflict. Back-to-back is a tight but achievable
   /// plan, not a clash — flagging it would cry wolf.
-  static bool _overlaps(EventSession a, EventSession b) =>
-      a.start.isBefore(b.end) && b.start.isBefore(a.end);
+  /// Two sessions clash only if BOTH have published times. An unscheduled
+  /// activity cannot be proven to clash with anything — flagging one would be a
+  /// conflict warning derived entirely from our own stand-in times.
+  static bool _overlaps(EventSession a, EventSession b) {
+    if (a.isUnscheduled || b.isUnscheduled) return false;
+    return a.start.isBefore(b.end) && b.start.isBefore(a.end);
+  }
 
   /// The next thing the visitor should head to, or null.
   ///

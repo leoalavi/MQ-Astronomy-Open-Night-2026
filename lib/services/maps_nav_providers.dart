@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
+import 'campus_scope.dart';
 import 'google_routes_service.dart';
 import 'location_providers.dart';
 import 'location_service.dart';
@@ -37,29 +38,55 @@ final iosRoutesKeyProvider = Provider<String>(
 
 /// The Routes key for the ACTIVE platform — NOT "either key" (#5). An Android
 /// build carrying only the iOS key must resolve to empty here.
+///
+/// Falls back to [nativeMapsApiKeyProvider] when the platform's own Routes
+/// define is absent. The Routes defines are COMPILE-time, so a run without
+/// `--dart-define-from-file=.env` has none — while the device itself may be
+/// perfectly well keyed (iOS Info.plist / Android manifest, resolved at runtime
+/// in `main.dart`). A single Google key legitimately serves both the Maps SDK
+/// and the Routes API when its API restrictions allow both, which is exactly
+/// the "same key in every entry" setup. A per-platform Routes define still wins
+/// when supplied, so a properly restricted production build is unaffected.
 final activeRoutesKeyProvider = Provider<String>((ref) {
-  return switch (ref.watch(mapsNavPlatformProvider)) {
+  final explicit = switch (ref.watch(mapsNavPlatformProvider)) {
     MapsNavPlatform.android => ref.watch(androidRoutesKeyProvider),
     MapsNavPlatform.ios => ref.watch(iosRoutesKeyProvider),
     MapsNavPlatform.unsupported => '',
   };
+  if (explicit.isNotEmpty) return explicit;
+  // Web/desktop never route from the device, so no fallback there.
+  if (ref.watch(mapsNavPlatformProvider) == MapsNavPlatform.unsupported) return '';
+  return ref.watch(nativeMapsApiKeyProvider);
 });
 
 /// True when the active platform has a non-empty Routes key.
 final routesConfiguredProvider =
     Provider<bool>((ref) => ref.watch(activeRoutesKeyProvider).isNotEmpty);
 
+/// The effective native Maps SDK key for this run — one key drives every Google
+/// surface (the embedded map, and the Routes call when no platform Routes key
+/// was supplied).
+///
+/// The default here is the COMPILE-time `MAPS_API_KEY` define. `main.dart`
+/// OVERRIDES it with the value resolved at runtime, which additionally picks up
+/// the platform's own configuration (iOS Info.plist `GMSApiKey`, Android
+/// manifest `geo.API_KEY`) — so a build launched from Xcode or a plain
+/// `flutter run`, with no `--dart-define-from-file=.env`, still finds its key
+/// instead of falsely reporting "Google Maps is not configured yet".
+/// Overridable in tests.
+final nativeMapsApiKeyProvider = Provider<String>(
+    (ref) => const String.fromEnvironment('MAPS_API_KEY'));
+
 /// Whether the native Maps SDK key was configured for THIS build.
 ///
-/// This is a BUILD-TIME assertion, not runtime detection: there is no clean way
-/// for Dart to query whether iOS `GMSServices.provideAPIKey` / the Android
-/// manifest key were actually set. The build that provides the native secret
-/// files ALSO passes `--dart-define=MAPS_NATIVE_CONFIGURED=true`. Keeping it a
-/// separate flag from [routesConfiguredProvider] is what lets the capability
-/// matrix prove the "routes present but native map absent → disabled" trap is
-/// closed. Overridable in tests.
-final embeddedMapConfiguredProvider = Provider<bool>(
-    (ref) => const bool.fromEnvironment('MAPS_NATIVE_CONFIGURED'));
+/// Derived from [nativeMapsApiKeyProvider] rather than a separate hand-set flag:
+/// supplying `MAPS_API_KEY` (via `.env`) is now the ONE action that both keys
+/// the native map and flips this true, so there is no second flag to forget.
+/// Kept a distinct provider from [routesConfiguredProvider] so the capability
+/// matrix can still prove the "routes present but native map absent → disabled"
+/// trap is closed. Overridable in tests.
+final embeddedMapConfiguredProvider =
+    Provider<bool>((ref) => ref.watch(nativeMapsApiKeyProvider).isNotEmpty);
 
 /// The single gate every Google-nav entry point checks: native map configured
 /// AND an active-platform Routes key AND a mobile surface.
@@ -129,21 +156,52 @@ final navRouteProvider = FutureProvider.autoDispose
   return service.walkingRoute(origin: args.$1, destination: args.$2);
 });
 
-/// The origin GPS for a nav session, captured ONCE (a snapshot — the route is
-/// not re-computed as the attendee walks). Ensures permission, then takes the
-/// first fix. Returns null when permission is refused or no fix arrives, so the
-/// screen can offer a curated/external fallback. Overridable in tests.
-final navOriginProvider = FutureProvider.autoDispose<(double, double)?>((ref) async {
+/// The resolved walking-origin for a nav session. Three distinct outcomes,
+/// because they need three different screens:
+///
+/// * [NavOriginOnCampus] — a live fix inside the campus scope; route it.
+/// * [NavOriginOffCampus] — a live fix OUTSIDE campus; the app must NOT route a
+///   long walk in from an arbitrary Sydney location. The screen says directions
+///   are available once you are on campus.
+/// * [NavOriginUnavailable] — permission refused or no fix arrived; offer the
+///   external hand-off, which can start from the device's own location.
+sealed class NavOrigin {
+  const NavOrigin();
+}
+
+class NavOriginOnCampus extends NavOrigin {
+  final (double, double) point;
+  const NavOriginOnCampus(this.point);
+}
+
+class NavOriginOffCampus extends NavOrigin {
+  const NavOriginOffCampus();
+}
+
+class NavOriginUnavailable extends NavOrigin {
+  const NavOriginUnavailable();
+}
+
+/// The origin for a nav session, captured ONCE (a snapshot — the route is not
+/// re-computed as the attendee walks). Ensures permission, takes the first fix,
+/// then validates it against the campus scope so an off-campus GPS position
+/// cannot silently generate a kilometres-long walk-in route. Overridable in
+/// tests.
+final navOriginProvider = FutureProvider.autoDispose<NavOrigin>((ref) async {
   final svc = ref.watch(locationServiceProvider);
   var status = await svc.status();
   if (status != LocationStatus.granted) {
     status = await svc.request();
   }
-  if (status != LocationStatus.granted) return null;
+  if (status != LocationStatus.granted) return const NavOriginUnavailable();
   try {
     final fix = await svc.watch().first.timeout(const Duration(seconds: 12));
-    return (fix.position.latitude, fix.position.longitude);
+    final lat = fix.position.latitude, lng = fix.position.longitude;
+    if (!const CampusScope().contains(lat, lng)) {
+      return const NavOriginOffCampus();
+    }
+    return NavOriginOnCampus((lat, lng));
   } catch (_) {
-    return null;
+    return const NavOriginUnavailable();
   }
 });

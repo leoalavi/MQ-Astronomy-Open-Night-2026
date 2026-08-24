@@ -48,7 +48,11 @@ import 'package:aon2026/widgets/user_location_layer.dart';
 /// an affine GPS-to-pixel projection, indoor floorplans and a compass AR mode —
 /// roughly 4,000 lines of machinery for features this MVP does not have.
 class MapScreen extends ConsumerStatefulWidget {
-  const MapScreen({super.key});
+  const MapScreen({super.key, this.focusPlaceKey});
+
+  /// A place key ("venue:x" / "building:y") to open focused on, supplied by
+  /// `Routes.mapFocus` from every "Show on map" action.
+  final String? focusPlaceKey;
 
   @override
   ConsumerState<MapScreen> createState() => _MapScreenState();
@@ -59,6 +63,38 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   final Set<VenueCategory> _visible = {...VenueCategory.values};
   MapMode _mode = MapMode.campusMap;
   static const CampusProjection _proj = CampusProjection();
+
+  /// The focus request already handled, so a rebuild (filter toggle, location
+  /// tick, keyboard) does not re-open the sheet under the visitor.
+  String? _handledFocus;
+
+  @override
+  void initState() {
+    super.initState();
+    _maybeHandleFocus();
+  }
+
+  @override
+  void didUpdateWidget(covariant MapScreen old) {
+    super.didUpdateWidget(old);
+    // Tapping "Show on map" for a DIFFERENT venue while the tab is already
+    // alive arrives as a widget update, not a fresh state.
+    if (widget.focusPlaceKey != old.focusPlaceKey) _maybeHandleFocus();
+  }
+
+  /// Selects the requested place, moves the camera onto it and opens its sheet.
+  /// Deferred to after the first frame so the map has a real viewport to move.
+  void _maybeHandleFocus() {
+    final key = widget.focusPlaceKey;
+    if (key == null || key == _handledFocus) return;
+    _handledFocus = key;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      // Focus is a campus-map concept; a pending 360°/compass mode would hide it.
+      if (_mode != MapMode.campusMap) setState(() => _mode = MapMode.campusMap);
+      _onPlaceSelected(key, zoom: MapConfig.mapFocusZoom);
+    });
+  }
 
   @override
   void dispose() {
@@ -218,11 +254,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                     ),
                     minZoom: MapConfig.mapMinZoom,
                     maxZoom: MapConfig.mapMaxZoom,
-                    // Keep the campus centred. containCenter (not contain) —
-                    // the whole campus is smaller than the viewport at fit
-                    // zoom, so `contain` is unsatisfiable; containCenter keeps
-                    // the map from being panned away.
-                    cameraConstraint: CameraConstraint.containCenter(
+                    // North-up only: the official artwork is unreadable rotated.
+                    interactionOptions: const InteractionOptions(
+                      flags: MapConfig.mapInteractiveFlags,
+                    ),
+                    // Per-axis contain-or-centre: the artwork can never be
+                    // dragged off into empty background, and it stays centred at
+                    // zoom levels where it is smaller than the viewport.
+                    cameraConstraint: ContainOrCentreCamera(
                       bounds: MapConfig.aonMapBounds,
                     ),
                     backgroundColor: context.aon.surfaceBase,
@@ -445,10 +484,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     if (key != null && mounted) await _onPlaceSelected(key);
   }
 
-  Future<void> _onPlaceSelected(String key) async {
+  Future<void> _onPlaceSelected(String key, {double? zoom}) async {
     ref.read(selectedPlaceKeyProvider.notifier).select(key);
-    final rp = ref.read(placeResolverProvider(key)).asData?.value?.renderPoint;
-    if (rp != null) _controller.move(rp.value, _controller.camera.zoom);
+    final resolved = ref.read(placeResolverProvider(key)).asData?.value;
+    final rp = resolved?.renderPoint;
+    if (rp != null) {
+      // Clamp: a focus zoom must still obey the campus map's zoom bounds.
+      final z = (zoom ?? _controller.camera.zoom)
+          .clamp(MapConfig.mapMinZoom, MapConfig.mapMaxZoom);
+      _controller.move(rp.value, z);
+    } else if (zoom != null && mounted) {
+      // Focused from another screen on a place with no map placement. Say so
+      // rather than silently leaving the camera wherever it was — the sheet
+      // alone would look like the map simply ignored the tap.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AonL10n.of(context).compassUnlocatable)),
+      );
+    }
     await _openDetail(key);
     if (mounted) ref.read(selectedPlaceKeyProvider.notifier).clear(); // G15
   }

@@ -15,6 +15,9 @@ class _LicenceInitializer implements MapsSdkInitializer {
   @override
   Future<String?> openSourceLicenseInfo() async =>
       'Apache License 2.0\n\nThis product includes software developed by …';
+
+  @override
+  Future<String> resolveKey() async => '';
 }
 
 Widget _host(ProviderContainer c) => UncontrolledProviderScope(

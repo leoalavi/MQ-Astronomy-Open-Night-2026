@@ -35,6 +35,11 @@ class MainActivity : FlutterActivity() {
             .setMethodCallHandler { call, result ->
                 when (call.method) {
                     "initialize" -> result.success(hasMapsApiKey())
+                    // Configuration READ only (no keying, no network) so Dart
+                    // can detect and reuse a keyed platform even when the app was
+                    // launched without --dart-define-from-file=.env. The value
+                    // never leaves the process.
+                    "getMapsKey" -> result.success(mapsApiKey())
                     // GoogleApiAvailability.getOpenSourceSoftwareLicenseInfo has
                     // been deprecated since Play services v11.0 and Google states
                     // it is no longer required — Android surfaces Play services
@@ -47,13 +52,15 @@ class MainActivity : FlutterActivity() {
             }
     }
 
-    private fun hasMapsApiKey(): Boolean = try {
+    private fun hasMapsApiKey(): Boolean = !mapsApiKey().isNullOrEmpty()
+
+    private fun mapsApiKey(): String? = try {
         val info = packageManager.getApplicationInfo(
             packageName, PackageManager.GET_META_DATA
         )
-        !info.metaData?.getString("com.google.android.geo.API_KEY").isNullOrEmpty()
+        info.metaData?.getString("com.google.android.geo.API_KEY")?.takeIf { it.isNotEmpty() }
     } catch (e: PackageManager.NameNotFoundException) {
-        false
+        null
     }
 
     private fun signingCertSha1(): String? {

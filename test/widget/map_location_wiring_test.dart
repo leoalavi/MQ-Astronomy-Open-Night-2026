@@ -69,12 +69,34 @@ Future<void> _activateWith(WidgetTester t, ProviderContainer c,
   await t.pump(); // rebuild + apply follow move
 }
 
+
+// Zooms in before a follow, so the artwork is LARGER than the viewport and the
+// camera is free to travel to the fix.
+//
+// At the opening fit zoom the whole campus is on screen, and the camera
+// constraint deliberately keeps it that way — so a follow can only nudge the
+// map a few points before the artwork would start leaving the frame. That is
+// correct behaviour (the dot is already visible; panning would only reveal
+// empty background), but it means "follow moves the camera ONTO the fix" is a
+// claim that only makes sense zoomed in, which is when following actually
+// matters.
+Future<void> _zoomIn(WidgetTester t, double zoom) async {
+  t.widget<FlutterMap>(find.byType(FlutterMap)).mapController!
+      .move(_cam(t).center, zoom);
+  await t.pump();
+}
+
 void main() {
   testWidgets('near fix -> circle + dot, camera MOVES to the fix, no banner',
       (t) async {
     final svc = FakeLocationService();
     final c = _container(svc);
-    await _activateWith(t, c, svc, _near());
+    await t.pumpWidget(_app(c));
+    await _zoomIn(t, MapConfig.mapMaxZoom);
+    await c.read(locationControllerProvider.notifier).onLocateTapped();
+    svc.emit(_near());
+    await t.pump();
+    await t.pump();
     expect(find.byType(CircleLayer), findsOneWidget);
     expect(find.byType(MarkerLayer), findsWidgets); // venue pins + user dot
     expect(find.textContaining('from campus'), findsNothing);
@@ -112,6 +134,10 @@ void main() {
     final svc = FakeLocationService();
     final c = _container(svc);
     await t.pumpWidget(_app(c));
+    // Zoomed in, so the drag genuinely moves the camera: at fit zoom the
+    // constraint holds the fully-visible artwork in place and there is no
+    // position change for the pan handler to react to.
+    await _zoomIn(t, MapConfig.mapMaxZoom);
     await c.read(locationControllerProvider.notifier).onLocateTapped();
     expect(c.read(locationControllerProvider).following, isTrue);
     await t.drag(find.byType(FlutterMap), const Offset(-60, 0));

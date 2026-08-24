@@ -93,6 +93,22 @@
     "description": "Evening event. The Open Day equivalent would be 'Later today'."
   },
   "timingFinished": "Finished",
+  "timingTimeNotPublished": "Time not published",
+  "@timingTimeNotPublished": {
+    "description": "Status for a programme entry the official PDF gives no time for — never Happening now / Up next"
+  },
+  "programTimeNotPublishedHeading": "Time not published",
+  "@programTimeNotPublishedHeading": {
+    "description": "Programme section heading grouping activities with no published time"
+  },
+  "programTimeNotPublishedBlurb": "The official programme doesn\u2019t list times for these. Ask at an information point on the night.",
+  "@programTimeNotPublishedBlurb": {
+    "description": "Explains the time-not-published group so it does not read as a bug"
+  },
+  "timingEndNotPublished": "Finish time not published",
+  "@timingEndNotPublished": {
+    "description": "Qualifier shown where only a start time is official"
+  },
   "timingOpenAllEvening": "Open all evening",
   "timingStartingWithin": "In the next {minutes} minutes",
   "@timingStartingWithin": {
@@ -582,6 +598,14 @@
   "@mapNavUnavailable": {
     "description": "Capability flag off (no keys) — deep-link landed here"
   },
+  "mapNavOffCampusOrigin": "Walking directions are available once you are on campus.",
+  "@mapNavOffCampusOrigin": {
+    "description": "Live location is outside the campus scope — the in-app walking route is campus-only, so no route is generated"
+  },
+  "mapNavDestinationOffCampus": "This place isn't on the Astronomy Open Night campus map.",
+  "@mapNavDestinationOffCampus": {
+    "description": "Requested destination falls outside the campus extent — defensive, curated places are always inside"
+  },
   "mapNavRetry": "Retry",
   "@mapNavRetry": {
     "description": "Retry a failed route fetch"
@@ -700,6 +724,23 @@
   "compassNearbyTitle": "Nearby",
   "compassFilterHint": "Filter places",
   "compassNothingNearby": "Nothing nearby to point to yet.",
+  "compassUnconfirmedHeading": "{count, plural, =1{1 place with no confirmed location} other{{count} places with no confirmed location}}",
+  "@compassUnconfirmedHeading": {
+    "description": "Collapsed section heading grouping venues the compass cannot point to",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "compassUnconfirmedBlurb": "We don\u2019t have a confirmed position for these, so the compass can\u2019t point to them. Check the printed map or ask at an information point.",
+  "@compassUnconfirmedBlurb": {
+    "description": "Explains the unconfirmed group so it does not read as broken"
+  },
+  "compassNoConfirmedTargets": "No confirmed locations to point to from here.",
+  "@compassNoConfirmedTargets": {
+    "description": "Shown when every nearby place lacks a confirmed position"
+  },
   "compassLocationNeeded": "Turn on location to find your way",
   "compassEnableLocation": "Enable location",
   "compassYouAreHere": "You're basically there",

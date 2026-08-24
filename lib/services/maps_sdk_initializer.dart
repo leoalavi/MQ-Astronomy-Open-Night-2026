@@ -21,20 +21,48 @@ abstract interface class MapsSdkInitializer {
   /// platform supplies none. Static bundled text, so reading it never contacts
   /// Google and it is safe to call before consent.
   Future<String?> openSourceLicenseInfo();
+
+  /// The effective Maps key for this run: the Dart `MAPS_API_KEY` define if the
+  /// build carried one, else the platform's own configured key (iOS Info.plist
+  /// `GMSApiKey`, Android manifest `com.google.android.geo.API_KEY`). Empty when
+  /// neither supplies one.
+  ///
+  /// This is a pure configuration *read* — it keys nothing and contacts nobody,
+  /// so it is safe to call before consent, and the value never leaves the
+  /// process. It exists because the Dart define is COMPILE-time: an app launched
+  /// without `--dart-define-from-file=.env` (from Xcode, or a plain
+  /// `flutter run`) would otherwise report "not configured" even though the
+  /// platform itself is perfectly well keyed.
+  Future<String> resolveKey();
 }
 
 class PlatformMapsSdkInitializer implements MapsSdkInitializer {
-  PlatformMapsSdkInitializer({MethodChannel? channel})
+  PlatformMapsSdkInitializer({MethodChannel? channel, this.apiKey = ''})
       : _channel = channel ?? const MethodChannel('aon2026/maps_sdk');
 
   final MethodChannel _channel;
+
+  /// The native Maps SDK key, supplied from a single source (`--dart-define`
+  /// `MAPS_API_KEY`, populated from `.env`). Passed to the native `initialize`
+  /// call so iOS can `GMSServices.provideAPIKey` it at consent time without a
+  /// separate Xcode build setting. Empty falls back to the platform's own
+  /// configured key (Info.plist `GMSApiKey` / Android manifest), so a build
+  /// that keys the native side the old way still works.
+  final String apiKey;
+
   bool _initialized = false;
 
   @override
   Future<bool> ensureInitialized() async {
     if (_initialized) return true;
     try {
-      final ok = await _channel.invokeMethod<bool>('initialize');
+      // A non-empty arg overrides the platform's own key; native treats an
+      // absent/empty arg as "use my configured key" (Android must key via the
+      // manifest regardless — its SDK reads the key when a MapView is built).
+      final ok = await _channel.invokeMethod<bool>(
+        'initialize',
+        apiKey.isEmpty ? null : {'apiKey': apiKey},
+      );
       _initialized = ok ?? false;
       return _initialized;
     } on PlatformException {
@@ -54,6 +82,19 @@ class PlatformMapsSdkInitializer implements MapsSdkInitializer {
       return null;
     }
   }
+
+  @override
+  Future<String> resolveKey() async {
+    // A Dart-supplied key wins: it is handed to native at initialise time.
+    if (apiKey.isNotEmpty) return apiKey;
+    try {
+      return await _channel.invokeMethod<String>('getMapsKey') ?? '';
+    } on PlatformException {
+      return '';
+    } on MissingPluginException {
+      return ''; // unsupported platform / test host
+    }
+  }
 }
 
 /// A no-op initialiser for tests and unsupported platforms.
@@ -68,6 +109,9 @@ class NoopMapsSdkInitializer implements MapsSdkInitializer {
 
   @override
   Future<String?> openSourceLicenseInfo() async => null;
+
+  @override
+  Future<String> resolveKey() async => '';
 }
 
 // ---------------------------------------------------------------------------

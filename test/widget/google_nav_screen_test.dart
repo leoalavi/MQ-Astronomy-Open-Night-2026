@@ -79,6 +79,9 @@ class _ReadyMapsSdk implements MapsSdkInitializer {
   Future<bool> ensureInitialized() async => ready;
   @override
   Future<String?> openSourceLicenseInfo() async => null;
+
+  @override
+  Future<String> resolveKey() async => '';
 }
 
 ProviderContainer _c({
@@ -88,6 +91,8 @@ ProviderContainer _c({
   bool enabled = true,
   ExternalMapsLauncher? launcher,
   bool sdkReady = true,
+  AsyncValue<ResolvedPlace?> resolved = _resolved,
+  NavOrigin? navOrigin,
 }) {
   final c = ProviderContainer(overrides: [
     googleNavEnabledProvider.overrideWithValue(enabled),
@@ -96,8 +101,13 @@ ProviderContainer _c({
     // initialiser fails closed, so these tests must say the SDK is ready.
     mapsSdkInitializerProvider.overrideWithValue(_ReadyMapsSdk(sdkReady)),
     mapsConsentSnapshotProvider.overrideWithValue(consent),
-    placeResolverProvider(_key).overrideWithValue(_resolved),
-    navOriginProvider.overrideWith((ref) async => origin),
+    placeResolverProvider(_key).overrideWithValue(resolved),
+    // origin == null models "no permission / no fix"; a coordinate models an
+    // on-campus fix. `navOrigin`, when supplied, is used verbatim (the
+    // off-campus case).
+    navOriginProvider.overrideWith((ref) async =>
+        navOrigin ??
+        (origin == null ? const NavOriginUnavailable() : NavOriginOnCampus(origin))),
     routesServiceProvider.overrideWith((ref) => service),
     externalMapsLauncherProvider.overrideWithValue(launcher ?? _FakeLauncher()),
   ]);
@@ -215,5 +225,59 @@ void main() {
     await t.pumpAndSettle();
     expect(find.byKey(const Key('map-surface')), findsOneWidget);
     expect(svc.calls, 1);
+  });
+
+  // ── Campus scope ──────────────────────────────────────────────────────────
+
+  testWidgets('origin OFF campus → "come to campus" message, never routes', (t) async {
+    final svc = _StubService(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11)], distanceMeters: 5000, eta: Duration(minutes: 60))));
+    await t.pumpWidget(_app(_c(service: svc, navOrigin: const NavOriginOffCampus())));
+    await t.pumpAndSettle();
+    final l = await _en();
+    expect(find.text(l.mapNavOffCampusOrigin), findsOneWidget);
+    expect(svc.calls, 0); // the whole point: no long walk-in route is generated
+    // No external hand-off here either — it would start the very walk we blocked.
+    expect(find.text(l.mapNavOpenExternal), findsNothing);
+  });
+
+  testWidgets('destination OFF campus → honest message, never routes', (t) async {
+    // A resolved place whose routing coordinate is in the Sydney CBD.
+    const offCampus = AsyncData<ResolvedPlace?>(ResolvedPlace(
+      kind: PlaceKind.building,
+      placeKey: _key,
+      title: 'Opera House',
+      subtitle: null,
+      renderPoint: null,
+      routingLat: -33.8568,
+      routingLng: 151.2153,
+    ));
+    final svc = _StubService(const RouteNoRoute());
+    await t.pumpWidget(_app(_c(service: svc, resolved: offCampus)));
+    await t.pumpAndSettle();
+    final l = await _en();
+    expect(find.text(l.mapNavDestinationOffCampus), findsOneWidget);
+    expect(svc.calls, 0);
+  });
+
+  testWidgets('a destination with NO coordinates (e.g. West 6) is handled honestly, not faked', (t) async {
+    // West 6's coordinate is an unresolved placeholder, so the resolver yields
+    // null routing. The screen must show the error-back panel — never a route.
+    const noCoords = AsyncData<ResolvedPlace?>(ResolvedPlace(
+      kind: PlaceKind.building,
+      placeKey: _key,
+      title: 'West 6',
+      subtitle: null,
+      renderPoint: null,
+      routingLat: null,
+      routingLng: null,
+    ));
+    final svc = _StubService(const RouteNoRoute());
+    await t.pumpWidget(_app(_c(service: svc, resolved: noCoords)));
+    await t.pumpAndSettle();
+    final l = await _en();
+    expect(find.text(l.mapNavError), findsOneWidget);
+    expect(svc.calls, 0);
+    expect(find.byKey(const Key('map-surface')), findsNothing); // no fake map
   });
 }

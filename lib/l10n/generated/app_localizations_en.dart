@@ -110,6 +110,19 @@ class AonL10nEn extends AonL10n {
   String get timingFinished => 'Finished';
 
   @override
+  String get timingTimeNotPublished => 'Time not published';
+
+  @override
+  String get programTimeNotPublishedHeading => 'Time not published';
+
+  @override
+  String get programTimeNotPublishedBlurb =>
+      'The official programme doesn’t list times for these. Ask at an information point on the night.';
+
+  @override
+  String get timingEndNotPublished => 'Finish time not published';
+
+  @override
   String get timingOpenAllEvening => 'Open all evening';
 
   @override
@@ -757,6 +770,14 @@ class AonL10nEn extends AonL10n {
       'Google Maps is not configured yet. Please add the Google Maps API key to enable directions.';
 
   @override
+  String get mapNavOffCampusOrigin =>
+      'Walking directions are available once you are on campus.';
+
+  @override
+  String get mapNavDestinationOffCampus =>
+      'This place isn\'t on the Astronomy Open Night campus map.';
+
+  @override
   String get mapNavRetry => 'Retry';
 
   @override
@@ -871,6 +892,25 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get compassNothingNearby => 'Nothing nearby to point to yet.';
+
+  @override
+  String compassUnconfirmedHeading(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count places with no confirmed location',
+      one: '1 place with no confirmed location',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get compassUnconfirmedBlurb =>
+      'We don’t have a confirmed position for these, so the compass can’t point to them. Check the printed map or ask at an information point.';
+
+  @override
+  String get compassNoConfirmedTargets =>
+      'No confirmed locations to point to from here.';
 
   @override
   String get compassLocationNeeded => 'Turn on location to find your way';

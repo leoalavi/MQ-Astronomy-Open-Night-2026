@@ -55,8 +55,18 @@ MapCamera _cam(WidgetTester t) =>
     MapCamera.of(t.element(find.byType(MarkerLayer).first));
 
 Future<void> _activate(WidgetTester t, ProviderContainer c,
-    FakeLocationService svc, UserLocationFix fix) async {
+    FakeLocationService svc, UserLocationFix fix, {double? zoom}) async {
   await t.pumpWidget(_app(c));
+  if (zoom != null) {
+    // At the opening fit zoom the whole campus is on screen and the camera
+    // constraint deliberately keeps it there, so a follow can only nudge the
+    // map before the artwork would start leaving frame. Zoomed in — which is
+    // when following actually matters — the camera is free to travel onto the
+    // fix, which is the claim these tests make.
+    t.widget<FlutterMap>(find.byType(FlutterMap)).mapController!
+        .move(_cam(t).center, zoom);
+    await t.pump();
+  }
   await c.read(locationControllerProvider.notifier).onLocateTapped();
   svc.emit(fix);
   await t.pump();
@@ -104,7 +114,7 @@ void main() {
       (t) async {
     final svc = FakeLocationService();
     final c = mapContainer(svc);
-    await _activate(t, c, svc, _near());
+    await _activate(t, c, svc, _near(), zoom: MapConfig.mapMaxZoom);
     final expected = _proj.project(GpsPoint(_nearPoint))!.value;
     expect(_cam(t).center.latitude, closeTo(expected.latitude, 0.5));
     expect(_cam(t).center.latitude, greaterThan(0)); // map-units, never -33

@@ -30,6 +30,8 @@ extension EventTimingL10n on EventTiming {
             ? l.timingOnTheNight
             : l.timingLaterTonight,
         EventTiming.finished => l.timingFinished,
+        // No published time — say exactly that, never a clock-derived status.
+        EventTiming.unscheduled => l.timingTimeNotPublished,
       };
 }
 

@@ -235,6 +235,30 @@ abstract class AonL10n {
   /// **'Finished'**
   String get timingFinished;
 
+  /// Status for a programme entry the official PDF gives no time for — never Happening now / Up next
+  ///
+  /// In en, this message translates to:
+  /// **'Time not published'**
+  String get timingTimeNotPublished;
+
+  /// Programme section heading grouping activities with no published time
+  ///
+  /// In en, this message translates to:
+  /// **'Time not published'**
+  String get programTimeNotPublishedHeading;
+
+  /// Explains the time-not-published group so it does not read as a bug
+  ///
+  /// In en, this message translates to:
+  /// **'The official programme doesn’t list times for these. Ask at an information point on the night.'**
+  String get programTimeNotPublishedBlurb;
+
+  /// Qualifier shown where only a start time is official
+  ///
+  /// In en, this message translates to:
+  /// **'Finish time not published'**
+  String get timingEndNotPublished;
+
   /// No description provided for @timingOpenAllEvening.
   ///
   /// In en, this message translates to:
@@ -1279,6 +1303,18 @@ abstract class AonL10n {
   /// **'Google Maps is not configured yet. Please add the Google Maps API key to enable directions.'**
   String get mapNavUnavailable;
 
+  /// Live location is outside the campus scope — the in-app walking route is campus-only, so no route is generated
+  ///
+  /// In en, this message translates to:
+  /// **'Walking directions are available once you are on campus.'**
+  String get mapNavOffCampusOrigin;
+
+  /// Requested destination falls outside the campus extent — defensive, curated places are always inside
+  ///
+  /// In en, this message translates to:
+  /// **'This place isn\'t on the Astronomy Open Night campus map.'**
+  String get mapNavDestinationOffCampus;
+
   /// Retry a failed route fetch
   ///
   /// In en, this message translates to:
@@ -1488,6 +1524,24 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Nothing nearby to point to yet.'**
   String get compassNothingNearby;
+
+  /// Collapsed section heading grouping venues the compass cannot point to
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 place with no confirmed location} other{{count} places with no confirmed location}}'**
+  String compassUnconfirmedHeading(int count);
+
+  /// Explains the unconfirmed group so it does not read as broken
+  ///
+  /// In en, this message translates to:
+  /// **'We don’t have a confirmed position for these, so the compass can’t point to them. Check the printed map or ask at an information point.'**
+  String get compassUnconfirmedBlurb;
+
+  /// Shown when every nearby place lacks a confirmed position
+  ///
+  /// In en, this message translates to:
+  /// **'No confirmed locations to point to from here.'**
+  String get compassNoConfirmedTargets;
 
   /// No description provided for @compassLocationNeeded.
   ///

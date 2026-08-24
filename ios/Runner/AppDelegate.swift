@@ -35,7 +35,18 @@ import GoogleMaps
     channel.setMethodCallHandler { [weak self] call, result in
       switch call.method {
       case "initialize":
-        result(self?.initializeMapsSdk() ?? false)
+        // One-key wiring: Dart passes MAPS_API_KEY (from `.env`) as `apiKey`,
+        // so the SDK can be keyed at consent time without a separate Xcode
+        // build setting. A nil/empty arg falls back to Info.plist GMSApiKey.
+        let key = (call.arguments as? [String: Any])?["apiKey"] as? String
+        result(self?.initializeMapsSdk(overrideKey: key) ?? false)
+      case "getMapsKey":
+        // Configuration READ only — keys nothing, contacts nobody, so it is
+        // safe before consent. Lets Dart detect (and reuse) a well-keyed
+        // platform even when the app was launched without
+        // --dart-define-from-file=.env. The value never leaves the process.
+        let plistKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String
+        result((plistKey ?? "").isEmpty ? nil : plistKey)
       case "openSourceLicenseInfo":
         // Static bundled text, not a network call — safe before consent.
         result(GMSServices.openSourceLicenseInfo())
@@ -45,11 +56,14 @@ import GoogleMaps
     }
   }
 
-  private func initializeMapsSdk() -> Bool {
+  private func initializeMapsSdk(overrideKey: String? = nil) -> Bool {
     if mapsSdkInitialized { return true }
-    guard let key = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String,
-          !key.isEmpty else {
-      return false // built without the secret → feature stays dark
+    // Prefer the Dart-supplied key (single source: MAPS_API_KEY from `.env`);
+    // fall back to the Info.plist GMSApiKey for the old two-file setup.
+    let plistKey = Bundle.main.object(forInfoDictionaryKey: "GMSApiKey") as? String
+    let key = (overrideKey?.isEmpty == false) ? overrideKey : plistKey
+    guard let key = key, !key.isEmpty else {
+      return false // no key anywhere → feature stays dark
     }
     GMSServices.provideAPIKey(key)
     mapsSdkInitialized = true

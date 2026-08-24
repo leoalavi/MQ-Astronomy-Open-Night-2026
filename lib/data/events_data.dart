@@ -119,10 +119,13 @@ abstract final class EventsData {
         // PLACEHOLDER: the programme lists no times. Assumed to run for the
         // full event window.
         EventSession(
+          // The programme prints NO time for this entry. start/end are
+          // bounding stand-ins ONLY (the event window) so lists have something
+          // to lay out; timeUnpublished keeps it off the timeline entirely.
           start: _t(16, 0),
           end: _t(22, 0),
-          timeConfidence: DataConfidence.placeholder,
-          note: 'Times not published — assumed open for the full event.',
+          timing: TimingConfidence.timeUnpublished,
+          note: 'Time not published in the official programme.',
         ),
       ],
     ),
@@ -140,9 +143,10 @@ abstract final class EventsData {
       sourceNote: 'Programme p.2 — "4.15pm start". No finish time published.',
       sessions: [
         EventSession(
+          // Real published START (4.15pm); the end is a bound, not a fact.
           start: _t(16, 15),
           end: _t(22, 0),
-          timeConfidence: DataConfidence.placeholder,
+          timing: TimingConfidence.startOnly,
           note: 'Starts 4.15pm. Finish time not published.',
         ),
       ],
@@ -176,9 +180,10 @@ abstract final class EventsData {
       sourceNote: 'Programme p.2 — "4.15pm start". No finish time published.',
       sessions: [
         EventSession(
+          // Real published START (4.15pm); the end is a bound, not a fact.
           start: _t(16, 15),
           end: _t(22, 0),
-          timeConfidence: DataConfidence.placeholder,
+          timing: TimingConfidence.startOnly,
           note: 'Starts 4.15pm. Finish time not published.',
         ),
       ],
@@ -199,9 +204,10 @@ abstract final class EventsData {
       sourceNote: 'Programme p.2 — "4.15pm start". No finish time published.',
       sessions: [
         EventSession(
+          // Real published START (4.15pm); the end is a bound, not a fact.
           start: _t(16, 15),
           end: _t(22, 0),
-          timeConfidence: DataConfidence.placeholder,
+          timing: TimingConfidence.startOnly,
           note: 'Starts 4.15pm. Finish time not published.',
         ),
       ],
@@ -303,9 +309,11 @@ abstract final class EventsData {
           '4.15pm." No finish time published.',
       sessions: [
         EventSession(
+          // Published start AND repeating cadence; finish not published, so
+          // the end here is a bound rather than a fact.
           start: _t(16, 15),
           end: _t(22, 0),
-          timeConfidence: DataConfidence.placeholder,
+          timing: TimingConfidence.repeating,
           note:
               'Sessions run about every 20 minutes from 4.15pm. Finish time '
               'not published.',
@@ -361,10 +369,13 @@ abstract final class EventsData {
       sourceNote: 'Programme p.2 — no times published for this entry.',
       sessions: [
         EventSession(
+          // The programme prints NO time for this entry. start/end are
+          // bounding stand-ins ONLY (the event window) so lists have something
+          // to lay out; timeUnpublished keeps it off the timeline entirely.
           start: _t(16, 0),
           end: _t(22, 0),
-          timeConfidence: DataConfidence.placeholder,
-          note: 'Times not published — assumed open for the full event.',
+          timing: TimingConfidence.timeUnpublished,
+          note: 'Time not published in the official programme.',
         ),
       ],
     ),
@@ -405,10 +416,11 @@ abstract final class EventsData {
       sourceNote: 'Programme p.2 — no times published for this entry.',
       sessions: [
         EventSession(
+          // No published time — bounding stand-ins only. See above.
           start: _t(16, 0),
           end: _t(22, 0),
-          timeConfidence: DataConfidence.placeholder,
-          note: 'Times not published — assumed available for the full event.',
+          timing: TimingConfidence.timeUnpublished,
+          note: 'Time not published in the official programme.',
         ),
       ],
     ),

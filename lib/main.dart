@@ -20,6 +20,7 @@ import 'package:aon2026/services/passport_store.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/favorites_store.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
+import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 
@@ -98,6 +99,20 @@ Future<void> main() async {
   final (favoritesSnapshot, favoritesStore) = await loadFavorites();
   final (mapsConsentSnapshot, mapsConsentStore) = await loadMapsConsent();
 
+  // ── Google Maps capability, resolved at RUNTIME ───────────────────────────
+  //
+  // `MAPS_API_KEY` is a compile-time define, so an app launched WITHOUT
+  // `--dart-define-from-file=.env` (from Xcode, or a plain `flutter run`) used
+  // to report "Google Maps is not configured yet" even on a perfectly well-keyed
+  // build. The key can legitimately arrive by either route, so ask both: the
+  // Dart define first, then the platform's own configuration (iOS Info.plist
+  // GMSApiKey, Android manifest geo.API_KEY). Reading configuration keys nothing
+  // and contacts nobody, so this is safe before consent.
+  final mapsSdkInitializer = PlatformMapsSdkInitializer(
+    apiKey: const String.fromEnvironment('MAPS_API_KEY'),
+  );
+  final resolvedMapsKey = await mapsSdkInitializer.resolveKey();
+
   runApp(
     ProviderScope(
       overrides: [
@@ -109,7 +124,11 @@ Future<void> main() async {
         mapsConsentStoreProvider.overrideWithValue(mapsConsentStore),
         // Spec §2b: the SDK is keyed on demand, never at launch. The provider
         // short-circuits on consent before this is ever reached.
-        mapsSdkInitializerProvider.overrideWithValue(PlatformMapsSdkInitializer()),
+        mapsSdkInitializerProvider.overrideWithValue(mapsSdkInitializer),
+        // The capability gate and the Routes-key fallback both derive from this
+        // ONE runtime-resolved value, so they can never disagree about whether
+        // this device is keyed.
+        nativeMapsApiKeyProvider.overrideWithValue(resolvedMapsKey),
         localDataEraserProvider.overrideWithValue(SharedPrefsLocalDataEraser(
           prefs: SharedPreferencesAsync(),
           // Same id SharedPrefsFavoritesStore is built with, so the per-event

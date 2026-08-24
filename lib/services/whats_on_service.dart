@@ -9,7 +9,13 @@ enum EventTiming {
   happeningNow('Happening now'),
   startingSoon('Starting soon'),
   upcoming('Later tonight'),
-  finished('Finished');
+  finished('Finished'),
+
+  /// The programme publishes NO time for this activity, so it cannot honestly
+  /// be placed anywhere on the evening's timeline. Distinct from [finished]:
+  /// the activity may well be running — we simply were not told when. It stays
+  /// fully discoverable in the Programme, in its own clearly-labelled group.
+  unscheduled('Time not published');
 
   const EventTiming(this.label);
 
@@ -39,8 +45,12 @@ class TimedEvent {
   /// mixed in with the timed sessions they crowd out the thing a user actually
   /// needs to know — that the keynote starts in twelve minutes. The UI groups
   /// them separately.
+  /// Requires a PUBLISHED end: a session whose finish we invented only looks
+  /// like an all-evening drop-in because of the stand-in time we wrote.
   bool get isAllEvening =>
-      session != null && session!.duration >= const Duration(hours: 4);
+      session != null &&
+      session!.hasPublishedEnd &&
+      session!.duration >= const Duration(hours: 4);
 }
 
 /// Classifies the programme against the current time.
@@ -62,6 +72,17 @@ abstract final class WhatsOnService {
 
   /// Classifies a single event.
   static TimedEvent classify(AonEvent event, DateTime now) {
+    // No published time anywhere → it belongs on no part of the timeline.
+    // Checked FIRST so an unscheduled activity can never be reported as
+    // running, starting soon, or finished, whatever its stand-in times say.
+    if (event.isUnscheduled) {
+      return TimedEvent(
+        event: event,
+        timing: EventTiming.unscheduled,
+        session: event.sessions.first,
+      );
+    }
+
     final running = event.sessionAt(now);
     if (running != null) {
       return TimedEvent(
@@ -108,7 +129,10 @@ abstract final class WhatsOnService {
   ) {
     final result = timed.where((t) => t.timing == timing).toList();
 
-    if (timing == EventTiming.happeningNow) {
+    if (timing == EventTiming.unscheduled) {
+      // No times to sort by — alphabetical is the only honest order.
+      result.sort((a, b) => a.event.title.compareTo(b.event.title));
+    } else if (timing == EventTiming.happeningNow) {
       result.sort((a, b) {
         final byEnd = a.session!.end.compareTo(b.session!.end);
         if (byEnd != 0) return byEnd;

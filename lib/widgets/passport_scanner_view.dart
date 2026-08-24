@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 
 import 'package:aon2026/app/theme/aon_spacing.dart';
@@ -60,7 +62,7 @@ class _PassportScannerViewState extends State<PassportScannerView> {
       return Padding(
         padding: const EdgeInsets.all(AonSpacing.space4),
         child: Text(
-          'Scanning isn\'t available on the web — enter the code below.',
+          AonL10n.of(context).passportScanWebUnavailable,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
       );
@@ -79,7 +81,7 @@ class _PassportScannerViewState extends State<PassportScannerView> {
               return Padding(
                 padding: const EdgeInsets.all(AonSpacing.space4),
                 child: Text(
-                  'Camera unavailable — enter the code from the sign instead.',
+                  AonL10n.of(context).passportScanCameraUnavailable,
                   style: Theme.of(context).textTheme.bodyMedium,
                 ),
               );
@@ -89,7 +91,7 @@ class _PassportScannerViewState extends State<PassportScannerView> {
         TextButton.icon(
           onPressed: () => unawaited(c.toggleTorch()),
           icon: const Icon(Icons.flashlight_on_rounded),
-          label: const Text('Torch'),
+          label: Text(AonL10n.of(context).passportScanTorch),
         ),
       ],
     );

@@ -110,6 +110,7 @@ final placeResolverProvider =
     if (v == null) return const AsyncData(null);
     return AsyncData(ResolvedPlace(
       kind: PlaceKind.venue, placeKey: key, title: v.name, subtitle: v.category.label,
+      venueCategory: v.category,
       renderPoint: placeVenue(v, _proj),
       routingLat: v.routingLatitude, routingLng: v.routingLongitude,
     ));

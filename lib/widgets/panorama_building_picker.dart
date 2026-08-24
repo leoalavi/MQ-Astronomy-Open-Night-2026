@@ -8,11 +8,10 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
-/// Demo-content disclosure for a PLACEHOLDER tour — the imagery is a different
-/// building. Nothing shipped is a placeholder any more (see [PanoramaData]);
-/// this exists so that if one ever returns it cannot pass as the real venue.
-const String kPanoramaDemoFlag = 'Demo 360° — sample imagery, not this venue';
-
+/// Demo-content disclosure for a PLACEHOLDER tour lives in the ARB as
+/// `panoramaDemoFlag` — the imagery is a different building. Nothing shipped is
+/// a placeholder any more (see [PanoramaData]); the string exists so that if one
+/// ever returns it cannot pass as the real venue, in either language.
 /// The 360° building picker: a card per *event* location — the A–I entries of
 /// the official AON program map's legend, in the order the sheet letters them.
 /// Unlettered service points (toilets, first aid, transport) are not offered.
@@ -67,8 +66,8 @@ class _VenueCard extends StatelessWidget {
     final hasTour = tour != null;
     final isDemo = tour?.placeholder ?? false;
     final subtitle = tour == null
-        ? 'Coming soon'
-        : (isDemo ? kPanoramaDemoFlag : l10n.panoramaTapToExplore);
+        ? l10n.panoramaComingSoon
+        : (isDemo ? l10n.panoramaDemoFlag : l10n.panoramaTapToExplore);
     final card = GlassSurface(
       variant: GlassVariant.control,
       borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
@@ -109,11 +108,13 @@ class _VenueCard extends StatelessWidget {
     );
 
     if (onTap == null) {
-      return Semantics(label: '$label, coming soon', child: card);
+      return Semantics(label: l10n.panoramaCardComingSoon(label), child: card);
     }
     return Semantics(
       button: true,
-      label: isDemo ? '$label, demo 360 tour' : '$label, 360 tour',
+      label: isDemo
+          ? l10n.panoramaCardDemoTour(label)
+          : l10n.panoramaCardTour(label),
       child: Material(
         color: Colors.transparent,
         child: InkWell(

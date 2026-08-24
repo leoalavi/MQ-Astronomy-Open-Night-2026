@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/utils/time_format.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
@@ -282,12 +283,12 @@ class _RouteDetail extends StatelessWidget {
                     if (route.walkingMinutes != null)
                       _Stat(
                         icon: Icons.directions_walk_rounded,
-                        value: 'About ${route.walkingMinutes} min',
+                        value: l.wayfindingAboutMinutes(route.walkingMinutes!),
                       ),
                     if (route.distanceMetres != null)
                       _Stat(
                         icon: Icons.straighten_rounded,
-                        value: '~${route.distanceMetres} m',
+                        value: l.wayfindingApproxMetres(route.distanceMetres!),
                       ),
                   ],
                 ),
@@ -390,8 +391,7 @@ class _RouteMapState extends ConsumerState<_RouteMap> {
         if (isDraftGeometry) ...[
           const SizedBox(height: AonSpacing.space2),
           Text(
-            'Straight line shown — this is the general direction, not the '
-            'exact path. Follow the written directions below.',
+            AonL10n.of(context).wayfindingStraightLineNote,
             style: theme.textTheme.bodySmall?.copyWith(
               color: context.aon.contentTertiary,
             ),
@@ -495,7 +495,7 @@ class _StepRow extends StatelessWidget {
               border: Border.all(color: context.aon.borderStrong),
             ),
             child: Text(
-              '$index',
+              TimeFormat.count(index),
               style: theme.textTheme.labelMedium?.copyWith(
                 color: context.aon.accent,
               ),

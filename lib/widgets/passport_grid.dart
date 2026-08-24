@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
@@ -64,6 +66,7 @@ class _Cell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
     final venue = VenuesData.byId(venueId);
     final name = venue?.shortName ?? venue?.name ?? venueId;
 
@@ -103,8 +106,8 @@ class _Cell extends StatelessWidget {
       return Semantics(
         container: true,
         button: true,
-        label: '$name, stamp collected',
-        hint: 'Opens astronomy fact',
+        label: l.passportCellCollected(name),
+        hint: l.passportCellOpensFact,
         child: AonTactileButton(
           onTap: () => onTapCollected!(venueId),
           hapticsEnabled: false,
@@ -117,7 +120,9 @@ class _Cell extends StatelessWidget {
     return Semantics(
       container: true,
       excludeSemantics: true,
-      label: '$name, ${collected ? 'stamp collected' : 'not yet collected'}',
+      label: collected
+          ? l.passportCellCollected(name)
+          : l.passportCellNotCollected(name),
       child: visual,
     );
   }

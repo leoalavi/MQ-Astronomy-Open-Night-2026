@@ -9,6 +9,9 @@ import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/panorama_building_picker.dart';
 
 const String _explore = 'Tap to explore in 360°';
+// The demo disclosure now lives in the ARB (`panoramaDemoFlag`); tests run in
+// English, so assert the English string the same way _explore does.
+const String _demoFlag = 'Demo 360° — sample imagery, not this venue';
 
 void main() {
   // `tours` swaps the shipped tour table — the only way to exercise the
@@ -51,7 +54,7 @@ void main() {
     expect(find.text(_explore), findsNWidgets(6));
     expect(find.text('Coming soon'), findsNWidgets(3));
     // Nothing shipped is sample imagery any more.
-    expect(find.text(kPanoramaDemoFlag), findsNothing);
+    expect(find.text(_demoFlag), findsNothing);
 
     // Nothing auto-opens; tapping a tour card opens that venue.
     expect(opened, isNull);
@@ -76,7 +79,7 @@ void main() {
     );
     await tester.pump();
 
-    expect(find.text(kPanoramaDemoFlag), findsOneWidget);
+    expect(find.text(_demoFlag), findsOneWidget);
     expect(find.text(_explore), findsNothing);
   });
 

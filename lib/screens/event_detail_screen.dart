@@ -76,10 +76,12 @@ class EventDetailScreen extends ConsumerWidget {
                     timing: timed.timing,
                     trailingText: switch (timed.timing) {
                       EventTiming.happeningNow => TimeFormat.remaining(
+                        l,
                         now,
                         timed.session!.end,
-                      ).replaceFirst('ends ', ''),
+                      ),
                       EventTiming.startingSoon => TimeFormat.until(
+                        l,
                         now,
                         timed.session!.start,
                       ),

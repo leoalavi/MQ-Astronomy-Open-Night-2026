@@ -28,7 +28,7 @@ class PanoramaScreen extends ConsumerWidget {
     final l = AonL10n.of(context);
     final tour = PanoramaData.tourFor(venueId);
     final venue = ref.watch(venueByIdProvider(venueId));
-    final title = venue?.name ?? '360° preview';
+    final title = venue?.name ?? l.panorama360Title;
 
     Widget body;
     if (tour == null) {

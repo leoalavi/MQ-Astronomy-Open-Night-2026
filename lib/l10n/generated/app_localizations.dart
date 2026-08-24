@@ -2178,6 +2178,216 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Directions'**
   String get mapDirections;
+
+  /// Venue category: a place where activities run.
+  ///
+  /// In en, this message translates to:
+  /// **'Event venue'**
+  String get venueCatEventVenue;
+
+  /// Venue category: a staffed information point.
+  ///
+  /// In en, this message translates to:
+  /// **'Information point'**
+  String get venueCatInformationPoint;
+
+  /// Venue category: the registration desk.
+  ///
+  /// In en, this message translates to:
+  /// **'Registration'**
+  String get venueCatRegistration;
+
+  /// Venue category: toilets.
+  ///
+  /// In en, this message translates to:
+  /// **'Toilets'**
+  String get venueCatToilets;
+
+  /// Venue category: the first-aid post.
+  ///
+  /// In en, this message translates to:
+  /// **'First aid'**
+  String get venueCatFirstAid;
+
+  /// Venue category: food and drink.
+  ///
+  /// In en, this message translates to:
+  /// **'Food and drink'**
+  String get venueCatFoodAndDrink;
+
+  /// Venue category: a car park.
+  ///
+  /// In en, this message translates to:
+  /// **'Parking'**
+  String get venueCatParking;
+
+  /// Venue category: the Sydney Metro station.
+  ///
+  /// In en, this message translates to:
+  /// **'Metro station'**
+  String get venueCatMetro;
+
+  /// Venue category: an event shuttle stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Shuttle stop'**
+  String get venueCatShuttleStop;
+
+  /// Venue category: a public bus stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Bus stop'**
+  String get venueCatBusStop;
+
+  /// Venue category: anything uncategorised.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get venueCatOther;
+
+  /// Countdown when a session starts within the minute.
+  ///
+  /// In en, this message translates to:
+  /// **'now'**
+  String get timeRelativeNow;
+
+  /// Countdown to a session start, e.g. 'in 12 min'.
+  ///
+  /// In en, this message translates to:
+  /// **'in {duration}'**
+  String timeRelativeIn(String duration);
+
+  /// A session whose end time has passed.
+  ///
+  /// In en, this message translates to:
+  /// **'ended'**
+  String get timeRelativeEnded;
+
+  /// A session with under a minute left.
+  ///
+  /// In en, this message translates to:
+  /// **'ending now'**
+  String get timeRelativeEndingNow;
+
+  /// A whole number of hours, with no minutes remainder.
+  ///
+  /// In en, this message translates to:
+  /// **'{hours} hr'**
+  String timeDurationHours(int hours);
+
+  /// Joins the last item of a list, e.g. 'A, B and C'.
+  ///
+  /// In en, this message translates to:
+  /// **'{items} and {last}'**
+  String listAnd(String items, String last);
+
+  /// Shown when /passport/reward is opened before all stamps are collected.
+  ///
+  /// In en, this message translates to:
+  /// **'Your passport is not complete yet — keep collecting stamps.'**
+  String get passportRewardIncomplete;
+
+  /// App-bar title of the completed passport reward screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Passport complete'**
+  String get passportRewardCompleteTitle;
+
+  /// Celebration headline on the reward screen.
+  ///
+  /// In en, this message translates to:
+  /// **'All {total} stamps collected!'**
+  String passportRewardAllCollected(int total);
+
+  /// Redemption instruction on the reward screen.
+  ///
+  /// In en, this message translates to:
+  /// **'Show this to staff at the prize booth.'**
+  String get passportRewardShowStaff;
+
+  /// Shown instead of the camera on the web build.
+  ///
+  /// In en, this message translates to:
+  /// **'Scanning isn\'t available on the web — enter the code below.'**
+  String get passportScanWebUnavailable;
+
+  /// Shown when the camera cannot start (permission denied or no camera).
+  ///
+  /// In en, this message translates to:
+  /// **'Camera unavailable — enter the code from the sign instead.'**
+  String get passportScanCameraUnavailable;
+
+  /// Button that toggles the camera torch while scanning.
+  ///
+  /// In en, this message translates to:
+  /// **'Torch'**
+  String get passportScanTorch;
+
+  /// Accessible name of a collected passport cell.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, stamp collected'**
+  String passportCellCollected(String name);
+
+  /// Accessible name of an uncollected passport cell.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, not yet collected'**
+  String passportCellNotCollected(String name);
+
+  /// Accessibility hint on a collected, tappable passport cell.
+  ///
+  /// In en, this message translates to:
+  /// **'Opens astronomy fact'**
+  String get passportCellOpensFact;
+
+  /// Confidence note on a placeholder astronomy fact.
+  ///
+  /// In en, this message translates to:
+  /// **'Draft — awaiting review by the astronomy team.'**
+  String get passportFactDraftNote;
+
+  /// Generic button that dismisses a sheet or dialog.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get actionClose;
+
+  /// Subtitle of a picker card for a venue with no 360° imagery yet.
+  ///
+  /// In en, this message translates to:
+  /// **'Coming soon'**
+  String get panoramaComingSoon;
+
+  /// Disclosure shown on a placeholder tour so sample imagery cannot pass as the real venue.
+  ///
+  /// In en, this message translates to:
+  /// **'Demo 360° — sample imagery, not this venue'**
+  String get panoramaDemoFlag;
+
+  /// Shown when the 360° viewer cannot load.
+  ///
+  /// In en, this message translates to:
+  /// **'360° preview unavailable'**
+  String get panoramaPreviewUnavailable;
+
+  /// Accessible name of a picker card with no tour.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, coming soon'**
+  String panoramaCardComingSoon(String name);
+
+  /// Accessible name of a picker card with a real tour.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, 360 tour'**
+  String panoramaCardTour(String name);
+
+  /// Accessible name of a picker card with a placeholder tour.
+  ///
+  /// In en, this message translates to:
+  /// **'{name}, demo 360 tour'**
+  String panoramaCardDemoTour(String name);
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

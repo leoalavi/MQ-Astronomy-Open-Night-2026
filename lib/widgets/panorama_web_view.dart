@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
@@ -28,7 +30,7 @@ class PanoramaUnavailable extends StatelessWidget {
                 size: AonSpacing.iconLg, color: context.aon.contentTertiary),
             const SizedBox(height: AonSpacing.space3),
             Text(
-              '360° preview unavailable',
+              AonL10n.of(context).panoramaPreviewUnavailable,
               textAlign: TextAlign.center,
               style: Theme.of(context)
                   .textTheme

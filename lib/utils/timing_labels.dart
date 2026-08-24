@@ -1,6 +1,8 @@
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/event_phase.dart';
 import 'package:aon2026/models/event.dart';
+import 'package:aon2026/models/search_entry.dart';
+import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/event_filter.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 
@@ -70,4 +72,42 @@ extension TimeBandL10n on TimeBand {
         TimeBand.evening => l.bandEvening,
         TimeBand.lateEvening => l.bandLateEvening,
       };
+}
+
+/// Localised names for the venue categories.
+///
+/// [VenueCategory.label] stays English for diagnostics; this is what the
+/// visitor hears. Without it a Persian map announced every marker as
+/// "Event venue" through the screen reader, and the campus search sheet
+/// subtitled Persian results in English.
+extension VenueCategoryL10n on VenueCategory {
+  String labelOf(AonL10n l) => switch (this) {
+        VenueCategory.eventVenue => l.venueCatEventVenue,
+        VenueCategory.informationPoint => l.venueCatInformationPoint,
+        VenueCategory.registration => l.venueCatRegistration,
+        VenueCategory.toilets => l.venueCatToilets,
+        VenueCategory.firstAid => l.venueCatFirstAid,
+        VenueCategory.foodAndDrink => l.venueCatFoodAndDrink,
+        VenueCategory.parking => l.venueCatParking,
+        VenueCategory.metro => l.venueCatMetro,
+        VenueCategory.shuttleStop => l.venueCatShuttleStop,
+        VenueCategory.busStop => l.venueCatBusStop,
+        VenueCategory.other => l.venueCatOther,
+      };
+}
+
+/// Localised subtitles for search results and resolved places.
+///
+/// A [SearchEntry] carries no pre-rendered subtitle: the venue category is
+/// resolved here, in the visitor's language. [ResolvedPlace.subtitle] stays
+/// English for the non-venue kinds that have no category to re-resolve.
+extension SearchEntryL10n on SearchEntry {
+  String? subtitleOf(AonL10n l) => switch (this) {
+        VenueEntry(:final venue) => venue.category.labelOf(l),
+        BuildingEntry(:final building) => building.code,
+      };
+}
+
+extension ResolvedPlaceL10n on ResolvedPlace {
+  String? subtitleOf(AonL10n l) => venueCategory?.labelOf(l) ?? subtitle;
 }

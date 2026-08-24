@@ -75,7 +75,7 @@ class ActivityRailCard extends ConsumerWidget {
                       alignment: Alignment.centerLeft,
                       child: TimingBadge(
                         timing: timed.timing,
-                        trailingText: _countdown(),
+                        trailingText: _countdown(l),
                         maxWidth: contentWidth,
                       ),
                     ),
@@ -147,15 +147,12 @@ class ActivityRailCard extends ConsumerWidget {
     );
   }
 
-  String? _countdown() {
+  String? _countdown(AonL10n l) {
     final session = timed.session;
     if (session == null) return null;
     return switch (timed.timing) {
-      EventTiming.happeningNow => TimeFormat.remaining(
-        now,
-        session.end,
-      ).replaceFirst('ends ', ''),
-      EventTiming.startingSoon => TimeFormat.until(now, session.start),
+      EventTiming.happeningNow => TimeFormat.remaining(l, now, session.end),
+      EventTiming.startingSoon => TimeFormat.until(l, now, session.start),
       EventTiming.upcoming => TimeFormat.time(session.start),
       EventTiming.finished => null,
     };

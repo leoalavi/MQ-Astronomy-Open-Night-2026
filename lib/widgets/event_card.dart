@@ -111,7 +111,7 @@ class EventCard extends ConsumerWidget {
                       if (timing != null)
                         TimingBadge(
                           timing: timing!,
-                          trailingText: _countdown(),
+                          trailingText: _countdown(l),
                         ),
                     ],
                   ),
@@ -191,17 +191,14 @@ class EventCard extends ConsumerWidget {
     );
   }
 
-  String? _countdown() {
+  String? _countdown(AonL10n l) {
     if (now == null || timing == null) return null;
     final session = event.sessionAt(now!) ?? event.nextSessionAfter(now!);
     if (session == null) return null;
 
     return switch (timing!) {
-      EventTiming.happeningNow => TimeFormat.remaining(
-        now!,
-        session.end,
-      ).replaceFirst('ends ', ''),
-      EventTiming.startingSoon => TimeFormat.until(now!, session.start),
+      EventTiming.happeningNow => TimeFormat.remaining(l, now!, session.end),
+      EventTiming.startingSoon => TimeFormat.until(l, now!, session.start),
       EventTiming.upcoming => TimeFormat.time(session.start),
       EventTiming.finished => null,
     };

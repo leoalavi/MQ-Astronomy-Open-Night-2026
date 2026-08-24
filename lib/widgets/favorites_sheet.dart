@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/services/favorites_providers.dart';
@@ -77,7 +78,9 @@ class _FavoriteRow extends ConsumerWidget {
               subtitle: place.renderPoint == null
                   ? Text(l.mapPlaceListOnly,
                       style: TextStyle(color: context.aon.contentTertiary))
-                  : (place.subtitle == null ? null : Text(place.subtitle!)),
+                  : (place.subtitleOf(l) == null
+                      ? null
+                      : Text(place.subtitleOf(l)!)),
               trailing: FavoriteToggleTrailing(placeKey: placeKey),
               onTap: () => Navigator.of(context).pop(placeKey),
             ),

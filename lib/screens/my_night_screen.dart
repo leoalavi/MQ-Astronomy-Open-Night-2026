@@ -204,10 +204,12 @@ class _ItineraryCard extends ConsumerWidget {
                     timing: entry.timing,
                     trailingText: switch (entry.timing) {
                       EventTiming.happeningNow => TimeFormat.remaining(
+                        l,
                         now,
                         entry.session.end,
-                      ).replaceFirst('ends ', ''),
+                      ),
                       EventTiming.startingSoon => TimeFormat.until(
+                        l,
                         now,
                         entry.session.start,
                       ),
@@ -347,7 +349,7 @@ class _ConflictNote extends StatelessWidget {
     final theme = Theme.of(context);
     final list = titles.length == 1
         ? titles.single
-        : '${titles.take(titles.length - 1).join(', ')} and ${titles.last}';
+        : l.listAnd(titles.take(titles.length - 1).join(', '), titles.last);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,

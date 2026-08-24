@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart' show normalizeBearing;
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/services/compass_controller.dart';
 import 'package:aon2026/services/heading_service.dart';
 import 'package:aon2026/services/nearby_targets.dart';
@@ -166,7 +167,7 @@ class _Blip extends StatelessWidget {
         decoration: const BoxDecoration(color: _ink, shape: BoxShape.circle),
         child: cluster.count > 1
             ? Center(
-                child: Text('${cluster.count}',
+                child: Text(TimeFormat.count(cluster.count),
                     style: const TextStyle(color: _bg, fontSize: 11, fontWeight: FontWeight.bold)))
             : const SizedBox.shrink(),
       );

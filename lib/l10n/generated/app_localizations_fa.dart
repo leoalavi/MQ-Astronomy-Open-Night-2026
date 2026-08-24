@@ -43,10 +43,14 @@ class AonL10nFa extends AonL10n {
 
   @override
   String myNightSavedCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count فعالیت ذخیره شد',
+      other: '$countString فعالیت ذخیره شد',
       one: '۱ فعالیت ذخیره شد',
     );
     return '$_temp0';
@@ -54,7 +58,14 @@ class AonL10nFa extends AonL10n {
 
   @override
   String myNightSessionOf(int index, int total) {
-    return 'سانس $index از $total';
+    final intl.NumberFormat indexNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String indexString = indexNumberFormat.format(index);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'سانس $indexString از $totalString';
   }
 
   @override
@@ -103,7 +114,11 @@ class AonL10nFa extends AonL10n {
 
   @override
   String timingStartingWithin(int minutes) {
-    return 'در $minutes دقیقهٔ آینده';
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    return 'در $minutesString دقیقهٔ آینده';
   }
 
   @override
@@ -440,7 +455,11 @@ class AonL10nFa extends AonL10n {
 
   @override
   String settingsTextSizeBody(int percent) {
-    return 'این برنامه از اندازهٔ متن دستگاه شما تا $percent٪ پیروی می‌کند و همهٔ صفحه‌ها در آن اندازه آزموده شده‌اند. آن را در تنظیمات نمایش یا دسترس‌پذیری گوشی تغییر دهید.';
+    final intl.NumberFormat percentNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String percentString = percentNumberFormat.format(percent);
+
+    return 'این برنامه از اندازهٔ متن دستگاه شما تا $percentString٪ پیروی می‌کند و همهٔ صفحه‌ها در آن اندازه آزموده شده‌اند. آن را در تنظیمات نمایش یا دسترس‌پذیری گوشی تغییر دهید.';
   }
 
   @override
@@ -535,12 +554,20 @@ class AonL10nFa extends AonL10n {
 
   @override
   String wayfindingAboutMinutes(int minutes) {
-    return 'حدود $minutes دقیقه';
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    return 'حدود $minutesString دقیقه';
   }
 
   @override
   String wayfindingApproxMetres(int metres) {
-    return '~$metres متر';
+    final intl.NumberFormat metresNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String metresString = metresNumberFormat.format(metres);
+
+    return '~$metresString متر';
   }
 
   @override
@@ -581,7 +608,11 @@ class AonL10nFa extends AonL10n {
 
   @override
   String pointMeDistanceMeters(int meters) {
-    return '$meters متر';
+    final intl.NumberFormat metersNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String metersString = metersNumberFormat.format(meters);
+
+    return '$metersString متر';
   }
 
   @override
@@ -674,7 +705,11 @@ class AonL10nFa extends AonL10n {
 
   @override
   String mapNavDistanceMeters(int meters) {
-    return '$meters متر';
+    final intl.NumberFormat metersNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String metersString = metersNumberFormat.format(meters);
+
+    return '$metersString متر';
   }
 
   @override
@@ -684,12 +719,25 @@ class AonL10nFa extends AonL10n {
 
   @override
   String mapNavEtaMin(int mins) {
-    return '$mins دقیقه';
+    final intl.NumberFormat minsNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String minsString = minsNumberFormat.format(mins);
+
+    return '$minsString دقیقه';
   }
 
   @override
   String mapNavEtaHourMin(int hours, int mins) {
-    return '$hours ساعت $mins دقیقه';
+    final intl.NumberFormat hoursNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String hoursString = hoursNumberFormat.format(hours);
+    final intl.NumberFormat minsNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String minsString = minsNumberFormat.format(mins);
+
+    return '$hoursString ساعت $minsString دقیقه';
   }
 
   @override
@@ -1150,7 +1198,14 @@ class AonL10nFa extends AonL10n {
 
   @override
   String passportProgress(int count, int total) {
-    return '$count / $total مهر';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return '$countString / $totalString مهر';
   }
 
   @override
@@ -1227,4 +1282,140 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get mapDirections => 'مسیریابی';
+
+  @override
+  String get venueCatEventVenue => 'محل برنامه';
+
+  @override
+  String get venueCatInformationPoint => 'باجهٔ اطلاعات';
+
+  @override
+  String get venueCatRegistration => 'پذیرش';
+
+  @override
+  String get venueCatToilets => 'سرویس بهداشتی';
+
+  @override
+  String get venueCatFirstAid => 'کمک‌های اولیه';
+
+  @override
+  String get venueCatFoodAndDrink => 'خوراکی و نوشیدنی';
+
+  @override
+  String get venueCatParking => 'پارکینگ';
+
+  @override
+  String get venueCatMetro => 'ایستگاه مترو';
+
+  @override
+  String get venueCatShuttleStop => 'ایستگاه شاتل';
+
+  @override
+  String get venueCatBusStop => 'ایستگاه اتوبوس';
+
+  @override
+  String get venueCatOther => 'دیگر';
+
+  @override
+  String get timeRelativeNow => 'همین حالا';
+
+  @override
+  String timeRelativeIn(String duration) {
+    return '$duration دیگر';
+  }
+
+  @override
+  String get timeRelativeEnded => 'پایان یافت';
+
+  @override
+  String get timeRelativeEndingNow => 'در حال پایان';
+
+  @override
+  String timeDurationHours(int hours) {
+    final intl.NumberFormat hoursNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String hoursString = hoursNumberFormat.format(hours);
+
+    return '$hoursString ساعت';
+  }
+
+  @override
+  String listAnd(String items, String last) {
+    return '$items و $last';
+  }
+
+  @override
+  String get passportRewardIncomplete =>
+      'پاسپورت شما هنوز کامل نشده است — به جمع‌کردن مهرها ادامه دهید.';
+
+  @override
+  String get passportRewardCompleteTitle => 'پاسپورت کامل شد';
+
+  @override
+  String passportRewardAllCollected(int total) {
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'همهٔ $totalString مهر جمع شد!';
+  }
+
+  @override
+  String get passportRewardShowStaff =>
+      'این را به کارکنان باجهٔ جایزه نشان دهید.';
+
+  @override
+  String get passportScanWebUnavailable =>
+      'اسکن در نسخهٔ وب در دسترس نیست — کد را در پایین وارد کنید.';
+
+  @override
+  String get passportScanCameraUnavailable =>
+      'دوربین در دسترس نیست — به‌جای آن کد روی تابلو را وارد کنید.';
+
+  @override
+  String get passportScanTorch => 'چراغ‌قوه';
+
+  @override
+  String passportCellCollected(String name) {
+    return '$name، مهر گرفته شد';
+  }
+
+  @override
+  String passportCellNotCollected(String name) {
+    return '$name، هنوز گرفته نشده';
+  }
+
+  @override
+  String get passportCellOpensFact => 'نکتهٔ نجومی را باز می‌کند';
+
+  @override
+  String get passportFactDraftNote => 'پیش‌نویس — در انتظار بازبینی تیم نجوم.';
+
+  @override
+  String get actionClose => 'بستن';
+
+  @override
+  String get panoramaComingSoon => 'به‌زودی';
+
+  @override
+  String get panoramaDemoFlag =>
+      'نمونهٔ ۳۶۰ درجه — تصویر نمونه است، نه این مکان';
+
+  @override
+  String get panoramaPreviewUnavailable => 'پیش‌نمای ۳۶۰ درجه در دسترس نیست';
+
+  @override
+  String panoramaCardComingSoon(String name) {
+    return '$name، به‌زودی';
+  }
+
+  @override
+  String panoramaCardTour(String name) {
+    return '$name، تور ۳۶۰ درجه';
+  }
+
+  @override
+  String panoramaCardDemoTour(String name) {
+    return '$name، تور نمونهٔ ۳۶۰ درجه';
+  }
 }

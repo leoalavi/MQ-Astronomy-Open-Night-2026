@@ -44,7 +44,8 @@
   "@myNightSavedCount": {
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -53,10 +54,12 @@
     "description": "Shown when one activity runs more than once",
     "placeholders": {
       "index": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       },
       "total": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -95,7 +98,8 @@
   "@timingStartingWithin": {
     "placeholders": {
       "minutes": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -310,7 +314,8 @@
   "@settingsTextSizeBody": {
     "placeholders": {
       "percent": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -355,7 +360,8 @@
   "@wayfindingAboutMinutes": {
     "placeholders": {
       "minutes": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -363,7 +369,8 @@
   "@wayfindingApproxMetres": {
     "placeholders": {
       "metres": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -417,7 +424,8 @@
   "@pointMeDistanceMeters": {
     "placeholders": {
       "meters": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -516,7 +524,8 @@
     "description": "Route distance under 1 km",
     "placeholders": {
       "meters": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -534,7 +543,8 @@
     "description": "Walking ETA under an hour",
     "placeholders": {
       "mins": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -543,10 +553,12 @@
     "description": "Walking ETA an hour or more",
     "placeholders": {
       "hours": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       },
       "mins": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -973,10 +985,12 @@
     "description": "Passport progress line.",
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       },
       "total": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },
@@ -1071,5 +1085,195 @@
   "mapDirections": "Directions",
   "@mapDirections": {
     "description": "Primary button that opens Google Maps walking directions to a place."
+  },
+  "venueCatEventVenue": "Event venue",
+  "@venueCatEventVenue": {
+    "description": "Venue category: a place where activities run."
+  },
+  "venueCatInformationPoint": "Information point",
+  "@venueCatInformationPoint": {
+    "description": "Venue category: a staffed information point."
+  },
+  "venueCatRegistration": "Registration",
+  "@venueCatRegistration": {
+    "description": "Venue category: the registration desk."
+  },
+  "venueCatToilets": "Toilets",
+  "@venueCatToilets": {
+    "description": "Venue category: toilets."
+  },
+  "venueCatFirstAid": "First aid",
+  "@venueCatFirstAid": {
+    "description": "Venue category: the first-aid post."
+  },
+  "venueCatFoodAndDrink": "Food and drink",
+  "@venueCatFoodAndDrink": {
+    "description": "Venue category: food and drink."
+  },
+  "venueCatParking": "Parking",
+  "@venueCatParking": {
+    "description": "Venue category: a car park."
+  },
+  "venueCatMetro": "Metro station",
+  "@venueCatMetro": {
+    "description": "Venue category: the Sydney Metro station."
+  },
+  "venueCatShuttleStop": "Shuttle stop",
+  "@venueCatShuttleStop": {
+    "description": "Venue category: an event shuttle stop."
+  },
+  "venueCatBusStop": "Bus stop",
+  "@venueCatBusStop": {
+    "description": "Venue category: a public bus stop."
+  },
+  "venueCatOther": "Other",
+  "@venueCatOther": {
+    "description": "Venue category: anything uncategorised."
+  },
+  "timeRelativeNow": "now",
+  "@timeRelativeNow": {
+    "description": "Countdown when a session starts within the minute."
+  },
+  "timeRelativeIn": "in {duration}",
+  "@timeRelativeIn": {
+    "description": "Countdown to a session start, e.g. 'in 12 min'.",
+    "placeholders": {
+          "duration": {
+                "type": "String"
+          }
+    }
+  },
+  "timeRelativeEnded": "ended",
+  "@timeRelativeEnded": {
+    "description": "A session whose end time has passed."
+  },
+  "timeRelativeEndingNow": "ending now",
+  "@timeRelativeEndingNow": {
+    "description": "A session with under a minute left."
+  },
+  "timeDurationHours": "{hours} hr",
+  "@timeDurationHours": {
+    "description": "A whole number of hours, with no minutes remainder.",
+    "placeholders": {
+          "hours": {
+                "type": "int",
+                "format": "decimalPattern"
+          }
+    }
+  },
+  "listAnd": "{items} and {last}",
+  "@listAnd": {
+    "description": "Joins the last item of a list, e.g. 'A, B and C'.",
+    "placeholders": {
+          "items": {
+                "type": "String"
+          },
+          "last": {
+                "type": "String"
+          }
+    }
+  },
+  "passportRewardIncomplete": "Your passport is not complete yet — keep collecting stamps.",
+  "@passportRewardIncomplete": {
+    "description": "Shown when /passport/reward is opened before all stamps are collected."
+  },
+  "passportRewardCompleteTitle": "Passport complete",
+  "@passportRewardCompleteTitle": {
+    "description": "App-bar title of the completed passport reward screen."
+  },
+  "passportRewardAllCollected": "All {total} stamps collected!",
+  "@passportRewardAllCollected": {
+    "description": "Celebration headline on the reward screen.",
+    "placeholders": {
+          "total": {
+                "type": "int",
+                "format": "decimalPattern"
+          }
+    }
+  },
+  "passportRewardShowStaff": "Show this to staff at the prize booth.",
+  "@passportRewardShowStaff": {
+    "description": "Redemption instruction on the reward screen."
+  },
+  "passportScanWebUnavailable": "Scanning isn't available on the web — enter the code below.",
+  "@passportScanWebUnavailable": {
+    "description": "Shown instead of the camera on the web build."
+  },
+  "passportScanCameraUnavailable": "Camera unavailable — enter the code from the sign instead.",
+  "@passportScanCameraUnavailable": {
+    "description": "Shown when the camera cannot start (permission denied or no camera)."
+  },
+  "passportScanTorch": "Torch",
+  "@passportScanTorch": {
+    "description": "Button that toggles the camera torch while scanning."
+  },
+  "passportCellCollected": "{name}, stamp collected",
+  "@passportCellCollected": {
+    "description": "Accessible name of a collected passport cell.",
+    "placeholders": {
+          "name": {
+                "type": "String"
+          }
+    }
+  },
+  "passportCellNotCollected": "{name}, not yet collected",
+  "@passportCellNotCollected": {
+    "description": "Accessible name of an uncollected passport cell.",
+    "placeholders": {
+          "name": {
+                "type": "String"
+          }
+    }
+  },
+  "passportCellOpensFact": "Opens astronomy fact",
+  "@passportCellOpensFact": {
+    "description": "Accessibility hint on a collected, tappable passport cell."
+  },
+  "passportFactDraftNote": "Draft — awaiting review by the astronomy team.",
+  "@passportFactDraftNote": {
+    "description": "Confidence note on a placeholder astronomy fact."
+  },
+  "actionClose": "Close",
+  "@actionClose": {
+    "description": "Generic button that dismisses a sheet or dialog."
+  },
+  "panoramaComingSoon": "Coming soon",
+  "@panoramaComingSoon": {
+    "description": "Subtitle of a picker card for a venue with no 360° imagery yet."
+  },
+  "panoramaDemoFlag": "Demo 360° — sample imagery, not this venue",
+  "@panoramaDemoFlag": {
+    "description": "Disclosure shown on a placeholder tour so sample imagery cannot pass as the real venue."
+  },
+  "panoramaPreviewUnavailable": "360° preview unavailable",
+  "@panoramaPreviewUnavailable": {
+    "description": "Shown when the 360° viewer cannot load."
+  },
+  "panoramaCardComingSoon": "{name}, coming soon",
+  "@panoramaCardComingSoon": {
+    "description": "Accessible name of a picker card with no tour.",
+    "placeholders": {
+          "name": {
+                "type": "String"
+          }
+    }
+  },
+  "panoramaCardTour": "{name}, 360 tour",
+  "@panoramaCardTour": {
+    "description": "Accessible name of a picker card with a real tour.",
+    "placeholders": {
+          "name": {
+                "type": "String"
+          }
+    }
+  },
+  "panoramaCardDemoTour": "{name}, demo 360 tour",
+  "@panoramaCardDemoTour": {
+    "description": "Accessible name of a picker card with a placeholder tour.",
+    "placeholders": {
+          "name": {
+                "type": "String"
+          }
+    }
   }
 }

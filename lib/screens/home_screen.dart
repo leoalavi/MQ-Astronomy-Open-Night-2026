@@ -576,10 +576,12 @@ class _NextUpCard extends ConsumerWidget {
                       timing: entry.timing,
                       trailingText: switch (entry.timing) {
                         EventTiming.happeningNow => TimeFormat.remaining(
+                          l,
                           now,
                           entry.session.end,
-                        ).replaceFirst('ends ', ''),
+                        ),
                         EventTiming.startingSoon => TimeFormat.until(
+                          l,
                           now,
                           entry.session.start,
                         ),

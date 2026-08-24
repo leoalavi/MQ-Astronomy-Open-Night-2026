@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/search_entry.dart';
@@ -110,6 +111,7 @@ class _CampusSearchSheetState extends ConsumerState<CampusSearchSheet> {
                     // A place with no map coordinate is list-only: say so and use
                     // a location-off icon rather than a normal pin (map audit P2).
                     final placeable = isPlaceableOnMap(e);
+                    final sub = e.subtitleOf(l);
                     return ListTile(
                       leading: Icon(!placeable
                           ? Icons.location_off_rounded
@@ -120,7 +122,7 @@ class _CampusSearchSheetState extends ConsumerState<CampusSearchSheet> {
                       subtitle: !placeable
                           ? Text(l.mapPlaceListOnly,
                               style: TextStyle(color: context.aon.contentTertiary))
-                          : (e.subtitle == null ? null : Text(e.subtitle!)),
+                          : (sub == null ? null : Text(sub)),
                       onTap: () => Navigator.of(context).pop(e.placeKey),
                     );
                   },

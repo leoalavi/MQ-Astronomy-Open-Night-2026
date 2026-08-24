@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
@@ -40,6 +42,7 @@ class MapControlIsland extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l = AonL10n.of(context);
     return GlassSurface(
       variant: GlassVariant.control,
       borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
@@ -47,9 +50,9 @@ class MapControlIsland extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _button(context, Icons.add_rounded, 'Zoom in', onZoomIn),
+          _button(context, Icons.add_rounded, l.mapZoomIn, onZoomIn),
           _divider(),
-          _button(context, Icons.remove_rounded, 'Zoom out', onZoomOut),
+          _button(context, Icons.remove_rounded, l.mapZoomOut, onZoomOut),
           _divider(),
           locateButton,
         ],

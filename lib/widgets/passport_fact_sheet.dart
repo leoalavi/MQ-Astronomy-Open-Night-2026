@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:flutter/material.dart';
 
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
 import 'package:aon2026/app/theme/aon_animations.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
@@ -48,6 +50,7 @@ class PassportFactSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
     final p = resolveFactPresentation(fact, isRelease: isRelease);
     final showFallback = p.body == FactBody.fallback;
     final title = showFallback ? factFallbackTitle : fact.title;
@@ -97,7 +100,7 @@ class PassportFactSheet extends StatelessWidget {
               // ConfidenceNote (which renders only for placeholder) shows here.
               ConfidenceNote(
                 confidence: fact.confidence,
-                message: 'Draft — awaiting review by the astronomy team.',
+                message: l.passportFactDraftNote,
               ),
             ],
             const SizedBox(height: AonSpacing.space5),
@@ -105,7 +108,7 @@ class PassportFactSheet extends StatelessWidget {
               alignment: Alignment.centerRight,
               child: TextButton(
                 onPressed: () => Navigator.of(context).maybePop(),
-                child: const Text('Close'),
+                child: Text(l.actionClose),
               ),
             ),
           ],

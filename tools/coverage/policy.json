@@ -12,7 +12,7 @@
     "gate fails if a debt entry has been paid off but left in place, so the",
     "list cannot rot."
   ],
-  "minimum_total_pct": 88.2,
+  "minimum_total_pct": 90.4,
   "per_file_minimum_pct": 80.0,
   "platform_exempt": {
     "lib/services/location_service.dart": "geolocator platform channel; permission + GPS stream only exist on a device",
@@ -24,7 +24,6 @@
     "lib/main.dart": "runApp bootstrap: startup snapshot loads and ProviderScope wiring that a test replaces rather than executes"
   },
   "debt": {
-    "lib/screens/wayfinding_screen.dart": 39.4,
     "lib/services/maps_nav_providers.dart": 78.7,
     "lib/widgets/building_sheet.dart": 79.3,
     "lib/widgets/glass_surface.dart": 61.3,

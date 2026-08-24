@@ -1,5 +1,7 @@
 import 'package:intl/intl.dart';
 
+import 'package:aon2026/l10n/generated/app_localizations.dart';
+
 import 'package:aon2026/models/event.dart';
 
 /// Time and date formatting.
@@ -71,30 +73,39 @@ abstract final class TimeFormat {
     return sorted.map(session).join(', ');
   }
 
-  /// A short relative countdown: 'in 12 min', 'in 1 hr 5 min', 'now'.
+  /// A bare duration: '12 min', '1 hr', '1 hr 5 min'.
   ///
-  /// Deliberately caps at hours — the event is six hours long, so "in 2 days"
+  /// Deliberately caps at hours — the event is six hours long, so "2 days"
   /// can never be a useful string here, and rounding to the nearest minute is
-  /// the resolution people can act on.
-  static String until(DateTime from, DateTime to) {
-    final d = to.difference(from);
-    if (d.isNegative || d.inMinutes < 1) return 'now';
-    if (d.inMinutes < 60) return 'in ${d.inMinutes} min';
+  /// the resolution people can act on. Shares the walking-ETA wording so a
+  /// duration reads the same everywhere in the app.
+  static String duration(AonL10n l, Duration d) {
+    final minutes = d.inMinutes;
+    if (minutes < 60) return l.mapNavEtaMin(minutes);
     final hours = d.inHours;
-    final minutes = d.inMinutes % 60;
-    if (minutes == 0) return 'in $hours hr';
-    return 'in $hours hr $minutes min';
+    final rest = minutes % 60;
+    if (rest == 0) return l.timeDurationHours(hours);
+    return l.mapNavEtaHourMin(hours, rest);
   }
 
-  /// How long is left of a running session: 'ends in 12 min'.
-  static String remaining(DateTime now, DateTime end) {
+  /// A short relative countdown: 'in 12 min', 'in 1 hr 5 min', 'now'.
+  static String until(AonL10n l, DateTime from, DateTime to) {
+    final d = to.difference(from);
+    if (d.isNegative || d.inMinutes < 1) return l.timeRelativeNow;
+    return l.timeRelativeIn(duration(l, d));
+  }
+
+  /// How long is left of a running session: 'in 12 min', 'ending now',
+  /// 'ended'.
+  ///
+  /// Returns the countdown WITHOUT an "ends" prefix. Callers used to build the
+  /// full sentence and then `replaceFirst('ends ', '')` it back off for the
+  /// badge — string surgery that only ever worked in English, and silently
+  /// left the whole sentence in a Persian badge.
+  static String remaining(AonL10n l, DateTime now, DateTime end) {
     final d = end.difference(now);
-    if (d.isNegative) return 'ended';
-    if (d.inMinutes < 1) return 'ending now';
-    if (d.inMinutes < 60) return 'ends in ${d.inMinutes} min';
-    final hours = d.inHours;
-    final minutes = d.inMinutes % 60;
-    if (minutes == 0) return 'ends in $hours hr';
-    return 'ends in $hours hr $minutes min';
+    if (d.isNegative) return l.timeRelativeEnded;
+    if (d.inMinutes < 1) return l.timeRelativeEndingNow;
+    return l.timeRelativeIn(duration(l, d));
   }
 }

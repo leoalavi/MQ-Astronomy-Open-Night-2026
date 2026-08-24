@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'dart:async';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -129,12 +130,12 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               child: _MarkerPin(
                 icon: Icons.local_parking_rounded,
                 color: context.aon.mapParking,
-                semanticLabel: '${p.name}. Parking.',
+                semanticLabel: '${p.name}. ${l.venueCatParking}.',
                 onTap: () => _showParkingSheet(p.id),
               ),
             ),
       for (final v in visibleVenues)
-        if (_venueMarker(v, selectedKey) case final Marker m) m,
+        if (_venueMarker(v, selectedKey, l) case final Marker m) m,
     ];
 
     // G8: transient marker for a selected BUILDING (buildings aren't on the
@@ -373,7 +374,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     );
   }
 
-  Marker? _venueMarker(Venue v, String? selectedKey) {
+  Marker? _venueMarker(Venue v, String? selectedKey, AonL10n l) {
     // G14: linked venues place pixel-exact; unlinked keep GPS-affine — via the
     // single shared placement helper (also used by placeResolver).
     final pt = placeVenue(v, _proj);
@@ -390,7 +391,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         icon: VenueStyle.iconFor(v.category),
         color: VenueStyle.colorFor(context, v.category),
         label: v.mapReference,
-        semanticLabel: '${v.name}. ${v.category.label}.',
+        semanticLabel: '${v.name}. ${v.category.labelOf(l)}.',
         onTap: () => _showVenueSheet(v.id),
         selected: selected,
       ),
@@ -728,7 +729,7 @@ class VenueSheet extends ConsumerWidget {
 
           if (events.isNotEmpty) ...[
             const SizedBox(height: AonSpacing.space5),
-            Text('On here tonight', style: theme.textTheme.titleMedium),
+            Text(l.mapOnHereTonight, style: theme.textTheme.titleMedium),
             const SizedBox(height: AonSpacing.space2),
             for (final e in events)
               ListTile(
@@ -791,7 +792,7 @@ class ParkingSheet extends ConsumerWidget {
               if (parking.isFree) ...[
                 const SizedBox(height: AonSpacing.space2),
                 Text(
-                  'Free event parking',
+                  l.infoParkingFree,
                   style: theme.textTheme.bodyMedium
                       ?.copyWith(color: context.aon.live),
                 ),

@@ -10,7 +10,6 @@ enum PlaceKind { venue, building }
 sealed class SearchEntry {
   String get placeKey;
   String get title;
-  String? get subtitle;
   PlaceKind get kind;
 }
 
@@ -23,8 +22,6 @@ class VenueEntry extends SearchEntry {
   @override
   String get title => venue.name;
   @override
-  String? get subtitle => venue.category.label;
-  @override
   PlaceKind get kind => PlaceKind.venue;
 }
 
@@ -35,8 +32,6 @@ class BuildingEntry extends SearchEntry {
   String get placeKey => 'building:${building.id}';
   @override
   String get title => building.name;
-  @override
-  String? get subtitle => building.code;
   @override
   PlaceKind get kind => PlaceKind.building;
 }
@@ -53,11 +48,19 @@ class ResolvedPlace {
     required this.renderPoint,
     required this.routingLat,
     required this.routingLng,
+    this.venueCategory,
   });
   final PlaceKind kind;
   final String placeKey;
   final String title;
+
+  /// English, for ranking and diagnostics. What the visitor reads comes from
+  /// `ResolvedPlaceL10n.subtitleOf` — see `utils/timing_labels.dart`.
   final String? subtitle;
+
+  /// Set for a venue, so the subtitle can be re-resolved in the visitor's
+  /// language rather than shipped pre-rendered in English.
+  final VenueCategory? venueCategory;
   final CampusMapPoint? renderPoint;
   final double? routingLat, routingLng;
 }

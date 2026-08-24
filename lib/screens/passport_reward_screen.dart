@@ -7,7 +7,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/data/event_info.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/passport_providers.dart';
+import 'package:aon2026/services/stamp_service.dart';
 import 'package:aon2026/utils/time_format.dart';
 
 /// Completion screen — GUARDED: redemption shows only when the passport is
@@ -48,16 +50,17 @@ class _RewardState extends ConsumerState<PassportRewardScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AonL10n.of(context);
     final complete = ref.watch(passportProvider).isComplete;
 
     if (!complete) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Astronomy Passport')),
+        appBar: AppBar(title: Text(l.passportTitle)),
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(AonSpacing.space5),
             child: Text(
-              'Your passport is not complete yet — keep collecting stamps.',
+              l.passportRewardIncomplete,
               style: theme.textTheme.titleMedium,
               textAlign: TextAlign.center,
             ),
@@ -71,7 +74,7 @@ class _RewardState extends ConsumerState<PassportRewardScreen> {
     final reduceMotion = MediaQuery.disableAnimationsOf(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Passport complete')),
+      appBar: AppBar(title: Text(l.passportRewardCompleteTitle)),
       body: Stack(
         alignment: Alignment.topCenter,
         children: [
@@ -88,7 +91,9 @@ class _RewardState extends ConsumerState<PassportRewardScreen> {
                   ),
                   const SizedBox(height: AonSpacing.space4),
                   Text(
-                    'All 9 stamps collected!',
+                    l.passportRewardAllCollected(
+                      PassportPolicy.stationCount,
+                    ),
                     style: theme.textTheme.headlineSmall,
                     textAlign: TextAlign.center,
                   ),
@@ -105,7 +110,7 @@ class _RewardState extends ConsumerState<PassportRewardScreen> {
                   ),
                   const SizedBox(height: AonSpacing.space4),
                   Text(
-                    'Show this to staff at the prize booth.',
+                    l.passportRewardShowStaff,
                     style: theme.textTheme.bodyLarge,
                     textAlign: TextAlign.center,
                   ),

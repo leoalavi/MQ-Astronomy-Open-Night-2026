@@ -43,10 +43,14 @@ class AonL10nEn extends AonL10n {
 
   @override
   String myNightSavedCount(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count activities saved',
+      other: '$countString activities saved',
       one: '1 activity saved',
     );
     return '$_temp0';
@@ -54,7 +58,14 @@ class AonL10nEn extends AonL10n {
 
   @override
   String myNightSessionOf(int index, int total) {
-    return 'Session $index of $total';
+    final intl.NumberFormat indexNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String indexString = indexNumberFormat.format(index);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'Session $indexString of $totalString';
   }
 
   @override
@@ -103,7 +114,11 @@ class AonL10nEn extends AonL10n {
 
   @override
   String timingStartingWithin(int minutes) {
-    return 'In the next $minutes minutes';
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    return 'In the next $minutesString minutes';
   }
 
   @override
@@ -440,7 +455,11 @@ class AonL10nEn extends AonL10n {
 
   @override
   String settingsTextSizeBody(int percent) {
-    return 'This app follows your device text size, up to $percent% — every screen is tested at that size. Change it in your phone’s display or accessibility settings.';
+    final intl.NumberFormat percentNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String percentString = percentNumberFormat.format(percent);
+
+    return 'This app follows your device text size, up to $percentString% — every screen is tested at that size. Change it in your phone’s display or accessibility settings.';
   }
 
   @override
@@ -535,12 +554,20 @@ class AonL10nEn extends AonL10n {
 
   @override
   String wayfindingAboutMinutes(int minutes) {
-    return 'About $minutes min';
+    final intl.NumberFormat minutesNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String minutesString = minutesNumberFormat.format(minutes);
+
+    return 'About $minutesString min';
   }
 
   @override
   String wayfindingApproxMetres(int metres) {
-    return '~$metres m';
+    final intl.NumberFormat metresNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String metresString = metresNumberFormat.format(metres);
+
+    return '~$metresString m';
   }
 
   @override
@@ -581,7 +608,11 @@ class AonL10nEn extends AonL10n {
 
   @override
   String pointMeDistanceMeters(int meters) {
-    return '$meters m';
+    final intl.NumberFormat metersNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String metersString = metersNumberFormat.format(meters);
+
+    return '$metersString m';
   }
 
   @override
@@ -673,7 +704,11 @@ class AonL10nEn extends AonL10n {
 
   @override
   String mapNavDistanceMeters(int meters) {
-    return '$meters m';
+    final intl.NumberFormat metersNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String metersString = metersNumberFormat.format(meters);
+
+    return '$metersString m';
   }
 
   @override
@@ -683,12 +718,25 @@ class AonL10nEn extends AonL10n {
 
   @override
   String mapNavEtaMin(int mins) {
-    return '$mins min';
+    final intl.NumberFormat minsNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String minsString = minsNumberFormat.format(mins);
+
+    return '$minsString min';
   }
 
   @override
   String mapNavEtaHourMin(int hours, int mins) {
-    return '$hours hr $mins min';
+    final intl.NumberFormat hoursNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String hoursString = hoursNumberFormat.format(hours);
+    final intl.NumberFormat minsNumberFormat = intl.NumberFormat.decimalPattern(
+      localeName,
+    );
+    final String minsString = minsNumberFormat.format(mins);
+
+    return '$hoursString hr $minsString min';
   }
 
   @override
@@ -1144,7 +1192,14 @@ class AonL10nEn extends AonL10n {
 
   @override
   String passportProgress(int count, int total) {
-    return '$count / $total stamps';
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return '$countString / $totalString stamps';
   }
 
   @override
@@ -1220,4 +1275,140 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get mapDirections => 'Directions';
+
+  @override
+  String get venueCatEventVenue => 'Event venue';
+
+  @override
+  String get venueCatInformationPoint => 'Information point';
+
+  @override
+  String get venueCatRegistration => 'Registration';
+
+  @override
+  String get venueCatToilets => 'Toilets';
+
+  @override
+  String get venueCatFirstAid => 'First aid';
+
+  @override
+  String get venueCatFoodAndDrink => 'Food and drink';
+
+  @override
+  String get venueCatParking => 'Parking';
+
+  @override
+  String get venueCatMetro => 'Metro station';
+
+  @override
+  String get venueCatShuttleStop => 'Shuttle stop';
+
+  @override
+  String get venueCatBusStop => 'Bus stop';
+
+  @override
+  String get venueCatOther => 'Other';
+
+  @override
+  String get timeRelativeNow => 'now';
+
+  @override
+  String timeRelativeIn(String duration) {
+    return 'in $duration';
+  }
+
+  @override
+  String get timeRelativeEnded => 'ended';
+
+  @override
+  String get timeRelativeEndingNow => 'ending now';
+
+  @override
+  String timeDurationHours(int hours) {
+    final intl.NumberFormat hoursNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String hoursString = hoursNumberFormat.format(hours);
+
+    return '$hoursString hr';
+  }
+
+  @override
+  String listAnd(String items, String last) {
+    return '$items and $last';
+  }
+
+  @override
+  String get passportRewardIncomplete =>
+      'Your passport is not complete yet — keep collecting stamps.';
+
+  @override
+  String get passportRewardCompleteTitle => 'Passport complete';
+
+  @override
+  String passportRewardAllCollected(int total) {
+    final intl.NumberFormat totalNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String totalString = totalNumberFormat.format(total);
+
+    return 'All $totalString stamps collected!';
+  }
+
+  @override
+  String get passportRewardShowStaff =>
+      'Show this to staff at the prize booth.';
+
+  @override
+  String get passportScanWebUnavailable =>
+      'Scanning isn\'t available on the web — enter the code below.';
+
+  @override
+  String get passportScanCameraUnavailable =>
+      'Camera unavailable — enter the code from the sign instead.';
+
+  @override
+  String get passportScanTorch => 'Torch';
+
+  @override
+  String passportCellCollected(String name) {
+    return '$name, stamp collected';
+  }
+
+  @override
+  String passportCellNotCollected(String name) {
+    return '$name, not yet collected';
+  }
+
+  @override
+  String get passportCellOpensFact => 'Opens astronomy fact';
+
+  @override
+  String get passportFactDraftNote =>
+      'Draft — awaiting review by the astronomy team.';
+
+  @override
+  String get actionClose => 'Close';
+
+  @override
+  String get panoramaComingSoon => 'Coming soon';
+
+  @override
+  String get panoramaDemoFlag => 'Demo 360° — sample imagery, not this venue';
+
+  @override
+  String get panoramaPreviewUnavailable => '360° preview unavailable';
+
+  @override
+  String panoramaCardComingSoon(String name) {
+    return '$name, coming soon';
+  }
+
+  @override
+  String panoramaCardTour(String name) {
+    return '$name, 360 tour';
+  }
+
+  @override
+  String panoramaCardDemoTour(String name) {
+    return '$name, demo 360 tour';
+  }
 }

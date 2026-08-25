@@ -188,7 +188,12 @@ class NavOriginUnavailable extends NavOrigin {
 /// cannot silently generate a kilometres-long walk-in route. Overridable in
 /// tests.
 final navOriginProvider = FutureProvider.autoDispose<NavOrigin>((ref) async {
-  final svc = ref.watch(locationServiceProvider);
+  // The EFFECTIVE service, not the raw one: preview mode (§3c) substitutes a
+  // simulated on-campus fix, and nav origin must honour it exactly as the map
+  // dot and compass do — otherwise a tester far from campus is blocked here
+  // even with preview on. The map/compass already read the effective service
+  // via LocationController; this was the one surface that bypassed it.
+  final svc = ref.watch(effectiveLocationServiceProvider);
   var status = await svc.status();
   if (status != LocationStatus.granted) {
     status = await svc.request();

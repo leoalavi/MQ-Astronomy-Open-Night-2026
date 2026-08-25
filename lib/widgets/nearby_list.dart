@@ -10,6 +10,7 @@ import 'package:aon2026/services/nav_format.dart';
 import 'package:aon2026/services/nearby_targets.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/bearing_math.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 
 /// The canonical accessible interaction for the compass (§0R-9): distance-sorted
 /// rows (56px, semantic buttons) plus disabled "location unknown" rows for
@@ -44,6 +45,12 @@ class NearbyList extends ConsumerWidget {
     }
 
     return ListView(
+      // The compass runs under the floating glass tab bar (shell `extendBody`),
+      // so reserve the same clearance every other scroll body does — otherwise
+      // the last rows and the collapsed "location unknown" section hide behind
+      // the island. Already includes the home-indicator inset, so this list is
+      // NOT additionally wrapped in a bottom SafeArea (that would double it).
+      padding: EdgeInsets.only(bottom: AonNavMetrics.clearance(context)),
       children: [
         // Confirmed, pointable targets first and unadorned — these are what the
         // compass is for.

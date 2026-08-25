@@ -11,6 +11,7 @@ import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
+import 'package:aon2026/widgets/map_config.dart';
 
 /// What a Quick Access shortcut opens.
 ///
@@ -64,8 +65,9 @@ class VenueInfoSheet extends ConsumerWidget {
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.6,
-      maxChildSize: 0.92,
+      initialChildSize: MapConfig.venueSheetInitialExtent,
+      minChildSize: MapConfig.venueSheetMinExtent,
+      maxChildSize: MapConfig.venueSheetMaxExtent,
       builder: (context, controller) => ListView(
         controller: controller,
         padding: const EdgeInsets.fromLTRB(

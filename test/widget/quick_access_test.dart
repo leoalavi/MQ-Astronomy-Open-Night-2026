@@ -123,6 +123,10 @@ void main() {
 
     testWidgets('the sheet still offers the map as a fallback', (tester) async {
       await openQuickAccess(tester, 'Toilets');
+      // The sheet opens compact (map stays visible) so the action sits below
+      // the fold — scroll to it, exactly as the sibling checks do for
+      // Directions. Reachable, not removed.
+      await scrollInSheet(tester, find.text('Show on map'));
       expect(find.text('Show on map'), findsOneWidget);
     });
 

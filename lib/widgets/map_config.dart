@@ -144,6 +144,15 @@ abstract final class MapConfig {
   /// enough to read the surrounding buildings, still well inside [mapMaxZoom].
   static const double mapFocusZoom = -4;
 
+  /// The place sheet (marker tap / "Show on map") opens at this fraction of the
+  /// screen height. Deliberately COMPACT so the map the visitor just asked to
+  /// see is not buried: it opened at 0.55–0.6 and covered most of the screen.
+  /// The sheet still drags up to [venueSheetMaxExtent] for full detail and
+  /// never shrinks below [venueSheetMinExtent].
+  static const double venueSheetInitialExtent = 0.35;
+  static const double venueSheetMinExtent = 0.25;
+  static const double venueSheetMaxExtent = 0.9;
+
   /// Gestures allowed on the illustrated campus map.
   ///
   /// ROTATION IS DELIBERATELY ABSENT. `InteractiveFlag.all` — flutter_map's

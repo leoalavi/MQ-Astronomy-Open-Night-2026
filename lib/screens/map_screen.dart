@@ -65,7 +65,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   static const CampusProjection _proj = CampusProjection();
 
   /// The focus request already handled, so a rebuild (filter toggle, location
-  /// tick, keyboard) does not re-open the sheet under the visitor.
+  /// tick, keyboard) does not re-open the sheet under the visitor. Reset once
+  /// the focus is consumed (see [_maybeHandleFocus]) so a repeat "Show on map"
+  /// for the SAME place fires again rather than being swallowed by the latch.
   String? _handledFocus;
 
   @override
@@ -93,6 +95,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Focus is a campus-map concept; a pending 360°/compass mode would hide it.
       if (_mode != MapMode.campusMap) setState(() => _mode = MapMode.campusMap);
       _onPlaceSelected(key, zoom: MapConfig.mapFocusZoom);
+      // Consume the focus. The Map tab is kept alive by the StatefulShellRoute
+      // indexedStack, so without this a repeat "Show on map" for the SAME place
+      // is inert: go_router sees an identical `/map?focus=X` location (no
+      // rebuild) and the latch would block it anyway. Reset the latch AND strip
+      // `?focus=` by REPLACEMENT — not a push, so no phantom history entry —
+      // so the next tap is a genuine navigation change that fires afresh.
+      _handledFocus = null;
+      context.replace(Routes.map);
     });
   }
 
@@ -685,8 +695,9 @@ class VenueSheet extends ConsumerWidget {
 
     return DraggableScrollableSheet(
       expand: false,
-      initialChildSize: 0.55,
-      maxChildSize: 0.9,
+      initialChildSize: MapConfig.venueSheetInitialExtent,
+      minChildSize: MapConfig.venueSheetMinExtent,
+      maxChildSize: MapConfig.venueSheetMaxExtent,
       builder: (context, scrollController) => ListView(
         controller: scrollController,
         padding: const EdgeInsets.fromLTRB(

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>com.apple.security.app-sandbox</key>
+	<true/>
+	<key>com.apple.security.cs.allow-jit</key>
+	<true/>
+	<!-- network.server: hot-reload/observatory in debug, AND the panorama's
+	     InAppLocalhostServer which binds a loopback HTTP server. -->
+	<key>com.apple.security.network.server</key>
+	<true/>
+	<!-- network.client: the InAppWebView connects to that loopback server, and
+	     the Google Routes request (when consented + keyed) goes out over HTTPS. -->
+	<key>com.apple.security.network.client</key>
+	<true/>
+	<!-- Location: geolocator campus positioning (map dot + point-me). -->
+	<key>com.apple.security.personal-information.location</key>
+	<true/>
+	<!-- Camera: mobile_scanner reads the Astronomy Passport QR codes. -->
+	<key>com.apple.security.device.camera</key>
+	<true/>
+</dict>
+</plist>

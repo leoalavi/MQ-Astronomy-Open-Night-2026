@@ -144,7 +144,68 @@ void main() {
       // Pinned deliberately: these were tuned against the CrsSimple math and
       // on-device screenshots. Changing them must be a conscious act.
       expect(MapConfig.mapMinZoom, -7);
-      expect(MapConfig.mapMaxZoom, -2);
+      expect(MapConfig.mapMaxZoom, closeTo(-2.75, 1e-9));
+    });
+  });
+
+  // Strict scale guard (Pouya + Raouf): the zoom-OUT floor now COVERS the box
+  // (fills the screen, no black bands — long edges crop and pan into view),
+  // and the zoom-IN cap is the raster's native 1:1 (the old -2 upscaled and
+  // blurred the printed labels). Max is a device-independent constant; the
+  // cover floor is per-viewport, computed by [MapConfig.minZoomForViewport] and
+  // wired into the map as MapOptions.minZoom (see map_platform_wiring_test).
+  group('strict zoom scale', () {
+    final bounds = MapConfig.aonMapBounds;
+    MapCamera camAt(double zoom, Size size) => MapCamera(
+          crs: const CrsSimple(),
+          center: LatLng((bounds.south + bounds.north) / 2,
+              (bounds.west + bounds.east) / 2),
+          zoom: zoom,
+          rotation: 0,
+          nonRotatedSize: size,
+          size: size,
+        );
+    // Projected artwork size (px) at a given zoom — independent of MapConfig's
+    // 256·2^z shortcut, so this cross-checks it.
+    (double, double) artworkPx(double zoom, Size size) {
+      final cam = camAt(zoom, size);
+      final ne = cam.projectAtZoom(bounds.northEast, zoom);
+      final sw = cam.projectAtZoom(bounds.southWest, zoom);
+      return ((ne.dx - sw.dx).abs(), (ne.dy - sw.dy).abs());
+    }
+
+    test('the floor COVERS the whole box (fills the screen, minimal zoom)', () {
+      for (final s in const [Size(320, 568), Size(390, 844), Size(768, 1024)]) {
+        final (w, h) = artworkPx(MapConfig.minZoomForViewport(s), s);
+        expect(w, greaterThanOrEqualTo(s.width - 0.5),
+            reason: 'width not covered at $s');
+        expect(h, greaterThanOrEqualTo(s.height - 0.5),
+            reason: 'height not covered at $s');
+        // Minimal cover: exactly the binding axis is filled to the edge.
+        final wTight = (w - s.width).abs() < 0.5;
+        final hTight = (h - s.height).abs() < 0.5;
+        expect(wTight || hTight, isTrue,
+            reason: 'not the MINIMAL covering zoom at $s');
+      }
+    });
+
+    test('cover is at least as zoomed-in as containing the whole map', () {
+      double log2(double x) => math.log(x) / math.ln2;
+      final wUnits = (bounds.east - bounds.west).abs();
+      final hUnits = (bounds.north - bounds.south).abs();
+      for (final s in const [Size(390, 844), Size(768, 1024)]) {
+        final contain = math.min(
+            log2(s.width / (wUnits * 256)), log2(s.height / (hUnits * 256)));
+        expect(MapConfig.minZoomForViewport(s), greaterThanOrEqualTo(contain),
+            reason: 'cover must not be MORE zoomed-out than contain');
+      }
+    });
+
+    test('max caps at the crisp 1:1 raster, not the pixelated -2', () {
+      expect(MapConfig.mapMaxZoom, lessThan(-2),
+          reason: 'the old -2 upscaled the 4680px artwork and blurred labels');
+      // ~1:1 for the AON render (~4680 px over ~123 map-units).
+      expect(MapConfig.mapMaxZoom, closeTo(-2.75, 0.1));
     });
   });
 }

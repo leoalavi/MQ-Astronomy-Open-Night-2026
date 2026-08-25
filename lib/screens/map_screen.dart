@@ -238,65 +238,79 @@ class _MapScreenState extends ConsumerState<MapScreen> {
           Expanded(
             child: Stack(
               children: [
-                FlutterMap(
-                  mapController: _controller,
-                  options: MapOptions(
-                    // CrsSimple illustrated campus basemap (Map Parity M1).
-                    // initialCameraFit is authoritative — it takes precedence
-                    // over initialCenter/initialZoom, so those are dropped.
-                    crs: const CrsSimple(),
-                    initialCameraFit: CameraFit.bounds(
-                      bounds: MapConfig.aonMapBounds,
-                      padding: const EdgeInsets.all(12),
-                      minZoom: MapConfig.mapMinZoom,
-                      maxZoom: MapConfig.mapMaxZoom,
-                    ),
-                    // initialCameraFit runs before the map is laid out (size 0),
-                    // so it under-fits and the map opens zoomed-in. Re-fit once
-                    // the real viewport exists (Map Parity M1, on-device fix).
-                    onMapReady: () => _controller.fitCamera(
-                      CameraFit.bounds(
-                        bounds: MapConfig.aonMapBounds,
-                        padding: const EdgeInsets.all(12),
-                        minZoom: MapConfig.mapMinZoom,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    // STRICT zoom-OUT floor for THIS viewport (Pouya): the map
+                    // can never shrink below COVERING its box (fills the screen,
+                    // long edges crop — Raouf's choice over black letterbox
+                    // bands). Wired as flutter_map's native, idempotent
+                    // MapOptions.minZoom — a zoom-clamping CameraConstraint breaks
+                    // its option-change invariant. Clamped to the absolute
+                    // [mapMinZoom, mapMaxZoom] range so minZoom <= maxZoom holds.
+                    final minZoom = MapConfig
+                        .minZoomForViewport(constraints.biggest)
+                        .clamp(MapConfig.mapMinZoom, MapConfig.mapMaxZoom);
+                    return FlutterMap(
+                      mapController: _controller,
+                      options: MapOptions(
+                        // CrsSimple illustrated campus basemap (Map Parity M1).
+                        // initialCameraFit is authoritative — it takes precedence
+                        // over initialCenter/initialZoom, so those are dropped.
+                        crs: const CrsSimple(),
+                        initialCameraFit: CameraFit.bounds(
+                          bounds: MapConfig.aonMapBounds,
+                          padding: MapConfig.mapFitPadding,
+                          minZoom: minZoom,
+                          maxZoom: MapConfig.mapMaxZoom,
+                        ),
+                        // initialCameraFit runs before the map is laid out (size
+                        // 0), so it under-fits and the map opens zoomed-in. Re-fit
+                        // once the real viewport exists (Map Parity M1).
+                        onMapReady: () => _controller.fitCamera(
+                          CameraFit.bounds(
+                            bounds: MapConfig.aonMapBounds,
+                            padding: MapConfig.mapFitPadding,
+                            minZoom: minZoom,
+                            maxZoom: MapConfig.mapMaxZoom,
+                          ),
+                        ),
+                        minZoom: minZoom,
                         maxZoom: MapConfig.mapMaxZoom,
+                        // North-up only: the official artwork is unreadable rotated.
+                        interactionOptions: const InteractionOptions(
+                          flags: MapConfig.mapInteractiveFlags,
+                        ),
+                        // Per-axis contain-or-centre: the artwork can never be
+                        // dragged off into empty background, and it stays centred
+                        // at zoom levels where it is smaller than the viewport.
+                        cameraConstraint: ContainOrCentreCamera(
+                          bounds: MapConfig.aonMapBounds,
+                        ),
+                        backgroundColor: context.aon.surfaceBase,
+                        // A deliberate user pan exits follow but keeps the dot; a
+                        // programmatic follow-move fires with hasGesture:false, so
+                        // it does not self-cancel follow (Phase A §5.7).
+                        onPositionChanged: (camera, hasGesture) {
+                          if (hasGesture) {
+                            ref
+                                .read(locationControllerProvider.notifier)
+                                .onUserPan();
+                          }
+                        },
                       ),
-                    ),
-                    minZoom: MapConfig.mapMinZoom,
-                    maxZoom: MapConfig.mapMaxZoom,
-                    // North-up only: the official artwork is unreadable rotated.
-                    interactionOptions: const InteractionOptions(
-                      flags: MapConfig.mapInteractiveFlags,
-                    ),
-                    // Per-axis contain-or-centre: the artwork can never be
-                    // dragged off into empty background, and it stays centred at
-                    // zoom levels where it is smaller than the viewport.
-                    cameraConstraint: ContainOrCentreCamera(
-                      bounds: MapConfig.aonMapBounds,
-                    ),
-                    backgroundColor: context.aon.surfaceBase,
-                    // A deliberate user pan exits follow but keeps the dot; a
-                    // programmatic follow-move fires this with hasGesture:false,
-                    // so it does not self-cancel follow (Phase A §5.7).
-                    onPositionChanged: (camera, hasGesture) {
-                      if (hasGesture) {
-                        ref
-                            .read(locationControllerProvider.notifier)
-                            .onUserPan();
-                      }
-                    },
-                  ),
-                  children: [
-                    const CampusBasemapLayer(),
-                    // Accuracy circle UNDER the venue pins; dot ON TOP (§5.5).
-                    if (loc.active && projected != null)
-                      UserLocationCircle(center: projected, fix: fix!),
-                    MarkerLayer(markers: markers),
-                    if (selectedBuildingMarker != null)
-                      MarkerLayer(markers: [selectedBuildingMarker]),
-                    if (loc.active && projected != null)
-                      UserLocationDot(center: projected),
-                  ],
+                      children: [
+                        const CampusBasemapLayer(),
+                        // Accuracy circle UNDER the venue pins; dot ON TOP (§5.5).
+                        if (loc.active && projected != null)
+                          UserLocationCircle(center: projected, fix: fix!),
+                        MarkerLayer(markers: markers),
+                        if (selectedBuildingMarker != null)
+                          MarkerLayer(markers: [selectedBuildingMarker]),
+                        if (loc.active && projected != null)
+                          UserLocationDot(center: projected),
+                      ],
+                    );
+                  },
                 ),
                 // One status note: off-campus takes priority over low-accuracy.
                 if (loc.active && loc.fix != null)

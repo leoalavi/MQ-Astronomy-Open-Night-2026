@@ -1,7 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart' show immutable;
-import 'package:flutter/rendering.dart' show Offset;
+import 'package:flutter/rendering.dart' show EdgeInsets, Offset, Size;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -35,6 +35,8 @@ import 'package:aon2026/services/campus_projection.dart';
 ///
 /// Taking `min`/`max` of the pair handles both cases in one expression. It never
 /// returns null, so a gesture is always answered.
+double _log2(double x) => math.log(x) / math.ln2;
+
 @immutable
 class ContainOrCentreCamera extends CameraConstraint {
   const ContainOrCentreCamera({required this.bounds});
@@ -133,12 +135,49 @@ abstract final class MapConfig {
   //   minZoom -7  : just below the tightest phone fit, so the opening fit never
   //                 clamps, yet the furthest zoom-out still shows the whole map
   //                 large and readable — not the tiny thumbnail -8 allowed.
-  //   maxZoom -2  : just inside the 1:1 raster limit, so the closest zoom-in
-  //                 keeps labels legible without the heavy pixelation +1 gave.
+  //   maxZoom -2.75: the raster's native 1:1. 256·2^z screen-px per map-unit
+  //                 equals the artwork's ~38 px per map-unit (≈4680 px over
+  //                 ~123 map-units) at z ≈ -2.72..-2.75; zooming in past it only
+  //                 UPSCALES and blurs the printed labels (the old -2 did this,
+  //                 reported by Pouya). This is the strict zoom-IN guard.
   // Tuned against the CrsSimple math above and the on-device screenshots; the
   // initial fit (≈ -6.3) sits comfortably inside the range so it is authoritative.
+  // The strict zoom-OUT guard is NOT mapMinZoom (a fixed number can't equal the
+  // per-viewport fit) — it is the fit-floor enforced in [ContainOrCentreCamera].
+  // mapMinZoom stays as a low safety net below every device's fit.
   static const double mapMinZoom = -7;
-  static const double mapMaxZoom = -2;
+  static const double mapMaxZoom = -2.75;
+
+  /// Padding used by BOTH the opening camera fit and the strict zoom-out floor,
+  /// so "the whole map fits" means the same thing in both places. One source of
+  /// truth — a mismatch would let the floor sit just above or below the opening
+  /// view and fight the first pinch.
+  static const EdgeInsets mapFitPadding = EdgeInsets.all(12);
+
+  /// The zoom at which the artwork COVERS [viewport] — fills it completely with
+  /// no empty bands — the STRICT zoom-OUT floor, wired into the map as
+  /// `MapOptions.minZoom`.
+  ///
+  /// The campus artwork is wide and short while a phone is tall, so a "contain"
+  /// fit (whole map visible) leaves black bands above and below it. Raouf chose
+  /// to FILL the screen instead: at the most zoomed-out the map covers the whole
+  /// box, and its long edges crop off-screen (pan to reach them). It is
+  /// viewport-dependent, so computed rather than pinned to a number that would
+  /// be wrong on some screens.
+  ///
+  /// CrsSimple shows 256·2^zoom screen-px per map-unit, so covering an axis
+  /// needs `log2(viewportPx / (artworkMapUnits · 256))`; covering BOTH axes
+  /// takes the LARGER (max) of the two.
+  static double minZoomForViewport(Size viewport) {
+    final w = math.max(1.0, viewport.width);
+    final h = math.max(1.0, viewport.height);
+    final wUnits = (aonMapBounds.east - aonMapBounds.west).abs();
+    final hUnits = (aonMapBounds.north - aonMapBounds.south).abs();
+    return math.max(
+      _log2(w / (wUnits * 256)),
+      _log2(h / (hUnits * 256)),
+    );
+  }
 
   /// Zoom used when another screen focuses one place ("Show on map"). Close
   /// enough to read the surrounding buildings, still well inside [mapMaxZoom].

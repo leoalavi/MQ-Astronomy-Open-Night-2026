@@ -185,4 +185,21 @@ void main() {
       expect(t.takeException(), isNull);
     }
   });
+
+  testWidgets('minZoom is the dynamic fit-floor for the map box, not a static '
+      'number (strict zoom-out guard)', (t) async {
+    final svc = FakeLocationService();
+    final c = mapContainer(svc);
+    await t.pumpWidget(_app(c));
+    await t.pump();
+
+    final map = t.widget<FlutterMap>(find.byType(FlutterMap));
+    final box = t.getSize(find.byType(FlutterMap));
+    // The floor is computed from the ACTUAL map box, so the artwork can never
+    // shrink below COVERING it (no black bands; Pouya's "tiny floating card").
+    expect(map.options.minZoom, closeTo(MapConfig.minZoomForViewport(box), 1e-6),
+        reason: 'zoom-out floor must cover the real map box');
+    // And the strict zoom-in cap is the crisp 1:1 raster.
+    expect(map.options.maxZoom, closeTo(MapConfig.mapMaxZoom, 1e-9));
+  });
 }

@@ -71,23 +71,36 @@ void main() {
     });
   });
 
-  group('at the very start (4:00pm)', () {
-    test('sessions starting exactly now are happening now, not up next', () {
+  group('at doors open (4:00pm)', () {
+    test('nothing is happening yet — the first activity is 4.15pm', () {
+      // No activity publishes a 4pm start. The untimed drop-ins carry a 4pm
+      // stand-in only and are never reported as running, so the opening state
+      // is honestly empty until 4.15pm.
       final container = at(EventInfo.at(16, 0));
-      final now = EventInfo.at(16, 0);
+      expect(container.read(happeningNowProvider), isEmpty,
+          reason: 'no activity has a published 4pm start');
+    });
+  });
+
+  group('at the first activity (4:15pm)', () {
+    test('sessions starting exactly now are happening now, not up next', () {
+      final container = at(EventInfo.at(16, 15));
+      final now = EventInfo.at(16, 15);
 
       final happening = container.read(happeningNowProvider);
       final happeningIds = happening.map((t) => t.event.id).toSet();
       expect(happening, isNotEmpty);
 
-      // Every 4pm-start session is live (start == now, half-open includes it)…
-      final startingAtOpen = EventsData.all.where(
-        (e) => e.sessions.any((s) => s.start == now),
+      // Every published-start 4.15pm session is live (start == now, half-open
+      // includes it). Unscheduled drop-ins carry a 4pm stand-in only and must
+      // NOT appear here.
+      final startingNow = EventsData.all.where(
+        (e) => !e.isUnscheduled && e.sessions.any((s) => s.start == now),
       );
-      expect(startingAtOpen, isNotEmpty);
-      for (final e in startingAtOpen) {
+      expect(startingNow, isNotEmpty);
+      for (final e in startingNow) {
         expect(happeningIds, contains(e.id),
-            reason: '${e.id} starts at 4pm and must be "happening now"');
+            reason: '${e.id} starts at 4.15pm and must be "happening now"');
       }
 
       // …and NONE of them are also in up next.

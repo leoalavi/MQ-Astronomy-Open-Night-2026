@@ -729,7 +729,8 @@
     "description": "Collapsed section heading grouping venues the compass cannot point to",
     "placeholders": {
       "count": {
-        "type": "int"
+        "type": "int",
+        "format": "decimalPattern"
       }
     }
   },

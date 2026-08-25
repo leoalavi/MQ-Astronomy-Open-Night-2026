@@ -898,10 +898,14 @@ class AonL10nFa extends AonL10n {
 
   @override
   String compassUnconfirmedHeading(int count) {
+    final intl.NumberFormat countNumberFormat =
+        intl.NumberFormat.decimalPattern(localeName);
+    final String countString = countNumberFormat.format(count);
+
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
-      other: '$count مکان بدون موقعیت تأییدشده',
+      other: '$countString مکان بدون موقعیت تأییدشده',
       one: '۱ مکان بدون موقعیت تأییدشده',
     );
     return '$_temp0';

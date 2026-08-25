@@ -205,18 +205,53 @@ void main() {
       expect(running, isEmpty);
     });
 
-    test('everything is finished after the event closes', () {
+    test('after close, every timed event is finished and nothing is still live',
+        () {
       final classified = WhatsOnService.classifyAll(EventsData.all, at(23, 0));
 
-      expect(classified.every((t) => t.timing == EventTiming.finished), isTrue);
+      // Activities with no published time never "finish" — claiming they ended
+      // would be as much an invention as claiming they started. They stay in
+      // their own unscheduled bucket. Everything with a published time is
+      // finished after close.
+      for (final t in classified) {
+        if (t.event.isUnscheduled) {
+          expect(t.timing, EventTiming.unscheduled,
+              reason: '${t.event.id} has no published time');
+        } else {
+          expect(t.timing, EventTiming.finished,
+              reason: '${t.event.id} has a published time and must read '
+                  'finished after the event closes');
+        }
+      }
     });
 
-    test('something is on at every half hour of the event', () {
-      // A smoke test over the whole evening. If any half-hour slot has
-      // nothing running, either the data is wrong or the programme genuinely
-      // has a gap worth telling the organisers about.
+    test('at 4:00pm doors are open but the first scheduled activity is 4.15pm',
+        () {
+      // The honest opening state: no activity publishes a 4pm start, and the
+      // untimed drop-ins carry a 4pm stand-in only, so they are never reported
+      // as running. The 4.15pm activities are about to begin.
+      final classified = WhatsOnService.classifyAll(EventsData.all, at(16, 0));
+      expect(
+        WhatsOnService.inBucket(classified, EventTiming.happeningNow),
+        isEmpty,
+        reason: 'nothing has a published start at exactly 4pm',
+      );
+      expect(
+        WhatsOnService.inBucket(classified, EventTiming.startingSoon),
+        isNotEmpty,
+        reason: 'the 4.15pm activities are starting soon at 4pm',
+      );
+    });
+
+    test('something is on at every half hour once the programme has started',
+        () {
+      // A smoke test over the evening. 4:00pm is a deliberate 15-minute gap
+      // (doors open before the 4.15pm start), so it is excluded. From 4:30pm
+      // on, if any half-hour slot has nothing running, either the data is wrong
+      // or the programme has a real gap worth telling the organisers about.
       for (var h = 16; h < 22; h++) {
         for (final m in [0, 30]) {
+          if (h == 16 && m == 0) continue; // doors-open gap before 4.15pm
           final classified = WhatsOnService.classifyAll(
             EventsData.all,
             at(h, m),

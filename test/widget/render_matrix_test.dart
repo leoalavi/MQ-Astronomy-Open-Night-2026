@@ -17,7 +17,6 @@ import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/screens/settings_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/widgets/empty_state.dart';
-import 'package:aon2026/widgets/event_card.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/saved_events.dart';
@@ -498,10 +497,14 @@ void main() {
       }
     }
 
-    testWidgets('after close, My Night still says something rather than '
-        'rendering an empty timeline', (tester) async {
-      // Everything is finished, so `remaining` is empty. A screen that only
-      // renders `remaining` would look broken to the last visitor of the night.
+    testWidgets('after close, My Night still shows the unscheduled drop-ins '
+        'rather than a blank timeline', (tester) async {
+      // After close every *timed* activity is finished, but the drop-ins with
+      // no published time never "finish" — they stay on the plan (in remaining)
+      // and render as cards. So the last visitor of the night sees those, never
+      // a blank/empty timeline. (My Night renders _ItineraryCards, not
+      // EventCards; the "Finished" section sits below the fold in the lazy
+      // list, so assert on the visible drop-in cards instead.)
       await renderAt(
         tester,
         child: const MyNightScreen(),
@@ -509,13 +512,12 @@ void main() {
         textScale: 1.0,
         saved: everything,
       );
-      expect(
-        find.byType(EventCard).evaluate().isNotEmpty ||
-            find.byType(EmptyState).evaluate().isNotEmpty ||
-            find.textContaining('inished').evaluate().isNotEmpty,
-        isTrue,
-        reason: 'My Night is blank after the event ends',
-      );
+      expect(find.byType(EmptyState), findsNothing,
+          reason: 'My Night must not collapse to the empty state while '
+              'unscheduled drop-ins remain');
+      expect(find.byType(Card), findsWidgets,
+          reason: 'the still-discoverable unscheduled drop-ins should render '
+              'as cards after close');
       expect(tester.takeException(), isNull);
     });
 

@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/data/events_data.dart';
-import 'package:aon2026/models/event.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 
 /// Home's "Happening now" / "Up next" on the actual event night.

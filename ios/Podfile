@@ -1,5 +1,10 @@
-# M4: google_maps_flutter_ios requires iOS 14.0+ (pod install error, 2026-08-16).
-platform :ios, '14.0'
+# Minimum deployment target. Raised 14.0 -> 15.0 for Flutter 3.47.1, whose tooling
+# declares iOS 15.0 as its minimum supported version (flutter_tools
+# darwin.dart: `ios => Version(15, 0, null)`); builds on 3.47.1 rewrite this line
+# automatically otherwise. No plugin needs more than 13.0 — google_maps_flutter_ios
+# declares none, shared_preferences_foundation is the highest at 13.0 — so the SDK
+# is the sole driver here.
+platform :ios, '15.0'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -54,8 +59,10 @@ post_install do |installer|
         '$(inherited)',
         'BYPASS_PERMISSION_LOCATION_ALWAYS=1',
       ]
-      # M4: ensure every pod targets at least iOS 14.0 (GoogleMaps requirement).
-      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '14.0'
+      # Keep every pod on the SAME minimum as the app (see `platform` at the top).
+      # This line overrides whatever flutter_additional_ios_build_settings set, so
+      # leaving it at 14.0 would build the pods one OS below the app itself.
+      config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
     end
   end
 end

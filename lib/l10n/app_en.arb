@@ -614,6 +614,10 @@
   "@mapNavRouteUnavailable": {
     "description": "Compact banner under a still-visible map when the Routes request fails"
   },
+  "mapNavFindingRoute": "Finding your walking route\u2026",
+  "@mapNavFindingRoute": {
+    "description": "Strip under an already-visible map while the route request is in flight"
+  },
   "mapNavRetry": "Retry",
   "@mapNavRetry": {
     "description": "Retry a failed route fetch"

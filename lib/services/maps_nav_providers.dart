@@ -173,10 +173,13 @@ String describeGoogleNavState(WidgetRef ref) {
 /// natively). Tests override this with a fake. The `http.Client` is closed when
 /// the provider is disposed.
 final routesServiceProvider = FutureProvider<RoutesService>((ref) async {
+  debugPrint('GoogleNavTrace: routes_service_build_start');
   final identity = await ref.watch(routesClientIdentityProvider.future);
+  debugPrint('GoogleNavTrace: identity_resolved headers=${identity.headers.length}');
   final key = ref.watch(activeRoutesKeyProvider);
   final client = http.Client();
   ref.onDispose(client.close);
+  debugPrint('GoogleNavTrace: routes_service_ready');
   return ConsentGuardedRoutesService(
     inner: GoogleRoutesService(
       client: client,
@@ -218,14 +221,31 @@ class ConsentGuardedRoutesService implements RoutesService {
   }
 }
 
+/// How long a single route request may take before it is declared failed.
+const Duration kRouteRequestTimeout = Duration(seconds: 15);
+
 /// One walking-route request per (origin, destination). `autoDispose` frees it
 /// when the nav screen closes; the family key dedups simultaneous consumers so
 /// a single (origin,dest) bills a single Routes call. Retry = invalidate on an
 /// explicit user action, never an automatic re-fetch.
 final navRouteProvider = FutureProvider.autoDispose
     .family<RouteResult, ((double, double), (double, double))>((ref, args) async {
+  debugPrint('GoogleNavTrace: nav_route_provider_start');
   final service = await ref.watch(routesServiceProvider.future);
-  return service.walkingRoute(origin: args.$1, destination: args.$2);
+  debugPrint('GoogleNavTrace: nav_route_got_service');
+  // HARD BOUND. Nothing downstream may leave the screen pending forever: a
+  // stalled socket, a captive portal or a silently-dropped response all used to
+  // mean an eternal spinner. A timeout becomes a typed failure like any other,
+  // so the map stays up and Retry is offered.
+  final r = await service
+      .walkingRoute(origin: args.$1, destination: args.$2)
+      .timeout(kRouteRequestTimeout, onTimeout: () {
+    debugPrint('GoogleNavTrace: route_timeout after '
+        '${kRouteRequestTimeout.inSeconds}s');
+    return const RouteTimeout();
+  });
+  debugPrint('GoogleNavTrace: provider_complete result=${r.runtimeType}');
+  return r;
 });
 
 /// The resolved walking-origin for a nav session. Three distinct outcomes,

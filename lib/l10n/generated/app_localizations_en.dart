@@ -786,6 +786,9 @@ class AonL10nEn extends AonL10n {
       'Walking route is temporarily unavailable. The map still shows your destination.';
 
   @override
+  String get mapNavFindingRoute => 'Finding your walking route…';
+
+  @override
   String get mapNavRetry => 'Retry';
 
   @override

@@ -1327,6 +1327,12 @@ abstract class AonL10n {
   /// **'Walking route is temporarily unavailable. The map still shows your destination.'**
   String get mapNavRouteUnavailable;
 
+  /// Strip under an already-visible map while the route request is in flight
+  ///
+  /// In en, this message translates to:
+  /// **'Finding your walking route…'**
+  String get mapNavFindingRoute;
+
   /// Retry a failed route fetch
   ///
   /// In en, this message translates to:

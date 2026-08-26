@@ -787,6 +787,9 @@ class AonL10nFa extends AonL10n {
       'مسیر پیاده موقتاً در دسترس نیست. نقشه همچنان مقصد شما را نشان می‌دهد.';
 
   @override
+  String get mapNavFindingRoute => 'در حال یافتن مسیر پیاده…';
+
+  @override
   String get mapNavRetry => 'تلاش دوباره';
 
   @override

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -40,6 +42,19 @@ class _FakeLauncher implements ExternalMapsLauncher {
 class _FailLauncher implements ExternalMapsLauncher {
   @override
   Future<bool> open(Uri uri) async => false;
+}
+
+/// Stays pending until the test releases it — reproduces the "HTTP answered but
+/// the screen hangs" case, then lets the tree settle so the binding's
+/// pending-timer invariant is satisfied (the strip's spinner animates).
+class _NeverService implements RoutesService {
+  final _c = Completer<RouteResult>();
+  void release() => _c.complete(const RouteNoRoute());
+  @override
+  Future<RouteResult> walkingRoute({
+    required (double, double) origin,
+    required (double, double) destination,
+  }) => _c.future;
 }
 
 class _FakeSurface implements EmbeddedMapSurface {
@@ -85,7 +100,7 @@ class _ReadyMapsSdk implements MapsSdkInitializer {
 }
 
 ProviderContainer _c({
-  required _StubService service,
+  required RoutesService service,
   MapsConsent consent = MapsConsent.accepted,
   (double, double)? origin = const (-33.77, 151.11),
   bool enabled = true,
@@ -232,6 +247,44 @@ void main() {
     expect(find.byKey(const Key('map-surface')), findsNothing);
     // And it says so, rather than spinning forever.
     expect(find.text(l.mapNavUnavailable), findsOneWidget);
+  });
+
+  // ── The hang this suite now guards ──────────────────────────────────────
+  //
+  // On web the screen span on a spinner forever after a perfectly good HTTP 200.
+  // Root cause: `mapsSdkReadyProvider` was watched ONLY inside the route-success
+  // branch, so `ensureInitialized()` was never called while a route was pending,
+  // and the map could not appear. The map must never be gated on the route.
+
+  testWidgets('the MAP renders while the route is still PENDING', (t) async {
+    // A service that never answers — the exact shape of the reported hang.
+    final never = _NeverService();
+    await t.pumpWidget(_app(_c(service: never)));
+    await t.pump(); // let the frame settle without awaiting the route
+    await t.pump(const Duration(milliseconds: 100));
+
+    expect(find.byKey(const Key('map-surface')), findsOneWidget,
+        reason: 'a pending route must not hide the destination map');
+    final l = await _en();
+    expect(find.text(l.mapNavFindingRoute), findsOneWidget,
+        reason: 'the strip explains the route is still coming');
+
+    never.release();
+    await t.pumpAndSettle();
+  });
+
+  testWidgets('a pending route shows NO full-screen spinner', (t) async {
+    final never = _NeverService();
+    await t.pumpWidget(_app(_c(service: never)));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+    // The old behaviour: one big CircularProgressIndicator and nothing else.
+    // Now the only progress indicator is the small one inside the strip, and
+    // the map is present alongside it.
+    expect(find.byKey(const Key('map-surface')), findsOneWidget);
+
+    never.release();
+    await t.pumpAndSettle();
   });
 
   testWidgets('consent withdrawn is the one case with NO map', (t) async {

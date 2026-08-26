@@ -45,6 +45,14 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   @override
   Widget build(BuildContext context) {
     final l = AonL10n.of(context);
+    // Maps SDK readiness is requested HERE, at the top of build, so it starts
+    // the moment the screen exists and is never gated behind the route. It used
+    // to be watched only inside the route-success branch, so a route that never
+    // resolved meant `ensureInitialized()` was never even called and the map
+    // could not appear — the screen span on a spinner forever.
+    final sdkAsync = ref.watch(mapsSdkReadyProvider);
+    debugPrint('GoogleNavTrace: build_start sdkLoading=${sdkAsync.isLoading} '
+        'sdkReady=${sdkAsync.asData?.value}');
     final resolved = ref.watch(placeResolverProvider(widget.placeKey));
 
     // (1) Capability guard — feature disabled → unavailable panel (with an
@@ -121,6 +129,9 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
 
         // (4) Location origin, captured once (snapshot), scope-validated.
         final originAsync = ref.watch(navOriginProvider);
+        debugPrint('GoogleNavTrace: origin_state loading=${originAsync.isLoading} '
+            'hasValue=${originAsync.hasValue} hasError=${originAsync.hasError} '
+            'type=${originAsync.asData?.value.runtimeType}');
         return originAsync.when(
           loading: () => _scaffold(l, title: place.title, body: _spinner(context)),
           error: (_, _) => _scaffold(
@@ -146,15 +157,18 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   Widget _routeFlow(BuildContext context, AonL10n l, String? title,
       (double, double) origin, (double, double) dest) {
     final routeAsync = ref.watch(navRouteProvider((origin, dest)));
-    return routeAsync.when(
-      loading: () => _scaffold(l, title: title, body: _spinner(context)),
-      error: (_, _) =>
-          _scaffold(l, title: title, body: _routeError(context, l, dest, origin)),
-      data: (result) => _scaffold(
-        l,
-        title: title,
-        body: _resultBody(context, l, result, origin, dest),
-      ),
+    debugPrint('GoogleNavTrace: route_flow loading=${routeAsync.isLoading} '
+        'hasValue=${routeAsync.hasValue} hasError=${routeAsync.hasError}');
+    // The MAP does not wait for the route. A pending or failed route only
+    // changes the strip under the map, never whether the map exists.
+    final RouteResult? result = routeAsync.hasError
+        ? const RouteMalformed()
+        : routeAsync.asData?.value;
+    return _scaffold(
+      l,
+      title: title,
+      body: _resultBody(context, l, result, origin, dest,
+          routeLoading: routeAsync.isLoading),
     );
   }
 
@@ -195,8 +209,9 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     });
   }
 
-  Widget _resultBody(BuildContext context, AonL10n l, RouteResult result,
-      (double, double) origin, (double, double) dest) {
+  Widget _resultBody(BuildContext context, AonL10n l, RouteResult? result,
+      (double, double) origin, (double, double) dest,
+      {bool routeLoading = false}) {
     // Consent withdrawn mid-flight is the ONE case with no map: nothing reached
     // the UI and no Google surface may be constructed, so offer the way back
     // rather than a map the user just revoked permission for.
@@ -223,7 +238,10 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     // Task 1 deferred GMSServices.provideAPIKey off app launch, so a GoogleMap
     // constructed against an unkeyed SDK would render blank. Consent alone is
     // not sufficient — readiness must be true.
+    debugPrint('GoogleNavTrace: map_render_branch reached');
     final sdkAsync = ref.watch(mapsSdkReadyProvider);
+    debugPrint('GoogleNavTrace: sdk_ready_requested '
+        'loading=${sdkAsync.isLoading} value=${sdkAsync.asData?.value}');
     final sdkReady = sdkAsync.asData?.value == true;
     // Distinguish "still initialising" from "resolved: cannot key the SDK".
     // Showing a spinner for the latter span forever, which reads as a hang.
@@ -263,6 +281,27 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           ),
         if (route != null)
           _successPanel(context, l, route, dest)
+        else if (routeLoading || result == null)
+          // Map is already up; the route is still on its way.
+          Container(
+            width: double.infinity,
+            color: context.aon.surface,
+            padding: const EdgeInsets.all(AonSpacing.space4),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                      strokeWidth: 2, color: context.aon.accent),
+                ),
+                const SizedBox(width: AonSpacing.space3),
+                Text(l.mapNavFindingRoute,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: context.aon.contentSecondary)),
+              ],
+            ),
+          )
         else
           _routeErrorBanner(context, l, result, origin, dest),
       ],
@@ -327,21 +366,6 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     );
   }
 
-  Widget _routeError(BuildContext context, AonL10n l, (double, double) dest,
-      (double, double) origin, {int? apiStatus}) {
-    if (apiStatus != null) {
-      // Surface the HTTP status to logs so the on-device restriction-rejection
-      // debt (M4 IOU) is diagnosable — 401/403 (key) vs 429 (quota) vs 5xx. The
-      // status was captured on RouteApiFailure but consumed nowhere (map audit P2).
-      debugPrint('GoogleNav: route API failure HTTP $apiStatus');
-    }
-    return _panel(
-      context,
-      icon: Icons.error_outline_rounded,
-      message: l.mapNavError,
-      actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
-    );
-  }
 
   Widget _needLocation(BuildContext context, AonL10n l, (double, double) dest) => _panel(
         context,

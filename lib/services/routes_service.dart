@@ -55,6 +55,15 @@ class RouteMalformed extends RouteResult {
   const RouteMalformed();
 }
 
+/// The request exceeded [kRouteRequestTimeout] and was abandoned.
+///
+/// Distinct from [RouteNetworkFailure]: the network did not report an error, it
+/// simply never answered. Keeping it separate makes an eternal-spinner
+/// regression visible in logs and tests instead of masquerading as an outage.
+class RouteTimeout extends RouteResult {
+  const RouteTimeout();
+}
+
 /// The request was refused locally because maps consent is not `accepted`.
 ///
 /// Distinct from every network and parse outcome: **nothing left the device**.

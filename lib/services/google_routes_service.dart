@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:aon2026/services/nav_trace.dart';
 
 import 'package:http/http.dart' as http;
 
@@ -41,7 +41,7 @@ class GoogleRoutesService implements RoutesService {
     // Scope 1: the network call ONLY. A throw here is a network failure and
     // must never be confused with a parse failure below (#12).
     final sw = Stopwatch()..start();
-    debugPrint('GoogleNavTrace: request_start');
+    navTrace('request_start');
     http.Response resp;
     try {
       resp = await client.post(
@@ -67,11 +67,11 @@ class GoogleRoutesService implements RoutesService {
         }),
       );
     } catch (e) {
-      debugPrint('GoogleNavTrace: http_threw after ${sw.elapsedMilliseconds}ms '
+      navTrace('http_threw after ${sw.elapsedMilliseconds}ms '
           '(${e.runtimeType})');
       return const RouteNetworkFailure();
     }
-    debugPrint('GoogleNavTrace: http_post_returned status=${resp.statusCode} '
+    navTrace('http_post_returned status=${resp.statusCode} '
         'bytes=${resp.bodyBytes.length} elapsed=${sw.elapsedMilliseconds}ms');
 
     if (resp.statusCode != 200) {
@@ -81,9 +81,9 @@ class GoogleRoutesService implements RoutesService {
     // Scope 2: decode + validate. Any throw or missing required field here is
     // malformed, NOT a network failure and NOT "no route".
     try {
-      debugPrint('GoogleNavTrace: route_parse_start');
+      navTrace('route_parse_start');
       final decoded = jsonDecode(resp.body);
-      debugPrint('GoogleNavTrace: json_decoded=true');
+      navTrace('json_decoded=true');
       if (decoded is! Map<String, dynamic>) return const RouteMalformed();
       final routes = decoded['routes'];
       // Routes v2 is proto3 JSON, which OMITS empty repeated fields — a genuine
@@ -110,10 +110,10 @@ class GoogleRoutesService implements RoutesService {
       // anomalous output rather than dropping legitimate warnings.
       final warnings =
           (route['warnings'] as List?)?.whereType<String>().toList() ?? const <String>[];
-      debugPrint('GoogleNavTrace: polyline_decode_start len=${encoded.length}');
+      navTrace('polyline_decode_start len=${encoded.length}');
       final pts = decodePolyline(encoded);
-      debugPrint('GoogleNavTrace: polyline_decode_done points=${pts.length}');
-      debugPrint('GoogleNavTrace: route_parse_done '
+      navTrace('polyline_decode_done points=${pts.length}');
+      navTrace('route_parse_done '
           'elapsed=${sw.elapsedMilliseconds}ms');
       return RouteSuccess(NavRoute(
         polyline: pts,
@@ -122,7 +122,7 @@ class GoogleRoutesService implements RoutesService {
         warnings: warnings,
       ));
     } catch (e) {
-      debugPrint('GoogleNavTrace: parse_threw (${e.runtimeType})');
+      navTrace('parse_threw (${e.runtimeType})');
       return const RouteMalformed();
     }
   }

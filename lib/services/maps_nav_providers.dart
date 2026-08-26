@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:aon2026/config/qa_mode.dart';
 
 import 'campus_scope.dart';
+import 'nav_trace.dart';
 import 'google_routes_service.dart';
 import 'location_providers.dart';
 import 'location_service.dart';
@@ -173,13 +174,13 @@ String describeGoogleNavState(WidgetRef ref) {
 /// natively). Tests override this with a fake. The `http.Client` is closed when
 /// the provider is disposed.
 final routesServiceProvider = FutureProvider<RoutesService>((ref) async {
-  debugPrint('GoogleNavTrace: routes_service_build_start');
+  navTrace('routes_service_build_start');
   final identity = await ref.watch(routesClientIdentityProvider.future);
-  debugPrint('GoogleNavTrace: identity_resolved headers=${identity.headers.length}');
+  navTrace('identity_resolved headers=${identity.headers.length}');
   final key = ref.watch(activeRoutesKeyProvider);
   final client = http.Client();
   ref.onDispose(client.close);
-  debugPrint('GoogleNavTrace: routes_service_ready');
+  navTrace('routes_service_ready');
   return ConsentGuardedRoutesService(
     inner: GoogleRoutesService(
       client: client,
@@ -230,9 +231,9 @@ const Duration kRouteRequestTimeout = Duration(seconds: 15);
 /// explicit user action, never an automatic re-fetch.
 final navRouteProvider = FutureProvider.autoDispose
     .family<RouteResult, ((double, double), (double, double))>((ref, args) async {
-  debugPrint('GoogleNavTrace: nav_route_provider_start');
+  navTrace('nav_route_provider_start');
   final service = await ref.watch(routesServiceProvider.future);
-  debugPrint('GoogleNavTrace: nav_route_got_service');
+  navTrace('nav_route_got_service');
   // HARD BOUND. Nothing downstream may leave the screen pending forever: a
   // stalled socket, a captive portal or a silently-dropped response all used to
   // mean an eternal spinner. A timeout becomes a typed failure like any other,
@@ -240,11 +241,11 @@ final navRouteProvider = FutureProvider.autoDispose
   final r = await service
       .walkingRoute(origin: args.$1, destination: args.$2)
       .timeout(kRouteRequestTimeout, onTimeout: () {
-    debugPrint('GoogleNavTrace: route_timeout after '
+    navTrace('route_timeout after '
         '${kRouteRequestTimeout.inSeconds}s');
     return const RouteTimeout();
   });
-  debugPrint('GoogleNavTrace: provider_complete result=${r.runtimeType}');
+  navTrace('provider_complete result=${r.runtimeType}');
   return r;
 });
 

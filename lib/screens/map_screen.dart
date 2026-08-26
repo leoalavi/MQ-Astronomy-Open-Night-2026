@@ -437,7 +437,14 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       ),
       // Wayfinding FAB is campus-map only — panorama and compass are their own
       // finders and must not overlay a walk-route FAB (§0.4/§0-N).
-      floatingActionButton: _mode != MapMode.campusMap
+      //
+      // It is ALSO hidden whenever a place is selected. The selected-place sheet
+      // carries its own Directions button for THAT venue, so showing the FAB too
+      // put two identical-looking primary actions on screen pointing at
+      // different destinations (the sheet's venue vs the Central Courtyard
+      // default) — the FAB is a general "route me to the middle of campus"
+      // affordance, which is only meaningful when nothing is selected.
+      floatingActionButton: (_mode != MapMode.campusMap || selectedKey != null)
           ? null
           : Padding(
         padding: EdgeInsets.only(
@@ -473,18 +480,31 @@ class _MapScreenState extends ConsumerState<MapScreen> {
         color: VenueStyle.colorFor(context, v.category),
         label: v.mapReference,
         semanticLabel: '${v.name}. ${v.category.labelOf(l)}.',
-        onTap: () => _showVenueSheet(v.id),
+        onTap: () => unawaited(_showVenueSheet(v.id)),
         selected: selected,
       ),
     );
   }
 
-  void _showVenueSheet(String venueId) {
-    showModalBottomSheet<void>(
+  /// Opens a venue's sheet from a marker tap.
+  ///
+  /// Routes through the CANONICAL selection so a tapped marker behaves exactly
+  /// like one opened from search, favourites or "Show on map": the pin gets its
+  /// selected decoration and the map's general Directions FAB steps aside (the
+  /// sheet carries the Directions action for this venue). Tapping used to show
+  /// the sheet without selecting, which left two Directions controls on screen
+  /// pointing at different destinations and no highlight on the pin.
+  Future<void> _showVenueSheet(String venueId) async {
+    final key = 'venue:$venueId';
+    ref.read(mapSelectionProvider.notifier).select(key);
+    await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       builder: (_) => VenueSheet(venueId: venueId),
     );
+    // Dismissing the sheet ends the selection, so the map returns to its
+    // neutral state (and the general FAB comes back).
+    if (mounted) ref.read(mapSelectionProvider.notifier).clear();
   }
 
   void _showParkingSheet(String parkingId) {
@@ -759,18 +779,14 @@ class VenueSheet extends ConsumerWidget {
                   ?.copyWith(color: context.aon.contentSecondary),
             ),
           ],
-          if (venue.notes != null) ...[
-            const SizedBox(height: AonSpacing.space3),
-            Text(
-              venue.notes!,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
-            ),
-          ],
-          const SizedBox(height: AonSpacing.space3),
-          ConfidenceNote(confidence: venue.coordinateConfidence),
-
           const SizedBox(height: AonSpacing.space4),
+          // ORDER MATTERS. The sheet opens at ~35% of the viewport so the map
+          // stays dominant, which means only the first ~180pt is visible before
+          // the visitor has to drag. The primary action therefore comes FIRST:
+          // notes, the confidence note and the activity list used to sit above
+          // it, pushing "Directions" below the fold on a phone — the button the
+          // sheet exists to offer was the one thing you could not see.
+          // Everything secondary now follows, reachable by dragging up.
           // One directions action, always Google Maps. The GoogleNavScreen
           // shows the interactive route when the key is present, or a clear
           // "not configured yet" message when it is not — never a draft screen.
@@ -800,6 +816,19 @@ class VenueSheet extends ConsumerWidget {
               ),
             ),
           ],
+
+          // Secondary detail, below the actions: visible on drag, never in the
+          // way of the primary CTA.
+          if (venue.notes != null) ...[
+            const SizedBox(height: AonSpacing.space4),
+            Text(
+              venue.notes!,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: context.aon.contentSecondary),
+            ),
+          ],
+          const SizedBox(height: AonSpacing.space3),
+          ConfidenceNote(confidence: venue.coordinateConfidence),
 
           // 360° entry. Present only when Raouf's panorama layer actually has
           // a tour for this venue id — availability comes from

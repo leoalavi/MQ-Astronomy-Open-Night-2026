@@ -13,6 +13,7 @@ import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/services/maps_url.dart';
+import 'package:aon2026/services/nav_trace.dart';
 import 'package:aon2026/services/nav_format.dart';
 import 'package:aon2026/services/routes_service.dart';
 import 'package:aon2026/services/search_providers.dart';
@@ -51,7 +52,7 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     // resolved meant `ensureInitialized()` was never even called and the map
     // could not appear — the screen span on a spinner forever.
     final sdkAsync = ref.watch(mapsSdkReadyProvider);
-    debugPrint('GoogleNavTrace: build_start sdkLoading=${sdkAsync.isLoading} '
+    navTrace('build_start sdkLoading=${sdkAsync.isLoading} '
         'sdkReady=${sdkAsync.asData?.value}');
     final resolved = ref.watch(placeResolverProvider(widget.placeKey));
 
@@ -63,7 +64,7 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
       final availability = ref.watch(googleNavAvailabilityProvider);
       final dest = _destOf(resolved.asData?.value);
       // Boolean-only trace (never the key) so a QA report can say WHY.
-      debugPrint('GoogleNav: ${describeGoogleNavState(ref)}');
+      navTrace(describeGoogleNavState(ref));
       // Tell the truth about the cause. Blaming a missing key on a platform
       // that simply has no Google map surface sends people hunting for a
       // credentials bug that does not exist.
@@ -129,7 +130,7 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
 
         // (4) Location origin, captured once (snapshot), scope-validated.
         final originAsync = ref.watch(navOriginProvider);
-        debugPrint('GoogleNavTrace: origin_state loading=${originAsync.isLoading} '
+        navTrace('origin_state loading=${originAsync.isLoading} '
             'hasValue=${originAsync.hasValue} hasError=${originAsync.hasError} '
             'type=${originAsync.asData?.value.runtimeType}');
         return originAsync.when(
@@ -157,7 +158,7 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   Widget _routeFlow(BuildContext context, AonL10n l, String? title,
       (double, double) origin, (double, double) dest) {
     final routeAsync = ref.watch(navRouteProvider((origin, dest)));
-    debugPrint('GoogleNavTrace: route_flow loading=${routeAsync.isLoading} '
+    navTrace('route_flow loading=${routeAsync.isLoading} '
         'hasValue=${routeAsync.hasValue} hasError=${routeAsync.hasError}');
     // The MAP does not wait for the route. A pending or failed route only
     // changes the strip under the map, never whether the map exists.
@@ -238,9 +239,9 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     // Task 1 deferred GMSServices.provideAPIKey off app launch, so a GoogleMap
     // constructed against an unkeyed SDK would render blank. Consent alone is
     // not sufficient — readiness must be true.
-    debugPrint('GoogleNavTrace: map_render_branch reached');
+    navTrace('map_render_branch reached');
     final sdkAsync = ref.watch(mapsSdkReadyProvider);
-    debugPrint('GoogleNavTrace: sdk_ready_requested '
+    navTrace('sdk_ready_requested '
         'loading=${sdkAsync.isLoading} value=${sdkAsync.asData?.value}');
     final sdkReady = sdkAsync.asData?.value == true;
     // Distinguish "still initialising" from "resolved: cannot key the SDK".
@@ -322,7 +323,7 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
       RouteApiFailure(:final status) => () {
           // Surface the status to logs so 401/403 (key) vs 429 (quota) vs 5xx
           // stays diagnosable from a QA report.
-          debugPrint('GoogleNav: route API failure HTTP $status');
+          navTrace('route API failure HTTP $status');
           return (Icons.error_outline_rounded, l.mapNavRouteUnavailable);
         }(),
       _ => (Icons.error_outline_rounded, l.mapNavRouteUnavailable),

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
 
-import 'package:flutter/foundation.dart' show debugPrint;
+import 'package:aon2026/services/nav_trace.dart';
 import 'package:web/web.dart' as web;
 
 /// The Maps JS libraries the plugin needs.
@@ -46,11 +46,11 @@ bool _mapsReady() {
 /// never stays pending thanks to [_loadTimeout].
 Future<bool> loadGoogleMapsJs(String apiKey) {
   if (apiKey.isEmpty) {
-    debugPrint('MapsJsLoader: no key — not loading');
+    mapsLoaderTrace('no key — not loading');
     return Future.value(false);
   }
   if (_mapsReady()) {
-    debugPrint('MapsJsLoader: already loaded');
+    mapsLoaderTrace('already loaded');
     return Future.value(true);
   }
   return _loading ??= _inject(apiKey);
@@ -61,7 +61,7 @@ Future<bool> _inject(String apiKey) async {
 
   void finish(bool ok, String why) {
     if (done.isCompleted) return;
-    debugPrint('MapsJsLoader: $why -> ready=$ok');
+    mapsLoaderTrace('$why -> ready=$ok');
     // Only a SUCCESS stays cached; drop a failure so Retry re-attempts.
     if (!ok) _loading = null;
     done.complete(ok);
@@ -95,9 +95,9 @@ Future<bool> _inject(String apiKey) async {
     }.toJS;
 
     web.document.head!.appendChild(script);
-    debugPrint('MapsJsLoader: script injected');
+    mapsLoaderTrace('script injected');
   } else {
-    debugPrint('MapsJsLoader: reusing existing script tag');
+    mapsLoaderTrace('reusing existing script tag');
   }
 
   // Poll as the authority. It covers three cases the events miss: a tag added

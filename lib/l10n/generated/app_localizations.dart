@@ -1297,6 +1297,12 @@ abstract class AonL10n {
   /// **'Turn on location to get walking directions.'**
   String get mapNavNeedLocation;
 
+  /// Shown on web/desktop, where google_maps_flutter has no implementation — NOT a missing-key problem
+  ///
+  /// In en, this message translates to:
+  /// **'Walking directions with the live map work on the iPhone and Android apps. This build can’t show the Google map.'**
+  String get mapNavPlatformUnsupported;
+
   /// Capability flag off (no keys) — deep-link landed here
   ///
   /// In en, this message translates to:
@@ -1314,6 +1320,12 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'This place isn\'t on the Astronomy Open Night campus map.'**
   String get mapNavDestinationOffCampus;
+
+  /// Compact banner under a still-visible map when the Routes request fails
+  ///
+  /// In en, this message translates to:
+  /// **'Walking route is temporarily unavailable. The map still shows your destination.'**
+  String get mapNavRouteUnavailable;
 
   /// Retry a failed route fetch
   ///

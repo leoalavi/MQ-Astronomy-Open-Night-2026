@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/venues_data.dart';
@@ -35,17 +36,60 @@ class MapSearchQuery extends Notifier<String> {
 final mapSearchQueryProvider =
     NotifierProvider<MapSearchQuery, String>(MapSearchQuery.new);
 
-/// The currently-selected place, as a stable `PlaceKey` (never a live entry).
-/// Set on selection, cleared when the detail sheet closes (G15).
-class SelectedPlaceKey extends Notifier<String?> {
+/// The canonical map selection: WHICH place, and WHICH selection it is.
+///
+/// ## Why a token
+///
+/// Ported from MQ Journey's `MapState.selectionToken` (Open Day). The place key
+/// alone cannot express "the user asked for this same venue again": selecting
+/// `venue:x` when `venue:x` is already selected changes nothing, so a sheet the
+/// user dismissed never reopens. The token increments on EVERY select, so the
+/// map can tell a repeat request apart from a no-op, while the screen remembers
+/// only which token it dismissed. That is also what stops sheets stacking — the
+/// screen shows at most one sheet, for the current token.
+@immutable
+class MapSelection {
+  const MapSelection({this.placeKey, this.token = 0});
+
+  /// A stable `PlaceKey` ("venue:x" / "building:y"), never a live entry.
+  final String? placeKey;
+
+  /// Bumped on every select, including a repeat of the same place.
+  final int token;
+
+  bool get isEmpty => placeKey == null;
+
   @override
-  String? build() => null;
-  void select(String? key) => state = key;
-  void clear() => state = null;
+  bool operator ==(Object other) =>
+      other is MapSelection && other.placeKey == placeKey && other.token == token;
+
+  @override
+  int get hashCode => Object.hash(placeKey, token);
 }
 
+/// The one writer of map selection. Every entry point — search, favourites, a
+/// marker tap, an external "Show on map" — goes through this, so no second copy
+/// of "what is selected" can drift out of step.
+class SelectedPlaceKey extends Notifier<MapSelection> {
+  @override
+  MapSelection build() => const MapSelection();
+
+  /// Selects [key], bumping the token even when [key] is already selected.
+  void select(String? key) =>
+      state = MapSelection(placeKey: key, token: state.token + 1);
+
+  /// Clears the selection. The token keeps counting up so a later re-select of
+  /// the same place is still distinguishable from this cleared state.
+  void clear() => state = MapSelection(token: state.token + 1);
+}
+
+final mapSelectionProvider =
+    NotifierProvider<SelectedPlaceKey, MapSelection>(SelectedPlaceKey.new);
+
+/// The selected place key on its own, for the many read-only consumers that do
+/// not care about the token. Derived — never a second source of truth.
 final selectedPlaceKeyProvider =
-    NotifierProvider<SelectedPlaceKey, String?>(SelectedPlaceKey.new);
+    Provider<String?>((ref) => ref.watch(mapSelectionProvider).placeKey);
 
 /// Unified index over venues ⊕ buildings, deduped on the curated identity link.
 /// Venues are always present; buildings fold in when `buildingsProvider` loads

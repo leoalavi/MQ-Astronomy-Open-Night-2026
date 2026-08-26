@@ -74,15 +74,61 @@ default), web ships without the interactive Google map. The embedded Google map
 
 ## Google Cloud console — enable exactly these
 
-- **Maps SDK for Android** — native map on Android.
-- **Maps SDK for iOS** — native map on iOS.
-- **Routes API** — the walking route (`directions/v2:computeRoutes`, `WALK`).
-- *(Web only, optional)* **Maps JavaScript API** — only if you enable the web map.
+| API | Needed by | Status as of 2026-08-26 |
+| --- | --- | --- |
+| **Maps SDK for Android** | native map on Android | assumed enabled |
+| **Maps SDK for iOS** | native map on iOS | assumed enabled |
+| **Maps JavaScript API** | embedded map on **web** | ✅ verified enabled |
+| **Routes API** | the walking route, every platform | ❌ **NOT ENABLED** |
 
 Do **not** enable anything else. In particular the app does **not** use the
 Places API, Directions API (legacy), Geocoding, or Roads API — leave them off.
 
+### ⚠ Routes API is currently disabled — the walking route cannot work
+
+A live probe of `directions/v2:computeRoutes` with the project key returns:
+
+```
+HTTP 401  UNAUTHENTICATED
+"API keys are not supported by this API. Expected OAuth2 access token or other
+ authentication credentials that assert a principal."
+```
+
+That message is misleading. The Routes API **does** accept API keys; Google
+returns this when the API is **not enabled on the project**, because the request
+never reaches the Routes service. It is not a key problem and not a referrer
+problem — a rejected referrer returns `403 RefererNotAllowedMapError`, and the
+same key already serves the Maps JavaScript API successfully (827 KB bootstrap,
+HTTP 200).
+
+**Fix:** Google Cloud console → *APIs & Services* → *Enable APIs and services* →
+enable **Routes API** on the same project as the key. No code change is needed;
+the walking route starts working on web, iOS and Android at once.
+
+### Browser support (verified)
+
+The Routes API **does** allow browser calls. Its CORS preflight from
+`http://localhost:8080` returns:
+
+```
+access-control-allow-origin: http://localhost:8080
+access-control-allow-methods: DELETE,GET,HEAD,OPTIONS,PATCH,POST,PUT
+access-control-allow-headers: content-type,x-goog-api-key,x-goog-fieldmask
+```
+
+— exactly the headers `GoogleRoutesService` sends, so no proxy or backend is
+required for the web build.
+
 ## Recommended restrictions
+
+> **Do not ship one unrestricted key.** The single shared key in `.env` is fine
+> for development and QA only. Application restrictions are **mutually
+> exclusive** — a key can be restricted to Android apps *or* iOS bundle IDs *or*
+> HTTP referrers, never several — so a locked-down production setup needs **one
+> key per platform**: an Android key, an iOS key, and a web key. Give each the
+> API restrictions listed below. On web the key is inherently public (it ships in
+> `main.dart.js`, which is unavoidable for the Maps JavaScript API), so the HTTP
+> referrer restriction is the only thing protecting it.
 
 **Application restrictions** (who may use the key):
 
@@ -92,7 +138,9 @@ Places API, Directions API (legacy), Geocoding, or Roads API — leave them off.
   debug and release once each SHA-1 is listed.
 - iOS key → *iOS apps*: bundle id `au.edu.mq.astronomy.aon2026` (sent as
   `X-Ios-Bundle-Identifier`).
-- Web key → *HTTP referrers*: the served origin(s).
+- Web key → *HTTP referrers*: the served origin(s). Supply it as
+  `GOOGLE_MAPS_WEB_ROUTES_KEY` (Routes) and `MAPS_API_KEY` (Maps JS); with only
+  `MAPS_API_KEY` set, web uses it for both.
 
 **API restrictions** (what the key may call): restrict each key to only the APIs
 it needs — Android key → Maps SDK for Android + Routes API; iOS key → Maps SDK

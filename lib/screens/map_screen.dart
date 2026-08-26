@@ -24,6 +24,7 @@ import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
+import 'package:aon2026/services/map_branch_lifecycle.dart';
 import 'package:aon2026/services/map_placement.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/building_sheet.dart';
@@ -130,6 +131,23 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final selectedBuilding = (selectedKey != null && selectedKey.startsWith('building:'))
         ? ref.watch(placeResolverProvider(selectedKey)).asData?.value
         : null;
+
+    // Leaving the Map tab discards the transient exploration state, so coming
+    // back lands on a clean map rather than a venue selected minutes ago on a
+    // different errand. The branch stays mounted in the shell's IndexedStack,
+    // so nothing clears itself — see map_branch_lifecycle.dart.
+    ref.listen<bool>(mapVisibleProvider, (wasVisible, isVisible) {
+      if (shouldResetMapExplorationOnBranchChange(
+        wasVisible: wasVisible,
+        isVisible: isVisible,
+        // AON's map is only ever a shell branch today; the flag keeps the
+        // ported contract intact if a pushed map is ever added.
+        isPushedEntry: false,
+      )) {
+        ref.read(mapSelectionProvider.notifier).clear();
+        _handledFocus = null; // let a later Show-on-map for the same venue work
+      }
+    });
 
     // Follow-me recenter. Unconditional at the top of build (Riverpod requires
     // ref.listen every build) — never inside a mode branch. The inherited
@@ -509,7 +527,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<void> _onPlaceSelected(String key, {double? zoom}) async {
-    ref.read(selectedPlaceKeyProvider.notifier).select(key);
+    ref.read(mapSelectionProvider.notifier).select(key);
     final resolved = ref.read(placeResolverProvider(key)).asData?.value;
     final rp = resolved?.renderPoint;
     if (rp != null) {
@@ -526,7 +544,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       );
     }
     await _openDetail(key);
-    if (mounted) ref.read(selectedPlaceKeyProvider.notifier).clear(); // G15
+    if (mounted) ref.read(mapSelectionProvider.notifier).clear(); // G15
   }
 
   Future<void> _openDetail(String key) => showModalBottomSheet<void>(

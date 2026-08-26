@@ -594,6 +594,10 @@
   "@mapNavNeedLocation": {
     "description": "No location permission/fix for Google nav"
   },
+  "mapNavPlatformUnsupported": "Walking directions with the live map work on the iPhone and Android apps. This build can\u2019t show the Google map.",
+  "@mapNavPlatformUnsupported": {
+    "description": "Shown on web/desktop, where google_maps_flutter has no implementation — NOT a missing-key problem"
+  },
   "mapNavUnavailable": "Google Maps is not configured yet. Please add the Google Maps API key to enable directions.",
   "@mapNavUnavailable": {
     "description": "Capability flag off (no keys) — deep-link landed here"
@@ -605,6 +609,10 @@
   "mapNavDestinationOffCampus": "This place isn't on the Astronomy Open Night campus map.",
   "@mapNavDestinationOffCampus": {
     "description": "Requested destination falls outside the campus extent — defensive, curated places are always inside"
+  },
+  "mapNavRouteUnavailable": "Walking route is temporarily unavailable. The map still shows your destination.",
+  "@mapNavRouteUnavailable": {
+    "description": "Compact banner under a still-visible map when the Routes request fails"
   },
   "mapNavRetry": "Retry",
   "@mapNavRetry": {

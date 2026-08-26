@@ -33,19 +33,26 @@
   <link rel="manifest" href="manifest.json">
 
   <!--
-    GOOGLE MAPS (WEB) — API KEY PLACEHOLDER.
+    GOOGLE MAPS (WEB).
 
-    Turn-by-turn walking navigation uses google_maps_flutter. On Android and iOS
-    the key is injected from the MAPS_API_KEY build secret (see
-    docs/google-maps-setup.md); the app degrades gracefully to "map unavailable"
-    when the key is absent, so it is safe to ship without one.
+    There is deliberately NO <script src="maps.googleapis.com/maps/api/js?key=...">
+    tag here. google_maps_flutter_web's README tells you to paste one in, but this
+    file is committed, so the key would become a tracked secret.
 
-    To enable the Google map on the WEB build, uncomment the line below and
-    replace YOUR_WEB_MAPS_API_KEY with a browser-restricted Maps JavaScript API
-    key. Leave it commented (the default) to ship web without Google Maps — the
-    illustrated campus basemap works regardless. Do NOT commit a real key here.
+    Instead the app injects the Maps JavaScript API at runtime, with the key that
+    every other platform already resolves (MAPS_API_KEY, supplied via
+    --dart-define-from-file=.env). See lib/services/maps_js_loader_web.dart. It
+    loads once and is reused, so returning to Directions does not re-add the tag.
+
+    Run/build web with:
+      flutter run -d chrome --dart-define-from-file=.env
+    Without the key the app degrades to a truthful "map unavailable" state — the
+    illustrated campus basemap keeps working regardless.
+
+    NOTE: a web key is public by nature (it ships in the JS bundle), so a
+    production web key MUST carry an HTTP-referrer restriction. See
+    docs/google-maps-setup.md.
   -->
-  <!-- <script src="https://maps.googleapis.com/maps/api/js?key=YOUR_WEB_MAPS_API_KEY"></script> -->
 </head>
 <body>
   <!--

@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:http/http.dart' as http;
 
+import 'package:aon2026/config/qa_mode.dart';
+
 import 'campus_scope.dart';
 import 'google_routes_service.dart';
 import 'location_providers.dart';
@@ -11,16 +13,25 @@ import 'maps_consent_store.dart';
 import 'routes_client_identity.dart';
 import 'routes_service.dart';
 
-/// Which native surface the app is running on, for Google-nav capability.
-/// `unsupported` covers web and desktop — the embedded Google map + direct
-/// Routes calls are mobile-only in M4.
-enum MapsNavPlatform { unsupported, android, ios }
+/// Which surface the app is running on, for Google-nav capability.
+///
+/// `web` is a FIRST-CLASS target: `google_maps_flutter_web` renders a real
+/// embedded map, and the Routes API accepts browser requests (its CORS preflight
+/// allows POST with our `x-goog-api-key` / `x-goog-fieldmask` headers). It was
+/// previously lumped into `unsupported`, which is what made the web build claim
+/// the API key was missing when it was present.
+///
+/// `unsupported` now means desktop only — macOS/Windows/Linux have no
+/// `google_maps_flutter` implementation at all.
+enum MapsNavPlatform { unsupported, android, ios, web }
 
 /// The running platform. Web-safe: `kIsWeb` short-circuits before
 /// `defaultTargetPlatform` (which on web reports the *browser's* OS and would
 /// otherwise mislabel a mobile browser as android/ios). Overridable in tests.
 final mapsNavPlatformProvider = Provider<MapsNavPlatform>((ref) {
-  if (kIsWeb) return MapsNavPlatform.unsupported;
+  // kIsWeb FIRST: on web `defaultTargetPlatform` reports the *browser's* OS and
+  // would mislabel a phone browser as android/ios.
+  if (kIsWeb) return MapsNavPlatform.web;
   return switch (defaultTargetPlatform) {
     TargetPlatform.android => MapsNavPlatform.android,
     TargetPlatform.iOS => MapsNavPlatform.ios,
@@ -36,6 +47,14 @@ final androidRoutesKeyProvider = Provider<String>(
 final iosRoutesKeyProvider = Provider<String>(
     (ref) => const String.fromEnvironment('GOOGLE_MAPS_IOS_ROUTES_KEY'));
 
+/// The web Routes key. Separate because a production web key carries an HTTP
+/// REFERRER restriction, which is mutually exclusive with the Android/iOS app
+/// restrictions — so web genuinely needs its own key once keys are locked down.
+/// Falls back to the shared `MAPS_API_KEY` (see [activeRoutesKeyProvider]),
+/// which is what the current unrestricted dev key relies on.
+final webRoutesKeyProvider = Provider<String>(
+    (ref) => const String.fromEnvironment('GOOGLE_MAPS_WEB_ROUTES_KEY'));
+
 /// The Routes key for the ACTIVE platform — NOT "either key" (#5). An Android
 /// build carrying only the iOS key must resolve to empty here.
 ///
@@ -48,14 +67,16 @@ final iosRoutesKeyProvider = Provider<String>(
 /// the "same key in every entry" setup. A per-platform Routes define still wins
 /// when supplied, so a properly restricted production build is unaffected.
 final activeRoutesKeyProvider = Provider<String>((ref) {
-  final explicit = switch (ref.watch(mapsNavPlatformProvider)) {
+  final platform = ref.watch(mapsNavPlatformProvider);
+  final explicit = switch (platform) {
     MapsNavPlatform.android => ref.watch(androidRoutesKeyProvider),
     MapsNavPlatform.ios => ref.watch(iosRoutesKeyProvider),
+    MapsNavPlatform.web => ref.watch(webRoutesKeyProvider),
     MapsNavPlatform.unsupported => '',
   };
   if (explicit.isNotEmpty) return explicit;
-  // Web/desktop never route from the device, so no fallback there.
-  if (ref.watch(mapsNavPlatformProvider) == MapsNavPlatform.unsupported) return '';
+  // Desktop cannot host a map, so it never routes.
+  if (platform == MapsNavPlatform.unsupported) return '';
   return ref.watch(nativeMapsApiKeyProvider);
 });
 
@@ -88,13 +109,64 @@ final nativeMapsApiKeyProvider = Provider<String>(
 final embeddedMapConfiguredProvider =
     Provider<bool>((ref) => ref.watch(nativeMapsApiKeyProvider).isNotEmpty);
 
-/// The single gate every Google-nav entry point checks: native map configured
-/// AND an active-platform Routes key AND a mobile surface.
-final googleNavEnabledProvider = Provider<bool>((ref) {
-  return ref.watch(embeddedMapConfiguredProvider) &&
-      ref.watch(routesConfiguredProvider) &&
-      ref.watch(mapsNavPlatformProvider) != MapsNavPlatform.unsupported;
+/// WHY embedded Google navigation is or is not available.
+///
+/// The gate used to be a bare bool, so three very different causes all surfaced
+/// as the same "Google Maps is not configured yet. Please add the Google Maps
+/// API key" panel. On web and macOS — where `google_maps_flutter` has no
+/// implementation at all — that message is simply untrue: the key is present
+/// and irrelevant. Someone reading it goes hunting for a credentials bug that
+/// does not exist. Naming the cause is what makes the screen diagnosable.
+enum GoogleNavAvailability {
+  /// Everything needed is present.
+  ready,
+
+  /// No native Maps SDK key resolved (neither Dart define nor platform config).
+  missingMapsKey,
+
+  /// A Maps key exists but this platform has no Routes key.
+  missingRoutesKey,
+
+  /// This platform cannot host an embedded Google map at all.
+  /// `google_maps_flutter` ships android/ios/web implementations only, so this
+  /// is now desktop (macOS/Windows/Linux) alone.
+  platformUnsupported,
+}
+
+/// The diagnosable form of the gate. Order matters: platform support is checked
+/// FIRST, because on an unsupported platform the keys are beside the point.
+final googleNavAvailabilityProvider = Provider<GoogleNavAvailability>((ref) {
+  if (ref.watch(mapsNavPlatformProvider) == MapsNavPlatform.unsupported) {
+    return GoogleNavAvailability.platformUnsupported;
+  }
+  if (!ref.watch(embeddedMapConfiguredProvider)) {
+    return GoogleNavAvailability.missingMapsKey;
+  }
+  if (!ref.watch(routesConfiguredProvider)) {
+    return GoogleNavAvailability.missingRoutesKey;
+  }
+  return GoogleNavAvailability.ready;
 });
+
+/// The single gate every Google-nav entry point checks. Derived from
+/// [googleNavAvailabilityProvider] so the boolean and the reason can never
+/// disagree.
+final googleNavEnabledProvider = Provider<bool>(
+    (ref) => ref.watch(googleNavAvailabilityProvider) == GoogleNavAvailability.ready);
+
+/// Boolean-only capability trace for QA. Contains NO key material — only
+/// whether each input is present — so it is safe in logs and bug reports.
+/// Takes the READ surface shared by `Ref` and `WidgetRef`, so both providers
+/// and widgets can emit the same trace.
+String describeGoogleNavState(WidgetRef ref) {
+  return [
+    'platform=${ref.read(mapsNavPlatformProvider).name}',
+    'mapsKeyPresent=${ref.read(nativeMapsApiKeyProvider).isNotEmpty}',
+    'routesKeyPresent=${ref.read(activeRoutesKeyProvider).isNotEmpty}',
+    'availability=${ref.read(googleNavAvailabilityProvider).name}',
+    'googleNavEnabled=${ref.read(googleNavEnabledProvider)}',
+  ].join(' ');
+}
 
 /// The production [RoutesService], built from the active-platform Routes key +
 /// the assembled identity headers (async because the Android cert is read
@@ -202,7 +274,11 @@ final navOriginProvider = FutureProvider.autoDispose<NavOrigin>((ref) async {
   try {
     final fix = await svc.watch().first.timeout(const Duration(seconds: 12));
     final lat = fix.position.latitude, lng = fix.position.longitude;
-    if (!const CampusScope().contains(lat, lng)) {
+    // QA mode lifts the campus-scope refusal so the walking flow can be
+    // exercised from wherever the tester actually is. Walking-only and
+    // Google-only are untouched — only the geographic gate is relaxed.
+    if (!ref.watch(allowOffCampusTestingProvider) &&
+        !const CampusScope().contains(lat, lng)) {
       return const NavOriginOffCampus();
     }
     return NavOriginOnCampus((lat, lng));

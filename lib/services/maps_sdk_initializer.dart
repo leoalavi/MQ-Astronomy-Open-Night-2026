@@ -1,5 +1,8 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'maps_js_loader.dart';
 
 import 'maps_consent_providers.dart';
 import 'maps_consent_store.dart';
@@ -55,6 +58,15 @@ class PlatformMapsSdkInitializer implements MapsSdkInitializer {
   @override
   Future<bool> ensureInitialized() async {
     if (_initialized) return true;
+    // WEB: there is no `aon2026/maps_sdk` MethodChannel in a browser — invoking
+    // one throws MissingPluginException and the map would never be allowed to
+    // render. Web readiness means "the Maps JavaScript API is loaded", which we
+    // do ourselves because the plugin ships no loader and the key must not live
+    // in the committed index.html.
+    if (kIsWeb) {
+      _initialized = await loadGoogleMapsJs(apiKey);
+      return _initialized;
+    }
     try {
       // A non-empty arg overrides the platform's own key; native treats an
       // absent/empty arg as "use my configured key" (Android must key via the
@@ -87,6 +99,8 @@ class PlatformMapsSdkInitializer implements MapsSdkInitializer {
   Future<String> resolveKey() async {
     // A Dart-supplied key wins: it is handed to native at initialise time.
     if (apiKey.isNotEmpty) return apiKey;
+    // Web has no native config to fall back on — the define is the only source.
+    if (kIsWeb) return '';
     try {
       return await _channel.invokeMethod<String>('getMapsKey') ?? '';
     } on PlatformException {

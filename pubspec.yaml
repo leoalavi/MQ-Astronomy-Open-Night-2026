@@ -40,6 +40,13 @@ dependencies:
   geolocator: ^14.0.3
   sensors_plus: ^7.1.0
   google_maps_flutter: ^2.18.0
+  # Promoted from TRANSITIVE (google_maps_flutter_web already depends on it) to
+  # direct, because lib/services/maps_js_loader_web.dart injects the Google Maps
+  # JavaScript API itself. The plugin ships no loader and its README says to put
+  # the key in web/index.html, which is committed — so the key would become a
+  # tracked secret. Loading it at runtime keeps the key in config. No new package
+  # enters the resolution; this only records a dependency we already had.
+  web: ^1.0.0
   http: ^1.6.0
   url_launcher: ^6.3.2
 

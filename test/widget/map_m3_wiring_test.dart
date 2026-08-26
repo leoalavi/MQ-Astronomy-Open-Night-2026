@@ -101,7 +101,7 @@ void main() {
     await t.pumpWidget(_app(c));
     await t.pumpAndSettle();
     final before = _markerCount(t);
-    c.read(selectedPlaceKeyProvider.notifier).select('venue:astronomical-observatory');
+    c.read(mapSelectionProvider.notifier).select('venue:astronomical-observatory');
     await t.pumpAndSettle();
     expect(_markerCount(t), before); // same count — decoration, not a new pin
   });

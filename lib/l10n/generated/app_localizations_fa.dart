@@ -767,6 +767,10 @@ class AonL10nFa extends AonL10n {
       'برای دریافت مسیر پیاده‌روی، موقعیت مکانی را روشن کنید.';
 
   @override
+  String get mapNavPlatformUnsupported =>
+      'مسیریابی پیاده با نقشهٔ زنده در برنامهٔ آیفون و اندروید کار می‌کند. این نسخه نمی‌تواند نقشهٔ گوگل را نشان دهد.';
+
+  @override
   String get mapNavUnavailable =>
       'نقشهٔ گوگل هنوز پیکربندی نشده است. برای فعال شدن مسیریابی، کلید API نقشهٔ گوگل را اضافه کنید.';
 
@@ -777,6 +781,10 @@ class AonL10nFa extends AonL10n {
   @override
   String get mapNavDestinationOffCampus =>
       'این مکان روی نقشهٔ محوطهٔ شب باز نجوم نیست.';
+
+  @override
+  String get mapNavRouteUnavailable =>
+      'مسیر پیاده موقتاً در دسترس نیست. نقشه همچنان مقصد شما را نشان می‌دهد.';
 
   @override
   String get mapNavRetry => 'تلاش دوباره';

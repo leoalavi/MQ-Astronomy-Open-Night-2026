@@ -185,12 +185,62 @@ void main() {
     expect(find.text(l.mapNavOffline), findsOneWidget);
   });
 
-  testWidgets('RouteApiFailure → error panel', (t) async {
+  // ── The map is not gated on the route ────────────────────────────────────
+  //
+  // A failed route used to replace the whole screen with an error panel, which
+  // threw away the part that still worked: the visitor could no longer even see
+  // WHERE they were going. Markers and camera depend only on the SDK; only the
+  // polyline and the distance/ETA depend on the route.
+
+  testWidgets('RouteApiFailure keeps the MAP and shows a route-only error',
+      (t) async {
     final svc = _StubService(const RouteApiFailure(403));
     await t.pumpWidget(_app(_c(service: svc)));
     await t.pumpAndSettle();
     final l = await _en();
-    expect(find.text(l.mapNavError), findsOneWidget);
+    expect(find.byKey(const Key('map-surface')), findsOneWidget,
+        reason: 'a route failure must not hide the destination');
+    expect(find.text(l.mapNavRouteUnavailable), findsOneWidget);
+    // Retry and the secondary hand-off stay reachable under the map.
+    expect(find.text(l.mapNavRetry), findsOneWidget);
+  });
+
+  for (final (label, failure) in <(String, RouteResult)>[
+    ('RouteApiFailure 401 (Routes API rejected)', const RouteApiFailure(401)),
+    ('RouteApiFailure 429 (quota)', const RouteApiFailure(429)),
+    ('RouteNoRoute', const RouteNoRoute()),
+    ('RouteNetworkFailure', const RouteNetworkFailure()),
+    ('RouteMalformed', const RouteMalformed()),
+  ]) {
+    // One test each, not a loop: pumping several trees in a single test leaves
+    // the previous tree's timers pending and trips the binding's invariant.
+    testWidgets('$label keeps the map visible', (t) async {
+      await t.pumpWidget(_app(_c(service: _StubService(failure))));
+      await t.pumpAndSettle();
+      expect(find.byKey(const Key('map-surface')), findsOneWidget,
+          reason: '$label replaced the map with an error page');
+    });
+  }
+
+  testWidgets('the map is NOT built when the SDK is unkeyed, even on failure',
+      (t) async {
+    // The consent/keying invariant still wins over "always show the map".
+    await t.pumpWidget(
+        _app(_c(service: _StubService(const RouteNoRoute()), sdkReady: false)));
+    await t.pumpAndSettle();
+    final l = await _en();
+    expect(find.byKey(const Key('map-surface')), findsNothing);
+    // And it says so, rather than spinning forever.
+    expect(find.text(l.mapNavUnavailable), findsOneWidget);
+  });
+
+  testWidgets('consent withdrawn is the one case with NO map', (t) async {
+    // Nothing reached the UI and no Google surface may be constructed.
+    await t.pumpWidget(
+        _app(_c(service: _StubService(const RouteConsentRefused()))));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('map-surface')), findsNothing);
+    expect(find.byKey(const Key('nav-reopen-disclosure')), findsOneWidget);
   });
 
   testWidgets('no location → needLocation panel with external fallback', (t) async {

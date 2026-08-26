@@ -5,6 +5,7 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/search_entry.dart';
+import 'package:aon2026/config/qa_mode.dart';
 import 'package:aon2026/services/campus_scope.dart';
 import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
@@ -48,15 +49,27 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
 
     // (1) Capability guard — feature disabled → unavailable panel (with an
     // optional external-Maps button if we can resolve a destination).
+    // Gate on the boolean (the long-established seam every caller and test
+    // overrides); consult the availability enum only to explain WHY.
     if (!ref.watch(googleNavEnabledProvider)) {
+      final availability = ref.watch(googleNavAvailabilityProvider);
       final dest = _destOf(resolved.asData?.value);
+      // Boolean-only trace (never the key) so a QA report can say WHY.
+      debugPrint('GoogleNav: ${describeGoogleNavState(ref)}');
+      // Tell the truth about the cause. Blaming a missing key on a platform
+      // that simply has no Google map surface sends people hunting for a
+      // credentials bug that does not exist.
+      final message = switch (availability) {
+        GoogleNavAvailability.platformUnsupported => l.mapNavPlatformUnsupported,
+        _ => l.mapNavUnavailable,
+      };
       return _scaffold(
         l,
         title: resolved.asData?.value?.title,
         body: _panel(
           context,
           icon: Icons.map_outlined,
-          message: l.mapNavUnavailable,
+          message: message,
           actions: [if (dest != null) _externalButton(context, l, dest)],
         ),
       );
@@ -76,7 +89,8 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         // routed to (defensive: every curated destination sits inside the
         // campus extent by construction, but nothing downstream should assume
         // it). Honest message instead of a kilometres-long walk-out.
-        if (!const CampusScope().contains(dest.$1, dest.$2)) {
+        if (!ref.watch(allowOffCampusTestingProvider) &&
+            !const CampusScope().contains(dest.$1, dest.$2)) {
           return _scaffold(
             l,
             title: place.title,
@@ -183,60 +197,134 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
 
   Widget _resultBody(BuildContext context, AonL10n l, RouteResult result,
       (double, double) origin, (double, double) dest) {
-    return switch (result) {
-      RouteSuccess(:final route) => Column(
-          children: [
-            // Task 1 deferred GMSServices.provideAPIKey off app launch, so a
-            // GoogleMap constructed against an unkeyed SDK would render blank.
-            // Consent alone is not sufficient — readiness must be true.
-            if (ref.watch(mapsSdkReadyProvider).asData?.value == true)
+    // Consent withdrawn mid-flight is the ONE case with no map: nothing reached
+    // the UI and no Google surface may be constructed, so offer the way back
+    // rather than a map the user just revoked permission for.
+    if (result is RouteConsentRefused) {
+      return _panel(
+        context,
+        icon: Icons.privacy_tip_outlined,
+        message: l.mapNavDisclosureBody,
+        actions: [
+          FilledButton(
+            key: const Key('nav-reopen-disclosure'),
+            onPressed: () {
+              // Re-arm so the next build shows the disclosure again.
+              setState(() => _disclosureRequested = false);
+              ref.read(mapsConsentProvider.notifier).revoke();
+            },
+            child: Text(l.mapNavDisclosureAccept),
+          ),
+          _externalButton(context, l, dest),
+        ],
+      );
+    }
+
+    // Task 1 deferred GMSServices.provideAPIKey off app launch, so a GoogleMap
+    // constructed against an unkeyed SDK would render blank. Consent alone is
+    // not sufficient — readiness must be true.
+    final sdkAsync = ref.watch(mapsSdkReadyProvider);
+    final sdkReady = sdkAsync.asData?.value == true;
+    // Distinguish "still initialising" from "resolved: cannot key the SDK".
+    // Showing a spinner for the latter span forever, which reads as a hang.
+    final sdkStillLoading = sdkAsync.isLoading;
+
+    // THE MAP IS NOT GATED ON THE ROUTE. A failed route used to replace the
+    // whole screen with an error panel, which threw away the part that still
+    // worked: the visitor could no longer even see WHERE they were going. The
+    // map, both markers and the camera fit depend only on the SDK; only the
+    // polyline and the distance/ETA depend on the route. So render the map
+    // whenever the SDK is ready and let the route decorate it — or not.
+    final route = result is RouteSuccess ? result.route : null;
+
+    return Column(
+      children: [
+        if (sdkReady)
+          Expanded(
+            child: EmbeddedMap(
+              origin: origin,
+              destination: dest,
+              // Empty on failure: markers and camera still work, no polyline.
+              route: route?.polyline ?? const <(double, double)>[],
+              surface: widget.surface,
+            ),
+          )
+        else if (sdkStillLoading)
+          Expanded(child: _spinner(context))
+        else
+          // The SDK resolved unusable (no key, or init refused). Say so once
+          // rather than spinning forever behind a route error.
+          Expanded(
+            child: _panel(
+              context,
+              icon: Icons.map_outlined,
+              message: l.mapNavUnavailable,
+            ),
+          ),
+        if (route != null)
+          _successPanel(context, l, route, dest)
+        else
+          _routeErrorBanner(context, l, result, origin, dest),
+      ],
+    );
+  }
+
+  /// A COMPACT route-failure strip under a still-visible map.
+  ///
+  /// Deliberately a banner, not a full-screen panel: the destination is on the
+  /// map above it, so the honest message is "the route is unavailable", not
+  /// "navigation is unavailable".
+  Widget _routeErrorBanner(BuildContext context, AonL10n l, RouteResult result,
+      (double, double) origin, (double, double) dest) {
+    final theme = Theme.of(context);
+    final (icon, message) = switch (result) {
+      RouteNoRoute() => (Icons.directions_off_outlined, l.mapNavNoRoute),
+      RouteNetworkFailure() => (Icons.wifi_off_rounded, l.mapNavOffline),
+      RouteApiFailure(:final status) => () {
+          // Surface the status to logs so 401/403 (key) vs 429 (quota) vs 5xx
+          // stays diagnosable from a QA report.
+          debugPrint('GoogleNav: route API failure HTTP $status');
+          return (Icons.error_outline_rounded, l.mapNavRouteUnavailable);
+        }(),
+      _ => (Icons.error_outline_rounded, l.mapNavRouteUnavailable),
+    };
+
+    return Container(
+      width: double.infinity,
+      color: context.aon.surface,
+      padding: const EdgeInsets.all(AonSpacing.space4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 18, color: context.aon.contentTertiary),
+              const SizedBox(width: AonSpacing.space2),
               Expanded(
-                child: EmbeddedMap(
-                  origin: origin,
-                  destination: dest,
-                  route: route.polyline,
-                  surface: widget.surface,
+                child: Text(
+                  message,
+                  style: theme.textTheme.bodyMedium
+                      ?.copyWith(color: context.aon.contentSecondary),
                 ),
               ),
-            _successPanel(context, l, route, dest),
-          ],
-        ),
-      // Consent was withdrawn between opening this screen and the request
-      // returning. Nothing reached the UI, so offer the way back rather than
-      // showing a network error for a request that never counted.
-      RouteConsentRefused() => _panel(
-          context,
-          icon: Icons.privacy_tip_outlined,
-          message: l.mapNavDisclosureBody,
-          actions: [
-            FilledButton(
-              key: const Key('nav-reopen-disclosure'),
-              onPressed: () {
-                // Re-arm so the next build shows the disclosure again.
-                setState(() => _disclosureRequested = false);
-                ref.read(mapsConsentProvider.notifier).revoke();
-              },
-              child: Text(l.mapNavDisclosureAccept),
+            ],
+          ),
+          const SizedBox(height: AonSpacing.space2),
+          Align(
+            alignment: AlignmentDirectional.centerEnd,
+            child: Wrap(
+              spacing: AonSpacing.space2,
+              children: [
+                _retryButton(context, l, origin, dest),
+                _externalButton(context, l, dest),
+              ],
             ),
-            _externalButton(context, l, dest),
-          ],
-        ),
-      RouteNoRoute() => _panel(
-          context,
-          icon: Icons.directions_off_outlined,
-          message: l.mapNavNoRoute,
-          actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
-        ),
-      RouteNetworkFailure() => _panel(
-          context,
-          icon: Icons.wifi_off_rounded,
-          message: l.mapNavOffline,
-          actions: [_retryButton(context, l, origin, dest), _externalButton(context, l, dest)],
-        ),
-      RouteApiFailure(:final status) =>
-        _routeError(context, l, dest, origin, apiStatus: status),
-      RouteMalformed() => _routeError(context, l, dest, origin),
-    };
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _routeError(BuildContext context, AonL10n l, (double, double) dest,

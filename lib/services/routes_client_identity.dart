@@ -33,8 +33,13 @@ final androidCertSha1Provider = FutureProvider<String>((ref) async {
 });
 
 /// Assembles the per-platform identity headers: iOS sends the one bundle-id
-/// header; Android sends BOTH package + cert; web/desktop send none (nav is
-/// disabled there anyway).
+/// header; Android sends BOTH package + cert.
+///
+/// WEB sends NONE, deliberately. A browser key is restricted by HTTP referrer,
+/// which the browser attaches itself and which cannot be forged from JS; sending
+/// an `X-Ios-Bundle-Identifier`/`X-Android-Package` header from a web page would
+/// be both meaningless and rejected by a referrer-restricted key. Desktop sends
+/// none because nav is disabled there.
 final routesClientIdentityProvider = FutureProvider<RoutesClientIdentity>((ref) async {
   switch (ref.watch(mapsNavPlatformProvider)) {
     case MapsNavPlatform.ios:
@@ -45,6 +50,7 @@ final routesClientIdentityProvider = FutureProvider<RoutesClientIdentity>((ref) 
         'X-Android-Package': _appId,
         'X-Android-Cert': cert,
       });
+    case MapsNavPlatform.web:
     case MapsNavPlatform.unsupported:
       return const RoutesClientIdentity({});
   }

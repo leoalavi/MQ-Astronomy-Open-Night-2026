@@ -766,6 +766,10 @@ class AonL10nEn extends AonL10n {
       'Turn on location to get walking directions.';
 
   @override
+  String get mapNavPlatformUnsupported =>
+      'Walking directions with the live map work on the iPhone and Android apps. This build can’t show the Google map.';
+
+  @override
   String get mapNavUnavailable =>
       'Google Maps is not configured yet. Please add the Google Maps API key to enable directions.';
 
@@ -776,6 +780,10 @@ class AonL10nEn extends AonL10n {
   @override
   String get mapNavDestinationOffCampus =>
       'This place isn\'t on the Astronomy Open Night campus map.';
+
+  @override
+  String get mapNavRouteUnavailable =>
+      'Walking route is temporarily unavailable. The map still shows your destination.';
 
   @override
   String get mapNavRetry => 'Retry';

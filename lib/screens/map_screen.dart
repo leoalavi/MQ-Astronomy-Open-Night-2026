@@ -554,7 +554,27 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       // Clamp: a focus zoom must still obey the campus map's zoom bounds.
       final z = (zoom ?? _controller.camera.zoom)
           .clamp(MapConfig.mapMinZoom, MapConfig.mapMaxZoom);
-      _controller.move(rp.value, z);
+
+      // Offset for the sheet. `move` centres the target in the FULL viewport,
+      // but the selected-place sheet covers the bottom ~35% of it — so a
+      // centred marker sits BEHIND the sheet, hiding the very venue the visitor
+      // asked to see. Shifting the camera target down the map by half the
+      // obscured band lifts the marker into the visible strip above the sheet.
+      // Only when a sheet is about to open (`zoom != null`, i.e. an external
+      // focus); an ordinary recentre keeps the plain centre.
+      final target = rp.value;
+      final adjusted = zoom == null
+          ? target
+          : LatLng(
+              target.latitude -
+                  MapConfig.focusOffsetMapUnits(
+                    zoom: z,
+                    obscuredBottomPx: MapConfig.sheetObscuredHeight(
+                        MediaQuery.sizeOf(context).height),
+                  ),
+              target.longitude,
+            );
+      _controller.move(adjusted, z);
     } else if (zoom != null && mounted) {
       // Focused from another screen on a place with no map placement. Say so
       // rather than silently leaving the camera wherever it was — the sheet

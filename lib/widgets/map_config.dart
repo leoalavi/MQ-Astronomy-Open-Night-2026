@@ -183,6 +183,44 @@ abstract final class MapConfig {
   /// enough to read the surrounding buildings, still well inside [mapMaxZoom].
   static const double mapFocusZoom = -4;
 
+  /// Screen pixels per CrsSimple map-unit at [zoom].
+  ///
+  /// CrsSimple maps one "map unit" to 256 px at zoom 0 and halves/doubles from
+  /// there, which is what lets the focus offset below be expressed in the same
+  /// units the camera moves in.
+  static double pixelsPerMapUnit(double zoom) => 256 * math.pow(2, zoom).toDouble();
+
+  /// How far to shift the camera target DOWN the map so a focused marker lands
+  /// in the part of the map the visitor can actually see.
+  ///
+  /// ## Why a focused marker was hidden
+  ///
+  /// `MapController.move` centres the target in the FULL widget viewport. The
+  /// selected-place sheet then covers the bottom ~35% of it, so a marker centred
+  /// by the camera sat behind the sheet — on a phone, the venue you just asked
+  /// to see was the one thing you could not see. Nothing about the camera knows
+  /// the sheet exists, so the correction has to be applied deliberately.
+  ///
+  /// The visible band runs from the top of the map to the top of the sheet, so
+  /// its centre is [obscuredBottomPx] / 2 ABOVE the widget centre. Moving the
+  /// camera target down by that much in map-units pushes the marker up the
+  /// screen by the same amount. Returned in map-units (not pixels) because that
+  /// is what `move` consumes, and it is zoom-dependent: the same pixel gap is a
+  /// larger slice of the map when zoomed out.
+  static double focusOffsetMapUnits({
+    required double zoom,
+    required double obscuredBottomPx,
+  }) {
+    if (obscuredBottomPx <= 0) return 0;
+    return (obscuredBottomPx / 2) / pixelsPerMapUnit(zoom);
+  }
+
+  /// The height the selected-place sheet covers, for a screen of [screenHeight].
+  /// The sheet is a fraction of the SCREEN, and it overlays the bottom of the
+  /// map, so this is also the map's obscured band.
+  static double sheetObscuredHeight(double screenHeight) =>
+      screenHeight * venueSheetInitialExtent;
+
   /// The place sheet (marker tap / "Show on map") opens at this fraction of the
   /// screen height. Deliberately COMPACT so the map the visitor just asked to
   /// see is not buried: it opened at 0.55–0.6 and covered most of the screen.

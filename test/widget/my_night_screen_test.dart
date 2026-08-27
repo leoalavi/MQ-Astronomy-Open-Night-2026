@@ -116,6 +116,28 @@ void main() {
     expect(find.text('Undo'), findsOneWidget);
   });
 
+  testWidgets('tapping Undo puts the entry back', (tester) async {
+    // Offering an Undo that does nothing is worse than offering none. The
+    // suite asserted the action was *present* but never pressed it, so the
+    // restore path itself was unverified.
+    seedSaved(['keynote-artemis']);
+    await tester.pumpWidget(harness());
+    await tester.pumpAndSettle();
+    final title = find.textContaining('Artemis and beyond');
+    expect(title, findsOneWidget);
+
+    await tester.tap(find.byTooltip('Remove from plan'));
+    await tester.pumpAndSettle();
+    expect(title, findsNothing);
+
+    await tester.tap(find.text('Undo'));
+    await tester.pumpAndSettle();
+
+    expect(title, findsOneWidget,
+        reason: 'Undo must restore the removed activity');
+    expect(find.text('Your night is empty'), findsNothing);
+  });
+
   testWidgets('a multi-session activity is labelled N of M', (tester) async {
     seedSaved(['physics-magic-show']);
     await tester.pumpWidget(harness(now: EventInfo.at(16, 0)));

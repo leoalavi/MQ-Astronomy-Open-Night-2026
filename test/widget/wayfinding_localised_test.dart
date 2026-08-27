@@ -9,6 +9,7 @@ import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/utils/time_format.dart';
+import 'package:aon2026/utils/bidi.dart';
 
 /// The route panel used to render "About 6 min", "~400 m", the straight-line
 /// caveat and its step numbers as hardcoded English, inside an otherwise
@@ -34,7 +35,7 @@ Future<void> _open(WidgetTester t, {Locale locale = const Locale('en')}) async {
   await t.pumpAndSettle();
   // The screen opens with a destination but no start; pick the car park so a
   // route actually resolves.
-  await t.tap(find.text('West 5'));
+  await t.tap(find.text(Bidi.isolate('West 5')));
   await t.pumpAndSettle();
 }
 

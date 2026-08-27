@@ -9,7 +9,10 @@ import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/models/building.dart';
 import 'package:aon2026/screens/info_screen.dart';
+import 'package:aon2026/services/building_providers.dart';
+import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/utils/bidi.dart';
@@ -34,10 +37,12 @@ import 'package:aon2026/utils/bidi.dart';
 /// while the surrounding page stays RTL. That keeps the stop attached to the
 /// sentence *and* keeps the block right-aligned with the rest of the Persian.
 ///
-/// Only free-text sentences are isolated. Titles and venue names are single runs
-/// with no punctuation at either boundary, so they never drifted, and isolating
-/// them would bury invisible control characters in every `find.text` in the
-/// suite for no benefit.
+/// Free-text sentences were isolated first. Place NAMES were left alone on the
+/// theory that a single run with no punctuation at either boundary cannot drift
+/// — wrong: a *leading street number* is a bidi-neutral-ish European Number and
+/// is carried to the far end of an RTL line. Seen on an iPhone 17 Pro with the
+/// map's place sheet showing "Central Courtyard 1" for the building
+/// "1 Central Courtyard". Names are isolated too now.
 void main() {
   Widget app({required Locale locale}) {
     SharedPreferences.setMockInitialValues({
@@ -198,6 +203,55 @@ void main() {
       // defeats `if (notes != null)` guards at the call sites.
       expect(Bidi.isolate(null), '');
       expect(Bidi.isolate(''), '');
+    });
+  });
+
+  group('place-sheet titles that begin with a street number', () {
+    // ## The bug this group exists to prevent
+    //
+    // Program -> "Show on map" for an activity in "1 Central Courtyard" opened
+    // the map's place sheet titled "Central Courtyard 1". The building's name
+    // is data, rendered raw into an RTL paragraph, so the leading number was
+    // relocated to the end of the run — the same failure as the Home rail's
+    // "Wally's Walk 17", on a surface the Info-screen test above cannot reach.
+    const numbered = Building(
+      id: 'central-courtyard',
+      code: '1CC',
+      name: '1 Central Courtyard',
+    );
+
+    Widget sheet(Locale locale) => ProviderScope(
+          overrides: [
+            buildingsProvider.overrideWith((ref) async => const [numbered]),
+          ],
+          child: MaterialApp(
+            localizationsDelegates: AonL10n.localizationsDelegates,
+            supportedLocales: AonL10n.supportedLocales,
+            locale: locale,
+            theme: AonTheme.build(),
+            home: const Scaffold(
+              body: BuildingSheet(buildingId: 'central-courtyard'),
+            ),
+          ),
+        );
+
+    testWidgets('the title is isolated in Persian', (tester) async {
+      await tester.pumpWidget(sheet(const Locale('fa')));
+      await tester.pumpAndSettle();
+
+      final bare = visibleStrings(tester)
+          .where((s) => RegExp(r'^\d').hasMatch(s) && s.contains(' '));
+      expect(bare, isEmpty,
+          reason: 'an un-isolated numbered building name renders reversed: '
+              '${bare.toList()}');
+      expect(find.text(Bidi.isolate(numbered.name)), findsOneWidget);
+    });
+
+    testWidgets('and in English, where the isolate is a harmless no-op',
+        (tester) async {
+      await tester.pumpWidget(sheet(const Locale('en')));
+      await tester.pumpAndSettle();
+      expect(find.text(Bidi.isolate(numbered.name)), findsOneWidget);
     });
   });
 }

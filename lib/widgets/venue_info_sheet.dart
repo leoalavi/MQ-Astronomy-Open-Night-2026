@@ -87,7 +87,7 @@ class VenueInfoSheet extends ConsumerWidget {
               ),
               const SizedBox(width: AonSpacing.space3),
               Expanded(
-                child: Text(venue.name, style: theme.textTheme.headlineSmall),
+                child: Text(Bidi.isolate(venue.name), style: theme.textTheme.headlineSmall),
               ),
               if (venue.mapReference != null) _MapRefBadge(venue.mapReference!),
             ],

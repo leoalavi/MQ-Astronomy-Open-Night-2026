@@ -10,6 +10,7 @@ import 'package:aon2026/services/building_providers.dart';
 import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/services/maps_url.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/widgets/favorite_toggle.dart';
 
 String buildingCategoryLabel(AonL10n l, BuildingCategory c) => switch (c) {
@@ -63,14 +64,15 @@ class BuildingSheet extends ConsumerWidget {
                   Icon(Icons.business_rounded, color: context.aon.contentSecondary),
                   const SizedBox(width: AonSpacing.space3),
                   Expanded(
-                    child: Text(building.name, style: theme.textTheme.headlineSmall),
+                    child: Text(Bidi.isolate(building.name), style: theme.textTheme.headlineSmall),
                   ),
                   FavoriteToggle(placeKey: 'building:${building.id}'),
                 ],
               ),
               const SizedBox(height: AonSpacing.space1),
               Text(
-                '${building.code} · ${buildingCategoryLabel(l, building.category)}',
+                Bidi.joinIsolated(
+                    [building.code, buildingCategoryLabel(l, building.category)]),
                 style: theme.textTheme.bodyMedium
                     ?.copyWith(color: context.aon.contentSecondary),
               ),

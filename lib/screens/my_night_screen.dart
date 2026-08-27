@@ -322,7 +322,14 @@ EventTiming.happeningNow => entry.session.hasPublishedEnd
   Future<void> _remove(BuildContext context, WidgetRef ref, AonL10n l) async {
     final planName = ref.read(terminologyProvider).myPlan(l);
     final id = entry.event.id;
-    await ref.read(savedEventsProvider.notifier).remove(id);
+    // Capture the notifier NOW. Removing the entry unmounts this very card, so
+    // an `onPressed` that closed over `ref` threw
+    // "Using ref when a widget ... has been unmounted" the moment Undo was
+    // pressed — the snackbar offered an Undo that silently did nothing. The
+    // notifier is owned by the ProviderContainer, not the widget, so holding a
+    // reference to it outlives the card safely.
+    final saved = ref.read(savedEventsProvider.notifier);
+    await saved.remove(id);
     if (!context.mounted) return;
 
     ScaffoldMessenger.maybeOf(context)
@@ -336,7 +343,7 @@ EventTiming.happeningNow => entry.session.hasPublishedEnd
           // a card being tapped in the dark.
           action: SnackBarAction(
             label: l.actionUndo,
-            onPressed: () => ref.read(savedEventsProvider.notifier).toggle(id),
+            onPressed: () => saved.toggle(id),
           ),
         ),
       );

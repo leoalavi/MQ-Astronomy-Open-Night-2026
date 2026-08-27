@@ -13,6 +13,7 @@ import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_search_sheet.dart';
 import 'package:aon2026/widgets/favorites_sheet.dart';
 import 'package:aon2026/screens/map_screen.dart';
+import 'package:aon2026/utils/bidi.dart';
 import '../support/fake_location_service.dart';
 
 const _eng = Building(
@@ -81,7 +82,7 @@ void main() {
     await t.pumpAndSettle();
     await t.enterText(find.byType(TextField), 'eng');
     await t.pumpAndSettle();
-    await t.tap(find.text('Engineering'));
+    await t.tap(find.text(Bidi.isolate('Engineering')));
     await t.pumpAndSettle();
 
     // selection set + transient marker added + BuildingSheet open

@@ -6,6 +6,7 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/search_providers.dart';
+import 'package:aon2026/utils/bidi.dart';
 
 /// Favourites list. Layout is `Column(header, Expanded(ListView))` (G19).
 /// A key that can't resolve YET (registry still loading) shows a pending row —
@@ -74,13 +75,13 @@ class _FavoriteRow extends ConsumerWidget {
               leading: place.renderPoint == null
                   ? Icon(Icons.location_off_rounded, color: context.aon.contentTertiary)
                   : Icon(Icons.place_rounded, color: context.aon.accent),
-              title: Text(place.title),
+              title: Text(Bidi.isolate(place.title)),
               subtitle: place.renderPoint == null
                   ? Text(l.mapPlaceListOnly,
                       style: TextStyle(color: context.aon.contentTertiary))
                   : (place.subtitleOf(l) == null
                       ? null
-                      : Text(place.subtitleOf(l)!)),
+                      : Text(Bidi.isolate(place.subtitleOf(l)))),
               trailing: FavoriteToggleTrailing(placeKey: placeKey),
               onTap: () => Navigator.of(context).pop(placeKey),
             ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/l10n/generated/app_localizations_fa.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
@@ -14,10 +15,12 @@ void main() {
     required Set<VenueCategory> selected,
     ValueChanged<VenueCategory>? onToggle,
     double scale = 1.0,
+    Locale locale = const Locale('en'),
   }) {
     return MaterialApp(
       localizationsDelegates: AonL10n.localizationsDelegates,
       supportedLocales: AonL10n.supportedLocales,
+      locale: locale,
       theme: AonTheme.build(),
       home: Scaffold(
         body: MediaQuery(
@@ -107,4 +110,39 @@ void main() {
       handle.dispose();
     },
   );
+
+  group('chip labels are localised, not the English diagnostic name', () {
+    // ## The bug this group exists to prevent
+    //
+    // `VenueCategory.label` is a hardcoded English string kept for diagnostics.
+    // Every other surface resolves the ARB string through `labelOf`, but the
+    // map's filter bar rendered `category.label` directly — so a Persian map
+    // showed "Event venue" and "Information point" in English, above a fully
+    // Persian screen. Seen on an iPhone 17 Pro simulator.
+    testWidgets('Persian chips carry no English category name', (tester) async {
+      await tester.pumpWidget(
+          harness(selected: const {}, locale: const Locale('fa')));
+      await tester.pumpAndSettle();
+
+      final fa = AonL10nFa();
+      expect(find.text(fa.venueCatEventVenue), findsOneWidget);
+      expect(find.text(VenueCategory.eventVenue.label), findsNothing,
+          reason: 'the English diagnostic name must never reach the visitor');
+    });
+
+    testWidgets('the semantics label is localised too', (tester) async {
+      final handle = tester.ensureSemantics();
+      await tester.pumpWidget(
+          harness(selected: const {}, locale: const Locale('fa')));
+      await tester.pumpAndSettle();
+
+      final fa = AonL10nFa();
+      expect(
+        tester.getSemantics(find.bySemanticsLabel(fa.venueCatEventVenue)),
+        isNotNull,
+        reason: 'a Persian screen reader announced every chip in English',
+      );
+      handle.dispose();
+    });
+  });
 }

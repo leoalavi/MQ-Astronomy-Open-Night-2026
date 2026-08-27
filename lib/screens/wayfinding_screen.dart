@@ -114,7 +114,7 @@ class _WayfindingScreenState extends ConsumerState<WayfindingScreen> {
               for (final p in parking)
                 if (startIds.contains(p.id))
                   ChoiceChip(
-                    label: Text(p.name),
+                    label: Text(Bidi.isolate(p.name)),
                     avatar: const Icon(
                       Icons.local_parking_rounded,
                       size: AonSpacing.iconSm,

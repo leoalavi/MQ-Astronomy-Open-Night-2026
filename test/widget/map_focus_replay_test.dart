@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
@@ -13,6 +14,7 @@ import 'package:aon2026/screens/map_screen.dart' show VenueSheet;
 import 'package:aon2026/services/building_providers.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/widgets/map_config.dart';
 
 import '../support/fake_location_service.dart';
 
@@ -114,5 +116,55 @@ void main() {
     await pumpFocus(t);
     expect(find.byType(VenueSheet), findsOneWidget,
         reason: 'returning to venue A must re-show, not stay on stale state');
+  });
+
+  /// The live camera of the mounted campus map.
+  MapCamera camera(WidgetTester t) =>
+      MapCamera.of(t.element(find.byType(MarkerLayer).first));
+
+  testWidgets('the FIRST Show on map lands on the venue, not the campus fit',
+      (t) async {
+    // ## The bug this test exists to prevent
+    //
+    // Post-frame callbacks run in REGISTRATION order. `initState` registered
+    // the focus callback; `FlutterMap` registered its `onMapReady` one step
+    // later during its own first build. So on the very first entry to the Map
+    // tab the camera was moved onto the venue and then immediately overwritten
+    // by `fitCamera(whole campus)`. The sheet opened over an unzoomed campus
+    // map — the visitor had to tap "Show on map" a SECOND time to actually see
+    // the place. Seen on an iPhone 17 Pro simulator.
+    await t.pumpWidget(app());
+    await t.pump();
+
+    router.go(Routes.mapFocus(venue));
+    await pumpFocus(t);
+
+    expect(find.byType(VenueSheet), findsOneWidget);
+    expect(camera(t).zoom, closeTo(MapConfig.mapFocusZoom, 1e-6),
+        reason: 'the first focus must survive the opening fit, which sits at '
+            'the much wider whole-campus zoom');
+  });
+
+  testWidgets('the first focus is offset above the sheet, like later ones',
+      (t) async {
+    // The offset and the zoom are applied by the same `move`, so a first focus
+    // that lost its zoom lost its sheet-clearance too. Pin both.
+    await t.pumpWidget(app());
+    await t.pump();
+
+    router.go(Routes.mapFocus(venue));
+    await pumpFocus(t);
+    final first = camera(t).center;
+
+    // Second focus on the same venue — the path that always worked.
+    await dismissSheet(t);
+    router.go(Routes.home);
+    await t.pump();
+    router.go(Routes.mapFocus(venue));
+    await pumpFocus(t);
+
+    expect(camera(t).center.latitude, closeTo(first.latitude, 1e-6),
+        reason: 'first and later focuses must frame the venue identically');
+    expect(camera(t).center.longitude, closeTo(first.longitude, 1e-6));
   });
 }

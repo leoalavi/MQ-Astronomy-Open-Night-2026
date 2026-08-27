@@ -142,7 +142,7 @@ class InfoScreen extends ConsumerWidget {
                           size: AonSpacing.iconMd,
                         ),
                         const SizedBox(width: AonSpacing.space3),
-                        Text(p.name, style: theme.textTheme.titleMedium),
+                        Text(Bidi.isolate(p.name), style: theme.textTheme.titleMedium),
                       ],
                     ),
                     if (p.notes != null) ...[

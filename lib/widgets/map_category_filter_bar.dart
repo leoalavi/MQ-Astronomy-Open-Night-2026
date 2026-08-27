@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/venue.dart';
+import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
@@ -64,6 +66,10 @@ class _MapCategoryChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final categoryColor = VenueStyle.colorFor(context, category);
+    // `VenueCategory.label` is the English diagnostic name; the visitor sees the
+    // ARB string. Every other surface already used `labelOf` — the map's filter
+    // chips were the last place still shipping "Event venue" into a Persian UI.
+    final label = category.labelOf(AonL10n.of(context));
     final fg = isSelected ? context.aon.onAccent : context.aon.contentPrimary;
     final radius = BorderRadius.circular(AonSpacing.radiusFull);
 
@@ -88,7 +94,7 @@ class _MapCategoryChip extends StatelessWidget {
                   ),
                   const SizedBox(width: AonSpacing.space2),
                   Text(
-                    category.label,
+                    label,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     // labelMedium matches the density of the Material FilterChip
@@ -123,7 +129,7 @@ class _MapCategoryChip extends StatelessWidget {
     return Semantics(
       button: true,
       selected: isSelected,
-      label: category.label,
+      label: label,
       onTap: onTap,
       child: ExcludeSemantics(child: visual),
     );

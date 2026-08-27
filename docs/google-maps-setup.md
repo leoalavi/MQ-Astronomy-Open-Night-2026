@@ -1,8 +1,11 @@
 # Google Maps setup — keys, wiring, and Cloud console
 
 Astronomy Open Night uses **Google Maps as the only navigation provider**.
-Directions are **walking only** and **scoped to the Macquarie University
-campus**. There is no provider chooser, no other travel mode, and no
+Directions are **walking only**. In production they are **scoped to the
+Macquarie University campus**; a debug-only flag
+(`--dart-define=AON_ALLOW_OFF_CAMPUS_TESTING=true`) lifts that scope so the flow
+can be exercised from off campus during QA. The flag defaults to **false**, so a
+release build keeps the campus rule and the branch is compiled out. There is no provider chooser, no other travel mode, and no
 OpenStreetMap. The illustrated campus map needs **no** key (it renders a bundled
 asset); only Google **walking directions** need keys, and they degrade to a
 clear "Google Maps is not configured yet" message — never a crash, never a fake
@@ -94,46 +97,59 @@ it by hand in that path. `ios/Pods/` is git-ignored — nothing to commit; only
 
 ## Web
 
-`web/index.html` has a commented Maps JavaScript API `<script>` placeholder. The
-web build does **not** read `MAPS_API_KEY` from `.env`; to show the Google map on
-web, uncomment the tag with a **browser-restricted** key. Left commented (the
-default), web ships without the interactive Google map. The embedded Google map
-+ direct Routes calls are a **mobile-only** capability (`mapsNavPlatform` reports
-`unsupported` on web/desktop), so on web the Directions flow shows the
-"not configured" state by design.
+There is deliberately **no** `<script src="maps.googleapis.com/maps/api/js?key=…">`
+tag in `web/index.html`. That file is committed, so a key pasted there would
+become a tracked secret. Instead the app injects the Maps JavaScript API at
+runtime with the same `MAPS_API_KEY` every other platform resolves — see
+`lib/services/maps_js_loader_web.dart` (single injection, success cached, 12 s
+timeout, retry on failure).
+
+Web is a **first-class** target: `MapsNavPlatform.web` renders a real embedded
+map and calls the Routes API directly (its CORS preflight allows our headers —
+see below), so no proxy or backend is required.
+
+```
+flutter run -d chrome --dart-define-from-file=.env
+```
+
+**Verified 2026-08-27 in Chrome:** embedded Google map renders in-app, WALK
+polyline drawn, distance + ETA shown.
+
+> A web key is public by nature — it ships in `main.dart.js`, which is
+> unavoidable for the Maps JavaScript API — so a production web key **must**
+> carry an HTTP-referrer restriction.
 
 ## Google Cloud console — enable exactly these
 
-| API | Needed by | Status as of 2026-08-26 |
+| API | Needed by | Status |
 | --- | --- | --- |
-| **Maps SDK for Android** | native map on Android | assumed enabled |
-| **Maps SDK for iOS** | native map on iOS | assumed enabled |
-| **Maps JavaScript API** | embedded map on **web** | ✅ verified enabled |
-| **Routes API** | the walking route, every platform | ❌ **NOT ENABLED** |
+| **Maps SDK for Android** | native map on Android | required |
+| **Maps SDK for iOS** | native map on iOS | ✅ verified working (route rendered on simulator) |
+| **Maps JavaScript API** | embedded map on **web** | ✅ verified working (map rendered in Chrome) |
+| **Routes API** | the walking route, every platform | ✅ **verified working** |
 
 Do **not** enable anything else. In particular the app does **not** use the
 Places API, Directions API (legacy), Geocoding, or Roads API — leave them off.
 
-### ⚠ Routes API is currently disabled — the walking route cannot work
+### Routes API — working (was previously blocked)
 
-A live probe of `directions/v2:computeRoutes` with the project key returns:
+Live probes of `directions/v2:computeRoutes` with the project key return
+**HTTP 200** with real WALK routes, both server-side and with a browser
+`Referer`. Verified end to end on 2026-08-27: a walking route rendered inside
+the app on the iOS simulator and in Chrome.
+
+Historical note, kept because the error is deeply misleading: while the key was
+not permitted to call Routes, the API returned
 
 ```
-HTTP 401  UNAUTHENTICATED
-"API keys are not supported by this API. Expected OAuth2 access token or other
- authentication credentials that assert a principal."
+HTTP 401 UNAUTHENTICATED
+"API keys are not supported by this API…"
 ```
 
-That message is misleading. The Routes API **does** accept API keys; Google
-returns this when the API is **not enabled on the project**, because the request
-never reaches the Routes service. It is not a key problem and not a referrer
-problem — a rejected referrer returns `403 RefererNotAllowedMapError`, and the
-same key already serves the Maps JavaScript API successfully (827 KB bootstrap,
-HTTP 200).
-
-**Fix:** Google Cloud console → *APIs & Services* → *Enable APIs and services* →
-enable **Routes API** on the same project as the key. No code change is needed;
-the walking route starts working on web, iOS and Android at once.
+That message does **not** mean API keys are unsupported — the Routes API accepts
+them. It is what Google returns when the key/project cannot reach the service.
+If it ever reappears, check the **key's API restrictions** include Routes API,
+and that Routes API is enabled on the key's project — not the request format.
 
 ### Browser support (verified)
 

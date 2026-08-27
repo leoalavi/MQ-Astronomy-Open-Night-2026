@@ -13,6 +13,7 @@ import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_search_sheet.dart';
 import 'package:aon2026/widgets/favorites_sheet.dart';
 import 'package:aon2026/widgets/favorite_toggle.dart';
+import 'package:aon2026/utils/bidi.dart';
 
 const _eng = Building(
     id: 'E7B', code: 'E7B', name: 'Engineering', category: BuildingCategory.academic,
@@ -36,7 +37,7 @@ void main() {
     await t.pumpAndSettle(); // buildings future resolves
     await t.enterText(find.byType(TextField), 'eng');
     await t.pumpAndSettle();
-    expect(find.text('Engineering'), findsOneWidget);
+    expect(find.text(Bidi.isolate('Engineering')), findsOneWidget);
   });
 
   testWidgets('search empty state (EN)', (t) async {
@@ -62,7 +63,7 @@ void main() {
     await t.pumpAndSettle();
     await t.enterText(find.byType(TextField), 'eng');
     await t.pumpAndSettle();
-    await t.tap(find.text('Engineering'));
+    await t.tap(find.text(Bidi.isolate('Engineering')));
     await t.pumpAndSettle();
     expect(popped, 'building:E7B');
   });
@@ -100,7 +101,7 @@ void main() {
     ));
     await t.pumpAndSettle();
     final l = await AonL10n.delegate.load(const Locale('en'));
-    expect(find.text('First Aid'), findsOneWidget);
+    expect(find.text(Bidi.isolate('First Aid')), findsOneWidget);
     expect(find.text(l.mapPlaceListOnly), findsOneWidget);
     expect(find.byIcon(Icons.location_off_rounded), findsOneWidget);
   });
@@ -108,7 +109,7 @@ void main() {
   testWidgets('building sheet renders name/code/category/gridRef + favorite toggle', (t) async {
     await t.pumpWidget(_host(const BuildingSheet(buildingId: 'E7B')));
     await t.pumpAndSettle();
-    expect(find.text('Engineering'), findsOneWidget);
+    expect(find.text(Bidi.isolate('Engineering')), findsOneWidget);
     expect(find.textContaining('E7B'), findsWidgets); // code · category
     expect(find.textContaining('Grid'), findsOneWidget); // gridRef
     expect(find.byType(FavoriteToggle), findsOneWidget);
@@ -139,6 +140,6 @@ void main() {
     expect(find.textContaining('No favourites'), findsOneWidget);
     await t.tap(find.text('fav'));
     await t.pumpAndSettle();
-    expect(find.text('Engineering'), findsOneWidget); // resolved row
+    expect(find.text(Bidi.isolate('Engineering')), findsOneWidget); // resolved row
   });
 }

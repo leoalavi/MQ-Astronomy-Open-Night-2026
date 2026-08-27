@@ -22,6 +22,7 @@ import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/campus_projection.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/providers.dart';
+import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/services/map_branch_lifecycle.dart';
@@ -71,6 +72,16 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   /// for the SAME place fires again rather than being swallowed by the latch.
   String? _handledFocus;
 
+  /// Whether [FlutterMap]'s `onMapReady` opening fit has already run.
+  ///
+  /// A focus that moves the camera BEFORE that fit is silently thrown away —
+  /// see [_deferOrApplyFocus].
+  bool _mapReady = false;
+
+  /// A "Show on map" that arrived before the map was ready, replayed by
+  /// `onMapReady` once the opening fit is out of the way.
+  String? _pendingFocus;
+
   @override
   void initState() {
     super.initState();
@@ -91,10 +102,39 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final key = widget.focusPlaceKey;
     if (key == null || key == _handledFocus) return;
     _handledFocus = key;
+    _deferOrApplyFocus(key);
+  }
+
+  /// Runs the focus, but never before the map's opening fit.
+  ///
+  /// ## The bug this guard exists to prevent
+  ///
+  /// Post-frame callbacks fire in REGISTRATION order. `initState` registers
+  /// this one while `FlutterMap` registers its `onMapReady` during its own
+  /// first build — one step later. So on the very first entry to the Map tab
+  /// the order was: focus `move()` onto the venue at [MapConfig.mapFocusZoom],
+  /// then `fitCamera(whole campus)` straight over the top of it. The visitor
+  /// tapped "Show on map" and got an unzoomed campus fit with the sheet open —
+  /// only the SECOND tap worked, because by then `onMapReady` had already
+  /// fired and never fires again. Observed on an iPhone 17 Pro simulator.
+  void _deferOrApplyFocus(String key) {
+    // Focus is a campus-map concept; a pending 360°/compass mode would hide it.
+    // Switching back REMOUNTS FlutterMap, so the focus has to wait for that
+    // fresh `onMapReady` too — moving a camera that is about to be rebuilt and
+    // re-fitted is the same race as above. (`_mode` is always campusMap when
+    // this runs from initState, so the setState here is never illegal.)
+    if (_mode != MapMode.campusMap) {
+      _mapReady = false;
+      _pendingFocus = key;
+      setState(() => _mode = MapMode.campusMap);
+      return;
+    }
+    if (!_mapReady) {
+      _pendingFocus = key;
+      return;
+    }
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      // Focus is a campus-map concept; a pending 360°/compass mode would hide it.
-      if (_mode != MapMode.campusMap) setState(() => _mode = MapMode.campusMap);
       _onPlaceSelected(key, zoom: MapConfig.mapFocusZoom);
       // Consume the focus. The Map tab is kept alive by the StatefulShellRoute
       // indexedStack, so without this a repeat "Show on map" for the SAME place
@@ -284,14 +324,25 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                         // initialCameraFit runs before the map is laid out (size
                         // 0), so it under-fits and the map opens zoomed-in. Re-fit
                         // once the real viewport exists (Map Parity M1).
-                        onMapReady: () => _controller.fitCamera(
-                          CameraFit.bounds(
-                            bounds: MapConfig.aonMapBounds,
-                            padding: MapConfig.mapFitPadding,
-                            minZoom: minZoom,
-                            maxZoom: MapConfig.mapMaxZoom,
-                          ),
-                        ),
+                        onMapReady: () {
+                          _controller.fitCamera(
+                            CameraFit.bounds(
+                              bounds: MapConfig.aonMapBounds,
+                              padding: MapConfig.mapFitPadding,
+                              minZoom: minZoom,
+                              maxZoom: MapConfig.mapMaxZoom,
+                            ),
+                          );
+                          _mapReady = true;
+                          // A "Show on map" that raced this fit was overwritten
+                          // by it. Replay it now that the opening camera is
+                          // settled — see [_deferOrApplyFocus].
+                          final pending = _pendingFocus;
+                          if (pending != null) {
+                            _pendingFocus = null;
+                            _deferOrApplyFocus(pending);
+                          }
+                        },
                         minZoom: minZoom,
                         maxZoom: MapConfig.mapMaxZoom,
                         // North-up only: the official artwork is unreadable rotated.
@@ -787,7 +838,7 @@ class VenueSheet extends ConsumerWidget {
               ),
               const SizedBox(width: AonSpacing.space3),
               Expanded(
-                child: Text(venue.name, style: theme.textTheme.headlineSmall),
+                child: Text(Bidi.isolate(venue.name), style: theme.textTheme.headlineSmall),
               ),
             ],
           ),

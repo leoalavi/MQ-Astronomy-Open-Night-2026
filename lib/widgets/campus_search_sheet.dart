@@ -6,6 +6,7 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/search_entry.dart';
 import 'package:aon2026/services/search_providers.dart';
+import 'package:aon2026/utils/bidi.dart';
 
 /// Popped by the search sheet when the visitor picks the parking action card.
 /// MapScreen routes this to the Wayfinding planner (which lists every car park
@@ -118,11 +119,11 @@ class _CampusSearchSheetState extends ConsumerState<CampusSearchSheet> {
                           : (e.kind == PlaceKind.building
                               ? Icons.business_rounded
                               : Icons.place_rounded)),
-                      title: Text(e.title),
+                      title: Text(Bidi.isolate(e.title)),
                       subtitle: !placeable
                           ? Text(l.mapPlaceListOnly,
                               style: TextStyle(color: context.aon.contentTertiary))
-                          : (sub == null ? null : Text(sub)),
+                          : (sub == null ? null : Text(Bidi.isolate(sub))),
                       onTap: () => Navigator.of(context).pop(e.placeKey),
                     );
                   },

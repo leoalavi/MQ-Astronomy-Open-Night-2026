@@ -72,6 +72,7 @@ TOURS: dict[str, list[tuple[str, str, str, str]]] = {
     "1-central-courtyard": [
         ("entrance", "Entrance", ASTRONOMY, "1 CC entrance.JPG"),
         ("stairs", "Stairs", ASTRONOMY, "1 CC - Stairs.JPG"),
+        ("downstairs", "Downstairs", ASTRONOMY, "1 CC- Downstairs.JPG"),
         ("lounge-108", "Lounge 108", ASTRONOMY, "1 CC - Lounge 108.JPG"),
         ("room-101", "Room 101", ASTRONOMY, "1 CC- Room 101.JPG"),
         ("room-105", "Room 105", ASTRONOMY, "1 CC - Room 105.JPG"),
@@ -82,6 +83,15 @@ TOURS: dict[str, list[tuple[str, str, str, str]]] = {
         ("room-114", "Room 114", ASTRONOMY, "1 CC- room 114.JPG"),
         ("room-115", "Room 115", ASTRONOMY, "1 CC- room 115.JPG"),
         ("room-116", "Room 116", ASTRONOMY, "1 CC- Room 116.JPG"),
+    ],
+    # F - Planetariums, Macquarie University Sport and Aquatic Centre
+    "sport-and-aquatic-centre": [
+        ("centre", "Sport and Aquatic Centre", ASTRONOMY,
+         "Sport and Aquatic center.JPG"),
+        ("planetarium-approach", "Before the planetarium", ASTRONOMY,
+         "Platiymrum before Entrance.JPG"),
+        ("planetarium-entrance", "Planetarium entrance", ASTRONOMY,
+         "Planetarium Entrance Gym.JPG"),
     ],
     # H - Laser challenge
     "11-wallys-walk": [
@@ -116,6 +126,7 @@ SOURCE_SHA256 = {
     "T3&T4-14-christopher.jpg": "c72ef2113893528419fea21948522ed561c09f672db5784fb9b8c299a163bafb",
     "1 CC entrance.JPG": "b31061324b8ab9d1fc9f5804a1abfa8bcc0cff5004be5dd21b9fb7deb6da5636",
     "1 CC - Stairs.JPG": "e1bc59f92c105673f5a45a4994beff3d9f2e9b5d594757541a39f6aaf27afc2c",
+    "1 CC- Downstairs.JPG": "b295f9d9b497998a4f5d7fc50dd8970e740eb7d0034a1f853ac23c90a79f1f5d",
     "1 CC - Lounge 108.JPG": "4559c6a1b0230eef867d150eef6e7aae8e38b10914651a99b60add822d358fac",
     "1 CC- Room 101.JPG": "c4e90038d0a33868940efbc2dce06df9e207d5aebfaedef8aff1facf0ca11121",
     "1 CC - Room 105.JPG": "a7846f84eea021ed29ebef74a0443251df2dbef58f85724468a73e25f32c0f41",
@@ -126,6 +137,9 @@ SOURCE_SHA256 = {
     "1 CC- room 114.JPG": "42bf69383c24660491433746888c0ef21f4e4ca5f0635b35cbd0f0e79ba81997",
     "1 CC- room 115.JPG": "7751aabeff53f4a6e3b6688751d776b7d8b596c4f805033c51cda243f1c02c6a",
     "1 CC- Room 116.JPG": "0c6ee812fa5c99089bf729f5fedeec35003f5a6f8d69052f1e6656407fa1038a",
+    "Sport and Aquatic center.JPG": "d3b5f3e335678b0875830fcba3b766005ae0bb306b0557ba499a507f4c879ab3",
+    "Platiymrum before Entrance.JPG": "d586af86af6c4e24ddc7dd6ba6a479e1cf8da3cfc7cbf129ce2fe7ad75a18289",
+    "Planetarium Entrance Gym.JPG": "fb1f2c2f14f0d1f6abf89a1db38b5825d0c500bcd5c086059f54e43db8a9ee04",
     "11 WW - Entrance.JPG": "83f26eb48b8fb5ffcd8808a22c72ebd3c255d5a79c9da7218e017d65b9c21b14",
     "11 WW -Room 150- Laser challenge game.JPG": "fbdb07db877fa103aead500680fb24eccd6bcf230a83e7534884452982b9583d",
     "11 WW - Room 160 - Laser Challange .JPG": "f09c807c3eaaebe31f5298466b26654d83130e52a0eb9a5ebcacb1808dd41e5e",

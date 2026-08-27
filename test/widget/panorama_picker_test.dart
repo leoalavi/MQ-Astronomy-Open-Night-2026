@@ -50,9 +50,9 @@ void main() {
     await tester.pumpWidget(picker(onOpen: (id) => opened = id));
     await tester.pump();
 
-    // Six legend venues have photography; three do not.
-    expect(find.text(_explore), findsNWidgets(6));
-    expect(find.text('Coming soon'), findsNWidgets(3));
+    // Seven legend venues have photography; two do not (C and G).
+    expect(find.text(_explore), findsNWidgets(7));
+    expect(find.text('Coming soon'), findsNWidgets(2));
     // Nothing shipped is sample imagery any more.
     expect(find.text(_demoFlag), findsNothing);
 
@@ -105,9 +105,9 @@ void main() {
       for (final label in lettered) {
         expect(find.text(label), findsOneWidget, reason: 'missing $label');
       }
-      // Nine cards, no more: six tourable + three coming soon.
-      expect(find.byIcon(Icons.panorama_photosphere), findsNWidgets(6));
-      expect(find.byIcon(Icons.lock_outline_rounded), findsNWidgets(3));
+      // Nine cards, no more: seven tourable + two coming soon.
+      expect(find.byIcon(Icons.panorama_photosphere), findsNWidgets(7));
+      expect(find.byIcon(Icons.lock_outline_rounded), findsNWidgets(2));
 
       // Unlettered service points are gone, not merely scrolled away.
       for (final gone in [

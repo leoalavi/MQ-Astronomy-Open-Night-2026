@@ -1,6 +1,6 @@
 # Panorama image provenance
 
-The app ships **28 real 360° panoramas** across six venues. This records the
+The app ships **32 real 360° panoramas** across seven venues. This records the
 rights basis for every bundled image, and for the viewer that renders them.
 
 Nothing bundled is placeholder or demo content any more. The SP1 "Demo 360° —
@@ -25,13 +25,14 @@ a scene ships only if its venue carries an A–I legend letter.
 | A | Macquarie Theatre | 2 | MQ_Journey set |
 | B | Mason Theatre | 1 | MQ_Journey set |
 | D | 14 Sir Christopher Ondaatje Avenue | 6 | 3 AON shoot + 3 MQ_Journey |
-| E | 1 Central Courtyard | 12 | AON shoot |
+| E | 1 Central Courtyard | 13 | AON shoot |
+| F | Macquarie University Sport and Aquatic Centre | 3 | AON shoot |
 | H | 11 Wally's Walk | 3 | AON shoot |
 | I | 17 Wally's Walk | 4 | MQ_Journey set |
 
-C (Food and drink), F (Sport and Aquatic Centre) and G (Astronomical
-Observatory) have no imagery and therefore no tour. **G is the telescopes** —
-the headline activity of the night — and is the most valuable gap to fill.
+C (Food and drink) and G (Astronomical Observatory) have no imagery and
+therefore no tour. **G is the telescopes** — the headline activity of the
+night — and is the most valuable remaining gap to fill.
 
 ## Sources
 
@@ -42,7 +43,7 @@ the headline activity of the night — and is the most valuable gap to fill.
 
 Both sets are 8192×4096 equirectangular JPEG. `tools/panorama/build.py`
 re-encodes them to the 4096×2048 q85 progressive JPEGs the bundle carries
-(37.3 MB total) and pins the **sha256 of every original**, so a re-shot or
+(44.6 MB total) and pins the **sha256 of every original**, so a re-shot or
 swapped source is detectable even though the 180 MB of originals is too large
 to vendor. That table is the authoritative scene→photograph mapping.
 

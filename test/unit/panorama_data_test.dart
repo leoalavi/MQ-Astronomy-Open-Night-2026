@@ -45,15 +45,16 @@ void main() {
   test(
     'tours are exactly the legend venues that have real photography',
     () {
-      // A, B, D, E, H and I. C (Food and drink), F (Sport and Aquatic Centre)
-      // and G (Astronomical Observatory) have no imagery yet and correctly
-      // have no tour. Nothing outside the official map's A-I legend appears —
-      // notably the Jim Piper Centre panorama, which the map letters nowhere.
+      // A, B, D, E, F, H and I. C (Food and drink) and G (Astronomical
+      // Observatory) still have no imagery and correctly have no tour.
+      // Nothing outside the official map's A-I legend appears — notably the
+      // Jim Piper Centre panorama, which the map letters nowhere.
       expect(PanoramaData.tours.map((t) => t.venueId).toSet(), {
         'macquarie-theatre',
         'mason-theatre',
         '14-sir-christopher-ondaatje-avenue',
         '1-central-courtyard',
+        'sport-and-aquatic-centre',
         '11-wallys-walk',
         '17-wallys-walk',
       });
@@ -74,7 +75,8 @@ void main() {
       'macquarie-theatre': 2,
       'mason-theatre': 1,
       '14-sir-christopher-ondaatje-avenue': 6,
-      '1-central-courtyard': 12,
+      '1-central-courtyard': 13,
+      'sport-and-aquatic-centre': 3,
       '11-wallys-walk': 3,
       '17-wallys-walk': 4,
     };

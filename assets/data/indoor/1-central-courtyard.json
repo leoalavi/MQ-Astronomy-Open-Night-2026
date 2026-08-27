@@ -13,6 +13,12 @@
       "neighbours": []
     },
     {
+      "id": "downstairs",
+      "image": "indoor/1-central-courtyard_downstairs.jpg",
+      "description": "Downstairs",
+      "neighbours": []
+    },
+    {
       "id": "lounge-108",
       "image": "indoor/1-central-courtyard_lounge-108.jpg",
       "description": "Lounge 108",

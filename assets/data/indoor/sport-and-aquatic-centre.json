@@ -1,0 +1,22 @@
+{
+  "nodes": [
+    {
+      "id": "centre",
+      "image": "indoor/sport-and-aquatic-centre_centre.jpg",
+      "description": "Sport and Aquatic Centre",
+      "neighbours": []
+    },
+    {
+      "id": "planetarium-approach",
+      "image": "indoor/sport-and-aquatic-centre_planetarium-approach.jpg",
+      "description": "Before the planetarium",
+      "neighbours": []
+    },
+    {
+      "id": "planetarium-entrance",
+      "image": "indoor/sport-and-aquatic-centre_planetarium-entrance.jpg",
+      "description": "Planetarium entrance",
+      "neighbours": []
+    }
+  ]
+}

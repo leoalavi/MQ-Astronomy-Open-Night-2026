@@ -62,6 +62,36 @@ What each consumer does with `MAPS_API_KEY`:
   Info.plist `GMSApiKey`).
 - These win over `.env` when present.
 
+## iOS build — run `pod install` after pulling the Maps changes
+
+The Google Maps / Routes work added **native CocoaPods** (`google_maps_flutter_ios`
+and friends), so `ios/Podfile.lock` changed. A checkout whose `ios/Pods/` sandbox
+predates that change fails the iOS build with:
+
+```
+error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' …
+** BUILD FAILED **
+```
+
+Fix it once, then build normally:
+
+```
+cd ios && pod install
+```
+
+`flutter run` / `flutter build ios` run `pod install` for you; a bare `xcodebuild`
+(or an IDE/simulator build that drives `xcodebuild` directly) does **not**, so run
+it by hand in that path. `ios/Pods/` is git-ignored — nothing to commit; only
+`Podfile.lock` is tracked, and it is already in sync on `main`.
+
+> **CocoaPods `Encoding::CompatibilityError` (ASCII-8BIT).** If `pod install`
+> crashes in `unicode_normalize` before doing anything, the shell has a non-UTF-8
+> locale. Prefix the command:
+>
+> ```
+> LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 pod install
+> ```
+
 ## Web
 
 `web/index.html` has a commented Maps JavaScript API `<script>` placeholder. The

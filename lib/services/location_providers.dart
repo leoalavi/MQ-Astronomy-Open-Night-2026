@@ -2,10 +2,30 @@ import 'dart:async';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:latlong2/latlong.dart' show Distance;
 
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/location_service.dart';
 import 'package:aon2026/services/preview_location.dart';
+
+/// Whether an incoming GPS [incoming] fix should replace the currently displayed
+/// [current] one.
+///
+/// Field report (Pouya, 2026-08-28): on opening the map the dot first appeared
+/// far off, then hopped three or four times before settling. Cause: the
+/// controller adopted every raw fix, so coarse early cell/Wi-Fi fixes and
+/// same-accuracy GPS scatter each moved the dot. This keeps the sharpest fix
+/// seen and only moves the dot when a new fix is genuinely better, or the device
+/// has genuinely moved beyond that fix's own uncertainty — so a coarser
+/// straggler (whose displacement its own error already explains) is ignored.
+///
+/// The first fix is always adopted, so the dot still appears right away.
+bool shouldAdoptFix(UserLocationFix? current, UserLocationFix incoming) {
+  if (current == null) return true;
+  if (incoming.accuracyMeters < current.accuracyMeters) return true;
+  final moved = const Distance()(current.position, incoming.position);
+  return moved > incoming.accuracyMeters;
+}
 
 class LocationSnapshot {
   const LocationSnapshot({
@@ -194,7 +214,9 @@ class LocationController extends Notifier<LocationSnapshot> {
     }
   }
 
-  void _onFix(UserLocationFix fix) => state = state.copyWith(fix: fix);
+  void _onFix(UserLocationFix fix) {
+    if (shouldAdoptFix(state.fix, fix)) state = state.copyWith(fix: fix);
+  }
 
   /// The OS told us Location Services were switched off — this reason we DO
   /// know, so route the user to the location settings.

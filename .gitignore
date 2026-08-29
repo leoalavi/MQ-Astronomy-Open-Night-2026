@@ -83,3 +83,6 @@ logs/
 
 # Maestro E2E run artifacts (screenshots are evidence, not source)
 .maestro/screenshots/
+
+# Private collaborator chat transcripts (WhatsApp voice/media transcriptions — not source)
+docs/feedback/

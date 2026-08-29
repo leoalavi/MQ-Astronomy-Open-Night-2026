@@ -7,6 +7,7 @@ import 'package:aon2026/data/panorama_data.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
 
 /// Demo-content disclosure for a PLACEHOLDER tour lives in the ARB as
 /// `panoramaDemoFlag` — the imagery is a different building. Nothing shipped is
@@ -31,7 +32,12 @@ class PanoramaBuildingPicker extends ConsumerWidget {
     final tours = ref.watch(panoramaToursProvider);
 
     return ListView(
-      padding: const EdgeInsets.all(AonSpacing.space4),
+      // Runs under the floating glass tab bar (shell `extendBody`), so reserve
+      // the same clearance the compass NearbyList does — otherwise the last
+      // legend card ("I · 17 Wally's Walk") hides behind the island (field
+      // report, Pouya 2026-08-28).
+      padding: EdgeInsets.fromLTRB(AonSpacing.space4, AonSpacing.space4,
+          AonSpacing.space4, AonNavMetrics.clearance(context)),
       children: [
         for (final v in venues)
           Padding(

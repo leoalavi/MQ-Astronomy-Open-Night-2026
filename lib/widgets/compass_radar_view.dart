@@ -114,6 +114,26 @@ class CompassRadarView extends ConsumerWidget {
                       center, radius),
                   ExcludeSemantics(child: _Blip(cluster: c)),
                 ),
+              // The rose is centred on YOU. Draw an explicit "you are here"
+              // marker so the facing pin at the rim reads as "which way you're
+              // facing", not "a person over there" (field report, Pouya
+              // 2026-08-28). Painted AFTER the blips: on the night, every venue
+              // is close, so the blips cluster near the centre — "you" must sit
+              // on top of them, never be buried. Ringed to stand apart.
+              Positioned(
+                key: const ValueKey('compass-you-marker'),
+                left: center.dx - 8,
+                top: center.dy - 8,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: _ink,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: _bg, width: 3),
+                  ),
+                ),
+              ),
               _FacingLayer(center: center, radius: radius),
               _LockedLayer(center: center, radius: radius),
               if (acquiring)

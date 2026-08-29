@@ -41,25 +41,26 @@ class UserLocationCircle extends StatelessWidget {
     final c = camera.projectAtZoom(center.value);
     final nPx = (camera.projectAtZoom(north.value) - c).distance / 25.0;
     final ePx = (camera.projectAtZoom(east.value) - c).distance / 25.0;
-    final accent = context.aon.accent;
+    final loc = context.aon.mapUserLocation;
     return CircleLayer(circles: [
       CircleMarker(
         point: center.value,
         radius: fix.accuracyMeters * accuracyRadiusScale(nPx, ePx),
         useRadiusInMeter: false, // radius is SCREEN PIXELS
-        color: accent.withValues(alpha: 0.12),
-        borderColor: accent.withValues(alpha: 0.4),
+        color: loc.withValues(alpha: 0.12),
+        borderColor: loc.withValues(alpha: 0.4),
         borderStrokeWidth: 1,
       ),
     ]);
   }
 }
 
-/// The "you are here" dot — an accent dot on a white ring — ON TOP of the pins.
+/// The "you are here" dot — a GPS-blue dot on a white ring — ON TOP of the pins.
 ///
 /// The `Colors.white` ring + `Colors.black26` shadow are the one sanctioned
 /// palette exception: a "you-are-here" dot must read as *you* against any map
-/// independent of theme. The dot's centre still reads from `context.aon`.
+/// independent of theme. The centre is `mapUserLocation` (blue), the universal
+/// location colour — field testers read the old amber centre as a venue pin.
 class UserLocationDot extends StatelessWidget {
   const UserLocationDot({required this.center, super.key});
   final CampusMapPoint center;
@@ -80,7 +81,7 @@ class UserLocationDot extends StatelessWidget {
               padding: const EdgeInsets.all(4),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                    color: context.aon.accent, shape: BoxShape.circle),
+                    color: context.aon.mapUserLocation, shape: BoxShape.circle),
               ),
             ),
           ),

@@ -58,6 +58,7 @@ class AonPalette extends ThemeExtension<AonPalette> {
     required this.mapTransport,
     required this.mapRoute,
     required this.mapRouteCasing,
+    required this.mapUserLocation,
   });
 
   final Brightness brightness;
@@ -125,6 +126,13 @@ class AonPalette extends ThemeExtension<AonPalette> {
   /// basemap tile. Dark under a bright line, light under a dark one.
   final Color mapRouteCasing;
 
+  /// The "you are here" dot and its accuracy circle. A conventional GPS blue —
+  /// deliberately NOT [accent] (amber): field testers read the amber dot as a
+  /// venue marker, not their own position, so this follows the universal
+  /// Google/Apple blue instead. Distinct hue from [mapFacility] so it never
+  /// reads as an information point either.
+  final Color mapUserLocation;
+
   // ══════════════════════════════════════════════════════
   // Dark — the Astronomy identity. Values unchanged from the
   // original AonColors, so the night look is byte-identical.
@@ -165,6 +173,7 @@ class AonPalette extends ThemeExtension<AonPalette> {
     mapTransport: Color(0xFF6EE7C8),
     mapRoute: Color(0xFFFFB945),
     mapRouteCasing: Color(0xFF2A1A00),
+    mapUserLocation: Color(0xFF3B82F6), // GPS blue, legible on the bright basemap
   );
 
   // ══════════════════════════════════════════════════════
@@ -209,6 +218,7 @@ class AonPalette extends ThemeExtension<AonPalette> {
     mapRoute: Color(0xFF9A5B00),
     // A dark line over light tiles needs a light casing, not a dark one.
     mapRouteCasing: Color(0xFFFFFFFF),
+    mapUserLocation: Color(0xFF1D4ED8), // deeper GPS blue: 5.4:1 on white
   );
 
   static AonPalette of(Brightness brightness) =>
@@ -241,6 +251,7 @@ class AonPalette extends ThemeExtension<AonPalette> {
     Color? mapTransport,
     Color? mapRoute,
     Color? mapRouteCasing,
+    Color? mapUserLocation,
   }) {
     return AonPalette(
       brightness: brightness ?? this.brightness,
@@ -268,6 +279,7 @@ class AonPalette extends ThemeExtension<AonPalette> {
       mapTransport: mapTransport ?? this.mapTransport,
       mapRoute: mapRoute ?? this.mapRoute,
       mapRouteCasing: mapRouteCasing ?? this.mapRouteCasing,
+      mapUserLocation: mapUserLocation ?? this.mapUserLocation,
     );
   }
 
@@ -307,6 +319,7 @@ class AonPalette extends ThemeExtension<AonPalette> {
       mapTransport: c(mapTransport, other.mapTransport),
       mapRoute: c(mapRoute, other.mapRoute),
       mapRouteCasing: c(mapRouteCasing, other.mapRouteCasing),
+      mapUserLocation: c(mapUserLocation, other.mapUserLocation),
     );
   }
 }

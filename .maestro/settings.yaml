@@ -1,0 +1,48 @@
+# Settings page
+#
+# The brief is "every control changes real behaviour". This exercises the
+# appearance card, the language switch (a real, whole-app RTL flip and back),
+# the destructive Delete-my-data confirm dialog, and proves the LAST actionable
+# row (Google Maps licences) is reachable above the floating tab bar and opens.
+# Settings is bottom-nav slot 6 of 6; tap it by POINT.
+appId: au.edu.mq.astronomy.aon2026
+tags: [settings]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    point: "88%,95%"
+- assertVisible: "Settings"
+- assertVisible: "Appearance"
+- assertVisible: "(?s).*Dark.*Recommended.*night vision.*"
+
+# Language is a real behaviour switch: Persian flips the whole app to RTL, and
+# English flips it back. Endonyms ("English"/"فارسی") are never translated, so
+# they remain tappable in either direction.
+- tapOn: "فارسی"
+- assertVisible: "تنظیمات"
+- tapOn: "English"
+- assertVisible: "Settings"
+
+# The destructive erase control raises a confirm dialog before doing anything.
+# The card merges its title + body into one a11y node, so match with DOTALL;
+# the Delete button is its own node.
+- scrollUntilVisible:
+    element:
+      text: "(?s).*Delete my data.*"
+    direction: DOWN
+- tapOn: "Delete"
+- assertVisible: "Delete data stored on this device?"
+- tapOn: "Cancel"
+
+# The last actionable row must clear the floating tab bar, and it opens the
+# bundled Google Maps open-source licences (static text — no network).
+- scrollUntilVisible:
+    element:
+      text: "Google Maps licences"
+    direction: DOWN
+- tapOn: "Google Maps licences"
+- assertVisible: "(?s).*Google Maps licences.*"
+- takeScreenshot: .maestro/screenshots/settings-01-licences
+- tapOn: "Back"
+- assertVisible: "Credits"

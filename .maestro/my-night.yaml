@@ -1,0 +1,52 @@
+# My Night page
+#
+# The saved-activities timeline. Covers the empty state + its Browse CTA, saving
+# from the programme, the chronological timeline with an HONEST overlap flag
+# (two 4.15pm activities genuinely clash — not a stand-in artifact), remove +
+# Undo, and Clear-all behind a confirm. My Night is bottom-nav slot 3 of 6; tap
+# it by POINT. Cards merge time/title/venue/overlap into one a11y node (match
+# with `(?s).*…*`); venue names carry bidi isolates.
+appId: au.edu.mq.astronomy.aon2026
+tags: [my-night]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    point: "42%,95%"
+- assertVisible: "Your night is empty"
+
+# The empty-state CTA routes to the programme.
+- tapOn: "Browse the program"
+- assertVisible: "Search talks, activities, presenters"
+
+# Save two activities that both begin 4.15pm — a real overlap.
+- tapOn: "(?s).*Save Cosmic arcade to My Night.*"
+- tapOn: "(?s).*Save Kids. space to My Night.*"
+
+# Back on My Night: both on the timeline, and the clash is flagged both ways
+# plus the banner. Kids' space shows "4.15pm – 10pm" but NO countdown — its 10pm
+# end is a stand-in, never presented as a fact.
+- tapOn:
+    point: "42%,95%"
+- assertVisible: "(?s).*Cosmic arcade.*Overlaps Kids. space.*"
+- assertVisible: "(?s).*Kids. space.*Overlaps Cosmic arcade.*"
+- assertVisible: "(?s).*run at the same time.*"
+- assertVisible: "Walk there"
+- takeScreenshot: .maestro/screenshots/my-night-01-timeline
+
+# Removing an activity takes it off the timeline (the first card, Cosmic arcade,
+# sorts ahead of Kids' space at the shared 4.15pm start). An Undo snackbar also
+# appears, but a transient SnackBar overlay isn't reliably assertable in Maestro,
+# so the remove is verified by absence; Undo is covered by the widget suite.
+- tapOn: "Remove from plan"
+- extendedWaitUntil:
+    notVisible: "(?s).*Cosmic arcade.*"
+    timeout: 3000
+- assertVisible: "(?s).*Kids. space.*"
+
+# Clear empties the whole plan, behind a confirm dialog. Once the dialog is
+# modal the app-bar "Clear" leaves the tree, so its confirm is the only match.
+- tapOn: "Clear"
+- assertVisible: "Clear My Night?"
+- tapOn: "Clear"
+- assertVisible: "Your night is empty"

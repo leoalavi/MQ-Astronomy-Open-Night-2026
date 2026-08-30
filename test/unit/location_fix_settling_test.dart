@@ -59,6 +59,61 @@ void main() {
     });
   });
 
+  group('shouldAdoptFix — timed outlier rejection', () {
+    // Field report (Pouya, 2026-08-28, around parking): the dot jumped ~150 m
+    // between one-second samples. A move beyond the fix's own uncertainty alone
+    // cannot tell a genuine step from a wild outlier — but the speed can, when
+    // the platform stamps each fix with a time.
+    UserLocationFix timed(LatLng p, double acc, DateTime t) =>
+        UserLocationFix(position: p, accuracyMeters: acc, timestamp: t);
+    final t0 = DateTime(2026, 9, 19, 18, 0, 0);
+
+    test('a wild ~150 m jump one second later is REJECTED as an outlier', () {
+      final current = timed(_base, 8, t0);
+      final outlier = timed(const Distance().offset(_base, 150, 0), 8,
+          t0.add(const Duration(seconds: 1)));
+      expect(shouldAdoptFix(current, outlier), isFalse,
+          reason: '150 m/s is not a person walking — do not teleport the dot');
+    });
+
+    test('a plausible walking step at the same cadence is still adopted', () {
+      final current = timed(_base, 6, t0);
+      // ~10 m in 5 s ≈ 2 m/s — an ordinary walking pace.
+      final step = timed(const Distance().offset(_base, 10, 30), 6,
+          t0.add(const Duration(seconds: 5)));
+      expect(shouldAdoptFix(current, step), isTrue);
+    });
+
+    test('after an outlier is rejected, the next honest fix settles the dot',
+        () {
+      final current = timed(_base, 8, t0);
+      final outlier = timed(const Distance().offset(_base, 150, 0), 8,
+          t0.add(const Duration(seconds: 1)));
+      expect(shouldAdoptFix(current, outlier), isFalse);
+      // Dot stayed at _base; a fresh honest fix a short walk away is adopted.
+      final recover = timed(const Distance().offset(_base, 12, 200), 8,
+          t0.add(const Duration(seconds: 6)));
+      expect(shouldAdoptFix(current, recover), isTrue);
+    });
+
+    test('a sharper outlier is still trusted (accuracy beats the speed gate)',
+        () {
+      // A much sharper fix is evidence in its own right; the gate only guards
+      // the coarse-or-equal branch.
+      final current = timed(_base, 30, t0);
+      final sharpFar = timed(const Distance().offset(_base, 150, 0), 4,
+          t0.add(const Duration(seconds: 1)));
+      expect(shouldAdoptFix(current, sharpFar), isTrue);
+    });
+
+    test('without timestamps the distance-only rule is unchanged', () {
+      final current = _fix(_base, 8);
+      final far = _fix(const Distance().offset(_base, 150, 0), 8);
+      expect(shouldAdoptFix(current, far), isTrue,
+          reason: 'no time basis → keep the original move-adopt behaviour');
+    });
+  });
+
   test('controller: dot settles once and does not re-jump on stragglers',
       () async {
     final svc = FakeLocationService();

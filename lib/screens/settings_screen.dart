@@ -546,17 +546,26 @@ class _GoogleMapsPrivacyCard extends ConsumerWidget {
                 ),
               ],
             ),
-            if (consent == MapsConsent.accepted) ...[
-              const SizedBox(height: AonSpacing.space2),
-              Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: TextButton(
-                  onPressed: () =>
-                      ref.read(mapsConsentProvider.notifier).revoke(),
-                  child: Text(l.settingsRevokeGoogleConsent),
-                ),
-              ),
-            ],
+            // Directions no longer ask per-use — this card is the disclosure AND
+            // the only opt-out. Sharing is ON unless explicitly turned OFF
+            // (declined): "Revoke" turns it off; once off, "Turn back on" re-enables.
+            const SizedBox(height: AonSpacing.space2),
+            Align(
+              alignment: AlignmentDirectional.centerEnd,
+              child: consent == MapsConsent.declined
+                  ? TextButton(
+                      key: const Key('settings-enable-google-consent'),
+                      onPressed: () =>
+                          ref.read(mapsConsentProvider.notifier).accept(),
+                      child: Text(l.settingsEnableGoogleConsent),
+                    )
+                  : TextButton(
+                      key: const Key('settings-revoke-google-consent'),
+                      onPressed: () =>
+                          ref.read(mapsConsentProvider.notifier).decline(),
+                      child: Text(l.settingsRevokeGoogleConsent),
+                    ),
+            ),
           ],
         ),
       ),

@@ -36,7 +36,9 @@ void main() {
     expect(seen.headers['content-type'], contains('application/json'));
     expect(seen.headers['x-goog-api-key'], 'k');
     expect(seen.headers['x-goog-fieldmask'],
-        'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration,routes.warnings');
+        'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration,'
+        'routes.warnings,routes.legs.steps.navigationInstruction,'
+        'routes.legs.steps.distanceMeters');
     expect(seen.headers['x-android-package'], 'au.edu.mq.astronomy.aon2026'); // BOTH android headers (#8)
     expect(seen.headers['x-android-cert'], 'AB:CD:EF');
     final body = jsonDecode(seen.body) as Map<String, dynamic>;
@@ -59,6 +61,72 @@ void main() {
     expect(nav.eta, const Duration(milliseconds: 3500)); // NOT crash on "3.5s"
     expect(nav.warnings, ['Use caution']);
     expect(nav.polyline.length, 1);
+  });
+
+  test('MAP #10: legs.steps are parsed into ordered NavSteps (Google-supplied only)', () async {
+    final r = await _svc(_ok(jsonEncode({
+      'routes': [
+        {
+          'distanceMeters': 300,
+          'duration': '240s',
+          'polyline': {'encodedPolyline': '_p~iF~ps|U'},
+          'legs': [
+            {
+              'steps': [
+                {
+                  'navigationInstruction': {'instructions': 'Head north on Wally-s Walk'},
+                  'distanceMeters': 120,
+                },
+                {
+                  'navigationInstruction': {'instructions': 'Turn right onto Central Ave'},
+                  'distanceMeters': 180,
+                },
+              ]
+            }
+          ],
+        }
+      ]
+    }))).walkingRoute(origin: (-33.77, 151.11), destination: (-33.78, 151.12));
+    final nav = (r as RouteSuccess).route;
+    expect(nav.steps.map((s) => s.instruction).toList(),
+        ['Head north on Wally-s Walk', 'Turn right onto Central Ave']);
+    expect(nav.steps.map((s) => s.distanceMeters).toList(), [120, 180]);
+  });
+
+  test('MAP #10: a step with no instruction text is skipped, never fabricated', () async {
+    final r = await _svc(_ok(jsonEncode({
+      'routes': [
+        {
+          'distanceMeters': 50,
+          'duration': '60s',
+          'polyline': {'encodedPolyline': ''},
+          'legs': [
+            {
+              'steps': [
+                {'distanceMeters': 20}, // no navigationInstruction → skipped
+                {
+                  'navigationInstruction': {'instructions': 'Arrive at destination'},
+                  'distanceMeters': 30,
+                },
+              ]
+            }
+          ],
+        }
+      ]
+    }))).walkingRoute(origin: (0, 0), destination: (0, 0));
+    final nav = (r as RouteSuccess).route;
+    expect(nav.steps.length, 1);
+    expect(nav.steps.single.instruction, 'Arrive at destination');
+  });
+
+  test('a route with no legs still succeeds with an empty step list', () async {
+    final r = await _svc(_ok(jsonEncode({
+      'routes': [
+        {'distanceMeters': 10, 'duration': '10s', 'polyline': {'encodedPolyline': ''}}
+      ]
+    }))).walkingRoute(origin: (0, 0), destination: (0, 0));
+    expect(r, isA<RouteSuccess>());
+    expect((r as RouteSuccess).route.steps, isEmpty);
   });
 
   test('durations "351s" and "0.125s" parse; absent warnings → empty list', () async {

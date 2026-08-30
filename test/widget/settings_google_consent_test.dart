@@ -34,13 +34,17 @@ Future<void> _scrollTo(WidgetTester t, Finder f) async {
 }
 
 void main() {
-  testWidgets('EN: Google Maps privacy notice is present; no revoke when consent unknown', (t) async {
+  testWidgets('EN: privacy notice present; sharing is ON by default with a turn-off control', (t) async {
+    // Directions no longer ask per-use, so sharing is ON unless turned off. The
+    // card is the passive disclosure AND the opt-out: with unknown consent it
+    // offers "Revoke", not nothing.
     await t.pumpWidget(_app(_container()));
     await t.pumpAndSettle();
     final l = await AonL10n.delegate.load(const Locale('en'));
     await _scrollTo(t, find.textContaining('sent to Google'));
     expect(find.text(l.settingsGoogleMapsNotice), findsOneWidget);
-    expect(find.text(l.settingsRevokeGoogleConsent), findsNothing); // nothing to revoke yet
+    expect(find.text(l.settingsRevokeGoogleConsent), findsOneWidget); // opt-out available
+    expect(find.text(l.settingsEnableGoogleConsent), findsNothing); // already on
   });
 
   testWidgets('FA: notice renders in Persian', (t) async {
@@ -51,7 +55,7 @@ void main() {
     expect(find.text(fa.settingsGoogleMapsNotice), findsOneWidget);
   });
 
-  testWidgets('revoke visible only when accepted; tapping it → consent unknown (next nav re-asks)', (t) async {
+  testWidgets('turning sharing off sets declined; a turn-on control then appears', (t) async {
     final c = _container(consent: MapsConsent.accepted);
     await t.pumpWidget(_app(c));
     await t.pumpAndSettle();
@@ -60,7 +64,13 @@ void main() {
     await _scrollTo(t, find.text(l.settingsRevokeGoogleConsent));
     await t.tap(find.text(l.settingsRevokeGoogleConsent));
     await t.pumpAndSettle();
-    expect(c.read(mapsConsentProvider), MapsConsent.unknown);
+    expect(c.read(mapsConsentProvider), MapsConsent.declined,
+        reason: 'the opt-out is a real, persisted off state');
+    // Now off → offer to turn it back on.
+    await _scrollTo(t, find.text(l.settingsEnableGoogleConsent));
+    await t.tap(find.text(l.settingsEnableGoogleConsent));
+    await t.pumpAndSettle();
+    expect(c.read(mapsConsentProvider), MapsConsent.accepted);
   });
 
   testWidgets('320×568 @ textScale 2.0: revoke row reachable + tappable', (t) async {
@@ -78,7 +88,7 @@ void main() {
     await _scrollTo(t, find.text(l.settingsRevokeGoogleConsent));
     await t.tap(find.text(l.settingsRevokeGoogleConsent));
     await t.pumpAndSettle();
-    expect(c.read(mapsConsentProvider), MapsConsent.unknown); // proved reachable + tappable
+    expect(c.read(mapsConsentProvider), MapsConsent.declined); // proved reachable + tappable
     expect(t.takeException(), isNull);
   });
 }

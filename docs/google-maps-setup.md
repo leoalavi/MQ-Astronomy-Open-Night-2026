@@ -131,6 +131,53 @@ polyline drawn, distance + ETA shown.
 Do **not** enable anything else. In particular the app does **not** use the
 Places API, Directions API (legacy), Geocoding, or Roads API — leave them off.
 
+### Device 401 from the Routes API — a STALE BAKED KEY, not a code bug
+
+Field run (Pouya, 2026-08-28): the Routes API returned **HTTP 401** on a
+physical iPhone while the same key returns **200** from a server-side probe AND
+from the web build. Root cause is the **build**, not the request:
+
+- The device was launched with `flutter run … lib/main.dart` **without**
+  `--dart-define-from-file=.env` (visible in the run log). With no Dart defines,
+  `GOOGLE_MAPS_IOS_ROUTES_KEY` and `MAPS_API_KEY` are empty, so the iOS Routes
+  key falls back to the **native Info.plist `GMSApiKey`** — the same path the
+  Maps SDK tiles use (which is why the tiles were blank too).
+- `Info.plist` sets `GMSApiKey = $(MAPS_API_KEY)`, substituted at build time from
+  `Secrets.xcconfig`. Xcode **caches** that substitution: after the key was
+  rotated to the new MQ_NAVIGATION key, an incremental build can keep the OLD
+  baked value even though `.env` and `Secrets.xcconfig` are current.
+
+A differential probe of the CURRENT `.env` key confirms the code path is correct
+— all of these return **200**, including the exact combination the iOS app sends:
+
+```
+key only ................................. 200
+key + X-Ios-Bundle-Identifier (iOS app) .. 200   ← the header is NOT the problem
+key + a wrong bundle id .................. 200   ← key is unrestricted
+key + Referer (browser) .................. 200
+```
+
+**Fix on the device (operational, not code):**
+
+1. Prefer building/running the device with the fresh key explicitly:
+   ```
+   flutter run --dart-define-from-file=.env -d <device>
+   flutter build ios --release --dart-define-from-file=.env
+   ```
+   The Dart-define key then wins and no longer depends on the Info.plist cache.
+2. If launching without the define (from Xcode/IDE), force a **clean** iOS build
+   after any key change so the `$(MAPS_API_KEY)` substitution re-runs:
+   ```
+   flutter clean && cd ios && pod install && cd ..
+   flutter build ios --release --dart-define-from-file=.env
+   ```
+
+**Confirming which key the device actually used:** the debug build now logs a
+NON-SECRET fingerprint at route time —
+`GoogleNavTrace: routes_key source=<…> len=<n> fp=<8-hex>`. If that `fp` differs
+between a server probe of `.env` and the device run, the binary baked a stale
+key. The fingerprint is one-way and never prints key material.
+
 ### Routes API — working (was previously blocked)
 
 Live probes of `directions/v2:computeRoutes` with the project key return

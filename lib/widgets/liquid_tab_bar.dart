@@ -188,8 +188,16 @@ class _LiquidTabBarState extends State<LiquidTabBar>
                 final visualFrac = rtl ? (n - 1) - frac : frac;
                 final indicatorCenter = (visualFrac + 0.5) * slot;
                 // One fixed lens size — it glides between tabs but never
-                // stretches or changes width.
-                final indW = slot * 0.82;
+                // stretches or changes width. Widened to 0.92 of the slot so the
+                // active halo COMFORTABLY contains the icon + its label + padding
+                // (field report, Pouya 2026-08-28: "Settings" text pokes out of
+                // the pill). The selected label is separately constrained to the
+                // lens's inner width (see [_buildTab]) so it can never overrun the
+                // halo in any language or at any text scale.
+                final indW = slot * 0.92;
+                // Inner content width the selected label must fit inside: the
+                // lens minus its rounded ends' horizontal padding.
+                final labelMaxWidth = indW - 16;
                 return Stack(
                   children: [
                     Positioned(
@@ -198,6 +206,7 @@ class _LiquidTabBarState extends State<LiquidTabBar>
                       width: indW,
                       height: indH,
                       child: DecoratedBox(
+                        key: const ValueKey('tab-active-lens'),
                         // Lens tint follows the bar's foreground colour: white
                         // glow on dark glass, smoked glass on light glass — a
                         // white-on-white lens was invisible in light mode.
@@ -213,7 +222,7 @@ class _LiquidTabBarState extends State<LiquidTabBar>
                     Row(
                       children: [
                         for (int i = 0; i < n; i++)
-                          Expanded(child: _buildTab(i)),
+                          Expanded(child: _buildTab(i, labelMaxWidth)),
                       ],
                     ),
                   ],
@@ -226,7 +235,7 @@ class _LiquidTabBarState extends State<LiquidTabBar>
     );
   }
 
-  Widget _buildTab(int i) {
+  Widget _buildTab(int i, double labelMaxWidth) {
     final item = widget.items[i];
     final selected = i == widget.currentIndex;
     final pressed = _pressed == i;
@@ -259,20 +268,29 @@ class _LiquidTabBarState extends State<LiquidTabBar>
                 child: selected
                     ? Padding(
                         padding: const EdgeInsets.only(top: 2),
-                        child: Text(
-                          item.label,
-                          textAlign: TextAlign.center,
-                          // One line only: on a narrow slot at a large text
-                          // scale the label would otherwise wrap to two lines
-                          // and overflow the bar height (measure-first, §5.6).
-                          maxLines: 1,
-                          softWrap: false,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            color: widget.selectedColor ?? widget.color,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w700,
-                            height: 1.0,
+                        // Constrain the label to the halo's inner width and
+                        // scale it DOWN to fit rather than letting it spill past
+                        // the lens (its old `Expanded`-slot width overran the
+                        // narrower lens). scaleDown means short labels ("Home",
+                        // "Map") render at the full 13px night floor and only a
+                        // long one ("Settings", or a longer Persian string, or a
+                        // large text scale) shrinks — always fully enclosed.
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(maxWidth: labelMaxWidth),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              item.label,
+                              textAlign: TextAlign.center,
+                              maxLines: 1,
+                              softWrap: false,
+                              style: TextStyle(
+                                color: widget.selectedColor ?? widget.color,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                height: 1.0,
+                              ),
+                            ),
                           ),
                         ),
                       )

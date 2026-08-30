@@ -120,6 +120,7 @@ class _TargetRow extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final theme = Theme.of(context);
     final approx = !target.confidence.isReliable; // placeholder/derived
     final cardinal = NearbyList._cardinal(l, cardinalFor(target.trueBearingDegrees));
     final dist = formatNavDistance(l, target.distanceMeters.round());
@@ -129,9 +130,17 @@ class _TargetRow extends ConsumerWidget {
         : target.kind == PlaceKind.venue
             ? Icons.star_rounded
             : Icons.place_rounded;
+    // A tapped row AIMS the compass at that place: it locks the target, so the
+    // rose draws a navigation arrow at its bearing (§0R-1). Without a visible
+    // selected state the tap felt like a no-op (field report, Pouya 2026-08-28:
+    // "I tap a row and nothing happens"). Highlight the current target and show
+    // a "pointed here" affordance; re-tapping clears it (never a one-way trap).
+    final selected = ref.watch(compassLockedProvider) == target.placeKey;
     return ConstrainedBox(
       constraints: const BoxConstraints(minHeight: AonSpacing.minTapTarget),
       child: ListTile(
+        selected: selected,
+        selectedTileColor: theme.colorScheme.primary.withValues(alpha: 0.10),
         leading: Icon(icon),
         title: Text(target.title),
         isThreeLine: approx,
@@ -140,10 +149,19 @@ class _TargetRow extends ConsumerWidget {
           children: [
             Text('$cardinal · $dist'),
             if (approx)
-              Text(l.compassApproximate, style: Theme.of(context).textTheme.bodySmall),
+              Text(l.compassApproximate, style: theme.textTheme.bodySmall),
           ],
         ),
-        onTap: () => ref.read(compassLockedProvider.notifier).set(target.placeKey),
+        // Filled arrow when this is the aimed target, a faint outline otherwise —
+        // the outline is the affordance that the row DOES something on tap.
+        trailing: Icon(
+          selected ? Icons.navigation_rounded : Icons.navigation_outlined,
+          color: selected ? theme.colorScheme.primary : theme.disabledColor,
+          semanticLabel: selected ? l.compassAimedHere : l.compassPointHere,
+        ),
+        onTap: () => ref
+            .read(compassLockedProvider.notifier)
+            .set(selected ? null : target.placeKey),
       ),
     );
   }

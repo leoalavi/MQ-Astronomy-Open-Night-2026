@@ -26,6 +26,58 @@ const _items = [
   ),
 ];
 
+// The real six-tab shell, with the long labels that overran the pill.
+const _sixItems = [
+  LiquidNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'Home', fx: TabFx.homecoming),
+  LiquidNavItem(icon: Icons.list_alt_outlined, activeIcon: Icons.list_alt, label: 'Program', fx: TabFx.bounce),
+  LiquidNavItem(icon: Icons.star_outline_rounded, activeIcon: Icons.star_rounded, label: 'My Night', fx: TabFx.spin),
+  LiquidNavItem(icon: Icons.map_outlined, activeIcon: Icons.map, label: 'Map', fx: TabFx.rotateOpen),
+  LiquidNavItem(icon: Icons.info_outline_rounded, activeIcon: Icons.info_rounded, label: 'Info', fx: TabFx.orbit),
+  LiquidNavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: 'Settings', fx: TabFx.rotateOpen),
+];
+
+Widget _host6({
+  required int index,
+  double textScale = 1.0,
+  TextDirection dir = TextDirection.ltr,
+  List<LiquidNavItem> items = _sixItems,
+  double width = 390, // an iPhone-ish width where the pill is tightest
+}) =>
+    MaterialApp(
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
+      home: MediaQuery(
+        data: MediaQueryData(textScaler: TextScaler.linear(textScale)),
+        child: Directionality(
+          textDirection: dir,
+          child: Scaffold(
+            bottomNavigationBar: SizedBox(
+              width: width,
+              child: LiquidTabBar(
+                currentIndex: index,
+                onSelected: (_) {},
+                color: Colors.white,
+                selectedColor: const Color(0xFFFFB945),
+                accent: const Color(0xFFFFB945),
+                items: items,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+/// The active halo must horizontally CONTAIN the selected label — no protruding
+/// text (MAP #8). Compares the painted rects with a 0.5px tolerance.
+void _expectLabelInsideHalo(WidgetTester t, String label) {
+  final lens = t.getRect(find.byKey(const ValueKey('tab-active-lens')));
+  final text = t.getRect(find.text(label));
+  expect(text.left, greaterThanOrEqualTo(lens.left - 0.5),
+      reason: '"$label" left edge pokes out of the halo');
+  expect(text.right, lessThanOrEqualTo(lens.right + 0.5),
+      reason: '"$label" right edge pokes out of the halo');
+}
+
 Finder _orbit() => find.byWidgetPredicate(
   (w) =>
       w is CustomPaint && w.painter.runtimeType.toString() == '_OrbitPainter',
@@ -155,6 +207,40 @@ void main() {
   testWidgets('no overflow at 2.0 text scale', (tester) async {
     await tester.pumpWidget(_host(textScale: 2.0));
     await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('MAP #8: the long "Settings" label is fully enclosed by the halo (EN)',
+      (tester) async {
+    await tester.pumpWidget(_host6(index: 5)); // Settings selected
+    await tester.pumpAndSettle();
+    _expectLabelInsideHalo(tester, 'Settings');
+  });
+
+  testWidgets('MAP #8: "My Night" is fully enclosed by the halo', (tester) async {
+    await tester.pumpWidget(_host6(index: 2));
+    await tester.pumpAndSettle();
+    _expectLabelInsideHalo(tester, 'My Night');
+  });
+
+  testWidgets('MAP #8: a long Persian-style label is enclosed under RTL', (tester) async {
+    const fa = [
+      LiquidNavItem(icon: Icons.home_outlined, activeIcon: Icons.home, label: 'خانه', fx: TabFx.homecoming),
+      LiquidNavItem(icon: Icons.list_alt_outlined, activeIcon: Icons.list_alt, label: 'برنامه', fx: TabFx.bounce),
+      LiquidNavItem(icon: Icons.star_outline_rounded, activeIcon: Icons.star_rounded, label: 'شب من', fx: TabFx.spin),
+      LiquidNavItem(icon: Icons.map_outlined, activeIcon: Icons.map, label: 'نقشه', fx: TabFx.rotateOpen),
+      LiquidNavItem(icon: Icons.info_outline_rounded, activeIcon: Icons.info_rounded, label: 'اطلاعات', fx: TabFx.orbit),
+      LiquidNavItem(icon: Icons.settings_outlined, activeIcon: Icons.settings_rounded, label: 'تنظیمات', fx: TabFx.rotateOpen),
+    ];
+    await tester.pumpWidget(_host6(index: 5, items: fa, dir: TextDirection.rtl));
+    await tester.pumpAndSettle();
+    _expectLabelInsideHalo(tester, 'تنظیمات');
+  });
+
+  testWidgets('MAP #8: still enclosed at 1.6 text scale', (tester) async {
+    await tester.pumpWidget(_host6(index: 5, textScale: 1.6));
+    await tester.pumpAndSettle();
+    _expectLabelInsideHalo(tester, 'Settings');
     expect(tester.takeException(), isNull);
   });
 

@@ -1,36 +1,26 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/services/building_search.dart';
 import 'package:aon2026/services/campus_projection.dart';
 import 'package:aon2026/services/map_placement.dart';
-import 'package:aon2026/services/maps_url.dart';
 
 /// The Map experience a family actually relies on at Astronomy Open Night:
-/// they can find the important places, and "get directions" hands off to Google
-/// Maps walking navigation from wherever they are. (The illustrated basemap,
-/// projection and marker internals have their own dedicated suites — this pins
-/// the family-facing contract on top of them.)
+/// they can find the important places, and "get directions" opens Google walking
+/// navigation EMBEDDED INSIDE AON (never a hand-off to the external Google Maps
+/// app). (The illustrated basemap, projection and marker internals have their
+/// own dedicated suites — this pins the family-facing contract on top of them.)
 void main() {
   const proj = CampusProjection();
 
-  group('Google Maps "get directions" hand-off', () {
-    test('is a keyless Google Maps walking URL to the destination', () {
-      final url = buildWalkingMapsUrl(destLat: -33.7738, destLng: 151.1126);
-
-      expect(url.scheme, 'https');
-      expect(url.host, 'www.google.com');
-      expect(url.path, '/maps/dir/');
-      expect(url.queryParameters['travelmode'], 'walking');
-      expect(url.queryParameters['destination'], '-33.7738,151.1126');
-      // Origin is omitted on purpose → Google uses the device's live location.
-      expect(url.queryParameters.containsKey('origin'), isFalse);
-    });
-
-    test('escapes the destination (no string concatenation)', () {
-      // A crafted value must land in the query, encoded — never break the URL.
-      final url = buildWalkingMapsUrl(destLat: 1.5, destLng: 2.5);
-      expect(url.toString(), contains('destination=1.5%2C2.5'));
+  group('"Get directions" stays inside AON (embedded Google nav)', () {
+    test('routes to the in-app google-nav screen for the place', () {
+      // The directions CTA pushes the embedded nav route — NOT an external
+      // Google Maps URL (removed 2026-08-30: users always stay in the app).
+      final path = Routes.googleNavTo('building:central-courtyard');
+      expect(path, startsWith('/google-nav/'));
+      expect(path, contains(Uri.encodeComponent('building:central-courtyard')));
     });
   });
 

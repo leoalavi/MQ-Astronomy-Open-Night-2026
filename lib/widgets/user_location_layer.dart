@@ -55,36 +55,68 @@ class UserLocationCircle extends StatelessWidget {
   }
 }
 
-/// The "you are here" dot — a GPS-blue dot on a white ring — ON TOP of the pins.
+/// The "you are here" dot — a GPS-blue dot inside a white ring inside a small
+/// translucent-blue halo — ON TOP of the pins. Modelled on Google Maps' live
+/// location indicator so a visitor reads it as *you* at a glance.
 ///
 /// The `Colors.white` ring + `Colors.black26` shadow are the one sanctioned
 /// palette exception: a "you-are-here" dot must read as *you* against any map
 /// independent of theme. The centre is `mapUserLocation` (blue), the universal
 /// location colour — field testers read the old amber centre as a venue pin.
+///
+/// Sizing (field report, Pouya 2026-08-28: the old 22px dot "is too small"):
+///  - 30px translucent-blue halo — visible but small, and translucent so it
+///    never obscures a nearby venue pin (which are 44–56px, solid);
+///  - 18px white ring — the crisp separation from the map;
+///  - 12px solid blue centre.
+/// This is the whole marker; the LARGE, accuracy-scaled ring is the separate
+/// [UserLocationCircle] beneath the pins, so the two are never confused.
 class UserLocationDot extends StatelessWidget {
   const UserLocationDot({required this.center, super.key});
   final CampusMapPoint center;
 
+  static const double _size = 30;
+
   @override
-  Widget build(BuildContext context) => MarkerLayer(markers: [
-        Marker(
-          point: center.value,
-          width: 22,
-          height: 22,
-          child: DecoratedBox(
-            decoration: const BoxDecoration(
-              color: Colors.white,
+  Widget build(BuildContext context) {
+    final loc = context.aon.mapUserLocation;
+    return MarkerLayer(markers: [
+      Marker(
+        point: center.value,
+        width: _size,
+        height: _size,
+        child: Center(
+          child: Container(
+            width: _size,
+            height: _size,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              boxShadow: [BoxShadow(blurRadius: 3, color: Colors.black26)],
+              // The small "you" halo — a constant footprint, NOT the accuracy
+              // circle. Kept translucent so venue pins stay visible under it.
+              color: loc.withValues(alpha: 0.18),
             ),
-            child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                    color: context.aon.mapUserLocation, shape: BoxShape.circle),
+            child: Center(
+              child: Container(
+                width: 18,
+                height: 18,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [BoxShadow(blurRadius: 3, color: Colors.black26)],
+                ),
+                child: Center(
+                  child: Container(
+                    width: 12,
+                    height: 12,
+                    decoration:
+                        BoxDecoration(color: loc, shape: BoxShape.circle),
+                  ),
+                ),
               ),
             ),
           ),
         ),
-      ]);
+      ),
+    ]);
+  }
 }

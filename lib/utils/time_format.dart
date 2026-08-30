@@ -1,8 +1,9 @@
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide Bidi;
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 
 import 'package:aon2026/models/event.dart';
+import 'package:aon2026/utils/bidi.dart';
 
 /// Time and date formatting.
 ///
@@ -71,6 +72,42 @@ abstract final class TimeFormat {
     final sorted = [...event.sessions]
       ..sort((a, b) => a.start.compareTo(b.start));
     return sorted.map(session).join(', ');
+  }
+
+  /// A timing-aware, localised label for one session — the only session-time
+  /// string a screen should show a visitor.
+  ///
+  /// ## The bug this exists to prevent
+  ///
+  /// [session]/[range] print `start – end` unconditionally. For a
+  /// [TimingConfidence.timeUnpublished] session those bounds are a `4pm–10pm`
+  /// *stand-in* kept only so lists can lay out — so the Program card showed
+  /// "4pm – 10pm" directly under a "Time not published" heading (field report,
+  /// Pouya 2026-08-28). And a [TimingConfidence.startOnly] session printed a
+  /// `10pm` finish that the programme never published.
+  ///
+  /// So: no published start → "Time not published"; a published start but no
+  /// published finish → the real start qualified as "finish not published",
+  /// never a fabricated end; only a fully published session prints a range.
+  static String sessionLabel(AonL10n l, EventSession s) {
+    if (!s.hasPublishedStart) return l.timingTimeNotPublished;
+    if (!s.hasPublishedEnd) {
+      // Real start, honest "finish unknown" — never the 10pm stand-in.
+      return Bidi.joinIsolated([time(s.start), l.timingEndNotPublished]);
+    }
+    return range(s.start, s.end);
+  }
+
+  /// All sessions, timing-aware and localised. When NOTHING has a published
+  /// start it collapses to a single "Time not published" rather than repeating
+  /// it per stand-in session.
+  static String allSessionsLabel(AonL10n l, AonEvent event) {
+    final sorted = [...event.sessions]
+      ..sort((a, b) => a.start.compareTo(b.start));
+    if (sorted.every((s) => !s.hasPublishedStart)) {
+      return l.timingTimeNotPublished;
+    }
+    return sorted.map((s) => sessionLabel(l, s)).join(', ');
   }
 
   /// A bare duration: '12 min', '1 hr', '1 hr 5 min'.

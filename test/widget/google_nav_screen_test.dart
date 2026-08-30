@@ -6,7 +6,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/search_entry.dart';
 import 'package:aon2026/screens/google_nav_screen.dart';
-import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
@@ -14,7 +13,6 @@ import 'package:aon2026/services/maps_sdk_initializer.dart';
 import 'package:aon2026/services/routes_service.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/embedded_map.dart';
-import 'package:aon2026/widgets/maps_nav_disclosure.dart';
 
 const _key = 'building:TEST';
 
@@ -29,19 +27,21 @@ class _StubService implements RoutesService {
   }
 }
 
-class _FakeLauncher implements ExternalMapsLauncher {
-  Uri? opened;
+/// Returns each queued result in turn, so a test can drive
+/// failure → Retry → success through the real `ref.invalidate(navRouteProvider)`.
+class _SequencedService implements RoutesService {
+  _SequencedService(this._results);
+  final List<RouteResult> _results;
+  int calls = 0;
   @override
-  Future<bool> open(Uri uri) async {
-    opened = uri;
-    return true;
+  Future<RouteResult> walkingRoute({
+    required (double, double) origin,
+    required (double, double) destination,
+  }) async {
+    final r = _results[calls < _results.length ? calls : _results.length - 1];
+    calls++;
+    return r;
   }
-}
-
-/// Launcher that reports failure (no Maps app / launch refused).
-class _FailLauncher implements ExternalMapsLauncher {
-  @override
-  Future<bool> open(Uri uri) async => false;
 }
 
 /// Stays pending until the test releases it — reproduces the "HTTP answered but
@@ -104,7 +104,6 @@ ProviderContainer _c({
   MapsConsent consent = MapsConsent.accepted,
   (double, double)? origin = const (-33.77, 151.11),
   bool enabled = true,
-  ExternalMapsLauncher? launcher,
   bool sdkReady = true,
   AsyncValue<ResolvedPlace?> resolved = _resolved,
   NavOrigin? navOrigin,
@@ -124,7 +123,6 @@ ProviderContainer _c({
         navOrigin ??
         (origin == null ? const NavOriginUnavailable() : NavOriginOnCampus(origin))),
     routesServiceProvider.overrideWith((ref) => service),
-    externalMapsLauncherProvider.overrideWithValue(launcher ?? _FakeLauncher()),
   ]);
   addTearDown(c.dispose);
   return c;
@@ -132,17 +130,26 @@ ProviderContainer _c({
 
 Future<AonL10n> _en() => AonL10n.delegate.load(const Locale('en'));
 
+/// The whole product line for MAP #9: the visitor is NEVER sent to the external
+/// Google Maps app. This asserts the CTA, its icon and its strings are all gone.
+void _expectNoExternalMapsHandoff(WidgetTester t) {
+  expect(find.byIcon(Icons.open_in_new_rounded), findsNothing,
+      reason: 'the external "open in Google Maps" affordance must not exist');
+}
+
 void main() {
-  testWidgets('capability off → unavailable panel (no routing)', (t) async {
+  testWidgets('capability off → unavailable panel (no routing, no external)', (t) async {
     final svc = _StubService(const RouteNoRoute());
     await t.pumpWidget(_app(_c(service: svc, enabled: false)));
     await t.pumpAndSettle();
     final l = await _en();
     expect(find.text(l.mapNavUnavailable), findsOneWidget);
     expect(svc.calls, 0);
+    _expectNoExternalMapsHandoff(t);
   });
 
-  testWidgets('success → map surface + distance/ETA + walking warning (Google mandate)', (t) async {
+  testWidgets('success → map + distance/ETA, NO "walking routes are in beta" copy',
+      (t) async {
     final svc = _StubService(const RouteSuccess(NavRoute(
       polyline: [(-33.77, 151.11), (-33.78, 151.12)],
       distanceMeters: 412,
@@ -151,14 +158,49 @@ void main() {
     )));
     await t.pumpWidget(_app(_c(service: svc)));
     await t.pumpAndSettle();
-    final l = await _en();
     expect(find.byKey(const Key('map-surface')), findsOneWidget);
     expect(find.textContaining('412 m'), findsOneWidget);
     expect(find.textContaining('6 min'), findsOneWidget);
-    expect(find.text(l.mapNavWalkingWarning), findsOneWidget); // #13
+    // MAP #11: the removed beta caution must not reappear anywhere on screen.
+    expect(find.textContaining('beta'), findsNothing);
+    expect(find.textContaining('use caution'), findsNothing);
+    // MAP #9: no external hand-off on the success panel.
+    _expectNoExternalMapsHandoff(t);
   });
 
-  testWidgets('Google-supplied route warnings are rendered on success (ToS display gap)', (t) async {
+  testWidgets('MAP #10: Google-supplied walking steps render as a compact list',
+      (t) async {
+    final svc = _StubService(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11), (-33.78, 151.12)],
+      distanceMeters: 300,
+      eta: Duration(minutes: 4),
+      steps: [
+        NavStep(instruction: 'Head north on Wally’s Walk', distanceMeters: 120),
+        NavStep(instruction: 'Turn right onto Central Avenue', distanceMeters: 180),
+      ],
+    )));
+    await t.pumpWidget(_app(_c(service: svc)));
+    await t.pumpAndSettle();
+    final l = await _en();
+    expect(find.text(l.mapNavStepsTitle), findsOneWidget);
+    expect(find.text('Head north on Wally’s Walk'), findsOneWidget);
+    expect(find.text('Turn right onto Central Avenue'), findsOneWidget);
+  });
+
+  testWidgets('no steps in the response → no steps list (never invented)', (t) async {
+    final svc = _StubService(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11)],
+      distanceMeters: 100,
+      eta: Duration(minutes: 2),
+      steps: [],
+    )));
+    await t.pumpWidget(_app(_c(service: svc)));
+    await t.pumpAndSettle();
+    final l = await _en();
+    expect(find.text(l.mapNavStepsTitle), findsNothing);
+  });
+
+  testWidgets('Google-supplied route warnings are rendered on success (ToS display)', (t) async {
     final svc = _StubService(const RouteSuccess(NavRoute(
       polyline: [(-33.77, 151.11)],
       distanceMeters: 100,
@@ -173,23 +215,14 @@ void main() {
     expect(find.text('• Use caution at night'), findsOneWidget);
   });
 
-  testWidgets('external hand-off failure surfaces a toast (not a silent dead-end)', (t) async {
-    final svc = _StubService(const RouteNoRoute());
-    await t.pumpWidget(_app(_c(service: svc, launcher: _FailLauncher())));
-    await t.pumpAndSettle();
-    final l = await _en();
-    await t.tap(find.text(l.mapNavOpenExternal));
-    await t.pumpAndSettle();
-    expect(find.text(l.mapNavOpenExternalFailed), findsOneWidget);
-  });
-
-  testWidgets('RouteNoRoute → no-route panel with retry + external', (t) async {
+  testWidgets('RouteNoRoute → no-route panel with in-app Retry only', (t) async {
     final svc = _StubService(const RouteNoRoute());
     await t.pumpWidget(_app(_c(service: svc)));
     await t.pumpAndSettle();
     final l = await _en();
     expect(find.text(l.mapNavNoRoute), findsOneWidget);
     expect(find.text(l.mapNavRetry), findsOneWidget);
+    _expectNoExternalMapsHandoff(t);
   });
 
   testWidgets('RouteNetworkFailure → offline panel', (t) async {
@@ -201,13 +234,7 @@ void main() {
   });
 
   // ── The map is not gated on the route ────────────────────────────────────
-  //
-  // A failed route used to replace the whole screen with an error panel, which
-  // threw away the part that still worked: the visitor could no longer even see
-  // WHERE they were going. Markers and camera depend only on the SDK; only the
-  // polyline and the distance/ETA depend on the route.
-
-  testWidgets('RouteApiFailure keeps the MAP and shows a route-only error',
+  testWidgets('RouteApiFailure keeps the MAP and shows a route-only error + Retry',
       (t) async {
     final svc = _StubService(const RouteApiFailure(403));
     await t.pumpWidget(_app(_c(service: svc)));
@@ -216,8 +243,8 @@ void main() {
     expect(find.byKey(const Key('map-surface')), findsOneWidget,
         reason: 'a route failure must not hide the destination');
     expect(find.text(l.mapNavRouteUnavailable), findsOneWidget);
-    // Retry and the secondary hand-off stay reachable under the map.
     expect(find.text(l.mapNavRetry), findsOneWidget);
+    _expectNoExternalMapsHandoff(t);
   });
 
   for (final (label, failure) in <(String, RouteResult)>[
@@ -227,8 +254,6 @@ void main() {
     ('RouteNetworkFailure', const RouteNetworkFailure()),
     ('RouteMalformed', const RouteMalformed()),
   ]) {
-    // One test each, not a loop: pumping several trees in a single test leaves
-    // the previous tree's timers pending and trips the binding's invariant.
     testWidgets('$label keeps the map visible', (t) async {
       await t.pumpWidget(_app(_c(service: _StubService(failure))));
       await t.pumpAndSettle();
@@ -239,36 +264,23 @@ void main() {
 
   testWidgets('the map is NOT built when the SDK is unkeyed, even on failure',
       (t) async {
-    // The consent/keying invariant still wins over "always show the map".
     await t.pumpWidget(
         _app(_c(service: _StubService(const RouteNoRoute()), sdkReady: false)));
     await t.pumpAndSettle();
     final l = await _en();
     expect(find.byKey(const Key('map-surface')), findsNothing);
-    // And it says so, rather than spinning forever.
     expect(find.text(l.mapNavUnavailable), findsOneWidget);
   });
 
-  // ── The hang this suite now guards ──────────────────────────────────────
-  //
-  // On web the screen span on a spinner forever after a perfectly good HTTP 200.
-  // Root cause: `mapsSdkReadyProvider` was watched ONLY inside the route-success
-  // branch, so `ensureInitialized()` was never called while a route was pending,
-  // and the map could not appear. The map must never be gated on the route.
-
   testWidgets('the MAP renders while the route is still PENDING', (t) async {
-    // A service that never answers — the exact shape of the reported hang.
     final never = _NeverService();
     await t.pumpWidget(_app(_c(service: never)));
-    await t.pump(); // let the frame settle without awaiting the route
+    await t.pump();
     await t.pump(const Duration(milliseconds: 100));
-
     expect(find.byKey(const Key('map-surface')), findsOneWidget,
         reason: 'a pending route must not hide the destination map');
     final l = await _en();
-    expect(find.text(l.mapNavFindingRoute), findsOneWidget,
-        reason: 'the strip explains the route is still coming');
-
+    expect(find.text(l.mapNavFindingRoute), findsOneWidget);
     never.release();
     await t.pumpAndSettle();
   });
@@ -278,60 +290,99 @@ void main() {
     await t.pumpWidget(_app(_c(service: never)));
     await t.pump();
     await t.pump(const Duration(milliseconds: 100));
-    // The old behaviour: one big CircularProgressIndicator and nothing else.
-    // Now the only progress indicator is the small one inside the strip, and
-    // the map is present alongside it.
     expect(find.byKey(const Key('map-surface')), findsOneWidget);
-
     never.release();
     await t.pumpAndSettle();
   });
 
-  testWidgets('consent withdrawn is the one case with NO map', (t) async {
-    // Nothing reached the UI and no Google surface may be constructed.
+  testWidgets('sharing turned off mid-flight → no map, one-tap re-enable, no external',
+      (t) async {
     await t.pumpWidget(
         _app(_c(service: _StubService(const RouteConsentRefused()))));
     await t.pumpAndSettle();
     expect(find.byKey(const Key('map-surface')), findsNothing);
-    expect(find.byKey(const Key('nav-reopen-disclosure')), findsOneWidget);
+    expect(find.byKey(const Key('nav-enable-sharing')), findsOneWidget);
+    _expectNoExternalMapsHandoff(t);
   });
 
-  testWidgets('no location → needLocation panel with external fallback', (t) async {
+  testWidgets('no location → needLocation panel with in-app Retry (no external)', (t) async {
     final svc = _StubService(const RouteNoRoute());
-    final launcher = _FakeLauncher();
-    await t.pumpWidget(_app(_c(service: svc, origin: null, launcher: launcher)));
+    await t.pumpWidget(_app(_c(service: svc, origin: null)));
     await t.pumpAndSettle();
     final l = await _en();
     expect(find.text(l.mapNavNeedLocation), findsOneWidget);
     expect(svc.calls, 0); // never routed without an origin
-    await t.tap(find.text(l.mapNavOpenExternal));
-    await t.pumpAndSettle();
-    expect(launcher.opened.toString(),
-        'https://www.google.com/maps/dir/?api=1&destination=-33.78%2C151.12&travelmode=walking');
+    expect(find.byKey(const Key('nav-retry-location')), findsOneWidget);
+    _expectNoExternalMapsHandoff(t);
   });
 
-  testWidgets('deep-link with consent != accepted → disclosure shows, no location/route touched (#21)', (t) async {
-    final svc = _StubService(const RouteSuccess(NavRoute(polyline: [], distanceMeters: 1, eta: Duration.zero)));
-    await t.pumpWidget(_app(_c(service: svc, consent: MapsConsent.unknown)));
-    await t.pumpAndSettle();
-    expect(find.byType(MapsNavDisclosure), findsOneWidget);
-    expect(svc.calls, 0); // consent gates before any Google call
-  });
-
-  testWidgets('accepting the disclosure proceeds to the route', (t) async {
+  testWidgets('first-run (unknown) auto-proceeds — NO consent modal, then routes', (t) async {
     final svc = _StubService(const RouteSuccess(NavRoute(
       polyline: [(-33.77, 151.11)], distanceMeters: 200, eta: Duration(minutes: 3), warnings: [])));
     await t.pumpWidget(_app(_c(service: svc, consent: MapsConsent.unknown)));
-    await t.pumpAndSettle();
-    final l = await _en();
-    await t.tap(find.text(l.mapNavDisclosureAccept));
     await t.pumpAndSettle();
     expect(find.byKey(const Key('map-surface')), findsOneWidget);
     expect(svc.calls, 1);
   });
 
-  // ── Campus scope ──────────────────────────────────────────────────────────
+  testWidgets('explicitly-off (declined) shows a panel with re-enable, not a modal', (t) async {
+    final svc = _StubService(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11)], distanceMeters: 200, eta: Duration(minutes: 3))));
+    await t.pumpWidget(_app(_c(service: svc, consent: MapsConsent.declined)));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('nav-enable-sharing')), findsOneWidget);
+    expect(find.byKey(const Key('map-surface')), findsNothing);
+    expect(svc.calls, 0);
+    _expectNoExternalMapsHandoff(t);
 
+    await t.tap(find.byKey(const Key('nav-enable-sharing')));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('map-surface')), findsOneWidget,
+        reason: 'one tap re-enables and the map appears');
+    expect(svc.calls, 1);
+  });
+
+  testWidgets('Retry after a 401-style API failure genuinely re-requests and can succeed', (t) async {
+    final svc = _SequencedService(const [
+      RouteApiFailure(401),
+      RouteSuccess(NavRoute(
+          polyline: [(-33.77, 151.11)], distanceMeters: 210, eta: Duration(minutes: 3))),
+    ]);
+    await t.pumpWidget(_app(_c(service: svc)));
+    await t.pumpAndSettle();
+    final l = await _en();
+
+    expect(find.byKey(const Key('map-surface')), findsOneWidget);
+    expect(find.text(l.mapNavRouteUnavailable), findsOneWidget);
+    expect(svc.calls, 1);
+
+    await t.tap(find.text(l.mapNavRetry));
+    await t.pumpAndSettle();
+
+    expect(svc.calls, 2, reason: 'Retry must re-hit the service, not reuse state');
+    expect(find.textContaining('210 m'), findsOneWidget);
+    expect(find.text(l.mapNavRouteUnavailable), findsNothing);
+  });
+
+  testWidgets('MAP #13: the route is fetched ONCE per origin — rebuilds do not re-hit Routes',
+      (t) async {
+    // The route is keyed by the snapshot (origin, dest); the live blue dot moves
+    // with GPS but the ROUTE never recomputes on a location tick or a rebuild.
+    // Only an explicit Retry (invalidate) issues a fresh request.
+    final svc = _StubService(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11)], distanceMeters: 200, eta: Duration(minutes: 3))));
+    await t.pumpWidget(_app(_c(service: svc)));
+    await t.pumpAndSettle();
+    expect(svc.calls, 1);
+    // Force several extra rebuilds — jitter/relayout/theme ticks would do this
+    // on device. The Routes call count must not climb.
+    for (var i = 0; i < 5; i++) {
+      await t.pump(const Duration(milliseconds: 50));
+    }
+    expect(svc.calls, 1, reason: 'no reroute on rebuilds — jitter must not re-hit Routes');
+  });
+
+  // ── Campus scope ──────────────────────────────────────────────────────────
   testWidgets('origin OFF campus → "come to campus" message, never routes', (t) async {
     final svc = _StubService(const RouteSuccess(NavRoute(
       polyline: [(-33.77, 151.11)], distanceMeters: 5000, eta: Duration(minutes: 60))));
@@ -339,13 +390,11 @@ void main() {
     await t.pumpAndSettle();
     final l = await _en();
     expect(find.text(l.mapNavOffCampusOrigin), findsOneWidget);
-    expect(svc.calls, 0); // the whole point: no long walk-in route is generated
-    // No external hand-off here either — it would start the very walk we blocked.
-    expect(find.text(l.mapNavOpenExternal), findsNothing);
+    expect(svc.calls, 0);
+    _expectNoExternalMapsHandoff(t);
   });
 
   testWidgets('destination OFF campus → honest message, never routes', (t) async {
-    // A resolved place whose routing coordinate is in the Sydney CBD.
     const offCampus = AsyncData<ResolvedPlace?>(ResolvedPlace(
       kind: PlaceKind.building,
       placeKey: _key,
@@ -364,8 +413,6 @@ void main() {
   });
 
   testWidgets('a destination with NO coordinates (e.g. West 6) is handled honestly, not faked', (t) async {
-    // West 6's coordinate is an unresolved placeholder, so the resolver yields
-    // null routing. The screen must show the error-back panel — never a route.
     const noCoords = AsyncData<ResolvedPlace?>(ResolvedPlace(
       kind: PlaceKind.building,
       placeKey: _key,
@@ -381,6 +428,6 @@ void main() {
     final l = await _en();
     expect(find.text(l.mapNavError), findsOneWidget);
     expect(svc.calls, 0);
-    expect(find.byKey(const Key('map-surface')), findsNothing); // no fake map
+    expect(find.byKey(const Key('map-surface')), findsNothing);
   });
 }

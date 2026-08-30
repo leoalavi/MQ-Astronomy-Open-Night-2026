@@ -7,23 +7,22 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/search_entry.dart';
 import 'package:aon2026/config/qa_mode.dart';
 import 'package:aon2026/services/campus_scope.dart';
-import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_consent_providers.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/services/maps_sdk_initializer.dart';
-import 'package:aon2026/services/maps_url.dart';
 import 'package:aon2026/services/nav_trace.dart';
 import 'package:aon2026/services/nav_format.dart';
 import 'package:aon2026/services/routes_service.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/embedded_map.dart';
-import 'package:aon2026/widgets/maps_nav_disclosure.dart';
 
 /// Embedded Google walking-navigation for an M3 place key. Runs the strict
 /// sequence: capability → resolve destination → consent → location (snapshot) →
 /// route → map. Every failure lands on a standalone AON panel, never a blank
-/// Google-tiles view. Renders the Google-mandated walking warning on success.
+/// Google-tiles view — and NEVER a hand-off to the external Google Maps app: the
+/// visitor always stays inside AON (product requirement 2026-08-30). A route
+/// that cannot be fetched shows an in-app error with Retry, not a way out.
 class GoogleNavScreen extends ConsumerStatefulWidget {
   const GoogleNavScreen({
     super.key,
@@ -41,7 +40,7 @@ class GoogleNavScreen extends ConsumerStatefulWidget {
 }
 
 class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
-  bool _disclosureRequested = false;
+  bool _autoAccepted = false;
 
   @override
   Widget build(BuildContext context) {
@@ -56,13 +55,13 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         'sdkReady=${sdkAsync.asData?.value}');
     final resolved = ref.watch(placeResolverProvider(widget.placeKey));
 
-    // (1) Capability guard — feature disabled → unavailable panel (with an
-    // optional external-Maps button if we can resolve a destination).
+    // (1) Capability guard — feature disabled → unavailable panel. No external
+    // hand-off: if in-app directions can't run we say so and offer the way back,
+    // never a bounce out to the Google Maps app.
     // Gate on the boolean (the long-established seam every caller and test
     // overrides); consult the availability enum only to explain WHY.
     if (!ref.watch(googleNavEnabledProvider)) {
       final availability = ref.watch(googleNavAvailabilityProvider);
-      final dest = _destOf(resolved.asData?.value);
       // Boolean-only trace (never the key) so a QA report can say WHY.
       navTrace(describeGoogleNavState(ref));
       // Tell the truth about the cause. Blaming a missing key on a platform
@@ -79,7 +78,7 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           context,
           icon: Icons.map_outlined,
           message: message,
-          actions: [if (dest != null) _externalButton(context, l, dest)],
+          actions: [_backButton(context)],
         ),
       );
     }
@@ -117,15 +116,21 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           );
         }
 
-        // (3) Consent gate — only `accepted` proceeds; unknown/declined show the
-        // disclosure before any location read or Google call.
+        // (3) Consent — NO blocking modal. Google is the only directions
+        // provider, so opening this screen IS the choice to use it. A first-run
+        // `unknown` consent is auto-accepted so the map + route load immediately;
+        // the passive privacy notice lives in Settings (settingsGoogleMapsNotice),
+        // where the user can also turn sharing OFF. `declined` is the one state
+        // that shows a panel (with a one-tap re-enable) instead of routing —
+        // never a modal on every Directions tap (field report, Pouya 2026-08-28).
         final consent = ref.watch(mapsConsentProvider);
-        if (consentNeedsDisclosure(consent)) {
-          _ensureDisclosure();
-          // Static placeholder (NOT an animating spinner) — the modal disclosure
-          // is shown over it; a spinner here would never let tests settle and
-          // burns frames behind a blocking dialog.
-          return _scaffold(l, title: place.title, body: const SizedBox.shrink());
+        if (consent == MapsConsent.unknown) {
+          _autoAcceptOnce();
+          return _scaffold(l, title: place.title, body: _spinner(context));
+        }
+        if (consent == MapsConsent.declined) {
+          return _scaffold(
+              l, title: place.title, body: _sharingOffPanel(context, l));
         }
 
         // (4) Location origin, captured once (snapshot), scope-validated.
@@ -136,12 +141,12 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         return originAsync.when(
           loading: () => _scaffold(l, title: place.title, body: _spinner(context)),
           error: (_, _) => _scaffold(
-              l, title: place.title, body: _needLocation(context, l, dest)),
+              l, title: place.title, body: _needLocation(context, l)),
           data: (origin) => switch (origin) {
-            // No permission / no fix — external Maps can still start from the
-            // device location, so offer that.
+            // No permission / no fix — we can't draw the route without an origin.
+            // Offer a Retry (re-request the fix) in-app; never a bounce out.
             NavOriginUnavailable() =>
-              _scaffold(l, title: place.title, body: _needLocation(context, l, dest)),
+              _scaffold(l, title: place.title, body: _needLocation(context, l)),
             // A real fix, but off campus. Do NOT route a long walk-in; say so.
             NavOriginOffCampus() =>
               _scaffold(l, title: place.title, body: _offCampusOrigin(context, l)),
@@ -189,26 +194,33 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     return (place!.routingLat!, place.routingLng!);
   }
 
-  void _ensureDisclosure() {
-    if (_disclosureRequested) return;
-    _disclosureRequested = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) async {
+  /// First-run consent is accepted silently (no modal) once per screen, after
+  /// the frame so we never mutate a provider mid-build. Latched so a rebuild
+  /// while the accept is in flight does not re-post it.
+  void _autoAcceptOnce() {
+    if (_autoAccepted) return;
+    _autoAccepted = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final accepted = await showMapsNavDisclosure(context);
-      if (!mounted) return;
-      final notifier = ref.read(mapsConsentProvider.notifier);
-      if (accepted) {
-        notifier.accept(); // rebuild proceeds (consent now accepted)
-      } else {
-        notifier.decline();
-        await Navigator.of(context).maybePop();
-      }
-      // Re-arm: if consent is later revoked while this screen stays mounted
-      // (e.g. via Settings pushed on top), the next disclosure-needed build must
-      // show the sheet again instead of a permanent blank body (map audit P2).
-      if (mounted) _disclosureRequested = false;
+      ref.read(mapsConsentProvider.notifier).accept();
     });
   }
+
+  /// The visitor turned directions data-sharing OFF in Settings. No modal — a
+  /// plain panel with a one-tap re-enable. No external hand-off: turning sharing
+  /// back on is the only path to directions, and it keeps them inside AON.
+  Widget _sharingOffPanel(BuildContext context, AonL10n l) => _panel(
+        context,
+        icon: Icons.location_disabled_outlined,
+        message: l.mapNavDisclosureBody,
+        actions: [
+          FilledButton(
+            key: const Key('nav-enable-sharing'),
+            onPressed: () => ref.read(mapsConsentProvider.notifier).accept(),
+            child: Text(l.mapNavDisclosureAccept),
+          ),
+        ],
+      );
 
   Widget _resultBody(BuildContext context, AonL10n l, RouteResult? result,
       (double, double) origin, (double, double) dest,
@@ -217,23 +229,9 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     // the UI and no Google surface may be constructed, so offer the way back
     // rather than a map the user just revoked permission for.
     if (result is RouteConsentRefused) {
-      return _panel(
-        context,
-        icon: Icons.privacy_tip_outlined,
-        message: l.mapNavDisclosureBody,
-        actions: [
-          FilledButton(
-            key: const Key('nav-reopen-disclosure'),
-            onPressed: () {
-              // Re-arm so the next build shows the disclosure again.
-              setState(() => _disclosureRequested = false);
-              ref.read(mapsConsentProvider.notifier).revoke();
-            },
-            child: Text(l.mapNavDisclosureAccept),
-          ),
-          _externalButton(context, l, dest),
-        ],
-      );
+      // Sharing was turned off (in Settings) between opening this screen and the
+      // route returning. Offer a one-tap re-enable, not a modal.
+      return _sharingOffPanel(context, l);
     }
 
     // Task 1 deferred GMSServices.provideAPIKey off app launch, so a GoogleMap
@@ -352,15 +350,11 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
             ],
           ),
           const SizedBox(height: AonSpacing.space2),
+          // In-app Retry ONLY — the destination is on the map above, so the way
+          // forward is to re-fetch the route, never to leave AON.
           Align(
             alignment: AlignmentDirectional.centerEnd,
-            child: Wrap(
-              spacing: AonSpacing.space2,
-              children: [
-                _retryButton(context, l, origin, dest),
-                _externalButton(context, l, dest),
-              ],
-            ),
+            child: _retryButton(context, l, origin, dest),
           ),
         ],
       ),
@@ -368,11 +362,19 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   }
 
 
-  Widget _needLocation(BuildContext context, AonL10n l, (double, double) dest) => _panel(
+  Widget _needLocation(BuildContext context, AonL10n l) => _panel(
         context,
         icon: Icons.location_off_outlined,
         message: l.mapNavNeedLocation,
-        actions: [_externalButton(context, l, dest)],
+        // Re-request the fix in-app. `navOriginProvider` is autoDispose, so
+        // invalidating it re-runs the location read on the next watch.
+        actions: [
+          FilledButton.tonal(
+            key: const Key('nav-retry-location'),
+            onPressed: () => ref.invalidate(navOriginProvider),
+            child: Text(l.mapNavRetry),
+          ),
+        ],
       );
 
   Widget _errorBack(BuildContext context, AonL10n l) => _panel(
@@ -398,26 +400,23 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text(
-            '${formatNavDistance(l, route.distanceMeters)} · ${formatNavEta(l, route.eta)}',
-            style: theme.textTheme.titleMedium?.copyWith(color: context.aon.contentPrimary),
-          ),
-          const SizedBox(height: AonSpacing.space2),
-          // Google-mandated baseline walking caution (WALK is beta) — always shown.
+          // Distance · ETA · a WALK badge — the walking headline of the route.
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Icon(Icons.info_outline_rounded, size: 18, color: context.aon.contentTertiary),
+              Icon(Icons.directions_walk_rounded,
+                  size: 20, color: context.aon.accent),
               const SizedBox(width: AonSpacing.space2),
               Expanded(
                 child: Text(
-                  l.mapNavWalkingWarning,
-                  style: theme.textTheme.bodySmall?.copyWith(color: context.aon.contentTertiary),
+                  '${formatNavDistance(l, route.distanceMeters)} · ${formatNavEta(l, route.eta)}',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(color: context.aon.contentPrimary),
                 ),
               ),
             ],
           ),
-          // Google-supplied route warnings, if any.
+          // Google-supplied route warnings, if any (rendered verbatim — the
+          // contractual bit; the app adds no generic "beta" caution of its own).
           if (route.warnings.isNotEmpty) ...[
             const SizedBox(height: AonSpacing.space2),
             Text(l.mapNavWarningsTitle,
@@ -426,11 +425,26 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
               Text('• $w',
                   style: theme.textTheme.bodySmall?.copyWith(color: context.aon.contentTertiary)),
           ],
-          const SizedBox(height: AonSpacing.space3),
-          Align(
-            alignment: AlignmentDirectional.centerEnd,
-            child: _externalButton(context, l, dest),
-          ),
+          // A compact, SCROLLABLE step list — only ever the steps Google actually
+          // returned (`route.steps`). Bounded so it can't crowd the map above it.
+          if (route.steps.isNotEmpty) ...[
+            const SizedBox(height: AonSpacing.space3),
+            Text(l.mapNavStepsTitle,
+                style: theme.textTheme.labelMedium
+                    ?.copyWith(color: context.aon.contentSecondary)),
+            const SizedBox(height: AonSpacing.space1),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 148),
+              child: ListView.separated(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: route.steps.length,
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: AonSpacing.space2),
+                itemBuilder: (_, i) => _StepRow(step: route.steps[i], l: l),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -443,26 +457,9 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         child: Text(l.mapNavRetry),
       );
 
-  Widget _externalButton(BuildContext context, AonL10n l, (double, double) dest) => TextButton.icon(
-        icon: const Icon(Icons.open_in_new_rounded, size: 18),
-        // The keyless external hand-off is the last-resort action on every error
-        // panel, so a silent throw / false return would strand the user. Await,
-        // catch, and surface a failure toast (map audit P2).
-        onPressed: () async {
-          final messenger = ScaffoldMessenger.of(context);
-          var ok = false;
-          try {
-            ok = await ref
-                .read(externalMapsLauncherProvider)
-                .open(buildWalkingMapsUrl(destLat: dest.$1, destLng: dest.$2));
-          } catch (_) {
-            ok = false;
-          }
-          if (!ok) {
-            messenger.showSnackBar(SnackBar(content: Text(l.mapNavOpenExternalFailed)));
-          }
-        },
-        label: Text(l.mapNavOpenExternal),
+  Widget _backButton(BuildContext context) => TextButton(
+        onPressed: () => Navigator.of(context).maybePop(),
+        child: Text(MaterialLocalizations.of(context).backButtonTooltip),
       );
 
   Widget _spinner(BuildContext context) =>
@@ -497,4 +494,36 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         appBar: AppBar(title: Text(title ?? l.mapNavGoogle)),
         body: SafeArea(child: body),
       );
+}
+
+/// One Google-supplied walking step: a walk glyph, the instruction text exactly
+/// as Google phrased it, and the step's distance. Never a locally invented step.
+class _StepRow extends StatelessWidget {
+  const _StepRow({required this.step, required this.l});
+  final NavStep step;
+  final AonL10n l;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(Icons.directions_walk_rounded,
+            size: 16, color: context.aon.contentTertiary),
+        const SizedBox(width: AonSpacing.space2),
+        Expanded(
+          child: Text(step.instruction,
+              style: theme.textTheme.bodyMedium
+                  ?.copyWith(color: context.aon.contentSecondary)),
+        ),
+        if (step.distanceMeters > 0) ...[
+          const SizedBox(width: AonSpacing.space2),
+          Text(formatNavDistance(l, step.distanceMeters),
+              style: theme.textTheme.bodySmall
+                  ?.copyWith(color: context.aon.contentTertiary)),
+        ],
+      ],
+    );
+  }
 }

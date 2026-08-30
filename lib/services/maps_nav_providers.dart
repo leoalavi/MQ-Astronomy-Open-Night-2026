@@ -178,6 +178,24 @@ final routesServiceProvider = FutureProvider<RoutesService>((ref) async {
   final identity = await ref.watch(routesClientIdentityProvider.future);
   navTrace('identity_resolved headers=${identity.headers.length}');
   final key = ref.watch(activeRoutesKeyProvider);
+  // NON-SECRET diagnostic: which key is this build actually routing with, and
+  // where did it come from. On device the 401 came from a build with no
+  // `--dart-define-from-file=.env`, so the key fell back to the native Info.plist
+  // value — if that `fp` differs from the `.env` key's, the installed binary
+  // baked a stale key. Never prints key material (see keyFingerprint).
+  final platform = ref.read(mapsNavPlatformProvider);
+  final explicitRoutesKey = switch (platform) {
+    MapsNavPlatform.android => ref.read(androidRoutesKeyProvider),
+    MapsNavPlatform.ios => ref.read(iosRoutesKeyProvider),
+    MapsNavPlatform.web => ref.read(webRoutesKeyProvider),
+    MapsNavPlatform.unsupported => '',
+  };
+  final source = explicitRoutesKey.isNotEmpty
+      ? 'platform-routes-define'
+      : (const String.fromEnvironment('MAPS_API_KEY').isNotEmpty
+          ? 'maps-define'
+          : 'native-runtime');
+  navTrace('routes_key source=$source ${keyFingerprint(key)}');
   final client = http.Client();
   ref.onDispose(client.close);
   navTrace('routes_service_ready');
@@ -293,7 +311,15 @@ final navOriginProvider = FutureProvider.autoDispose<NavOrigin>((ref) async {
   }
   if (status != LocationStatus.granted) return const NavOriginUnavailable();
   try {
-    final fix = await svc.watch().first.timeout(const Duration(seconds: 12));
+    // Prefer the CANONICAL settled fix (the same filtered position the map dot
+    // and compass show) when the controller already has one — it is the
+    // sharpest fix seen, not the coarse first sample `watch().first` returns.
+    // The route then starts from where the visitor actually is, not the cell
+    // fix that put the dot 150 m away on the day. Falls back to a fresh one-shot
+    // when nothing has settled yet (Directions opened without visiting the map).
+    final settled = ref.read(locationControllerProvider).fix;
+    final fix =
+        settled ?? await svc.watch().first.timeout(const Duration(seconds: 12));
     final lat = fix.position.latitude, lng = fix.position.longitude;
     // QA mode lifts the campus-scope refusal so the walking flow can be
     // exercised from wherever the tester actually is. Walking-only and

@@ -121,8 +121,8 @@ class ActivityRailCard extends ConsumerWidget {
                         Expanded(
                           child: Text(
                             timed.session == null
-                                ? TimeFormat.allSessions(event)
-                                : TimeFormat.session(timed.session!),
+                                ? TimeFormat.allSessionsLabel(l, event)
+                                : TimeFormat.sessionLabel(l, timed.session!),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: context.aon.contentTertiary,
                             ),

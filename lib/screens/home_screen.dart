@@ -600,7 +600,7 @@ class _NextUpCard extends ConsumerWidget {
               const SizedBox(height: AonSpacing.space1),
               Text(
                 Bidi.joinIsolated([
-                  TimeFormat.session(entry.session),
+                  TimeFormat.sessionLabel(l, entry.session),
                   venue?.chipLabel ?? l.infoLocationToBeConfirmed,
                 ], separator: '  ·  '),
                 style: theme.textTheme.bodySmall?.copyWith(

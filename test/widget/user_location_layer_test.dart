@@ -56,6 +56,28 @@ void main() {
     expect(t.takeException(), isNull);
   });
 
+  testWidgets('MAP #14: the dot is enlarged (30px) with a translucent blue halo',
+      (t) async {
+    await t.pumpWidget(_host(UserLocationDot(center: _centre), zoom: -3.4));
+    await t.pump();
+    final marker =
+        t.widget<MarkerLayer>(find.byType(MarkerLayer)).markers.single;
+    // Bigger than the old 22px so it reads clearly on the illustrated basemap.
+    expect(marker.width, greaterThanOrEqualTo(28));
+    expect(marker.height, greaterThanOrEqualTo(28));
+    // A translucent (never opaque) halo container is present — visible, but it
+    // must not obscure the venue pins beneath it.
+    final haloColor = t
+        .widgetList<Container>(find.descendant(
+            of: find.byType(MarkerLayer), matching: find.byType(Container)))
+        .map((c) => (c.decoration as BoxDecoration?)?.color)
+        .firstWhere(
+            (c) => c != null && c != Colors.white && c.a > 0 && c.a < 1,
+            orElse: () => null);
+    expect(haloColor, isNotNull,
+        reason: 'a small translucent blue halo must surround the dot');
+  });
+
   testWidgets('low-accuracy fix omits the circle (migrated, Phase A §5.1)', (
     t,
   ) async {

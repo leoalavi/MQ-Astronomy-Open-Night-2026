@@ -48,6 +48,7 @@ class GeolocatorLocationService implements LocationService {
           .map((p) => UserLocationFix(
                 position: LatLng(p.latitude, p.longitude),
                 accuracyMeters: p.accuracy,
+                timestamp: p.timestamp,
               ));
 
   @override

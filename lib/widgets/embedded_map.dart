@@ -60,16 +60,33 @@ class GoogleEmbeddedMapSurface implements EmbeddedMapSurface {
     final gBounds = LatLngBounds(southwest: ll(bounds.southwest), northeast: ll(bounds.northeast));
     return GoogleMap(
       initialCameraPosition: CameraPosition(target: ll(destination), zoom: 15),
-      // Inset the Google logo/attribution above a bottom info panel.
+      // Inset the Google logo/attribution AND the my-location button above the
+      // bottom info/steps panel.
       padding: const EdgeInsets.only(bottom: 96),
-      myLocationEnabled: false,
+      // The live blue "you are here" dot IS the current-location indicator — it
+      // tracks the walker as they move (real GPS), so there is no separate static
+      // origin marker (two "you" pins that drift apart is worse than one live
+      // dot). The my-location button is the recenter control.
+      myLocationEnabled: true,
+      myLocationButtonEnabled: true,
       zoomControlsEnabled: false,
       markers: {
-        Marker(markerId: const MarkerId('origin'), position: ll(origin)),
+        // Destination only — a clear pin for where you're headed. "You" is the
+        // blue dot above.
         Marker(markerId: const MarkerId('destination'), position: ll(destination)),
       },
       polylines: {
-        Polyline(polylineId: const PolylineId('route'), width: 5, points: route.map(ll).toList()),
+        // A coloured, rounded walking line reads as a route, not a stray black
+        // stroke (field report, Pouya 2026-08-28: "it's just a black line").
+        Polyline(
+          polylineId: const PolylineId('route'),
+          width: 6,
+          color: const Color(0xFF1A73E8), // Google-walking blue
+          startCap: Cap.roundCap,
+          endCap: Cap.roundCap,
+          jointType: JointType.round,
+          points: route.map(ll).toList(),
+        ),
       },
       onMapCreated: (controller) {
         controller.animateCamera(CameraUpdate.newLatLngBounds(gBounds, 48));

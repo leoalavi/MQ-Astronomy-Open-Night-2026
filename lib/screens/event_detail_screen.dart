@@ -136,7 +136,7 @@ class EventDetailScreen extends ConsumerWidget {
                   children: [
                     Expanded(
                       child: Text(
-                        TimeFormat.session(session),
+                        TimeFormat.sessionLabel(l, session),
                         style: theme.textTheme.titleMedium,
                       ),
                     ),

@@ -53,6 +53,37 @@ void main() {
     expect(c.read(eventPhaseProvider).isLive, isTrue);
   });
 
+  test('MAP #6: representative event-night times classify sanely (doors→close)', () {
+    final c = make();
+    final notifier = c.read(simulatedTimeProvider.notifier);
+    // 4:00pm — doors: before or exactly at open, the event is not yet "ended".
+    notifier.set(EventInfo.at(16, 0));
+    expect(c.read(eventPhaseProvider), isNot(EventPhase.ended));
+    // 5:00 / 7:00 / 9:30pm — squarely inside the running event → live.
+    for (final (h, m) in const [(17, 0), (19, 0), (21, 30)]) {
+      notifier.set(EventInfo.at(h, m));
+      expect(c.read(eventPhaseProvider).isLive, isTrue,
+          reason: '$h:$m on the night should read as live');
+    }
+    // 10:00pm — the event has ended; nothing is "happening now".
+    notifier.set(EventInfo.at(22, 0));
+    expect(c.read(eventPhaseProvider), EventPhase.ended);
+    expect(c.read(happeningNowProvider), isEmpty);
+  });
+
+  test('MAP #6: an unpublished-time activity is never falsely "happening now"', () {
+    // Whatever the preview clock, an activity with no published start must not be
+    // classified as live off a placeholder time (honest-time contract).
+    final c = make();
+    c.read(simulatedTimeProvider.notifier).set(EventInfo.at(19, 0));
+    final live = c.read(happeningNowProvider);
+    for (final e in live) {
+      expect(e.session?.hasPublishedStart, isTrue,
+          reason: 'a "happening now" entry must run off a real published start, '
+              'never a placeholder time');
+    }
+  });
+
   test('clearing the preview returns to real time — never stuck', () {
     final c = make();
     final notifier = c.read(simulatedTimeProvider.notifier);

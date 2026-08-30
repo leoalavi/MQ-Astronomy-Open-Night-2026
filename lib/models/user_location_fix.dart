@@ -5,7 +5,11 @@ import 'package:latlong2/latlong.dart';
 /// Validation is a real runtime check, NOT `assert` — asserts are stripped in
 /// release, and an invalid coordinate reaching flutter_map can crash a layer.
 class UserLocationFix {
-  UserLocationFix({required this.position, required this.accuracyMeters}) {
+  UserLocationFix({
+    required this.position,
+    required this.accuracyMeters,
+    this.timestamp,
+  }) {
     if (!position.latitude.isFinite ||
         !position.longitude.isFinite ||
         position.latitude.abs() > 90 ||
@@ -19,6 +23,12 @@ class UserLocationFix {
 
   final LatLng position;
   final double accuracyMeters;
+
+  /// When the OS captured this fix, when known. Used by the settling policy to
+  /// reject an implausibly fast jump (a single wild GPS outlier) — see
+  /// `shouldAdoptFix`. Null when the platform gives no timestamp; the policy
+  /// then falls back to its distance-only rule rather than guessing.
+  final DateTime? timestamp;
 
   /// Above this, the accuracy circle would be a misleading blob — the layer
   /// omits it and the control shows a "low accuracy" state (spec §5.1).

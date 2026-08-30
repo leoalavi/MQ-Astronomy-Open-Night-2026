@@ -135,7 +135,7 @@ class EventCard extends ConsumerWidget {
                   // ── Time ──
                   _MetaRow(
                     icon: Icons.schedule_rounded,
-                    text: TimeFormat.allSessions(event),
+                    text: TimeFormat.allSessionsLabel(l, event),
                     // Amber-flag a time we inferred rather than one that was
                     // published, so nobody plans their evening around a guess.
                     warn: hasPlaceholderTime,

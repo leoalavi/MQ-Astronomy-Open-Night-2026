@@ -8,6 +8,7 @@ import 'package:aon2026/services/heading_service.dart';
 import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/nearby_targets.dart';
 import 'package:aon2026/widgets/compass_radar_view.dart';
+import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/nearby_list.dart';
 import 'package:aon2026/widgets/preview_location_badge.dart';
 
@@ -67,16 +68,41 @@ class _CompassModeViewState extends ConsumerState<CompassModeView> {
       return _Hint(icon: Icons.my_location_rounded, text: l.compassFindingYourLocation);
     }
     final avail = ref.watch(compassControllerProvider.select((s) => s.availability));
-    final Widget body = switch (avail) {
-      HeadingAvailability.available || HeadingAvailability.acquiring => const Column(
-          children: [
-            Expanded(flex: 3, child: CompassRadarView()),
-            Divider(height: 1),
-            Expanded(flex: 2, child: NearbyList()), // canonical a11y path (§0-A/§0R-9)
-          ],
-        ),
-      HeadingAvailability.unavailable || HeadingAvailability.unsupported => const NearbyList(),
-    };
+    final headingUsable = avail == HeadingAvailability.available ||
+        avail == HeadingAvailability.acquiring;
+    // A numbered blip is a cluster COUNT — several places sharing one bearing
+    // (field report, Pouya 2026-08-28: "numbers 8/3/2 with no clue what they
+    // mean"). Explain it, but only when such a blip is actually on the rose, so
+    // the hint never appears next to a rose that has no numbers.
+    final hasNumberedCluster =
+        clusterByBearing(ref.watch(nearbyTargetsProvider),
+                MapConfig.compassMinAngularSepDegrees)
+            .any((c) => c.count > 1);
+    // The rose is north-up with ABSOLUTE bearings (§0R-1): "you" in the centre,
+    // every place at its true compass bearing and scaled distance. Only the
+    // facing arrow (`_FacingLayer`) needs a live heading, and it already
+    // null-guards. So the graphic stays meaningful with NO magnetometer — we
+    // always render rose + list once we have a fix, and never collapse the
+    // compass to a bare list (field report, Pouya 2026-08-28: "compass
+    // disappears after switching tabs"; the real cause was this branch throwing
+    // the rose away the moment heading resolved `unavailable`, which a
+    // magnetometer-less simulator hits after its acquire window). When heading
+    // is unusable we swap the cluster legend for an honest "why no arrow" note.
+    final Widget body = Column(
+      children: [
+        if (!headingUsable)
+          _RadarLegend(
+            icon: Icons.explore_off_rounded,
+            text: l.compassUnavailable,
+            subtext: l.compassUnavailableBody,
+          )
+        else if (hasNumberedCluster)
+          _RadarLegend(text: l.compassClusterLegend),
+        const Expanded(flex: 3, child: CompassRadarView()),
+        const Divider(height: 1),
+        const Expanded(flex: 2, child: NearbyList()), // canonical a11y path (§0-A/§0R-9)
+      ],
+    );
     return Column(children: [
       // §3c: the bearings below may be computed from a simulated fix. Sits
       // above the filter so it covers the radar AND the NearbyList fallback.
@@ -90,6 +116,60 @@ class _CompassModeViewState extends ConsumerState<CompassModeView> {
       ),
       Expanded(child: body),
     ]);
+  }
+}
+
+/// A one- or two-line note above the rose: either "what the numbers mean" or,
+/// when there is no live heading, "why there's no facing arrow". `ExcludeSemantics`
+/// because the blips it describes are themselves excluded (§0R-9) — the list
+/// names every place for screen readers, so the note would be noise there.
+class _RadarLegend extends StatelessWidget {
+  const _RadarLegend({
+    required this.text,
+    this.subtext,
+    this.icon = Icons.info_outline_rounded,
+  });
+  final String text;
+  final String? subtext;
+  final IconData icon;
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return ExcludeSemantics(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(
+            AonSpacing.space3, 0, AonSpacing.space3, AonSpacing.space2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Icon(icon, size: 16, color: theme.textTheme.bodySmall?.color),
+            const SizedBox(width: AonSpacing.space2),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(text,
+                      // Capped so a large text scale on a tiny screen can never
+                      // make this fixed-height note starve the flexible radar/
+                      // list below and overflow the column.
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall
+                          ?.copyWith(color: theme.hintColor)),
+                  if (subtext != null)
+                    Text(subtext!,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.bodySmall
+                            ?.copyWith(color: theme.hintColor)),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 

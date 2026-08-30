@@ -197,7 +197,7 @@ class _ItineraryCard extends ConsumerWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
-                    TimeFormat.session(entry.session),
+                    TimeFormat.sessionLabel(l, entry.session),
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: dimmed ? context.aon.contentTertiary : accent,
                     ),

@@ -707,12 +707,6 @@ class AonL10nEn extends AonL10n {
   String get mapNavGoogle => 'Navigate with Google Maps';
 
   @override
-  String get mapNavOpenExternal => 'Open in Google Maps';
-
-  @override
-  String get mapNavOpenExternalFailed => 'Couldn\'t open Google Maps.';
-
-  @override
   String get mapPlaceListOnly => 'Details only — not shown on the map';
 
   @override
@@ -792,11 +786,10 @@ class AonL10nEn extends AonL10n {
   String get mapNavRetry => 'Retry';
 
   @override
-  String get mapNavWalkingWarning =>
-      'Walking routes are in beta — sidewalks and paths may be missing, so use caution.';
+  String get mapNavWarningsTitle => 'Route notices';
 
   @override
-  String get mapNavWarningsTitle => 'Route notices';
+  String get mapNavStepsTitle => 'Walking directions';
 
   @override
   String get mapNavDisclosureTitle => 'Use Google Maps for directions?';
@@ -870,6 +863,10 @@ class AonL10nEn extends AonL10n {
   String get settingsRevokeGoogleConsent => 'Revoke Google Maps access';
 
   @override
+  String get settingsEnableGoogleConsent =>
+      'Turn Google Maps directions back on';
+
+  @override
   String get settingsGoogleMapsNotice =>
       'When you use Google Maps directions, your location is sent to Google. Google\'s terms and privacy policy apply.';
 
@@ -893,13 +890,22 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get compassUnavailableBody =>
-      'Showing what\'s nearby with directions instead.';
+      'Still showing each place\'s direction, north-up.';
 
   @override
   String get compassNearbyTitle => 'Nearby';
 
   @override
   String get compassFilterHint => 'Filter places';
+
+  @override
+  String get compassClusterLegend => 'A number = how many places lie that way.';
+
+  @override
+  String get compassPointHere => 'Point the compass here';
+
+  @override
+  String get compassAimedHere => 'Compass pointed here';
 
   @override
   String get compassNothingNearby => 'Nothing nearby to point to yet.';

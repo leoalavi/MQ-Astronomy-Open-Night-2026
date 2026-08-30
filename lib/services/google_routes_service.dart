@@ -28,10 +28,13 @@ class GoogleRoutesService implements RoutesService {
   static final Uri _endpoint =
       Uri.parse('https://routes.googleapis.com/directions/v2:computeRoutes');
 
-  /// Includes `routes.warnings` — required so the mandated walking warning can
-  /// be displayed when Google supplies one.
+  /// Includes `routes.warnings` — required so any Google-supplied route notice
+  /// can be displayed — and `routes.legs.steps.*` so the in-app directions can
+  /// show a compact, GOOGLE-SUPPLIED step list (never locally invented).
   static const String _fieldMask =
-      'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration,routes.warnings';
+      'routes.polyline.encodedPolyline,routes.distanceMeters,routes.duration,'
+      'routes.warnings,routes.legs.steps.navigationInstruction,'
+      'routes.legs.steps.distanceMeters';
 
   @override
   Future<RouteResult> walkingRoute({
@@ -113,18 +116,45 @@ class GoogleRoutesService implements RoutesService {
       navTrace('polyline_decode_start len=${encoded.length}');
       final pts = decodePolyline(encoded);
       navTrace('polyline_decode_done points=${pts.length}');
-      navTrace('route_parse_done '
+      // Walking steps, verbatim from `routes.legs[].steps[]`. Every access is
+      // defensive: a missing/oddly-typed field just skips that step (or all of
+      // them) — the route still succeeds on distance + polyline alone, and the
+      // UI shows whatever real steps came back, never a fabricated one.
+      final steps = _parseSteps(route['legs']);
+      navTrace('route_parse_done steps=${steps.length} '
           'elapsed=${sw.elapsedMilliseconds}ms');
       return RouteSuccess(NavRoute(
         polyline: pts,
         distanceMeters: distance,
         eta: _parseDuration(durationStr),
         warnings: warnings,
+        steps: steps,
       ));
     } catch (e) {
       navTrace('parse_threw (${e.runtimeType})');
       return const RouteMalformed();
     }
+  }
+
+  /// Flatten `routes.legs[].steps[]` into ordered [NavStep]s. Defensive at every
+  /// hop: a leg or step of the wrong shape, or a step with no instruction text,
+  /// is skipped rather than throwing — a walk route may legitimately arrive with
+  /// no steps, and that must never turn a good route into `RouteMalformed`.
+  List<NavStep> _parseSteps(Object? legs) {
+    if (legs is! List) return const [];
+    final out = <NavStep>[];
+    for (final leg in legs) {
+      final ls = (leg is Map) ? leg['steps'] : null;
+      if (ls is! List) continue;
+      for (final s in ls) {
+        if (s is! Map) continue;
+        final instr = (s['navigationInstruction'] as Map?)?['instructions'];
+        if (instr is! String || instr.isEmpty) continue; // no text → skip
+        final d = s['distanceMeters'];
+        out.add(NavStep(instruction: instr, distanceMeters: d is int ? d : 0));
+      }
+    }
+    return out;
   }
 
   /// Google durations are seconds with an `s` suffix and MAY be fractional,

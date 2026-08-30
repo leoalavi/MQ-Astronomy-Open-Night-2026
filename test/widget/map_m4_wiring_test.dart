@@ -7,7 +7,6 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/building.dart';
 import 'package:aon2026/screens/map_screen.dart' show VenueSheet;
 import 'package:aon2026/services/building_providers.dart';
-import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/widgets/building_sheet.dart';
 
@@ -15,15 +14,6 @@ const _building = Building(
   id: 'TEST', code: 'T1', name: 'Test Hall', category: BuildingCategory.academic,
   latitude: -33.78, longitude: 151.12, campusX: 100, campusY: 100,
 );
-
-class _FakeLauncher implements ExternalMapsLauncher {
-  Uri? opened;
-  @override
-  Future<bool> open(Uri uri) async {
-    opened = uri;
-    return true;
-  }
-}
 
 Widget _harness(ProviderContainer c, Widget sheet) {
   final router = GoRouter(routes: [
@@ -86,11 +76,10 @@ Future<void> _scrollTo(WidgetTester t, Finder f) async {
   await t.pumpAndSettle();
 }
 
-ProviderContainer _c({required bool enabled, _FakeLauncher? launcher}) {
+ProviderContainer _c({required bool enabled}) {
   final c = ProviderContainer(overrides: [
     googleNavEnabledProvider.overrideWithValue(enabled),
     buildingsProvider.overrideWith((ref) async => const [_building]),
-    externalMapsLauncherProvider.overrideWithValue(launcher ?? _FakeLauncher()),
   ]);
   addTearDown(c.dispose);
   return c;
@@ -105,25 +94,22 @@ void main() {
     await _openSheet(t);
     final l = await _en();
     expect(find.text(l.mapWalkingDirections), findsOneWidget);
-    expect(find.text(l.mapNavOpenExternal), findsNothing);
+    expect(find.byIcon(Icons.open_in_new_rounded), findsNothing);
     await t.tap(find.text(l.mapWalkingDirections));
     await t.pumpAndSettle();
     expect(find.text('NAV:building:TEST'), findsOneWidget); // embedded google nav, not curated
   });
 
-  testWidgets('building CTA, flag OFF → launches keyless external Maps URL (never curated screen)', (t) async {
-    final launcher = _FakeLauncher();
-    await t.pumpWidget(_harness(_c(enabled: false, launcher: launcher), const BuildingSheet(buildingId: 'TEST')));
+  testWidgets('building CTA, flag OFF → NO directions button (never an external hand-off)', (t) async {
+    // MAP #9: when in-app Google nav is unavailable we show no directions button
+    // at all, rather than bouncing the visitor out to the Google Maps app.
+    await t.pumpWidget(_harness(_c(enabled: false), const BuildingSheet(buildingId: 'TEST')));
     await t.pumpAndSettle();
     await _openSheet(t);
     final l = await _en();
-    expect(find.text(l.mapNavOpenExternal), findsOneWidget);
     expect(find.text(l.mapWalkingDirections), findsNothing);
-    await t.tap(find.text(l.mapNavOpenExternal));
-    await t.pumpAndSettle();
-    expect(launcher.opened.toString(),
-        'https://www.google.com/maps/dir/?api=1&destination=-33.78%2C151.12&travelmode=walking');
-    expect(find.text('CURATED'), findsNothing); // must NOT route to the curated wayfinding screen
+    expect(find.byIcon(Icons.open_in_new_rounded), findsNothing,
+        reason: 'no external Google Maps hand-off may exist');
   });
 
   testWidgets('venue sheet: one Google Directions action, flag ON', (t) async {

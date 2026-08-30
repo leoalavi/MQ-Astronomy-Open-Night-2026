@@ -708,12 +708,6 @@ class AonL10nFa extends AonL10n {
   String get mapNavGoogle => 'مسیریابی با نقشهٔ گوگل';
 
   @override
-  String get mapNavOpenExternal => 'باز کردن در نقشهٔ گوگل';
-
-  @override
-  String get mapNavOpenExternalFailed => 'باز کردن نقشهٔ گوگل ممکن نشد.';
-
-  @override
   String get mapPlaceListOnly => 'فقط جزئیات — روی نقشه نشان داده نمی‌شود';
 
   @override
@@ -793,11 +787,10 @@ class AonL10nFa extends AonL10n {
   String get mapNavRetry => 'تلاش دوباره';
 
   @override
-  String get mapNavWalkingWarning =>
-      'مسیرهای پیاده‌روی آزمایشی‌اند — ممکن است پیاده‌رو یا مسیر مشخصی نداشته باشند؛ با احتیاط حرکت کنید.';
+  String get mapNavWarningsTitle => 'نکات مسیر';
 
   @override
-  String get mapNavWarningsTitle => 'نکات مسیر';
+  String get mapNavStepsTitle => 'مسیر پیاده‌روی';
 
   @override
   String get mapNavDisclosureTitle =>
@@ -873,6 +866,10 @@ class AonL10nFa extends AonL10n {
   String get settingsRevokeGoogleConsent => 'لغو دسترسی نقشهٔ گوگل';
 
   @override
+  String get settingsEnableGoogleConsent =>
+      'روشن‌کردن دوبارهٔ مسیریابی گوگل‌مپ';
+
+  @override
   String get settingsGoogleMapsNotice =>
       'هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود.';
 
@@ -896,13 +893,22 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get compassUnavailableBody =>
-      'در عوض مکان‌های نزدیک به همراه جهت نشان داده می‌شود.';
+      'جهت هر مکان همچنان رو به شمال نشان داده می‌شود.';
 
   @override
   String get compassNearbyTitle => 'نزدیک شما';
 
   @override
   String get compassFilterHint => 'فیلتر مکان‌ها';
+
+  @override
+  String get compassClusterLegend => 'عدد = تعداد مکان‌ها در آن جهت.';
+
+  @override
+  String get compassPointHere => 'قطب‌نما را به این‌جا بگیر';
+
+  @override
+  String get compassAimedHere => 'قطب‌نما به این‌جا اشاره دارد';
 
   @override
   String get compassNothingNearby => 'هنوز جایی برای نشان‌دادن نزدیک نیست.';

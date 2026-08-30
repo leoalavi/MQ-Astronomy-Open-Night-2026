@@ -7,9 +7,7 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/models/building.dart';
 import 'package:aon2026/services/building_providers.dart';
-import 'package:aon2026/services/external_maps_launcher.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
-import 'package:aon2026/services/maps_url.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/widgets/favorite_toggle.dart';
 
@@ -107,6 +105,10 @@ class _BuildingDirectionsButton extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AonL10n.of(context);
+    // In-app embedded walking directions ONLY. When Google nav isn't available
+    // on this build/platform we show no directions button rather than bouncing
+    // the visitor out to the external Google Maps app (product requirement
+    // 2026-08-30: users always stay inside AON).
     if (ref.watch(googleNavEnabledProvider)) {
       return SizedBox(
         width: double.infinity,
@@ -120,17 +122,6 @@ class _BuildingDirectionsButton extends ConsumerWidget {
         ),
       );
     }
-    final lat = building.routingLatitude, lng = building.routingLongitude;
-    if (lat == null || lng == null) return const SizedBox.shrink();
-    return SizedBox(
-      width: double.infinity,
-      child: FilledButton.icon(
-        onPressed: () => ref
-            .read(externalMapsLauncherProvider)
-            .open(buildWalkingMapsUrl(destLat: lat, destLng: lng)),
-        icon: const Icon(Icons.open_in_new_rounded),
-        label: Text(l.mapNavOpenExternal),
-      ),
-    );
+    return const SizedBox.shrink();
   }
 }

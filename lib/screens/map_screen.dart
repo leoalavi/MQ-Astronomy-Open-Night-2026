@@ -951,7 +951,7 @@ class VenueSheet extends ConsumerWidget {
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(e.title, style: theme.textTheme.titleSmall),
-                subtitle: Text(TimeFormat.allSessions(e)),
+                subtitle: Text(TimeFormat.allSessionsLabel(l, e)),
                 trailing: const Icon(Icons.chevron_right_rounded),
                 onTap: () {
                   Navigator.of(context).pop();

@@ -20,11 +20,28 @@ import 'package:aon2026/services/preview_location.dart';
 /// straggler (whose displacement its own error already explains) is ignored.
 ///
 /// The first fix is always adopted, so the dot still appears right away.
+/// The fastest apparent GPS step the settling policy treats as real movement,
+/// in metres/second. Walking is ~1.4 m/s and a jog ~5 m/s; this generous ~43
+/// km/h ceiling never rejects a real pedestrian step (even a noisy one) but does
+/// reject the teleport-scale jumps a single wild fix makes — on the day the dot
+/// leapt ~150 m to the Sir Christopher intersection between one-second samples
+/// (~150 m/s). Only applied when both fixes carry a timestamp.
+const double maxPlausibleStepMetersPerSecond = 12.0;
+
 bool shouldAdoptFix(UserLocationFix? current, UserLocationFix incoming) {
   if (current == null) return true;
   if (incoming.accuracyMeters < current.accuracyMeters) return true;
   final moved = const Distance()(current.position, incoming.position);
-  return moved > incoming.accuracyMeters;
+  if (moved <= incoming.accuracyMeters) return false; // within noise: ignore
+  // Moved beyond its own uncertainty. If we can time the step, reject a single
+  // implausibly fast jump (a wild outlier) so the dot does not teleport; the
+  // next honest fix near the real position settles it. With no timestamp we
+  // cannot time it, so fall back to the distance-only rule.
+  final ct = current.timestamp, it = incoming.timestamp;
+  if (ct == null || it == null) return true;
+  final dt = it.difference(ct).inMilliseconds / 1000.0;
+  if (dt <= 0) return true; // no reliable elapsed time — do not second-guess
+  return moved / dt <= maxPlausibleStepMetersPerSecond;
 }
 
 class LocationSnapshot {

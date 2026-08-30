@@ -1231,18 +1231,6 @@ abstract class AonL10n {
   /// **'Navigate with Google Maps'**
   String get mapNavGoogle;
 
-  /// Hand off to the Google Maps app / keyless directions URL
-  ///
-  /// In en, this message translates to:
-  /// **'Open in Google Maps'**
-  String get mapNavOpenExternal;
-
-  /// Snackbar shown when the external Google Maps hand-off fails to launch
-  ///
-  /// In en, this message translates to:
-  /// **'Couldn\'t open Google Maps.'**
-  String get mapNavOpenExternalFailed;
-
   /// Row hint for a place with no map coordinate (placeholder confidence or off the illustrated footprint); tapping still opens its details
   ///
   /// In en, this message translates to:
@@ -1339,17 +1327,17 @@ abstract class AonL10n {
   /// **'Retry'**
   String get mapNavRetry;
 
-  /// Google-mandated baseline caution for WALK routes
-  ///
-  /// In en, this message translates to:
-  /// **'Walking routes are in beta — sidewalks and paths may be missing, so use caution.'**
-  String get mapNavWalkingWarning;
-
   /// Header above Google-supplied route warnings
   ///
   /// In en, this message translates to:
   /// **'Route notices'**
   String get mapNavWarningsTitle;
+
+  /// Header above the compact list of Google-supplied walking steps
+  ///
+  /// In en, this message translates to:
+  /// **'Walking directions'**
+  String get mapNavStepsTitle;
 
   /// Consent dialog title before sharing location with Google
   ///
@@ -1477,6 +1465,12 @@ abstract class AonL10n {
   /// **'Revoke Google Maps access'**
   String get settingsRevokeGoogleConsent;
 
+  /// No description provided for @settingsEnableGoogleConsent.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn Google Maps directions back on'**
+  String get settingsEnableGoogleConsent;
+
   /// Settings/Info notice about Google Maps usage + ToS
   ///
   /// In en, this message translates to:
@@ -1522,7 +1516,7 @@ abstract class AonL10n {
   /// No description provided for @compassUnavailableBody.
   ///
   /// In en, this message translates to:
-  /// **'Showing what\'s nearby with directions instead.'**
+  /// **'Still showing each place\'s direction, north-up.'**
   String get compassUnavailableBody;
 
   /// No description provided for @compassNearbyTitle.
@@ -1536,6 +1530,24 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Filter places'**
   String get compassFilterHint;
+
+  /// No description provided for @compassClusterLegend.
+  ///
+  /// In en, this message translates to:
+  /// **'A number = how many places lie that way.'**
+  String get compassClusterLegend;
+
+  /// Accessible label for the un-aimed target row affordance
+  ///
+  /// In en, this message translates to:
+  /// **'Point the compass here'**
+  String get compassPointHere;
+
+  /// Accessible label when a target row is the aimed compass target
+  ///
+  /// In en, this message translates to:
+  /// **'Compass pointed here'**
+  String get compassAimedHere;
 
   /// No description provided for @compassNothingNearby.
   ///

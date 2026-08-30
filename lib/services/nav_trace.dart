@@ -27,3 +27,21 @@ void navTrace(String message) {
 void mapsLoaderTrace(String message) {
   if (kDebugMode) debugPrint('MapsJsLoader: $message');
 }
+
+/// A NON-SECRET fingerprint of an API key, for diagnosing "which key is the
+/// device actually using". Returns a length + a 32-bit FNV-1a hash in hex.
+///
+/// This is deliberately one-way and lossy: two runs with the SAME key print the
+/// same `fp`, and a stale baked key prints a DIFFERENT `fp` — which is exactly
+/// how the on-device Routes 401 (a valid key here, 401 there) is pinned to a
+/// key mismatch without ever printing key material. An 8-hex-digit hash of a
+/// ≥39-char key cannot be inverted to the key. Empty key → `fp=none`.
+String keyFingerprint(String key) {
+  if (key.isEmpty) return 'len=0 fp=none';
+  var hash = 0x811c9dc5;
+  for (final unit in key.codeUnits) {
+    hash ^= unit;
+    hash = (hash * 0x01000193) & 0xFFFFFFFF;
+  }
+  return 'len=${key.length} fp=${hash.toRadixString(16).padLeft(8, '0')}';
+}

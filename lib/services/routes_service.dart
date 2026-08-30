@@ -1,22 +1,38 @@
 /// A decoded walking route: the polyline (geographic degree pairs), total
 /// distance, estimated time, and any Google-supplied warnings.
 ///
-/// `warnings` carries the Routes API's `routes.warnings[]`. Google MANDATES
-/// displaying a warning for walking routes (WALK is beta), so this field is
-/// first-class, not optional metadata — the UI renders it plus a baseline
-/// caution regardless.
+/// `warnings` carries the Routes API's `routes.warnings[]` — the notices Google
+/// actually supplies for a given route. The UI renders these verbatim when
+/// present (the contractual bit); it does NOT add its own generic "beta" caution
+/// on top (removed 2026-08-30 — it read as boilerplate, not guidance).
 class NavRoute {
   final List<(double lat, double lng)> polyline;
   final int distanceMeters;
   final Duration eta;
   final List<String> warnings;
 
+  /// Turn-by-turn walking steps, in order, EXACTLY as Google supplied them
+  /// (`routes.legs.steps`). Empty when the field mask did not request them or
+  /// the response omitted them — the UI then simply shows no step list rather
+  /// than inventing instructions (design: never fabricate directions).
+  final List<NavStep> steps;
+
   const NavRoute({
     required this.polyline,
     required this.distanceMeters,
     required this.eta,
     this.warnings = const [],
+    this.steps = const [],
   });
+}
+
+/// One walking instruction from Google's `routes.legs.steps[]`: the human
+/// `navigationInstruction.instructions` text and the step's own distance. Never
+/// synthesised locally — only ever a verbatim Google-supplied step.
+class NavStep {
+  final String instruction;
+  final int distanceMeters;
+  const NavStep({required this.instruction, required this.distanceMeters});
 }
 
 /// The typed outcome of a route request. Auth/quota/network/no-route/malformed

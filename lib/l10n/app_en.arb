@@ -523,14 +523,6 @@
   "@mapNavGoogle": {
     "description": "CTA to open the embedded Google walking-nav screen"
   },
-  "mapNavOpenExternal": "Open in Google Maps",
-  "@mapNavOpenExternal": {
-    "description": "Hand off to the Google Maps app / keyless directions URL"
-  },
-  "mapNavOpenExternalFailed": "Couldn't open Google Maps.",
-  "@mapNavOpenExternalFailed": {
-    "description": "Snackbar shown when the external Google Maps hand-off fails to launch"
-  },
   "mapPlaceListOnly": "Details only — not shown on the map",
   "@mapPlaceListOnly": {
     "description": "Row hint for a place with no map coordinate (placeholder confidence or off the illustrated footprint); tapping still opens its details"
@@ -622,13 +614,13 @@
   "@mapNavRetry": {
     "description": "Retry a failed route fetch"
   },
-  "mapNavWalkingWarning": "Walking routes are in beta — sidewalks and paths may be missing, so use caution.",
-  "@mapNavWalkingWarning": {
-    "description": "Google-mandated baseline caution for WALK routes"
-  },
   "mapNavWarningsTitle": "Route notices",
   "@mapNavWarningsTitle": {
     "description": "Header above Google-supplied route warnings"
+  },
+  "mapNavStepsTitle": "Walking directions",
+  "@mapNavStepsTitle": {
+    "description": "Header above the compact list of Google-supplied walking steps"
   },
   "mapNavDisclosureTitle": "Use Google Maps for directions?",
   "@mapNavDisclosureTitle": {
@@ -719,6 +711,7 @@
     "description": "Consent decline button"
   },
   "settingsRevokeGoogleConsent": "Revoke Google Maps access",
+  "settingsEnableGoogleConsent": "Turn Google Maps directions back on",
   "@settingsRevokeGoogleConsent": {
     "description": "Settings control to reset Google-nav consent to unknown"
   },
@@ -732,9 +725,18 @@
   "compassFindingNorth": "Finding north…",
   "compassFindingYourLocation": "Finding your location…",
   "compassUnavailable": "Compass unavailable on this device",
-  "compassUnavailableBody": "Showing what's nearby with directions instead.",
+  "compassUnavailableBody": "Still showing each place's direction, north-up.",
   "compassNearbyTitle": "Nearby",
   "compassFilterHint": "Filter places",
+  "compassClusterLegend": "A number = how many places lie that way.",
+  "compassPointHere": "Point the compass here",
+  "@compassPointHere": {
+    "description": "Accessible label for the un-aimed target row affordance"
+  },
+  "compassAimedHere": "Compass pointed here",
+  "@compassAimedHere": {
+    "description": "Accessible label when a target row is the aimed compass target"
+  },
   "compassNothingNearby": "Nothing nearby to point to yet.",
   "compassUnconfirmedHeading": "{count, plural, =1{1 place with no confirmed location} other{{count} places with no confirmed location}}",
   "@compassUnconfirmedHeading": {

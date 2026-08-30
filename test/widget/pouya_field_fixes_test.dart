@@ -35,9 +35,11 @@ const _proj = CampusProjection();
 const _gps = LatLng(-33.7737, 151.1134);
 final _centre = _proj.project(const GpsPoint(_gps))!;
 
-Widget _mapHost(Widget child) => MaterialApp(
+Widget _mapHost(Widget child, {Brightness brightness = Brightness.light}) =>
+    MaterialApp(
       localizationsDelegates: AonL10n.localizationsDelegates,
       supportedLocales: AonL10n.supportedLocales,
+      theme: ThemeData(brightness: brightness),
       home: Scaffold(
         body: FlutterMap(
           options: MapOptions(
@@ -52,19 +54,46 @@ Widget _mapHost(Widget child) => MaterialApp(
       ),
     );
 
+Widget _pickerHost(void Function(String) onOpen) => ProviderScope(
+      child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        theme: AonTheme.build(),
+        home: Scaffold(body: PanoramaBuildingPicker(onOpen: onOpen)),
+      ),
+    );
+
+Future<void> _pumpCompass(WidgetTester t, ProviderContainer c) async {
+  await t.pumpWidget(UncontrolledProviderScope(
+    container: c,
+    child: const MaterialApp(
+      localizationsDelegates: AonL10n.localizationsDelegates,
+      supportedLocales: AonL10n.supportedLocales,
+      home: Scaffold(body: CompassRadarView()),
+    ),
+  ));
+  await t.pump();
+}
+
 void main() {
   group('location indicator is the conventional blue, not amber', () {
-    testWidgets('the dot centre uses mapUserLocation (blue), never accent',
-        (t) async {
-      await t.pumpWidget(_mapHost(UserLocationDot(center: _centre)));
-      await t.pump();
-      final colors = t
-          .widgetList<DecoratedBox>(find.byType(DecoratedBox))
-          .map((d) => (d.decoration as BoxDecoration).color)
-          .toList();
-      expect(colors, contains(AonPalette.light.mapUserLocation));
-      expect(colors, isNot(contains(AonPalette.light.accent)));
-    });
+    for (final (name, brightness, palette) in [
+      ('light', Brightness.light, AonPalette.light),
+      ('dark', Brightness.dark, AonPalette.dark),
+    ]) {
+      testWidgets('$name: the dot centre uses mapUserLocation, never accent',
+          (t) async {
+        await t.pumpWidget(
+            _mapHost(UserLocationDot(center: _centre), brightness: brightness));
+        await t.pump();
+        final colors = t
+            .widgetList<DecoratedBox>(find.byType(DecoratedBox))
+            .map((d) => (d.decoration as BoxDecoration).color)
+            .toList();
+        expect(colors, contains(palette.mapUserLocation));
+        expect(colors, isNot(contains(palette.accent)));
+      });
+    }
 
     testWidgets('the accuracy circle is tinted from mapUserLocation', (t) async {
       final fix = UserLocationFix(position: _gps, accuracyMeters: 15);
@@ -75,65 +104,125 @@ void main() {
           t.widget<CircleLayer>(find.byType(CircleLayer)).circles.single;
       expect(circle.borderColor.withValues(alpha: 1.0),
           AonPalette.light.mapUserLocation);
+      expect(circle.color.withValues(alpha: 1.0),
+          AonPalette.light.mapUserLocation);
     });
   });
 
-  testWidgets('360° picker reserves clearance for the floating tab bar',
-      (t) async {
-    t.view.physicalSize = const Size(800, 2400);
-    t.view.devicePixelRatio = 1.0;
-    addTearDown(t.view.reset);
-    await t.pumpWidget(ProviderScope(
-      child: MaterialApp(
-        localizationsDelegates: AonL10n.localizationsDelegates,
-        supportedLocales: AonL10n.supportedLocales,
-        theme: AonTheme.build(),
-        home: Scaffold(body: PanoramaBuildingPicker(onOpen: (_) {})),
-      ),
-    ));
-    await t.pump();
-    final padding = t
-        .widget<ListView>(find.byType(ListView))
-        .padding!
-        .resolve(TextDirection.ltr);
-    // Must clear the floating island, like NearbyList already does — well above
-    // the old uniform space4.
-    expect(padding.bottom, greaterThanOrEqualTo(AonNavMetrics.barHeight));
+  group('360° picker clears the floating tab bar', () {
+    testWidgets('the ListView reserves the island clearance', (t) async {
+      t.view.physicalSize = const Size(800, 2400);
+      t.view.devicePixelRatio = 1.0;
+      addTearDown(t.view.reset);
+      await t.pumpWidget(_pickerHost((_) {}));
+      await t.pump();
+      final padding = t
+          .widget<ListView>(find.byType(ListView))
+          .padding!
+          .resolve(TextDirection.ltr);
+      expect(padding.bottom, greaterThanOrEqualTo(AonNavMetrics.barHeight));
+      // ...and far above the old uniform 16px that caused the overlap.
+      expect(padding.bottom, greaterThan(16));
+    });
+
+    testWidgets(
+        'the LAST card ("I · 17 Wally\'s Walk") is reachable AND tappable '
+        'on a short screen (not just non-overflowing)', (t) async {
+      // A short viewport forces the list to scroll — otherwise "reachable"
+      // proves nothing (CLAUDE.md: prove the last row is reachable+tappable).
+      t.view.physicalSize = const Size(360, 640);
+      t.view.devicePixelRatio = 1.0;
+      addTearDown(t.view.reset);
+      String? opened;
+      await t.pumpWidget(_pickerHost((id) => opened = id));
+      await t.pump();
+
+      final lastCard = find.textContaining('17 Wally');
+      await t.scrollUntilVisible(lastCard, 200,
+          scrollable: find.byType(Scrollable));
+      expect(lastCard, findsOneWidget);
+      await t.tap(lastCard);
+      await t.pump();
+      // Tapping the fully-cleared last card opens its tour — it is not trapped
+      // behind the tab bar.
+      expect(opened, '17-wallys-walk');
+    });
   });
 
-  testWidgets('compass rose shows a "you are here" marker at the centre',
-      (t) async {
+  group('compass rose marks the user\'s own position', () {
     const target = NearbyTarget(
         placeKey: 'building:T',
         title: 'Tower',
         kind: PlaceKind.building,
         lat: -33.77,
         lng: 151.11,
-        distanceMeters: 120,
+        distanceMeters: 20, // close: exactly the case where blips crowd centre
         trueBearingDegrees: 90,
         confidence: DataConfidence.confirmed);
-    final c = ProviderContainer(overrides: [
-      compassControllerProvider.overrideWith(() => FakeCompassController(
-          const CompassState(
-              availability: HeadingAvailability.available,
-              trueHeadingDegrees: 30))),
-      nearbyTargetsProvider.overrideWithValue(const [target]),
-    ]);
-    addTearDown(c.dispose);
-    await t.pumpWidget(UncontrolledProviderScope(
-      container: c,
-      child: const MaterialApp(
-        localizationsDelegates: AonL10n.localizationsDelegates,
-        supportedLocales: AonL10n.supportedLocales,
-        home: Scaffold(body: CompassRadarView()),
-      ),
-    ));
-    await t.pump();
-    expect(find.byKey(const ValueKey('compass-you-marker')), findsOneWidget);
-    // It sits at the rose centre (that IS the user's position).
-    final viewCenter = t.getCenter(find.byType(CompassRadarView));
-    final you = t.getCenter(find.byKey(const ValueKey('compass-you-marker')));
-    expect((you.dx - viewCenter.dx).abs(), lessThan(20));
-    expect((you.dy - viewCenter.dy).abs(), lessThan(20));
+
+    testWidgets('a "you are here" marker sits at the rose centre', (t) async {
+      final c = ProviderContainer(overrides: [
+        compassControllerProvider.overrideWith(() => FakeCompassController(
+            const CompassState(
+                availability: HeadingAvailability.available,
+                trueHeadingDegrees: 30))),
+        nearbyTargetsProvider.overrideWithValue(const [target]),
+      ]);
+      addTearDown(c.dispose);
+      await _pumpCompass(t, c);
+      expect(find.byKey(const ValueKey('compass-you-marker')), findsOneWidget);
+      final viewCenter = t.getCenter(find.byType(CompassRadarView));
+      final you = t.getCenter(find.byKey(const ValueKey('compass-you-marker')));
+      expect((you.dx - viewCenter.dx).abs(), lessThan(20));
+      expect((you.dy - viewCenter.dy).abs(), lessThan(20));
+    });
+
+    testWidgets('the marker shows even while heading is acquiring (no fix yet)',
+        (t) async {
+      // On the simulator / indoors the magnetometer never resolves — the "you"
+      // marker must still anchor the centre, since the facing pin is absent.
+      final c = ProviderContainer(overrides: [
+        compassControllerProvider.overrideWith(() => FakeCompassController(
+            const CompassState(availability: HeadingAvailability.acquiring))),
+        nearbyTargetsProvider.overrideWithValue(const [target]),
+      ]);
+      addTearDown(c.dispose);
+      await _pumpCompass(t, c);
+      expect(find.byKey(const ValueKey('compass-you-marker')), findsOneWidget);
+    });
+
+    testWidgets('the marker is painted ON TOP of the target blips (z-order)',
+        (t) async {
+      // Regression guard: on the night every venue is close, so blips cluster at
+      // the centre. If "you" is painted before them it gets buried — it must be
+      // a LATER child of the rose Stack than the blips.
+      final c = ProviderContainer(overrides: [
+        compassControllerProvider.overrideWith(() => FakeCompassController(
+            const CompassState(
+                availability: HeadingAvailability.available,
+                trueHeadingDegrees: 30))),
+        nearbyTargetsProvider.overrideWithValue(const [target]),
+      ]);
+      addTearDown(c.dispose);
+      await _pumpCompass(t, c);
+
+      final stack = t.widget<Stack>(find.ancestor(
+        of: find.byKey(const ValueKey('compass-you-marker')),
+        matching: find.byType(Stack),
+      ).first);
+      int youIndex = -1;
+      final blipIndices = <int>[];
+      for (var i = 0; i < stack.children.length; i++) {
+        final child = stack.children[i];
+        if (child.key == const ValueKey('compass-you-marker')) youIndex = i;
+        if (child is Positioned && child.child is ExcludeSemantics) {
+          blipIndices.add(i); // the target blips
+        }
+      }
+      expect(youIndex, greaterThanOrEqualTo(0));
+      expect(blipIndices, isNotEmpty);
+      expect(youIndex, greaterThan(blipIndices.reduce((a, b) => a > b ? a : b)),
+          reason: '"you" must paint after (on top of) every blip');
+    });
   });
 }

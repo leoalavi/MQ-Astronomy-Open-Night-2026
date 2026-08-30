@@ -1,55 +1,35 @@
-# Map · walking directions
+# Map · walking directions (consent gate)
 #
-# Tests: the campus-map-only Directions FAB reaches the wayfinding screen and a
-# start/destination pair produces a route preview with written steps.
+# The map's "Directions" FAB now pushes the CONSENT-GATED Google nav screen
+# (`Routes.googleNavTo(...)`) — the app consolidated on one directions surface,
+# "always Google Maps", and the old offline origin/destination picker
+# (`wayfinding_screen.dart`) is no longer reachable (audit 2026-08-30, MAP-007).
 #
-# AUDIT NOTE (RESOLVED 2026-08-23): this used to be the app's last live-network
-# surface, rendering unattributed OpenStreetMap raster tiles via DarkTileLayer.
-# That is gone. The screen now asks for consent first ("Load the Google map
-# here?") and, if declined, draws NO map at all and says so. Verified on an
-# iPhone 17 Pro Max simulator; this flow now exercises the declined path, which
-# is both the honest fallback and the one that needs no network.
+# So this flow now exercises the CONSENT INVARIANT (spec §2b): no Google surface
+# initialises until consent resolves positively. Tapping Directions must raise the
+# disclosure BEFORE any Google map is drawn, and declining must return to the
+# campus map without ever touching the network.
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
 - runFlow: flows/open-map.yaml
 
 - tapOn: "Directions"
-- assertVisible: "Walking directions"
-- assertVisible: "Starting from"
-- assertVisible: "Going to"
-# (The empty-state heading is merged with its body into one a11y string, so it
-#  is not assertable as a standalone full-string match.)
-- takeScreenshot: .maestro/screenshots/wayfinding-01-picker
 
-- tapOn: "West 5"
-# Chip labels that come from an l10n PLACEHOLDER are wrapped by Flutter in
-# Unicode bidi isolates (U+2068 … U+2069) because the app ships EN + Persian.
-# The literal text is therefore "\u2068Observatory\u2069" and an exact match
-# fails. Wrap in .* so the isolates are absorbed.
-- tapOn: ".*Observatory.*"
+# The disclosure appears BEFORE any Google surface is built — the invariant.
+- assertVisible: "Use Google Maps for directions?"
+- assertVisible: "(?s).*your current location is sent to Google Maps.*"
+- takeScreenshot: .maestro/screenshots/wayfinding-01-consent
 
-# Choosing a destination arms the route map, which is a Google surface — so the
-# consent disclosure appears BEFORE any route is drawn. That is the invariant
-# (spec §2b): no Google surface initialises until consent resolves positively.
-#
-# Tapped by POINT. `tapOn: "Not now"` reports success and does nothing: the
-# label's semantics node is not the button's hit target, so Maestro taps the
-# Text and the dialog stays up — which is how this flow started failing without
-# an obvious cause. The dialog is centred and fixed-height; "Not now" sits at
-# [105,632]-[197,688] of a 440x956 frame.
-- assertVisible: "Load the Google map here?"
+# Decline. Tapped by POINT: a dialog button's label is not its hit target
+# (.maestro/README.md trap 6) — `tapOn: "Not now"` reports success and does
+# nothing. "Not now" sits at [105,551]-[197,607] of a 440x956 frame → ~34%,61%.
 - tapOn:
-    point: "34%,69%"
+    point: "34%,61%"
 - waitForAnimationToEnd:
     timeout: 5000
 
-# Declined: written directions still stand on their own, and the app SAYS the
-# map is missing rather than showing an empty grey box.
-- assertVisible: "Reset"
-# Trap 1 (see .maestro/README.md) at its worst: the ENTIRE route panel — origin,
-# destination, duration, distance, every note and every numbered step — merges
-# into ONE a11y string separated by newlines. Maestro's `text:` is a full-string
-# regex, and `.` does not cross a newline, so `(?s)` (DOTALL) is required.
-- assertVisible: "(?s).*Map not shown\\. The written directions below are complete on their own\\..*"
-- takeScreenshot: .maestro/screenshots/wayfinding-02-route-no-map
+# Declined → back on the campus map, no Google map ever drawn.
+- assertVisible: "Directions"
+- assertVisible: "Zoom in"
+- takeScreenshot: .maestro/screenshots/wayfinding-02-declined-back-on-map

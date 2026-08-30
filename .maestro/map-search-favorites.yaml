@@ -6,7 +6,13 @@
 # NOTE ON SELECTORS: Flutter merges a row's label and subtitle into ONE
 # accessibility string joined by a newline ("Mason Theatre\nEvent venue"), and
 # Maestro's `text:` is a FULL-STRING regex — a partial like "Mason Theatre"
-# does not match. Always use the complete two-line string.
+# does not match.
+#
+# Since 2026-08-29 (upstream "Bidi fixes", 0eb2986) every place NAME and its
+# subtitle are wrapped in Unicode bidi isolates U+2068…U+2069 (the app ships
+# EN + Persian), so the live string is "⁨Mason Theatre⁩\n⁨Event venue⁩". An exact
+# two-line match no longer works. Match with `(?s).*name.*subtitle.*` — `(?s)`
+# (DOTALL) lets `.*` cross the newline, and the `.*` absorb the isolates.
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
@@ -15,17 +21,19 @@ tags: [map]
 # ── search sheet opens and browses venues while idle (M3 search honesty) ────
 - tapOn: "Search"
 - assertVisible: "Find a place\nSearch buildings and venues"
-- assertVisible: "1 Central Courtyard\nEvent venue"
-- assertVisible: "11 Wally’s Walk\nEvent venue"
+- assertVisible: "(?s).*1 Central Courtyard.*Event venue.*"
+- assertVisible: "(?s).*11 Wally.s Walk.*Event venue.*"
 - takeScreenshot: .maestro/screenshots/search-01-idle-browse
 
 # ── a VENUE query resolves, and selecting it opens the venue sheet ──────────
 - tapOn: "Find a place\nSearch buildings and venues"
 - inputText: "Mason"
-- assertVisible: "Mason Theatre\nEvent venue"
+- assertVisible: "(?s).*Mason Theatre.*Event venue.*"
 - takeScreenshot: .maestro/screenshots/search-02-venue-query
-- tapOn: "Mason Theatre\nEvent venue"
-- assertVisible: "Walking directions"
+- tapOn: "(?s).*Mason Theatre.*Event venue.*"
+# The venue sheet's directions action is "Directions" (shortened from the old
+# "Walking directions"); it pushes the consent-gated Google nav.
+- assertVisible: "Directions"
 - takeScreenshot: .maestro/screenshots/search-03-venue-selected
 - tapOn:
     point: "50%,25%"
@@ -36,9 +44,10 @@ tags: [map]
 - inputText: "Chancellery"
 - takeScreenshot: .maestro/screenshots/search-04-building-query
 # Buildings resolve by their MQ street-address name + code, not a friendly
-# alias. Parens are regex metacharacters here, so they must be escaped.
-- assertVisible: "19 Eastern Road \\(Chancellery\\)\n19ER"
-- tapOn: "19 Eastern Road \\(Chancellery\\)\n19ER"
+# alias. Bidi-isolated + newline-joined, so `(?s).*…*` as above; the `.*`
+# between "Road" and "Chancellery" also absorbs the literal parens.
+- assertVisible: "(?s).*19 Eastern Road.*Chancellery.*19ER.*"
+- tapOn: "(?s).*19 Eastern Road.*Chancellery.*19ER.*"
 - takeScreenshot: .maestro/screenshots/search-05-building-sheet
 - tapOn:
     point: "50%,25%"

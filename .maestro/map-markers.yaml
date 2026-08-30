@@ -37,7 +37,10 @@ tags: [map]
 
 # ── tapping a venue opens its sheet ──────────────────────────────────────────
 - tapOn: "Macquarie University Astronomical Observatory. Event venue."
-- assertVisible: "Walking directions"
+# The venue sheet's directions action is labelled "Directions" (it pushes the
+# consent-gated Google nav). It was "Walking directions" when this suite was
+# first written; the string was shortened since.
+- assertVisible: "Directions"
 - assertVisible: "Point me there"
 - assertVisible: "Macquarie University Observatory"   # the venue subtitle
 - takeScreenshot: .maestro/screenshots/markers-01-venue-sheet

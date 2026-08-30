@@ -199,7 +199,7 @@ class EventCard extends ConsumerWidget {
     return switch (timing!) {
 // Only count down to a PUBLISHED finish — see activity_rail_card.
 EventTiming.happeningNow => session.hasPublishedEnd
-    ? TimeFormat.remaining(l, now!, session.end).replaceFirst('ends ', '')
+    ? TimeFormat.remaining(l, now!, session.end)
     : null,
 EventTiming.startingSoon => TimeFormat.until(l, now!, session.start),
       EventTiming.upcoming => TimeFormat.time(session.start),

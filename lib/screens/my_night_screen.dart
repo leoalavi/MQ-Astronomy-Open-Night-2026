@@ -207,11 +207,7 @@ class _ItineraryCard extends ConsumerWidget {
                     trailingText: switch (entry.timing) {
 // Only count down to a PUBLISHED finish — see activity_rail_card.
 EventTiming.happeningNow => entry.session.hasPublishedEnd
-    ? TimeFormat.remaining(
-        l,
-        now,
-        entry.session.end,
-      ).replaceFirst('ends ', '')
+    ? TimeFormat.remaining(l, now, entry.session.end)
     : null,
                       EventTiming.startingSoon => TimeFormat.until(
                         l,

@@ -155,7 +155,7 @@ class ActivityRailCard extends ConsumerWidget {
 // For a "4.15pm start, no finish time" entry the end is our own bound, so
 // "ends in 2 hr" would be a number the programme never printed.
 EventTiming.happeningNow => session.hasPublishedEnd
-    ? TimeFormat.remaining(l, now, session.end).replaceFirst('ends ', '')
+    ? TimeFormat.remaining(l, now, session.end)
     : null,
 EventTiming.startingSoon => TimeFormat.until(l, now, session.start),
       EventTiming.upcoming => TimeFormat.time(session.start),

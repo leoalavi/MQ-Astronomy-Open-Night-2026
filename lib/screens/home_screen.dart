@@ -326,7 +326,7 @@ class _Hero extends StatelessWidget {
                       ),
                       if (_phaseLabel(phase, l) != null) ...[
                         const SizedBox(height: AonSpacing.space3),
-                        _PhasePill(phase: phase, now: now),
+                        _PhasePill(phase: phase),
                       ],
                     ],
                   ),
@@ -347,10 +347,9 @@ String? _phaseLabel(EventPhase phase, AonL10n l) => phase.labelOf(l);
 
 /// The hero's event-status badge.
 class _PhasePill extends StatelessWidget {
-  const _PhasePill({required this.phase, required this.now});
+  const _PhasePill({required this.phase});
 
   final EventPhase phase;
-  final DateTime now;
 
   @override
   Widget build(BuildContext context) {
@@ -575,11 +574,16 @@ class _NextUpCard extends ConsumerWidget {
                     child: TimingBadge(
                       timing: entry.timing,
                       trailingText: switch (entry.timing) {
-                        EventTiming.happeningNow => TimeFormat.remaining(
-                          l,
-                          now,
-                          entry.session.end,
-                        ),
+                        // Only count down to a PUBLISHED finish — the same
+                        // honesty gate event_card / activity_rail_card /
+                        // my_night_screen already apply. A startOnly/repeating
+                        // session's end is our own 10pm stand-in, so an
+                        // ungated "ends in 3 hr" here invented a finish time
+                        // the programme never printed (audit HP-A).
+                        EventTiming.happeningNow =>
+                          entry.session.hasPublishedEnd
+                              ? TimeFormat.remaining(l, now, entry.session.end)
+                              : null,
                         EventTiming.startingSoon => TimeFormat.until(
                           l,
                           now,

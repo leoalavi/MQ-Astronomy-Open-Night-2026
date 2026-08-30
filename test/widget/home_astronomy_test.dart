@@ -12,6 +12,8 @@ import 'package:aon2026/screens/home_screen.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/widgets/activity_rail_card.dart';
+import 'package:aon2026/widgets/aon_tactile_button.dart';
+import 'package:aon2026/widgets/timing_badge.dart';
 
 /// The Astronomy Home screen.
 ///
@@ -163,6 +165,29 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('3 activities saved'), findsOneWidget);
+    });
+
+    testWidgets('never counts down to an UNPUBLISHED finish (audit HP-A)',
+        (tester) async {
+      // kids-space is startOnly: a published 4.15pm start and a 10pm STAND-IN
+      // end. At 7pm it is "happening now". The card must show the timing label
+      // but NOT a fabricated "ends in 3 hr" countdown to a finish the programme
+      // never published — the honesty gate event_card / activity_rail_card /
+      // my_night_screen already apply.
+      seedSaved(['kids-space']);
+      await tester.pumpWidget(harness(EventInfo.at(19, 0)));
+      await tester.pumpAndSettle();
+
+      expect(find.text('Next in My Night'), findsOneWidget);
+      final card = find.ancestor(
+        of: find.text('Next in My Night'),
+        matching: find.byType(AonTactileButton),
+      );
+      final badge = tester.widget<TimingBadge>(
+        find.descendant(of: card, matching: find.byType(TimingBadge)),
+      );
+      expect(badge.trailingText, isNull,
+          reason: 'a startOnly session has no published finish to count down to');
     });
   });
 

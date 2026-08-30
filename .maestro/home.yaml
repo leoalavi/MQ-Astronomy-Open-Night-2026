@@ -1,0 +1,38 @@
+# Home page
+#
+# Home answers, in order: what is this event, what is on now/next, where do I go,
+# what have I saved. This exercises the hero + date, the passport card, an
+# "Up next" event card (favourite it), the "See the whole tonight" link, and the
+# campus-map CTA. Merged multi-line a11y rows with bidi-isolated venue names, so
+# match with `(?s).*…*` (DOTALL + isolate-absorbing).
+appId: au.edu.mq.astronomy.aon2026
+tags: [home]
+---
+# Clear stored state so the flow is order-independent — otherwise a favourite
+# saved by a prior run leaves the card reading "Remove…" instead of "Save…".
+- launchApp:
+    clearState: true
+- assertVisible: "Astronomy Open Night"
+- assertVisible: "(?s).*Saturday 19 September 2026.*4pm – 10pm.*"
+- assertVisible: "(?s).*Image credit.*Aleix Roig.*"
+- assertVisible: "(?s).*Astronomy Passport.*of 9 stamps.*"
+- assertVisible: "(?s).*Up next.*"
+
+# An "Up next" event card renders with its timing chip, venue and time.
+- assertVisible: "(?s).*On the night · 4.15pm.*Cosmic arcade.*Central Courtyard.*4.15pm – 9.30pm.*"
+# Favourite it from the card.
+- tapOn: "(?s).*Save Cosmic arcade to My Night.*"
+- takeScreenshot: .maestro/screenshots/home-01-saved
+
+# The whole-programme link and the map CTA are reachable below the fold.
+- scrollUntilVisible:
+    element:
+      text: "See the whole tonight"
+    direction: DOWN
+- assertVisible: "See the whole tonight"
+- scrollUntilVisible:
+    element:
+      text: "(?s).*Open the campus map.*walking directions from the car parks.*"
+    direction: DOWN
+- assertVisible: "(?s).*Open the campus map.*walking directions from the car parks.*"
+- takeScreenshot: .maestro/screenshots/home-02-map-cta

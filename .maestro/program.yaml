@@ -1,0 +1,54 @@
+# Program page
+#
+# The whole-programme browser: search, the time-band + category filter chips, the
+# Tonight/Sections toggle, and an event card → detail. Event rows and the section
+# header are merged multi-line a11y with bidi-isolated room/venue names, so match
+# with `(?s).*…*`. Program is bottom-nav tab 2 of 6; tap it by POINT (the animated
+# LiquidTabBar shifts neighbours mid-tap — see .maestro/README.md).
+appId: au.edu.mq.astronomy.aon2026
+tags: [program]
+---
+# Clear stored state so item counts and saved-state are deterministic regardless
+# of what a prior flow left behind.
+- launchApp:
+    clearState: true
+- tapOn:
+    point: "27%,92%"
+- assertVisible: "Search talks, activities, presenters"
+- assertVisible: "36 items in the program"
+- assertVisible: "(?s).*On the night.*33.*"
+- assertVisible: "(?s).*Activities.*Cosmic arcade.*4.15pm – 9.30pm.*Central Courtyard.*"
+
+# A time-band chip narrows the list; Clear resets it.
+- tapOn: "6–8pm"
+- assertVisible: "(?s).*shown.*"
+- assertVisible: "Clear"
+- tapOn: "Clear"
+- assertVisible: "36 items in the program"
+
+# The Sections toggle groups the programme by category.
+- tapOn: "Sections"
+- takeScreenshot: .maestro/screenshots/program-01-sections
+- tapOn: "Tonight"
+
+# Search filters the programme.
+- tapOn: "Search talks, activities, presenters"
+- inputText: "Laser"
+- assertVisible: "(?s).*Laser Challenge.*4.15pm – 9.30pm.*"
+- takeScreenshot: .maestro/screenshots/program-02-search
+
+# Tapping an event opens its detail; back returns to the programme.
+# The detail merges each labelled block into one a11y string, so match with DOTALL.
+- tapOn: "(?s).*Laser Challenge.*4.15pm – 9.30pm.*"
+- assertVisible: "(?s).*TIME.*4.15pm – 9.30pm.*"
+- assertVisible: "(?s).*LOCATION.*Wally.s Walk.*"
+- takeScreenshot: .maestro/screenshots/program-03-detail
+# iOS has no hardware back; the detail is a pushed route with its own Back button.
+- tapOn: "Back"
+# The query survives the round-trip — the field still holds "Laser".
+- assertVisible: "Laser"
+- assertVisible: "(?s).*3 of 36 shown.*"
+# Clearing the search restores the placeholder and the full programme.
+- tapOn: "Clear search"
+- assertVisible: "Search talks, activities, presenters"
+- assertVisible: "36 items in the program"

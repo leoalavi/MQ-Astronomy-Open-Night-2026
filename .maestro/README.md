@@ -24,7 +24,8 @@ maestro test --include-tags smoke .maestro/  # quick gate
 | `map-search-favorites.yaml` | idle browse, venue query, building query out of `buildings.json`, selection opens the right sheet, favourites |
 | `map-location.yaml` | locate → iOS permission → dot on the artwork → follow state; a far fix yields the honest distance banner, never a clamped dot |
 | `map-modes.yaml` | Map / 360° / Compass switching; walk-route FAB is campus-map only; compass degrades to the honest cardinal LIST (no magnetometer on the simulator) |
-| `map-wayfinding.yaml` | Directions FAB → start/destination picker → route preview |
+| `map-wayfinding.yaml` | Directions FAB → Google consent disclosure (the §2b invariant) → decline returns to the campus map, no network. **Rewritten 2026-08-30**: the old offline origin/destination picker is gone; Directions is now always the consent-gated Google nav. |
+| `map-360-picker.yaml` | 360° picker: an early tourable card + the honest "coming soon", the LAST legend card reachable+tappable past the floating tab bar, and its tour opens |
 
 ## Selector gotchas in THIS app
 

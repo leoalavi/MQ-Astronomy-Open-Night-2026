@@ -1,0 +1,34 @@
+# Map · 360° picker
+#
+# The picker lists the A–I legend venues that have (or are getting) a 360° tour.
+# Regression guard for the field fix that made its ListView reserve the floating
+# tab-bar clearance: the LAST card ("I · 17 Wally's Walk") must be reachable AND
+# tappable, not hidden behind the island (audit 2026-08-30).
+#
+# Rows are merged 3-line a11y strings with bidi isolates on the placeholder name,
+# so match with `(?s).*…*` (DOTALL crosses the newlines; `.*` absorbs isolates).
+appId: au.edu.mq.astronomy.aon2026
+tags: [map]
+---
+- runFlow: flows/open-map.yaml
+
+- tapOn:
+    text: "360°"
+# The picker rendered (an early tourable card + the honest "coming soon" one).
+- assertVisible: "(?s).*E . 1 Central Courtyard.*Tap to explore.*"
+- assertVisible: "(?s).*G . Macquarie University Astronomical Observatory.*Coming soon.*"
+
+# The last legend card must be reachable past the floating tab bar.
+- scrollUntilVisible:
+    element:
+      text: "(?s).*I . 17 Wally.s Walk.*Tap to explore.*"
+    direction: DOWN
+- assertVisible: "(?s).*I . 17 Wally.s Walk.*Tap to explore.*"
+- takeScreenshot: .maestro/screenshots/panorama-01-last-card-reachable
+
+# ...and it is genuinely tappable — it opens the tour rather than being trapped
+# under the bar.
+- tapOn: "(?s).*I . 17 Wally.s Walk.*Tap to explore.*"
+- waitForAnimationToEnd:
+    timeout: 8000
+- takeScreenshot: .maestro/screenshots/panorama-02-tour-open

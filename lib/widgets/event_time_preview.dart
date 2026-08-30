@@ -90,6 +90,10 @@ class _TimePickerSheet extends ConsumerWidget {
         EventInfo.at(h, 0),
         EventInfo.at(h, 30),
       ],
+      // The close itself, so an organiser can preview the "that's a wrap"
+      // ended state — the loop stopped at 9.30pm, leaving it unreachable in
+      // preview (audit HP-F).
+      EventInfo.at(EventInfo.endsAt.hour, EventInfo.endsAt.minute),
     ];
 
     return SafeArea(

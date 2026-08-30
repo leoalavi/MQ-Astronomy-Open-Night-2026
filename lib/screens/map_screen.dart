@@ -194,8 +194,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // !isLowAccuracy guard stops a fuzzy estimate from yanking the camera
     // (Phase A §5.1). Under CrsSimple the camera moves to the PROJECTED point;
     // `mp != null` (on-footprint) subsumes the old isNearCampus check.
+    //
+    // Gated to campus-map mode: 360°/Compass replace (unmount) the FlutterMap,
+    // so `_controller` is detached there. flutter_map 8.3.1 makes a detached
+    // move a benign no-op, but that is an internal contract — reading/moving a
+    // hidden map is pointless work, and a later flutter_map could throw instead
+    // (audit MAP-001). Follow-me only ever means anything on the campus map.
     ref.listen(locationControllerProvider, (_, s) {
-      if (s.following && s.fix != null && !s.fix!.isLowAccuracy) {
+      if (_mode == MapMode.campusMap &&
+          s.following &&
+          s.fix != null &&
+          !s.fix!.isLowAccuracy) {
         final mp = _proj.project(GpsPoint(s.fix!.position));
         if (mp != null) _controller.move(mp.value, _controller.camera.zoom);
       }
@@ -584,7 +593,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       unawaited(context.push(Routes.googleNavTo('parking:west-5')));
       return;
     }
-    await _onPlaceSelected(key);
+    // Pass a focus zoom (like "Show on map" from other screens) rather than
+    // moving at the current cover-fit zoom. At the cover-fit floor the artwork
+    // exactly fills the viewport, so a venue that is not the artwork centre
+    // CANNOT be centred — the move clamps straight back to centre (so it does
+    // nothing useful) AND leaves the camera on the constraint edge, which then
+    // tripped flutter_map's option-change assertion when the sheet was dismissed
+    // (the red screen in audit MAP-006). Zoomed in, the venue is centrable and
+    // the constraint is satisfied cleanly.
+    await _onPlaceSelected(key, zoom: MapConfig.mapFocusZoom);
   }
 
   Future<void> _openFavorites() async {
@@ -594,7 +611,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       useSafeArea: true,
       builder: (_) => const FavoritesSheet(),
     );
-    if (key != null && mounted) await _onPlaceSelected(key);
+    // Zoom in on the chosen place (see [_openSearch] — avoids the MAP-006 crash
+    // and matches the "Show on map" focus behaviour).
+    if (key != null && mounted) {
+      await _onPlaceSelected(key, zoom: MapConfig.mapFocusZoom);
+    }
   }
 
   Future<void> _onPlaceSelected(String key, {double? zoom}) async {

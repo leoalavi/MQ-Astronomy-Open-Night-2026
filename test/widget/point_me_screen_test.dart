@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
@@ -64,6 +65,56 @@ void main() {
     expect(find.textContaining("can't find"), findsOneWidget);
     expect(c.read(pointMeActiveProvider), isFalse); // no lifecycle claim
     expect(t.takeException(), isNull);
+  });
+
+  testWidgets(
+      'unlocatable place never locks NOR restores orientation (MAP-003)',
+      (t) async {
+    // Capture SystemChrome.setPreferredOrientations. initState locks it only
+    // when there is a target; dispose must MIRROR that — an unlocatable place
+    // (no target) must not write the global orientation policy on the way out.
+    final orientationCalls = <MethodCall>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'SystemChrome.setPreferredOrientations') {
+        orientationCalls.add(call);
+      }
+      return null;
+    });
+    addTearDown(
+        () => messenger.setMockMethodCallHandler(SystemChannels.platform, null));
+
+    final c = _c(FakeHeadingService(), FakeLocationService());
+    await t.pumpWidget(_app(c, 'does-not-exist')); // no coordinates → no target
+    await t.pump();
+    await t.pumpWidget(const SizedBox()); // dispose
+    await t.pump();
+    expect(orientationCalls, isEmpty,
+        reason: 'no lock in initState ⇒ no restore in dispose');
+  });
+
+  testWidgets('a locatable place DOES lock and restore orientation (MAP-003)',
+      (t) async {
+    final orientationCalls = <MethodCall>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.platform, (call) async {
+      if (call.method == 'SystemChrome.setPreferredOrientations') {
+        orientationCalls.add(call);
+      }
+      return null;
+    });
+    addTearDown(
+        () => messenger.setMockMethodCallHandler(SystemChannels.platform, null));
+
+    final c = _c(FakeHeadingService(), FakeLocationService());
+    await t.pumpWidget(_app(c, _venueId)); // real venue → target → locks
+    await t.pump();
+    await t.pumpWidget(const SizedBox()); // dispose → restores
+    await t.pump();
+    expect(orientationCalls.length, greaterThanOrEqualTo(2),
+        reason: 'one lock (initState) + one restore (dispose)');
   });
 
   testWidgets('opening the screen claims pointMeActive; leaving clears it',

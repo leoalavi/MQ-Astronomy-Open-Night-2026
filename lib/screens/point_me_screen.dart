@@ -85,8 +85,14 @@ class _PointMeScreenState extends ConsumerState<PointMeScreen> {
   void dispose() {
     _lifecycle?.dispose();
     _release(); // uses captured notifiers, not ref
-    SystemChrome.setPreferredOrientations(
-        const [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+    // Mirror the set: initState only locks the orientation when there is a
+    // target, so only restore it then. Otherwise an unlocatable-place visit
+    // (no target, never locked) still wrote the global orientation policy on
+    // the way out (audit MAP-003).
+    if (_target != null) {
+      SystemChrome.setPreferredOrientations(
+          const [DeviceOrientation.portraitUp, DeviceOrientation.portraitDown]);
+    }
     super.dispose();
   }
 

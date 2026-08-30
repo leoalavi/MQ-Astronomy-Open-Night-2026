@@ -60,8 +60,8 @@
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
         </intent>
-        <!-- M4: url_launcher needs to see https VIEW handlers (Android 11+ package
-             visibility) to open the keyless external Google Maps directions URL. -->
+        <!-- url_launcher needs to see https VIEW handlers (Android 11+ package
+             visibility) for visitor-facing web links. Map directions stay in-app. -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />

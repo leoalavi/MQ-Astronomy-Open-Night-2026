@@ -8,8 +8,8 @@ download and risk a decode OOM on older phones, so this tool produces the
 resolution the first tour already shipped at.
 
 WHICH PLACES ARE IN: the published AON 2026 Program and Map is the source of
-truth. A scene ships only if its venue is one of the map legend's A-I event
-locations. That rule is why the MQ Journey set contributes Macquarie Theatre,
+truth. A scene ships only if its venue is one of the photographed map-legend
+event locations. That rule is why the MQ Journey set contributes Macquarie Theatre,
 Mason Theatre, 17 Wally's Walk and three extra 14 Sir scenes but NOT its two
 dozen Open Day buildings (1 WW, 10 Hadenfield, 23/25/27/29 WW) — the AON map
 puts no event in any of them. The Jim Piper Centre (12 Wally's Walk) panorama
@@ -72,12 +72,11 @@ TOURS: dict[str, list[tuple[str, str, str, str]]] = {
     "1-central-courtyard": [
         ("entrance", "Entrance", ASTRONOMY, "1 CC entrance.JPG"),
         ("stairs", "Stairs", ASTRONOMY, "1 CC - Stairs.JPG"),
-        ("downstairs", "Downstairs", ASTRONOMY, "1 CC- Downstairs.JPG"),
-        ("lounge-108", "Lounge 108", ASTRONOMY, "1 CC - Lounge 108.JPG"),
         ("room-101", "Room 101", ASTRONOMY, "1 CC- Room 101.JPG"),
         ("room-105", "Room 105", ASTRONOMY, "1 CC - Room 105.JPG"),
         ("room-106", "Room 106", ASTRONOMY, "1 CC- Room 106.JPG"),
         ("room-107", "Room 107", ASTRONOMY, "1 CC- Room 107.JPG"),
+        ("lounge-108", "Lounge 108", ASTRONOMY, "1 CC - Lounge 108.JPG"),
         ("room-109", "Room 109", ASTRONOMY, "1 CC - Room 109.JPG"),
         ("room-112", "Room 112", ASTRONOMY, "1 CC - Room 112.JPG"),
         ("room-114", "Room 114", ASTRONOMY, "1 CC- room 114.JPG"),
@@ -111,6 +110,13 @@ TOURS: dict[str, list[tuple[str, str, str, str]]] = {
          "g25-t2-theatre-17-WW.jpg"),
     ],
 }
+
+# Retained for the future road/route panorama. This source and bundled asset
+# record is deliberately NOT in TOURS, so manifest generation cannot put it
+# back into the 1 Central Courtyard room sequence.
+HELD_OUT_ROUTE_SCENES = [
+    ("downstairs", "Downstairs", ASTRONOMY, "1 CC- Downstairs.JPG"),
+]
 
 # sha256 of each ORIGINAL, so a re-shot or swapped source is detectable even
 # though the originals are too large to vendor.

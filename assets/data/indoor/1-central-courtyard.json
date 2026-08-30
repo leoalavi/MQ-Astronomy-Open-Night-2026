@@ -13,18 +13,6 @@
       "neighbours": []
     },
     {
-      "id": "downstairs",
-      "image": "indoor/1-central-courtyard_downstairs.jpg",
-      "description": "Downstairs",
-      "neighbours": []
-    },
-    {
-      "id": "lounge-108",
-      "image": "indoor/1-central-courtyard_lounge-108.jpg",
-      "description": "Lounge 108",
-      "neighbours": []
-    },
-    {
       "id": "room-101",
       "image": "indoor/1-central-courtyard_room-101.jpg",
       "description": "Room 101",
@@ -46,6 +34,12 @@
       "id": "room-107",
       "image": "indoor/1-central-courtyard_room-107.jpg",
       "description": "Room 107",
+      "neighbours": []
+    },
+    {
+      "id": "lounge-108",
+      "image": "indoor/1-central-courtyard_lounge-108.jpg",
+      "description": "Lounge 108",
       "neighbours": []
     },
     {

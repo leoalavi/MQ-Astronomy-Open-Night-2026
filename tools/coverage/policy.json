@@ -20,7 +20,6 @@
     "lib/widgets/panorama_web_view.dart": "InAppWebView platform view; the panorama only renders on a real engine",
     "lib/widgets/embedded_map.dart": "GoogleMap platform view; needs a keyed native SDK",
     "lib/widgets/glass_shader.dart": "FragmentProgram; shader compilation is a real-GPU path",
-    "lib/services/external_maps_launcher.dart": "url_launcher hand-off to another app",
     "lib/main.dart": "runApp bootstrap: startup snapshot loads and ProviderScope wiring that a test replaces rather than executes"
   },
   "debt": {

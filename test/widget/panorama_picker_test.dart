@@ -27,9 +27,7 @@ void main() {
       localizationsDelegates: AonL10n.localizationsDelegates,
       supportedLocales: AonL10n.supportedLocales,
       theme: AonTheme.build(),
-      home: Scaffold(
-        body: PanoramaBuildingPicker(onOpen: onOpen ?? (_) {}),
-      ),
+      home: Scaffold(body: PanoramaBuildingPicker(onOpen: onOpen ?? (_) {})),
     ),
   );
 
@@ -50,16 +48,16 @@ void main() {
     await tester.pumpWidget(picker(onOpen: (id) => opened = id));
     await tester.pump();
 
-    // Seven legend venues have photography; two do not (C and G).
-    expect(find.text(_explore), findsNWidgets(7));
-    expect(find.text('Coming soon'), findsNWidgets(2));
+    // Five D–I venues have photography; only G is still planned and waiting.
+    expect(find.text(_explore), findsNWidgets(5));
+    expect(find.text('Coming soon'), findsOneWidget);
     // Nothing shipped is sample imagery any more.
     expect(find.text(_demoFlag), findsNothing);
 
     // Nothing auto-opens; tapping a tour card opens that venue.
     expect(opened, isNull);
-    await tester.tap(find.text('A · Macquarie Theatre'));
-    expect(opened, 'macquarie-theatre');
+    await tester.tap(find.text('D · 14 Sir Christopher Ondaatje Avenue'));
+    expect(opened, '14-sir-christopher-ondaatje-avenue');
   });
 
   testWidgets('a placeholder tour still discloses itself as demo content', (
@@ -69,9 +67,10 @@ void main() {
     await tester.pumpWidget(
       picker(
         tours: {
-          'mason-theatre': const PanoramaTour(
-            venueId: 'mason-theatre',
-            manifestAsset: 'assets/data/indoor/mason-theatre.json',
+          '14-sir-christopher-ondaatje-avenue': const PanoramaTour(
+            venueId: '14-sir-christopher-ondaatje-avenue',
+            manifestAsset:
+                'assets/data/indoor/14-sir-christopher-ondaatje-avenue.json',
             placeholder: true,
           ),
         },
@@ -84,7 +83,7 @@ void main() {
   });
 
   testWidgets(
-    'lists only the map legend A-I venues, each prefixed with its letter',
+    'lists only the planned D-I venues, each prefixed with its letter',
     (tester) async {
       tall(tester);
       await tester.pumpWidget(picker());
@@ -92,9 +91,6 @@ void main() {
 
       // Every card reads as the paper map letters it.
       const lettered = [
-        'A · Macquarie Theatre',
-        'B · Mason Theatre',
-        'C · Food and drink',
         'D · 14 Sir Christopher Ondaatje Avenue',
         'E · 1 Central Courtyard',
         'F · Macquarie University Sport and Aquatic Centre',
@@ -105,9 +101,15 @@ void main() {
       for (final label in lettered) {
         expect(find.text(label), findsOneWidget, reason: 'missing $label');
       }
-      // Nine cards, no more: seven tourable + two coming soon.
-      expect(find.byIcon(Icons.panorama_photosphere), findsNWidgets(7));
-      expect(find.byIcon(Icons.lock_outline_rounded), findsNWidgets(2));
+      // Six cards, no more: five tourable + G coming soon.
+      expect(find.byIcon(Icons.panorama_photosphere), findsNWidgets(5));
+      expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
+
+      // Food and drink remains elsewhere in the product, but is not planned
+      // for 360 and must never be presented as a future panorama.
+      expect(find.text('C · Food and drink'), findsNothing);
+      expect(find.text('A · Macquarie Theatre'), findsNothing);
+      expect(find.text('B · Mason Theatre'), findsNothing);
 
       // Unlettered service points are gone, not merely scrolled away.
       for (final gone in [

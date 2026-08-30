@@ -36,6 +36,13 @@ void main() {
     },
   );
 
+  testWidgets('Food and drink has no 360 deep-link content', (tester) async {
+    await pumpAt(tester, '/panorama/food-and-drink');
+    expect(tester.takeException(), isNull);
+    expect(find.byType(PanoramaScreen), findsOneWidget);
+    expect(find.textContaining('unavailable'), findsOneWidget);
+  });
+
   testWidgets(
     'deep-link to a real tour venue renders the panorama screen, no crash',
     (tester) async {

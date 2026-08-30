@@ -13,9 +13,9 @@ import 'package:aon2026/widgets/nav_metrics.dart';
 /// `panoramaDemoFlag` — the imagery is a different building. Nothing shipped is
 /// a placeholder any more (see [PanoramaData]); the string exists so that if one
 /// ever returns it cannot pass as the real venue, in either language.
-/// The 360° building picker: a card per *event* location — the A–I entries of
-/// the official AON program map's legend, in the order the sheet letters them.
-/// Unlettered service points (toilets, first aid, transport) are not offered.
+/// The 360° building picker: the planned D–I catalogue, in official map-letter
+/// order. C (Food and drink) is intentionally absent because no panorama is
+/// planned; unlettered service points are not offered either.
 ///
 /// Venues with a tour are tappable (with the demo flag); the rest show
 /// "coming soon". No auto-select — the picker is always shown so availability
@@ -36,8 +36,12 @@ class PanoramaBuildingPicker extends ConsumerWidget {
       // the same clearance the compass NearbyList does — otherwise the last
       // legend card ("I · 17 Wally's Walk") hides behind the island (field
       // report, Pouya 2026-08-28).
-      padding: EdgeInsets.fromLTRB(AonSpacing.space4, AonSpacing.space4,
-          AonSpacing.space4, AonNavMetrics.clearance(context)),
+      padding: EdgeInsets.fromLTRB(
+        AonSpacing.space4,
+        AonSpacing.space4,
+        AonSpacing.space4,
+        AonNavMetrics.clearance(context),
+      ),
       children: [
         for (final v in venues)
           Padding(
@@ -106,8 +110,10 @@ class _VenueCard extends StatelessWidget {
               ),
             ),
             if (hasTour)
-              Icon(Icons.chevron_right_rounded,
-                  color: context.aon.contentSecondary),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: context.aon.contentSecondary,
+              ),
           ],
         ),
       ),

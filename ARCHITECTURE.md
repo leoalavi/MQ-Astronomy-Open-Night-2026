@@ -581,7 +581,7 @@ incident.
    carries the distinction the raw times cannot; `hasPublishedEnd` gates every
    countdown. `unpublished_time_test.dart`.
 3. **One clear truth per card.** Never render "Time not published" *and* a time
-   range together. `liz_program_update_test.dart`.
+   range together. `liz_update_2026_08_31_test.dart`, `session_label_test.dart`.
 4. **An open-all-night drop-in must never clash with a scheduled session** —
    it overlaps everything by construction. `ItineraryService._overlaps`.
 5. **`artworkX/Y` is never geographic.** Never write it into

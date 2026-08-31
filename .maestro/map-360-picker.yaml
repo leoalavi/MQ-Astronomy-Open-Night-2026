@@ -1,6 +1,6 @@
 # Map · 360° picker
 #
-# The picker lists the A–I legend venues that have (or are getting) a 360° tour.
+# The picker lists the D–I legend venues, every one of which now has a 360° tour.
 # Regression guard for the field fix that made its ListView reserve the floating
 # tab-bar clearance: the LAST card ("I · 17 Wally's Walk") must be reachable AND
 # tappable, not hidden behind the island (audit 2026-08-30).
@@ -14,9 +14,10 @@ tags: [map]
 
 - tapOn:
     text: "360°"
-# The picker rendered (an early tourable card + the honest "coming soon" one).
+# The picker rendered. G shipped 2026-08-31, so every D-I card is now tourable
+# and none reads "Coming soon".
 - assertVisible: "(?s).*E . 1 Central Courtyard.*Tap to explore.*"
-- assertVisible: "(?s).*G . Macquarie University Astronomical Observatory.*Coming soon.*"
+- assertVisible: "(?s).*G . Macquarie University Astronomical Observatory.*Tap to explore.*"
 
 # The last legend card must be reachable past the floating tab bar.
 - scrollUntilVisible:

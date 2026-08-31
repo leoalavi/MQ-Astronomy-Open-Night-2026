@@ -1,0 +1,16 @@
+{
+  "nodes": [
+    {
+      "id": "approach",
+      "image": "indoor/astronomical-observatory_approach.jpg",
+      "description": "Observatory approach",
+      "neighbours": []
+    },
+    {
+      "id": "entrance",
+      "image": "indoor/astronomical-observatory_entrance.jpg",
+      "description": "Observatory entrance",
+      "neighbours": []
+    }
+  ]
+}

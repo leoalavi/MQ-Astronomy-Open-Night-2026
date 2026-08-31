@@ -43,8 +43,9 @@ void main() {
   );
 
   test('tours are exactly the legend venues that have real photography', () {
-    // A, B, D, E, F, H and I. C (Food and drink) and G (Astronomical
-    // Observatory) still have no imagery and correctly have no tour.
+    // A, B, D, E, F, G, H and I. Only C (Food and drink) has no tour: no
+    // panorama is planned for it. G shipped once its two Observatory
+    // originals were found unused in the source set (2026-08-31).
     // Nothing outside the official map's A-I legend appears — notably the
     // Jim Piper Centre panorama, which the map letters nowhere.
     expect(PanoramaData.tours.map((t) => t.venueId).toSet(), {
@@ -53,6 +54,7 @@ void main() {
       '14-sir-christopher-ondaatje-avenue',
       '1-central-courtyard',
       'sport-and-aquatic-centre',
+      'astronomical-observatory',
       '11-wallys-walk',
       '17-wallys-walk',
     });
@@ -85,6 +87,11 @@ void main() {
         'centre',
         'indoor/sport-and-aquatic-centre_',
       ),
+      'astronomical-observatory': (
+        'assets/data/indoor/astronomical-observatory.json',
+        'approach',
+        'indoor/astronomical-observatory_',
+      ),
       '11-wallys-walk': (
         'assets/data/indoor/11-wallys-walk.json',
         'entrance',
@@ -110,8 +117,6 @@ void main() {
         reason: '${entry.key} contains an image assigned to another venue',
       );
     }
-
-    expect(PanoramaData.tourFor('astronomical-observatory'), isNull);
   });
 
   test('no shipped tour is a placeholder', () {
@@ -132,6 +137,7 @@ void main() {
         '14-sir-christopher-ondaatje-avenue': 6,
         '1-central-courtyard': 12,
         'sport-and-aquatic-centre': 3,
+        'astronomical-observatory': 2,
         '11-wallys-walk': 3,
         '17-wallys-walk': 4,
       };
@@ -189,6 +195,37 @@ void main() {
         'assets/data/indoor/1-central-courtyard_downstairs.jpg',
       ]) {
         expect((await rootBundle.load(asset)).lengthInBytes, greaterThan(0));
+      }
+    },
+  );
+
+  test(
+    'G runs Observatory approach then entrance, with no invented hotspots',
+    () async {
+      // Order is the photographer's own "Entrance 1"/"Entrance 2" naming,
+      // corroborated by the GPS capture stamps (15:18 then 15:22 on
+      // 2026-08-23). The originals carry no pose metadata, so — as with every
+      // other tour — neighbours stay empty rather than guess a bearing.
+      final tour = PanoramaData.tourFor('astronomical-observatory')!;
+      final manifest = IndoorManifest.fromJson(
+        await rootBundle.loadString(tour.manifestAsset),
+      );
+
+      expect(manifest.nodes.map((node) => node.id).toList(), [
+        'approach',
+        'entrance',
+      ]);
+      expect(
+        manifest.nodes.every((node) => node.neighbours.isEmpty),
+        isTrue,
+        reason: 'no source photo carries a bearing to draw a hotspot from',
+      );
+      for (final node in manifest.nodes) {
+        expect(
+          (await rootBundle.load('assets/data/${node.image}')).lengthInBytes,
+          greaterThan(0),
+          reason: node.id,
+        );
       }
     },
   );

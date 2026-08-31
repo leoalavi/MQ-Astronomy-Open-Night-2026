@@ -48,9 +48,10 @@ void main() {
     await tester.pumpWidget(picker(onOpen: (id) => opened = id));
     await tester.pump();
 
-    // Five D–I venues have photography; only G is still planned and waiting.
-    expect(find.text(_explore), findsNWidgets(5));
-    expect(find.text('Coming soon'), findsOneWidget);
+    // All six D–I venues now have photography — G shipped 2026-08-31, so no
+    // card is locked and none reads "Coming soon".
+    expect(find.text(_explore), findsNWidgets(6));
+    expect(find.text('Coming soon'), findsNothing);
     // Nothing shipped is sample imagery any more.
     expect(find.text(_demoFlag), findsNothing);
 
@@ -101,9 +102,9 @@ void main() {
       for (final label in lettered) {
         expect(find.text(label), findsOneWidget, reason: 'missing $label');
       }
-      // Six cards, no more: five tourable + G coming soon.
-      expect(find.byIcon(Icons.panorama_photosphere), findsNWidgets(5));
-      expect(find.byIcon(Icons.lock_outline_rounded), findsOneWidget);
+      // Six cards, no more, and every one tourable.
+      expect(find.byIcon(Icons.panorama_photosphere), findsNWidgets(6));
+      expect(find.byIcon(Icons.lock_outline_rounded), findsNothing);
 
       // Food and drink remains elsewhere in the product, but is not planned
       // for 360 and must never be presented as a future panorama.
@@ -128,4 +129,19 @@ void main() {
       }
     },
   );
+
+  testWidgets('a venue with no tour is still shown locked, not hidden', (
+    tester,
+  ) async {
+    // Every D–I venue ships a tour today, so nothing exercises the locked
+    // branch any more. It stays reachable: if a venue ever loses its imagery
+    // the picker must say "Coming soon" rather than drop the card.
+    tall(tester);
+    await tester.pumpWidget(picker(tours: const {}));
+    await tester.pump();
+
+    expect(find.text('Coming soon'), findsNWidgets(6));
+    expect(find.byIcon(Icons.lock_outline_rounded), findsNWidgets(6));
+    expect(find.byIcon(Icons.panorama_photosphere), findsNothing);
+  });
 }

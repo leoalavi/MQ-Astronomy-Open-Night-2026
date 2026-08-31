@@ -92,6 +92,19 @@ TOURS: dict[str, list[tuple[str, str, str, str]]] = {
         ("planetarium-entrance", "Planetarium entrance", ASTRONOMY,
          "Planetarium Entrance Gym.JPG"),
     ],
+    # G - Telescope Park, Macquarie University Astronomical Observatory.
+    # Both originals sat unused in the source set until 2026-08-31; the venue
+    # had been carried as "coming soon" on the strength of a stale comment
+    # rather than a look at the folder. Order is the photographer's own
+    # "Entrance 1"/"Entrance 2", which the GPS capture stamps agree with
+    # (15:18 then 15:22 on 2026-08-23). Entrance 1 is the wide approach with
+    # the dome in frame; Entrance 2 is the gate, with the AON banner up.
+    "astronomical-observatory": [
+        ("approach", "Observatory approach", ASTRONOMY,
+         "Astronomical Observatory Entrance 1.JPG"),
+        ("entrance", "Observatory entrance", ASTRONOMY,
+         "Astronomical Observatory Entrance 2.JPG"),
+    ],
     # H - Laser challenge
     "11-wallys-walk": [
         ("entrance", "Entrance", ASTRONOMY, "11 WW - Entrance.JPG"),
@@ -146,6 +159,8 @@ SOURCE_SHA256 = {
     "Sport and Aquatic center.JPG": "d3b5f3e335678b0875830fcba3b766005ae0bb306b0557ba499a507f4c879ab3",
     "Platiymrum before Entrance.JPG": "d586af86af6c4e24ddc7dd6ba6a479e1cf8da3cfc7cbf129ce2fe7ad75a18289",
     "Planetarium Entrance Gym.JPG": "fb1f2c2f14f0d1f6abf89a1db38b5825d0c500bcd5c086059f54e43db8a9ee04",
+    "Astronomical Observatory Entrance 1.JPG": "ace4f3349a074d9c1220b3a53f4844326ad661a547127fdd1fc80a2da1369b5d",
+    "Astronomical Observatory Entrance 2.JPG": "5dcb50d90fc6407b79e71ad9e94325211d326057d69cffdf80e8befaac37e1d5",
     "11 WW - Entrance.JPG": "83f26eb48b8fb5ffcd8808a22c72ebd3c255d5a79c9da7218e017d65b9c21b14",
     "11 WW -Room 150- Laser challenge game.JPG": "fbdb07db877fa103aead500680fb24eccd6bcf230a83e7534884452982b9583d",
     "11 WW - Room 160 - Laser Challange .JPG": "f09c807c3eaaebe31f5298466b26654d83130e52a0eb9a5ebcacb1808dd41e5e",

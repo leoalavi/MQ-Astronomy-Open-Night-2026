@@ -69,7 +69,7 @@ Three decisions worth knowing up front:
   `placeholder`) is a field on the data, and the UI renders a visible warning
   wherever a placeholder appears.
 
-Full detail: [`docs/architecture.md`](docs/architecture.md).
+Full detail: [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ### Zero credentials
 
@@ -284,7 +284,7 @@ University and with Aleix Roig.
 
 | Document | Contents |
 |---|---|
-| [`docs/architecture.md`](docs/architecture.md) | Stack, layout, key decisions, timezone handling |
+| [`ARCHITECTURE.md`](ARCHITECTURE.md) | **Authoritative architecture**: structure, data flow, maps, 360°, privacy, security, invariants, risks |
 | [`docs/mq-journey-reuse-analysis.md`](docs/mq-journey-reuse-analysis.md) | Full reuse classification and rationale |
 | [`docs/project-scope.md`](docs/project-scope.md) | MVP, exclusions, definition of done, possible v2 |
 | [`docs/data-sources.md`](docs/data-sources.md) | Provenance of every data item; open questions |

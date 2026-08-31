@@ -49,9 +49,9 @@ deliberately left behind:
 | Live GPS position | See `docs/navigation-strategy.md` |
 | Turn-by-turn routing | Same |
 | Indoor floorplans | MQ Journey has them; unnecessary for six hours |
-| Favourites / personal schedule | Plausible v2 |
+| ~~Favourites / personal schedule~~ | **SHIPPED** (2026-08-31 review) — `favorites_store.dart`, My Night |
 | Timetable / transit APIs | Would require a Transport for NSW key |
-| Light theme | Deliberate — see `docs/architecture.md` |
+| ~~Light theme~~ | **SHIPPED** — `AonTheme.light()`; the visitor chooses. Dark remains the event default |
 
 ## Known incomplete
 

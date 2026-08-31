@@ -100,13 +100,25 @@ building at dusk, 6 a grey shed between two car parks). Getting them the wrong
 way round is a minor cosmetic error on an otherwise correct route; it is called
 out here rather than presented as certain.
 
-Scenes 7 and 8 **reuse the assets encoded for the G tour** —
-`astronomical-observatory_approach.jpg` / `_entrance.jpg`. Manifests reference
-images by path, so one encode serves both tours. Do not encode a second copy.
+### 3.1 Asset reuse needs a build.py change (corrected 2026-08-31)
 
-Scene 1 reuses the already-bundled `1-central-courtyard_downstairs.jpg`, which
-`test/unit/panorama_data_test.dart` pins as bundled. Only **four** new encodes
-are required (scenes 2–6 minus the SAC entrance… see §7).
+Three of the eight scenes are photographs the bundle **already carries**: scene 1
+is `1-central-courtyard_downstairs.jpg`, and scenes 7–8 are the G tour's
+`astronomical-observatory_approach.jpg` / `_entrance.jpg`.
+
+An earlier draft of this design claimed those could simply be pointed at, "so one
+encode serves both tours". **That is not true of `build.py` as written.**
+`asset_name()` is `f"{venue_id}_{scene_id}.jpg"` and `write_manifests()` hard-codes
+`f"indoor/{asset_name(venue_id, scene_id)}"`, so a `gymnasium-road` tour would
+emit `gymnasium-road_observatory-approach.jpg` and two more — **three byte-identical
+duplicates**, ~6 MB of bundle for nothing, and two copies of an image that must
+stay in sync if a photo is ever re-shot.
+
+**Requirement:** before building this tour, give `TOURS` a way to alias an
+existing asset instead of encoding a new one — e.g. an optional 5th tuple field
+carrying an explicit `indoor/...` path that `write_manifests()` uses verbatim and
+the encoder skips. Add a test that no two manifest entries reference different
+paths for the same source photograph.
 
 ## 4. THE open question: how does a letterless route enter the picker?
 
@@ -154,7 +166,18 @@ Whichever is chosen, `label:` must stop calling `v.mapReference!` unguarded.
 - `docs/panorama-image-provenance.md` — move the six from "Reserved for the Solar
   system walk" into the shipping table.
 
-Est. **+3.5 MB** bundle (four to five new 4096×2048 q85 encodes).
+**Bundle cost** (corrected — an earlier draft said "+3.5 MB", which was wrong by
+roughly 3×). The two G scenes encoded at 2.05 MB and 2.10 MB; these are outdoor
+daylight panoramas and compress worse than the 1.43 MB mean across the current 34
+assets, so budget **~2.05 MB per new scene**:
+
+- with the §3.1 aliasing change: **5 new encodes ≈ +10 MB**
+- without it: **8 new encodes ≈ +16 MB**, three of them duplicates
+
+`assets/data/indoor/` is currently 48.7 MB across 34 files. Ten more megabytes is
+a real download-size decision for a one-night event app, not a rounding error —
+worth raising before building, and a reason to consider whether all six route
+scenes earn their place or whether the walk reads well at four.
 
 ## 6. Honesty constraints (non-negotiable)
 

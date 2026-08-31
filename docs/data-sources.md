@@ -40,15 +40,26 @@ Those sessions end at the 10pm event close and are flagged in the UI.
 
 | Event | What S1 says | What we assumed |
 |---|---|---|
-| Exhibition Hall | *(no times)* | 4pm – 10pm |
-| Capture the cosmos | *(no times)* | 4pm – 10pm |
-| Solar system walk | *(no times)* | 4pm – 10pm |
 | Stories Across Worlds | "4.15pm start" | ends 10pm |
 | Space exploration with the Junior Science Academy | "4.15pm start" | ends 10pm |
-| Kids' space | "4.15pm start" | ends 10pm |
+| Kids' space | "4.15pm start" (Room 109 per Liz 2026-08-31, was 106) | ends 10pm |
 | Planetariums | "Sessions run about every 20 minutes, starting at 4.15pm" | ends 10pm |
 
-**→ Ask the organisers for finish times for these seven.**
+**→ Ask the organisers for finish times for these four.**
+
+### Resolved by Liz's 2026-08-31 update (supersedes S1)
+
+Liz confirmed the following, which now override the older "no times" placeholders:
+
+| Event | Liz 2026-08-31 | Model timing |
+|---|---|---|
+| Exhibition Hall (14 SCO) | "open from 4.15pm to 10pm" | `exactTime` 4.15pm–10pm |
+| Capture the cosmos (17 WW foyer) | "just open all night" (Liz's "astrophotography display") | `fullEventConfirmed` → "Open all night" |
+| Solar system walk (Gymnasium Road) | "no set opening times … present throughout" | `openAllNight` → "Open all night" (no scheduled start/finish) |
+| Featured astro talk (17 WW G25) | "5.00pm to 5.45pm" | already `exactTime` (`featured-astrophotography`) |
+
+There is **no separate "Astrophotography Display"** in S1 — it is Capture the
+Cosmos — so none was added.
 
 ### Deliberate exclusion
 

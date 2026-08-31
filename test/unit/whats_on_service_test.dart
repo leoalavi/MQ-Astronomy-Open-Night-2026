@@ -225,17 +225,19 @@ void main() {
       }
     });
 
-    test('at 4:00pm doors are open but the first scheduled activity is 4.15pm',
+    test('at 4:00pm only the open-all-night drop-ins are live; first TIMED activity is 4.15pm',
         () {
-      // The honest opening state: no activity publishes a 4pm start, and the
-      // untimed drop-ins carry a 4pm stand-in only, so they are never reported
-      // as running. The 4.15pm activities are about to begin.
+      // Liz 2026-08-31: the open-all-night activities (Capture the Cosmos, Solar
+      // System Walk) are available from event open. So at 4pm they ARE live —
+      // but every live entry is a full-event drop-in, not a scheduled slot. The
+      // first TIMED activities begin at 4.15pm and read as "starting soon".
       final classified = WhatsOnService.classifyAll(EventsData.all, at(16, 0));
-      expect(
-        WhatsOnService.inBucket(classified, EventTiming.happeningNow),
-        isEmpty,
-        reason: 'nothing has a published start at exactly 4pm',
-      );
+      final live = WhatsOnService.inBucket(classified, EventTiming.happeningNow);
+      expect(live, isNotEmpty,
+          reason: 'the open-all-night activities are available from 4pm');
+      expect(live.every((t) => t.isAllEvening), isTrue,
+          reason: 'only full-event / open-all-night drop-ins are live at 4pm — '
+              'no scheduled slot has a 4pm start');
       expect(
         WhatsOnService.inBucket(classified, EventTiming.startingSoon),
         isNotEmpty,

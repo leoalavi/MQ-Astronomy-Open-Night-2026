@@ -19,6 +19,22 @@ import 'package:aon2026/models/event.dart';
 /// listed in `docs/data-sources.md` and rendered with a qualifier in the UI —
 /// the app never states a finish time the organisers did not publish.
 ///
+/// ## Liz's 2026-08-31 update (supersedes older programme data on conflict)
+///
+/// * Capture the Cosmos (17 Wally's Walk foyer) — "just open all night"; the
+///   astrophotography-competition display Liz calls the "astrophotography
+///   display". Now [TimingConfidence.fullEventConfirmed] → "Open all night".
+///   (There is no SEPARATE "Astrophotography Display" entry in the official
+///   source — it IS Capture the Cosmos — so none was invented.)
+/// * Exhibitor / Exhibition Hall (14 SCO) — exact 4.15pm–10pm.
+/// * Solar System Walk (Gymnasium Road) — "no set opening times", present
+///   throughout: [TimingConfidence.openAllNight] → "Open all night", but never
+///   a scheduled start/finish.
+/// * The featured 17 WW G25 astro talk (5–5.45pm) already exists as
+///   `featured-astrophotography` ("Astrophotography: The sky is your lab").
+/// * Kids' space moved from Room 106 to Room 109 (Room 109 Kids' space is
+///   VALID; the Room 109 Huntsman activity stays removed — see below).
+///
 /// ## Deliberate exclusion
 ///
 /// **The Huntsman Telescope Exploratorium (Room 109, 1 Central Courtyard) is
@@ -113,20 +129,15 @@ abstract final class EventsData {
       category: EventCategory.activity,
       venueId: '14-sir-christopher-ondaatje-avenue',
       mapReference: 'D',
-      tags: ['exhibition', 'community', 'telescopes'],
-      sourceNote: 'Programme p.2 — no times published for this entry.',
+      // 'exhibitor' aliases Liz's wording ("Exhibitor Hall") so a search for it
+      // finds this "Exhibition Hall" entry (program search matches tags).
+      tags: ['exhibition', 'exhibitor', 'community', 'telescopes'],
+      sourceNote: 'Liz 2026-08-31 — "Exhibitor Hall — 14 SCO Hall is open from '
+          '4.15pm to 10 pm." Exact confirmed timing (supersedes the programme\'s '
+          'no-time entry).',
       sessions: [
-        // PLACEHOLDER: the programme lists no times. Assumed to run for the
-        // full event window.
-        EventSession(
-          // The programme prints NO time for this entry. start/end are
-          // bounding stand-ins ONLY (the event window) so lists have something
-          // to lay out; timeUnpublished keeps it off the timeline entirely.
-          start: _t(16, 0),
-          end: _t(22, 0),
-          timing: TimingConfidence.timeUnpublished,
-          note: 'Time not published in the official programme.',
-        ),
+        // Liz published exact hours: 4.15pm–10pm.
+        EventSession(start: _t(16, 15), end: _t(22, 0)),
       ],
     ),
     AonEvent(
@@ -198,10 +209,14 @@ abstract final class EventsData {
           'a parent or guardian while in this space.',
       category: EventCategory.activity,
       venueId: '1-central-courtyard',
-      room: 'Room 106',
+      // Moved from Room 106 to Room 109 (Liz update 2026-08-31). Room 109 is the
+      // room the cancelled Huntsman Exploratorium once occupied — that activity
+      // stays removed; Kids' space simply now uses the room.
+      room: 'Room 109',
       mapReference: 'E',
       tags: ['kids', 'family', 'hands-on'],
-      sourceNote: 'Programme p.2 — "4.15pm start". No finish time published.',
+      sourceNote: 'Programme p.2 — "4.15pm start". No finish time published. '
+          'Room updated to 109 per Liz 2026-08-31 (was 106).',
       sessions: [
         EventSession(
           // Real published START (4.15pm); the end is a bound, not a fact.
@@ -364,18 +379,22 @@ abstract final class EventsData {
           'People’s Choice award.',
       category: EventCategory.activity,
       venueId: '17-wallys-walk',
+      // Liz 2026-08-31: "Capture the Cosmos — 17 WW foyer is just open all
+      // night." This astrophotography-competition DISPLAY (Liz's "astrophotography
+      // display") lives in the 17 Wally's Walk foyer.
+      room: 'Foyer',
       mapReference: 'I',
-      tags: ['astrophotography', 'exhibition'],
-      sourceNote: 'Programme p.2 — no times published for this entry.',
+      tags: ['astrophotography', 'exhibition', 'display'],
+      sourceNote: 'Liz 2026-08-31 — "17 WW foyer is just open all night". '
+          'Confirmed full-event display (supersedes the programme\'s no-time entry).',
       sessions: [
         EventSession(
-          // The programme prints NO time for this entry. start/end are
-          // bounding stand-ins ONLY (the event window) so lists have something
-          // to lay out; timeUnpublished keeps it off the timeline entirely.
+          // Open for the whole event, confirmed by Liz. start/end are the event
+          // window; fullEventConfirmed renders as "Open all night".
           start: _t(16, 0),
           end: _t(22, 0),
-          timing: TimingConfidence.timeUnpublished,
-          note: 'Time not published in the official programme.',
+          timing: TimingConfidence.fullEventConfirmed,
+          note: 'Open all night (17 Wally’s Walk foyer).',
         ),
       ],
     ),
@@ -413,14 +432,21 @@ abstract final class EventsData {
       category: EventCategory.activity,
       venueId: 'gymnasium-road',
       tags: ['walk', 'outdoors', 'scale model', 'family'],
-      sourceNote: 'Programme p.2 — no times published for this entry.',
+      sourceNote: 'Liz 2026-08-31 — "Will go up on Gymnasium Road a few days '
+          'before the event and taken down a few days after. It\'s outside so no '
+          'set opening times." Available all night; no precise start/finish '
+          'published, so classified openAllNight (not an exact session).',
       sessions: [
         EventSession(
-          // No published time — bounding stand-ins only. See above.
+          // Physically present the whole event, but Liz published NO set times.
+          // openAllNight renders as "Open all night" and is available all
+          // evening WITHOUT claiming a scheduled start/finish. start/end are the
+          // event window (bounds only, never shown as a published session).
           start: _t(16, 0),
           end: _t(22, 0),
-          timing: TimingConfidence.timeUnpublished,
-          note: 'Time not published in the official programme.',
+          timing: TimingConfidence.openAllNight,
+          note: 'Open all night (outdoor scale model along Gymnasium Road). '
+              'No set opening times.',
         ),
       ],
     ),

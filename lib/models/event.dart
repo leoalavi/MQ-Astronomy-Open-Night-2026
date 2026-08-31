@@ -28,10 +28,19 @@ enum TimingConfidence {
   /// every 20 minutes from 4.15pm"). Like [startOnly], the finish is unknown.
   repeating,
 
-  /// The source EXPLICITLY states the activity runs for the whole event. This
-  /// is the only case in which a full-evening block is a fact rather than an
-  /// assumption — nothing currently qualifies.
+  /// The source EXPLICITLY confirms the activity runs for the whole event, with
+  /// a real start and finish (e.g. Liz: "Capture the Cosmos … is just open all
+  /// night"). A full-evening block that is a FACT, shown as "Open all night".
   fullEventConfirmed,
+
+  /// Physically available for the whole event, but the source published NO
+  /// precise start or finish — it is simply present throughout (Liz on the Solar
+  /// System Walk: "It's outside so no set opening times … up a few days before
+  /// and taken down a few days after"). Shown as "Open all night" like
+  /// [fullEventConfirmed], and treated identically for availability, conflicts
+  /// and countdowns — but it never claims a published start or finish, so the
+  /// distinction from a formally scheduled session is preserved internally.
+  openAllNight,
 
   /// No time published at all. There is no honest start or end, so the session
   /// is never classified as running or upcoming.
@@ -39,15 +48,28 @@ enum TimingConfidence {
 }
 
 extension TimingConfidenceX on TimingConfidence {
-  /// Whether a real, source-backed START time exists. False only for
-  /// [TimingConfidence.timeUnpublished].
-  bool get hasPublishedStart => this != TimingConfidence.timeUnpublished;
+  /// Whether a real, source-backed START time exists. False for
+  /// [TimingConfidence.timeUnpublished] (no time at all) and for
+  /// [TimingConfidence.openAllNight] (available throughout, but no published
+  /// start — Liz gave "no set opening times").
+  bool get hasPublishedStart =>
+      this != TimingConfidence.timeUnpublished &&
+      this != TimingConfidence.openAllNight;
 
   /// Whether the END time is source-backed. When false the UI must qualify any
   /// finish time it shows, and must not compute a "time remaining" from it.
   bool get hasPublishedEnd =>
       this == TimingConfidence.exactTime ||
       this == TimingConfidence.fullEventConfirmed;
+
+  /// Whether this is an "open all night" full-event activity — available for the
+  /// whole evening rather than a scheduled slot. Both the source-confirmed
+  /// ([fullEventConfirmed]) and the no-set-times ([openAllNight]) kinds qualify.
+  /// Such activities are shown as "Open all night", are always available during
+  /// the event, never count down, and never clash with a scheduled session.
+  bool get isFullEvent =>
+      this == TimingConfidence.fullEventConfirmed ||
+      this == TimingConfidence.openAllNight;
 }
 
 /// One scheduled run of an [AonEvent].
@@ -94,6 +116,10 @@ class EventSession {
   /// can be neither "happening now" nor "up next".
   bool get isUnscheduled => timing == TimingConfidence.timeUnpublished;
 
+  /// True for an "open all night" full-event activity — see
+  /// [TimingConfidenceX.isFullEvent].
+  bool get isFullEvent => timing.isFullEvent;
+
   Duration get duration => end.difference(start);
 
   /// Whether this session is running at [t].
@@ -109,6 +135,9 @@ class EventSession {
 
   bool startsWithin(DateTime now, Duration window) {
     if (isUnscheduled) return false;
+    // An open-all-night activity has no scheduled start to count down to — it is
+    // simply available. Never surface it as "starting soon" / "up next".
+    if (isFullEvent) return false;
     if (!start.isAfter(now)) return false;
     return start.difference(now) <= window;
   }

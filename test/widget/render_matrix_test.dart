@@ -497,14 +497,15 @@ void main() {
       }
     }
 
-    testWidgets('after close, My Night still shows the unscheduled drop-ins '
-        'rather than a blank timeline', (tester) async {
-      // After close every *timed* activity is finished, but the drop-ins with
-      // no published time never "finish" — they stay on the plan (in remaining)
-      // and render as cards. So the last visitor of the night sees those, never
-      // a blank/empty timeline. (My Night renders _ItineraryCards, not
-      // EventCards; the "Finished" section sits below the fold in the lazy
-      // list, so assert on the visible drop-in cards instead.)
+    testWidgets('after close, My Night shows an "all finished" state, never a blank '
+        'EmptyState', (tester) async {
+      // Liz 2026-08-31: the former no-time drop-ins now carry real timing
+      // (Capture the Cosmos / Solar System Walk are open all night, ending at
+      // event close; Exhibition Hall 4.15–10pm). So after close EVERYTHING the
+      // visitor saved is genuinely finished — and My Night must say so ("all
+      // finished" + the Finished section) rather than collapsing to the blank
+      // EmptyState reserved for "you haven't saved anything".
+      final l = await AonL10n.delegate.load(const Locale('en'));
       await renderAt(
         tester,
         child: const MyNightScreen(),
@@ -513,11 +514,9 @@ void main() {
         saved: everything,
       );
       expect(find.byType(EmptyState), findsNothing,
-          reason: 'My Night must not collapse to the empty state while '
-              'unscheduled drop-ins remain');
-      expect(find.byType(Card), findsWidgets,
-          reason: 'the still-discoverable unscheduled drop-ins should render '
-              'as cards after close');
+          reason: 'a saved-but-finished plan is not the empty state');
+      expect(find.text(l.myNightAllFinished), findsOneWidget,
+          reason: 'the last visitor of the night sees "all finished", not blank');
       expect(tester.takeException(), isNull);
     });
 

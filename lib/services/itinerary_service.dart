@@ -149,11 +149,16 @@ abstract final class ItineraryService {
   /// Half-open overlap: sessions that merely touch (one ends exactly as the
   /// next begins) do **not** conflict. Back-to-back is a tight but achievable
   /// plan, not a clash — flagging it would cry wolf.
-  /// Two sessions clash only if BOTH have published times. An unscheduled
+  /// Two sessions clash only if BOTH are real scheduled slots. An unscheduled
   /// activity cannot be proven to clash with anything — flagging one would be a
-  /// conflict warning derived entirely from our own stand-in times.
+  /// conflict warning derived entirely from our own stand-in times. An
+  /// "open all night" activity (Capture the Cosmos, Astrophotography display,
+  /// Solar System Walk) is available the WHOLE evening, so it never blocks a
+  /// scheduled talk — treating its 4pm–10pm span as a clash would flag a false
+  /// conflict against every other saved event (Liz update 2026-08-31).
   static bool _overlaps(EventSession a, EventSession b) {
     if (a.isUnscheduled || b.isUnscheduled) return false;
+    if (a.isFullEvent || b.isFullEvent) return false;
     return a.start.isBefore(b.end) && b.start.isBefore(a.end);
   }
 

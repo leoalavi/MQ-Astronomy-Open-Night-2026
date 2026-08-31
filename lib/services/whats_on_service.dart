@@ -45,12 +45,16 @@ class TimedEvent {
   /// mixed in with the timed sessions they crowd out the thing a user actually
   /// needs to know — that the keynote starts in twelve minutes. The UI groups
   /// them separately.
-  /// Requires a PUBLISHED end: a session whose finish we invented only looks
-  /// like an all-evening drop-in because of the stand-in time we wrote.
+  /// An "open all night" activity is an all-evening drop-in by definition, even
+  /// though it publishes no finish (Solar System Walk). Otherwise it requires a
+  /// PUBLISHED end and a long span: a session whose finish we merely invented
+  /// only LOOKS like an all-evening drop-in because of the stand-in time we
+  /// wrote, and must not be treated as one.
   bool get isAllEvening =>
       session != null &&
-      session!.hasPublishedEnd &&
-      session!.duration >= const Duration(hours: 4);
+      (session!.isFullEvent ||
+          (session!.hasPublishedEnd &&
+              session!.duration >= const Duration(hours: 4)));
 }
 
 /// Classifies the programme against the current time.

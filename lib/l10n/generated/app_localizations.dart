@@ -259,10 +259,10 @@ abstract class AonL10n {
   /// **'Finish time not published'**
   String get timingEndNotPublished;
 
-  /// No description provided for @timingOpenAllEvening.
+  /// Timing label for a full-event / open-all-night activity (available the whole evening, not a scheduled session)
   ///
   /// In en, this message translates to:
-  /// **'Open all evening'**
+  /// **'Open all night'**
   String get timingOpenAllEvening;
 
   /// No description provided for @timingStartingWithin.

@@ -71,16 +71,22 @@ void main() {
     expect(c.read(happeningNowProvider), isEmpty);
   });
 
-  test('MAP #6: an unpublished-time activity is never falsely "happening now"', () {
-    // Whatever the preview clock, an activity with no published start must not be
-    // classified as live off a placeholder time (honest-time contract).
+  test('MAP #6: a time-unpublished activity is never falsely "happening now"', () {
+    // Whatever the preview clock, a `timeUnpublished` activity (no time at all)
+    // must not be classified as live off a placeholder stand-in. An open-all-night
+    // activity (Solar System Walk) legitimately IS available all evening even
+    // without a published start, so those are allowed — the honesty line is
+    // "never a timeUnpublished stand-in", not "must have a published start".
     final c = make();
     c.read(simulatedTimeProvider.notifier).set(EventInfo.at(19, 0));
     final live = c.read(happeningNowProvider);
     for (final e in live) {
-      expect(e.session?.hasPublishedStart, isTrue,
-          reason: 'a "happening now" entry must run off a real published start, '
-              'never a placeholder time');
+      final s = e.session!;
+      expect(s.hasPublishedStart || s.isFullEvent, isTrue,
+          reason: 'a "happening now" entry runs off a real published start OR is '
+              'an open-all-night activity — never a time-unpublished stand-in');
+      expect(s.isUnscheduled, isFalse,
+          reason: 'a time-unpublished activity must never be reported as live');
     }
   });
 

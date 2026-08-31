@@ -123,21 +123,24 @@ void main() {
       expect(b.finished, isEmpty);
     });
 
-    test('16:00 — doors open, but nothing PUBLISHED starts until 4.15', () {
-      // A deliberate, checked claim rather than an oversight. The earliest
-      // published start in the whole programme is 4.15pm; the only entries that
-      // ever looked like 4pm starters were the three with no published time at
-      // all, which used to be filled in as 4pm–10pm. Home therefore shows
-      // "Nothing running this minute — check what's next" at 4pm, which is the
-      // honest answer.
-      final earliest = EventsData.all
-          .where((e) => !e.isUnscheduled)
-          .expand((e) => e.sessions.map((s) => s.start))
+    test('16:00 — doors open; only open-all-night drop-ins live, first SCHEDULED start is 4.15',
+        () {
+      // The earliest SCHEDULED start (an exact/start-only/repeating slot) is
+      // 4.15pm. The open-all-night activities (Capture the Cosmos, Solar System
+      // Walk) are available from event open, so at 4pm they ARE live — but every
+      // live entry is a full-event drop-in, not a scheduled slot (Liz 2026-08-31).
+      final earliestScheduled = EventsData.all
+          .expand((e) => e.sessions)
+          .where((s) => !s.isUnscheduled && !s.isFullEvent)
+          .map((s) => s.start)
           .reduce((a, b) => a.isBefore(b) ? a : b);
-      expect(earliest, at(16, 15));
+      expect(earliestScheduled, at(16, 15));
 
       final b = buckets(at(16, 0));
-      expect(b.now, isEmpty);
+      expect(b.now, isNotEmpty,
+          reason: 'the open-all-night activities are available from 4pm');
+      expect(b.now.every((t) => t.session!.isFullEvent), isTrue,
+          reason: 'no scheduled slot starts at 4pm — only full-event drop-ins');
       expect(b.soon, isNotEmpty, reason: '4.15pm is inside the 30-min window');
     });
 

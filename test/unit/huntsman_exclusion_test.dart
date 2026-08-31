@@ -40,19 +40,41 @@ void main() {
       );
     });
 
-    test('no event is scheduled in Room 109', () {
-      final offenders = EventsData.all
+    test('Room 109 now hosts Kids\' space (valid), never the Huntsman', () {
+      // Liz 2026-08-31 moved Kids' space to Room 109. Room 109 is therefore
+      // valid — but ONLY for Kids' space. The cancelled Huntsman must never be
+      // what occupies it. This is the explicit two-case distinction:
+      //   Room 109 Kids' space  → KEEP
+      //   Room 109 Huntsman     → REMOVE
+      final inRoom109 = EventsData.all
           .where((e) => (e.room ?? '').toLowerCase().contains('109'))
           .toList();
 
+      // Kids' space IS there.
       expect(
-        offenders,
-        isEmpty,
-        reason:
-            'Room 109 at 1 Central Courtyard hosted only the cancelled '
-            'Huntsman Telescope Exploratorium. Nothing should be scheduled '
-            'there. Found: ${offenders.map((e) => e.id).join(', ')}',
+        inRoom109.map((e) => e.id),
+        contains('kids-space'),
+        reason: 'Kids\' space was moved to Room 109 (Liz 2026-08-31).',
       );
+
+      // And NOTHING in Room 109 is the Huntsman / Exploratorium.
+      for (final e in inRoom109) {
+        final haystack =
+            '${e.id} ${e.title} ${e.description} ${e.tags.join(' ')}'
+                .toLowerCase();
+        expect(haystack.contains('huntsman'), isFalse,
+            reason: 'Room 109 must not resurrect the cancelled Huntsman.');
+        expect(haystack.contains('exploratorium'), isFalse,
+            reason: 'Room 109 must not resurrect the Exploratorium.');
+      }
+    });
+
+    test('Kids\' space no longer references the old Room 106', () {
+      final kids =
+          EventsData.all.firstWhere((e) => e.id == 'kids-space');
+      expect(kids.room, 'Room 109');
+      expect(kids.room, isNot(contains('106')),
+          reason: 'Kids\' space moved OUT of Room 106 (Liz 2026-08-31).');
     });
 
     test('no venue is named after the Exploratorium', () {

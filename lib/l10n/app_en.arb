@@ -109,7 +109,10 @@
   "@timingEndNotPublished": {
     "description": "Qualifier shown where only a start time is official"
   },
-  "timingOpenAllEvening": "Open all evening",
+  "timingOpenAllEvening": "Open all night",
+  "@timingOpenAllEvening": {
+    "description": "Timing label for a full-event / open-all-night activity (available the whole evening, not a scheduled session)"
+  },
   "timingStartingWithin": "In the next {minutes} minutes",
   "@timingStartingWithin": {
     "placeholders": {

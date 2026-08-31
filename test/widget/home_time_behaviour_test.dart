@@ -72,13 +72,17 @@ void main() {
   });
 
   group('at doors open (4:00pm)', () {
-    test('nothing is happening yet — the first activity is 4.15pm', () {
-      // No activity publishes a 4pm start. The untimed drop-ins carry a 4pm
-      // stand-in only and are never reported as running, so the opening state
-      // is honestly empty until 4.15pm.
+    test('only the open-all-night drop-ins are live; first SCHEDULED slot is 4.15pm',
+        () {
+      // Liz 2026-08-31: Capture the Cosmos and the Solar System Walk are open
+      // all night, so at 4pm they ARE live. But no SCHEDULED slot starts before
+      // 4.15pm, so everything live at 4pm is a full-event drop-in.
       final container = at(EventInfo.at(16, 0));
-      expect(container.read(happeningNowProvider), isEmpty,
-          reason: 'no activity has a published 4pm start');
+      final live = container.read(happeningNowProvider);
+      expect(live, isNotEmpty,
+          reason: 'open-all-night activities are available from 4pm');
+      expect(live.every((t) => t.session!.isFullEvent), isTrue,
+          reason: 'no scheduled slot has a 4pm start');
     });
   });
 

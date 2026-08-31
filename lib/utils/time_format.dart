@@ -86,10 +86,15 @@ abstract final class TimeFormat {
   /// Pouya 2026-08-28). And a [TimingConfidence.startOnly] session printed a
   /// `10pm` finish that the programme never published.
   ///
-  /// So: no published start → "Time not published"; a published start but no
-  /// published finish → the real start qualified as "finish not published",
-  /// never a fabricated end; only a fully published session prints a range.
+  /// So: an open-all-night activity → "Open all night"; no published start →
+  /// "Time not published"; a published start but no published finish → the real
+  /// start qualified as "finish not published", never a fabricated end; only a
+  /// fully published session prints a range.
   static String sessionLabel(AonL10n l, EventSession s) {
+    // Checked FIRST: an open-all-night session has no published start, so
+    // without this it would fall to "Time not published" — the exact
+    // contradiction Liz's update fixes (available all night, shown as such).
+    if (s.isFullEvent) return l.timingOpenAllEvening;
     if (!s.hasPublishedStart) return l.timingTimeNotPublished;
     if (!s.hasPublishedEnd) {
       // Real start, honest "finish unknown" — never the 10pm stand-in.
@@ -98,13 +103,14 @@ abstract final class TimeFormat {
     return range(s.start, s.end);
   }
 
-  /// All sessions, timing-aware and localised. When NOTHING has a published
-  /// start it collapses to a single "Time not published" rather than repeating
-  /// it per stand-in session.
+  /// All sessions, timing-aware and localised. When every session is genuinely
+  /// unscheduled it collapses to a single "Time not published" rather than
+  /// repeating it per stand-in session. Open-all-night sessions are NOT
+  /// collapsed here — [sessionLabel] renders each as "Open all night".
   static String allSessionsLabel(AonL10n l, AonEvent event) {
     final sorted = [...event.sessions]
       ..sort((a, b) => a.start.compareTo(b.start));
-    if (sorted.every((s) => !s.hasPublishedStart)) {
+    if (sorted.every((s) => s.isUnscheduled)) {
       return l.timingTimeNotPublished;
     }
     return sorted.map((s) => sessionLabel(l, s)).join(', ');

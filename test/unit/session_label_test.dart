@@ -60,10 +60,22 @@ void main() {
       expect(label, '4pm – 10pm');
     });
 
-    test('a source-confirmed full-event block prints its real range', () {
+    test('a source-confirmed full-event block reads "Open all night"', () {
+      // Liz 2026-08-31: "open all night" — the label communicates availability,
+      // never a scheduled 4pm–10pm range that could read as a booking.
       final label =
           TimeFormat.sessionLabel(en, session(TimingConfidence.fullEventConfirmed));
-      expect(label, '4pm – 10pm');
+      expect(label, en.timingOpenAllEvening);
+      expect(label, isNot(contains('–')));
+    });
+
+    test('an open-all-night (no set times) session reads "Open all night" too',
+        () {
+      final label =
+          TimeFormat.sessionLabel(en, session(TimingConfidence.openAllNight));
+      expect(label, en.timingOpenAllEvening);
+      expect(label, isNot(contains('–')));
+      expect(label, isNot(contains('4pm')));
     });
 
     test('the label is localised — Persian, not the English stand-in', () {
@@ -72,21 +84,35 @@ void main() {
     });
   });
 
-  group('the three audited unpublished activities never show 4pm–10pm', () {
-    final unscheduled = EventsData.all.where((e) => e.isUnscheduled).toList();
-
-    test('there are exactly the three we audited', () {
-      expect(unscheduled.map((e) => e.id).toList()..sort(),
-          ['capture-the-cosmos', 'exhibition-hall', 'solar-system-walk']);
+  group('Liz\'s three former-unpublished activities read correctly now', () {
+    test('Capture the cosmos → "Open all night" (never a fabricated range)', () {
+      final e = EventsData.byId('capture-the-cosmos')!;
+      final label = TimeFormat.allSessionsLabel(en, e);
+      expect(label, en.timingOpenAllEvening);
+      expect(label, isNot(contains('–')));
     });
 
-    for (final e in EventsData.all.where((e) => e.isUnscheduled)) {
-      test('${e.id}: allSessionsLabel is "Time not published"', () {
+    test('Solar system walk → "Open all night" (never "Time not published")', () {
+      final e = EventsData.byId('solar-system-walk')!;
+      final label = TimeFormat.allSessionsLabel(en, e);
+      expect(label, en.timingOpenAllEvening);
+      expect(label, isNot(equals(en.timingTimeNotPublished)));
+    });
+
+    test('Exhibition Hall → the real 4.15pm–10pm range', () {
+      final e = EventsData.byId('exhibition-hall')!;
+      final label = TimeFormat.allSessionsLabel(en, e);
+      expect(label, contains('4.15pm'));
+      expect(label, contains('10pm'));
+    });
+
+    test('no entry shows the contradictory "Time not published" + a range', () {
+      for (final e in EventsData.all) {
         final label = TimeFormat.allSessionsLabel(en, e);
-        expect(label, en.timingTimeNotPublished);
-        expect(label, isNot(contains('4pm')));
-        expect(label, isNot(contains('10pm')));
-      });
-    }
+        final contradiction =
+            label.contains(en.timingTimeNotPublished) && label.contains('–');
+        expect(contradiction, isFalse, reason: '${e.id}: "$label"');
+      }
+    });
   });
 }

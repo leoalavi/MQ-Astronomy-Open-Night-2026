@@ -38,7 +38,7 @@ time not published" rather than a made-up end.
 | --- | --- | --- |
 | **Stories Across Worlds** (`stories-across-worlds`) | — | Confirmed finish time |
 | **Space exploration with the Junior Science Academy** (`junior-science-academy`) | — | Confirmed finish time |
-| **Kids' space** (`kids-space`) | 1 Central Courtyard, Room 106 | Confirmed finish time |
+| **Kids' space** (`kids-space`) | 1 Central Courtyard, Room 109 | Confirmed finish time |
 | **Planetariums** (`planetariums`) | Sport & Aquatic Centre | Finish time, and the exact session cadence ("about every 20 min from 4.15pm" is our current wording) |
 
 **Question to send:** *"These four activities list a 4.15pm start but no finish

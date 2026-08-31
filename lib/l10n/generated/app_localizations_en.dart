@@ -123,7 +123,7 @@ class AonL10nEn extends AonL10n {
   String get timingEndNotPublished => 'Finish time not published';
 
   @override
-  String get timingOpenAllEvening => 'Open all evening';
+  String get timingOpenAllEvening => 'Open all night';
 
   @override
   String timingStartingWithin(int minutes) {

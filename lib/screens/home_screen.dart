@@ -589,7 +589,11 @@ class _NextUpCard extends ConsumerWidget {
                           now,
                           entry.session.start,
                         ),
-                        _ => TimeFormat.time(entry.session.start),
+                        // Only a published start; an open-all-night activity's
+                        // 4pm is a stand-in, not a time the programme printed.
+                        _ => entry.session.hasPublishedStart
+                            ? TimeFormat.time(entry.session.start)
+                            : null,
                       },
                     ),
                   ),

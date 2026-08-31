@@ -158,7 +158,13 @@ EventTiming.happeningNow => session.hasPublishedEnd
     ? TimeFormat.remaining(l, now, session.end)
     : null,
 EventTiming.startingSoon => TimeFormat.until(l, now, session.start),
-      EventTiming.upcoming => TimeFormat.time(session.start),
+      // Only present a start time the programme actually published. For an
+      // "open all night" activity (no set opening times) the start is a 4pm
+      // stand-in, and "· 4pm" would both invent a time and contradict the
+      // card's own "Open all night" line — the start-side twin of the
+      // hasPublishedEnd countdown gate above.
+      EventTiming.upcoming =>
+        session.hasPublishedStart ? TimeFormat.time(session.start) : null,
       EventTiming.finished => null,
       EventTiming.unscheduled => null, // nothing to count down to
     };

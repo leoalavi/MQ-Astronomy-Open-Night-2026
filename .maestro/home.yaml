@@ -18,10 +18,15 @@ tags: [home]
 - assertVisible: "(?s).*Astronomy Passport.*of 9 stamps.*"
 - assertVisible: "(?s).*Up next.*"
 
-# An "Up next" event card renders with its timing chip, venue and time.
-- assertVisible: "(?s).*On the night · 4.15pm.*Cosmic arcade.*Central Courtyard.*4.15pm – 9.30pm.*"
+# Post-Liz (2026-08-31) the two "Open all night" activities lead the rail
+# (they start at the 4pm event open, ahead of the 4.15pm crowd). Capture the
+# cosmos is fullEventConfirmed — a published 4pm start — so it keeps its time.
+# Solar system walk is openAllNight (Liz: "no set opening times") and must NOT
+# show a fabricated start; that honesty guard runs on the Program screen where
+# the card is fully visible (this rail only peeks two cards).
+- assertVisible: "(?s).*On the night · 4pm.*Capture the cosmos.*Open all night.*"
 # Favourite it from the card.
-- tapOn: "(?s).*Save Cosmic arcade to My Night.*"
+- tapOn: "(?s).*Save Capture the cosmos to My Night.*"
 - takeScreenshot: .maestro/screenshots/home-01-saved
 
 # The whole-programme link and the map CTA are reachable below the fold.

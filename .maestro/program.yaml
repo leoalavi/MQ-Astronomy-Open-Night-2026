@@ -16,8 +16,17 @@ tags: [program]
     point: "27%,92%"
 - assertVisible: "Search talks, activities, presenters"
 - assertVisible: "36 items in the program"
-- assertVisible: "(?s).*On the night.*33.*"
+# Post-Liz (2026-08-31) all 36 entries are upcoming ("On the night") — the three
+# formerly time-unpublished activities now carry confirmed / open-all-night
+# timing, so none sits in a separate "Time not published" group before the event.
+- assertVisible: "(?s).*On the night.*36.*"
 - assertVisible: "(?s).*Activities.*Cosmic arcade.*4.15pm – 9.30pm.*Central Courtyard.*"
+# Honesty guard: Solar system walk is openAllNight (Liz gave "no set opening
+# times"), so its card reads "Open all night" and must NEVER present a
+# fabricated 4pm start beside the title (regression guard for the openAllNight
+# start-time fix).
+- assertVisible: "(?s).*Solar system walk.*Open all night.*"
+- assertNotVisible: "(?s).*4pm.*Solar system walk.*"
 
 # A time-band chip narrows the list; Clear resets it.
 - tapOn: "6–8pm"

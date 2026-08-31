@@ -6,7 +6,7 @@ import 'package:aon2026/models/data_confidence.dart';
 ///
 /// ## Why this exists
 ///
-/// Seven of the 36 programme entries do not publish a full start-and-end time,
+/// Several of the 36 programme entries do not publish a full start-and-end time,
 /// and the data previously papered over that by writing plausible times into
 /// [EventSession.start]/[EventSession.end] — 4pm–10pm for entries with no time
 /// at all. Nothing downstream could tell those apart from a real 4pm–10pm

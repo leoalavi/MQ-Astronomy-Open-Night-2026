@@ -579,7 +579,10 @@ incident.
    the single enforcement point. `maps_sdk_boundary_test.dart`.
 2. **Never state a time the organisers did not publish.** `TimingConfidence`
    carries the distinction the raw times cannot; `hasPublishedEnd` gates every
-   countdown. `unpublished_time_test.dart`.
+   countdown, and `hasPublishedStart` gates the "up next" start time — an
+   `openAllNight` activity (Solar system walk: "no set opening times") has no
+   published start, so no card may show its 4pm stand-in as a start.
+   `unpublished_time_test.dart`, `open_all_night_start_time_test.dart`.
 3. **One clear truth per card.** Never render "Time not published" *and* a time
    range together. `liz_update_2026_08_31_test.dart`, `session_label_test.dart`.
 4. **An open-all-night drop-in must never clash with a scheduled session** —

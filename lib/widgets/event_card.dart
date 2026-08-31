@@ -202,7 +202,10 @@ EventTiming.happeningNow => session.hasPublishedEnd
     ? TimeFormat.remaining(l, now!, session.end)
     : null,
 EventTiming.startingSoon => TimeFormat.until(l, now!, session.start),
-      EventTiming.upcoming => TimeFormat.time(session.start),
+      // Only present a published start — an open-all-night activity's start is
+      // a 4pm stand-in, never a time the programme printed. See activity_rail_card.
+      EventTiming.upcoming =>
+        session.hasPublishedStart ? TimeFormat.time(session.start) : null,
       EventTiming.finished => null,
       EventTiming.unscheduled => null,
     };

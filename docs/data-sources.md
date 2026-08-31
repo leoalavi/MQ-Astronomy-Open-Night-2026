@@ -153,7 +153,10 @@ See `docs/navigation-strategy.md`.
 
 ## Open questions for the organisers
 
-1. Finish times for the seven activities listed above.
+1. Finish times for the four activities listed above (Stories Across Worlds,
+   Junior Science Academy, Kids' space, Planetariums). Liz's 2026-08-31 update
+   resolved the other formerly-unpublished entries (Exhibition Hall, Capture the
+   cosmos, Solar system walk).
 2. Exact **first aid** location.
 3. Which of the two mapped positions is the **West 6** event car park.
 4. **Shuttle bus** stops, route and timetable.

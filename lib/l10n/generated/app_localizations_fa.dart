@@ -427,6 +427,13 @@ class AonL10nFa extends AonL10n {
   String get panoramaTapToExplore => 'برای دیدن نمای ۳۶۰ درجه ضربه بزنید';
 
   @override
+  String get panoramaSolarWalkTitle => 'پیاده‌روی منظومهٔ شمسی';
+
+  @override
+  String get panoramaSolarWalkSubtitle =>
+      'از حیاط مرکزی تا پارک تلسکوپ، به‌صورت ۳۶۰ درجه';
+
+  @override
   String panoramaVenueWithMapLetter(String letter, String name) {
     return '$letter · $name';
   }

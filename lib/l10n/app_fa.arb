@@ -113,6 +113,8 @@
   "panorama360Loading": "در حال بارگذاری نمای ۳۶۰ درجه…",
   "panorama360Title": "پیش‌نمای ۳۶۰ درجه",
   "panoramaTapToExplore": "برای دیدن نمای ۳۶۰ درجه ضربه بزنید",
+  "panoramaSolarWalkTitle": "پیاده‌روی منظومهٔ شمسی",
+  "panoramaSolarWalkSubtitle": "از حیاط مرکزی تا پارک تلسکوپ، به‌صورت ۳۶۰ درجه",
   "panoramaVenueWithMapLetter": "{letter} · {name}",
   "settingsTitle": "تنظیمات",
   "settingsAppearance": "ظاهر",

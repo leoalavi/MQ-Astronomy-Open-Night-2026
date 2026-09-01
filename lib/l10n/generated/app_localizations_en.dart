@@ -427,6 +427,13 @@ class AonL10nEn extends AonL10n {
   String get panoramaTapToExplore => 'Tap to explore in 360°';
 
   @override
+  String get panoramaSolarWalkTitle => 'Solar system walk';
+
+  @override
+  String get panoramaSolarWalkSubtitle =>
+      'Central Courtyard to Telescope Park, in 360°';
+
+  @override
   String panoramaVenueWithMapLetter(String letter, String name) {
     return '$letter · $name';
   }

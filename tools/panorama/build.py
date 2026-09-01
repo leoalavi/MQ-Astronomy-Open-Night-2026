@@ -122,14 +122,61 @@ TOURS: dict[str, list[tuple[str, str, str, str]]] = {
         ("t2-theatre-g25", "T2 Theatre G25", JOURNEY,
          "g25-t2-theatre-17-WW.jpg"),
     ],
+    # Solar system walk — a ROUTE tour, not a legend venue. Gymnasium Road is
+    # unlettered on the printed sheet (venues_data.dart), so this never enters
+    # the D–I picker; it is surfaced as a pinned card at the top of the picker
+    # instead. Scene order is the organiser's own numbering (1→13), from the
+    # Central Courtyard to the Telescope Park — the direction visitors walk it,
+    # confirmed by Raouf 2026-09-01. Every source is byte-identical to a pinned
+    # original (verified 2026-09-01).
+    #
+    # Seven scenes carry a 5th tuple element: an explicit bundled asset path that
+    # some other tour (E/F/G) already encodes. The encoder SKIPS those and the
+    # manifest points at the shared file verbatim (see asset_relpath), so the
+    # walk reuses ~14 MB of imagery instead of duplicating it. The remaining six
+    # are new encodes unique to the walk.
+    "gymnasium-road": [
+        ("courtyard-entrance", "Central Courtyard", ASTRONOMY,
+         "1 CC entrance.JPG", "indoor/1-central-courtyard_entrance.jpg"),
+        ("courtyard-approach-stairs", "Leaving the Central Courtyard", ASTRONOMY,
+         "1 CC close to stairs.JPG"),
+        ("courtyard-stairs", "Central Courtyard stairs", ASTRONOMY,
+         "1 CC - Stairs.JPG", "indoor/1-central-courtyard_stairs.jpg"),
+        # Already bundled as 1-central-courtyard_downstairs.jpg — it was held out
+        # of E's rail "for the future road/route panorama", which is THIS walk.
+        # Reuse that encode rather than duplicate it.
+        ("courtyard-downstairs", "Down toward Gymnasium Road", ASTRONOMY,
+         "1 CC- Downstairs.JPG", "indoor/1-central-courtyard_downstairs.jpg"),
+        ("planetarium-approach", "Before the planetarium", ASTRONOMY,
+         "Platiymrum before Entrance.JPG",
+         "indoor/sport-and-aquatic-centre_planetarium-approach.jpg"),
+        ("planetarium-entrance", "Planetarium entrance", ASTRONOMY,
+         "Planetarium Entrance Gym.JPG",
+         "indoor/sport-and-aquatic-centre_planetarium-entrance.jpg"),
+        ("sport-and-aquatic-centre", "Sport and Aquatic Centre", ASTRONOMY,
+         "Sport and Aquatic center.JPG",
+         "indoor/sport-and-aquatic-centre_centre.jpg"),
+        ("sport-and-aquatic-centre-street",
+         "Sport and Aquatic Centre — 10 Gymnasium Road", ASTRONOMY,
+         "Sport and Aquatic Centre — 10 Gymnasium Road — entrance.JPG"),
+        ("nextsense", "NextSense — 2 Gymnasium Road", ASTRONOMY,
+         "Next Sense— North 3 Parking - optional.JPG"),
+        ("gymnasium-road-south", "Along Gymnasium Road", ASTRONOMY,
+         "1 Gymnastic road - optional 1.JPG"),
+        ("gymnasium-road-north", "Gymnasium Road, near the Observatory",
+         ASTRONOMY, "1 Gymnasium road- Optional.JPG"),
+        ("observatory-gate", "Observatory gate", ASTRONOMY,
+         "Astronomical Observatory Entrance 2.JPG",
+         "indoor/astronomical-observatory_entrance.jpg"),
+        ("telescope-park", "Telescope Park", ASTRONOMY,
+         "Astronomical Observatory Entrance 1.JPG",
+         "indoor/astronomical-observatory_approach.jpg"),
+    ],
 }
 
-# Retained for the future road/route panorama. This source and bundled asset
-# record is deliberately NOT in TOURS, so manifest generation cannot put it
-# back into the 1 Central Courtyard room sequence.
-HELD_OUT_ROUTE_SCENES = [
-    ("downstairs", "Downstairs", ASTRONOMY, "1 CC- Downstairs.JPG"),
-]
+# (Formerly HELD_OUT_ROUTE_SCENES held `1 CC- Downstairs.JPG` "for the future
+# road/route panorama". That route now exists — it is scene 4 of the Solar
+# system walk above — so the hold-out is gone; the photo lives in `gymnasium-road`.)
 
 # sha256 of each ORIGINAL, so a re-shot or swapped source is detectable even
 # though the originals are too large to vendor.
@@ -157,6 +204,12 @@ SOURCE_SHA256 = {
     "1 CC- room 115.JPG": "7751aabeff53f4a6e3b6688751d776b7d8b596c4f805033c51cda243f1c02c6a",
     "1 CC- Room 116.JPG": "0c6ee812fa5c99089bf729f5fedeec35003f5a6f8d69052f1e6656407fa1038a",
     "Sport and Aquatic center.JPG": "d3b5f3e335678b0875830fcba3b766005ae0bb306b0557ba499a507f4c879ab3",
+    # Solar system walk — five sources new to the bundle (2026-09-01).
+    "1 CC close to stairs.JPG": "b717f3abbbd78f0486a54e5bca669b501b2f68c68991a3cf81b2935d0ffb5f2c",
+    "Sport and Aquatic Centre — 10 Gymnasium Road — entrance.JPG": "6eb8a731edd0662b505006ca1c0744778cafe3efc0c568670f89613ac9faae88",
+    "Next Sense— North 3 Parking - optional.JPG": "fa75a3d5e07cfaf2a5215696c5bcf810507a069ada65cd3ae9cbd556acc440b0",
+    "1 Gymnastic road - optional 1.JPG": "9283437a5614d979acc82e340d0951a0e1c15cee4119270e3b114dab1714946c",
+    "1 Gymnasium road- Optional.JPG": "b4553af8c32ce2246dd722b255efd843682dc5d6381d02e19a8c3526613b966f",
     "Platiymrum before Entrance.JPG": "d586af86af6c4e24ddc7dd6ba6a479e1cf8da3cfc7cbf129ce2fe7ad75a18289",
     "Planetarium Entrance Gym.JPG": "fb1f2c2f14f0d1f6abf89a1db38b5825d0c500bcd5c086059f54e43db8a9ee04",
     "Astronomical Observatory Entrance 1.JPG": "ace4f3349a074d9c1220b3a53f4844326ad661a547127fdd1fc80a2da1369b5d",
@@ -175,6 +228,51 @@ def asset_name(venue_id: str, scene_id: str) -> str:
     return f"{venue_id}_{scene_id}.jpg"
 
 
+def _unpack(scene: tuple) -> tuple[str, str, str, str, str | None]:
+    """A TOURS scene is (scene_id, label, dir, filename[, alias]).
+
+    The optional 5th element is an explicit bundled asset path (e.g.
+    'indoor/1-central-courtyard_entrance.jpg') that ANOTHER tour already encodes.
+    When present the encoder writes nothing for this scene and the manifest points
+    at that shared file, so a photograph reused across tours is bundled once.
+    """
+    scene_id, label, directory, filename = scene[0], scene[1], scene[2], scene[3]
+    alias = scene[4] if len(scene) > 4 else None
+    return scene_id, label, directory, filename, alias
+
+
+def asset_relpath(venue_id: str, scene_id: str, alias: str | None) -> str:
+    """The bundled path a manifest node points at: a reused alias, or own encode."""
+    return alias if alias else f"indoor/{asset_name(venue_id, scene_id)}"
+
+
+def encoded_asset_paths() -> set[str]:
+    """Every bundled path some NON-aliased scene actually encodes."""
+    return {
+        f"indoor/{asset_name(v, s)}"
+        for v, s, _, _, alias in sources()
+        if not alias
+    }
+
+
+def dangling_aliases() -> list[tuple[str, str, str]]:
+    """Aliases that resolve to no bundled file — the failure §3.1 guards against
+    (a typo'd reuse, or a drift after an asset is renamed). An alias is sound if
+    some non-aliased scene encodes it, OR it already exists as a tracked bundle
+    asset (e.g. 1-central-courtyard_downstairs.jpg, encoded once and reused).
+    Empty list == every alias points at a real file."""
+    produced = encoded_asset_paths()
+    bundle_root = os.path.join(REPO, "assets", "data")
+    dangling = []
+    for v, s, _, _, alias in sources():
+        if not alias:
+            continue
+        on_disk = os.path.exists(os.path.join(bundle_root, alias))
+        if alias not in produced and not on_disk:
+            dangling.append((v, s, alias))
+    return dangling
+
+
 def sha256(path: str) -> str:
     h = hashlib.sha256()
     with open(path, "rb") as fh:
@@ -183,13 +281,14 @@ def sha256(path: str) -> str:
     return h.hexdigest()
 
 
-def sources() -> list[tuple[str, str, str, str]]:
-    """(venue_id, scene_id, label, absolute source path) in tour order."""
+def sources() -> list[tuple[str, str, str, str, str | None]]:
+    """(venue_id, scene_id, label, absolute source path, alias) in tour order."""
     out = []
     for venue_id, scenes in TOURS.items():
-        for scene_id, label, directory, filename in scenes:
+        for scene in scenes:
+            scene_id, label, directory, filename, alias = _unpack(scene)
             out.append((venue_id, scene_id, label,
-                        os.path.join(directory, filename)))
+                        os.path.join(directory, filename), alias))
     return out
 
 
@@ -203,15 +302,15 @@ def write_manifests() -> None:
     tours are navigated by the scene rail, which needs no direction at all.
     """
     for venue_id, scenes in TOURS.items():
-        nodes = [
-            {
+        nodes = []
+        for scene in scenes:
+            scene_id, label, _, _, alias = _unpack(scene)
+            nodes.append({
                 "id": scene_id,
-                "image": f"indoor/{asset_name(venue_id, scene_id)}",
+                "image": asset_relpath(venue_id, scene_id, alias),
                 "description": label,
                 "neighbours": [],
-            }
-            for scene_id, label, _, _ in scenes
-        ]
+            })
         path = os.path.join(OUT_DIR, f"{venue_id}.json")
         with open(path, "w", encoding="utf-8") as fh:
             json.dump({"nodes": nodes}, fh, indent=2, ensure_ascii=False)
@@ -226,17 +325,28 @@ def main() -> int:
                     help="print source sha256s for SOURCE_SHA256")
     ap.add_argument("--manifests-only", action="store_true",
                     help="rewrite the manifests without re-encoding")
+    ap.add_argument("--only", metavar="VENUE_ID",
+                    help="encode only this venue's own scenes (skips aliases); "
+                         "still writes all manifests. Use when adding one tour "
+                         "so the other 30+ JPEGs are not re-encoded and churned.")
     args = ap.parse_args()
 
-    missing = [p for _, _, _, p in sources() if not os.path.exists(p)]
+    missing = [p for _, _, _, p, _ in sources() if not os.path.exists(p)]
     if missing:
         print("MISSING SOURCES:", file=sys.stderr)
         for p in missing:
             print(f"  {p}", file=sys.stderr)
         return 1
 
+    dangling = dangling_aliases()
+    if dangling:
+        print("DANGLING ALIASES (reuse a path no scene encodes):", file=sys.stderr)
+        for v, s, alias in dangling:
+            print(f"  {v}/{s} -> {alias}", file=sys.stderr)
+        return 1
+
     if args.print_shas:
-        for _, _, _, p in sources():
+        for _, _, _, p, _ in sources():
             print(f'    "{os.path.basename(p)}": "{sha256(p)}",')
         return 0
 
@@ -253,7 +363,12 @@ def main() -> int:
 
     os.makedirs(OUT_DIR, exist_ok=True)
     total = 0
-    for venue_id, scene_id, _, src in sources():
+    encoded = 0
+    for venue_id, scene_id, _, src, alias in sources():
+        if alias:
+            continue  # reuses another tour's encode; never duplicate it
+        if args.only and venue_id != args.only:
+            continue
         dst = os.path.join(OUT_DIR, asset_name(venue_id, scene_id))
         with Image.open(src) as im:
             if im.size != (8192, 4096):
@@ -263,9 +378,10 @@ def main() -> int:
                 dst, "JPEG", quality=QUALITY, optimize=True, progressive=True)
         size = os.path.getsize(dst)
         total += size
+        encoded += 1
         print(f"{os.path.basename(dst):52} {size / 1e6:5.2f} MB")
     write_manifests()
-    print(f"\n{len(sources())} scenes, {total / 1e6:.1f} MB, "
+    print(f"\n{encoded} scenes encoded, {total / 1e6:.1f} MB, "
           f"{len(TOURS)} manifests")
     return 0
 

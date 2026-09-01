@@ -64,7 +64,10 @@ void main() {
       'metro-station',
       'shuttle-stop',
       'bus-stop',
-      // Unlettered on the sheet — see venues_data.dart for why.
+      // Unlettered on the sheet — see venues_data.dart for why. gymnasium-road
+      // (the Solar system walk) DOES have a 360° tour, but it is a route, not a
+      // lettered venue: the picker pins it as a top card of its own rather than
+      // in this D–I letter provider. So it must stay OUT of this list.
       'gymnasium-road',
       'central-courtyard',
       // Valid event venues with direct tours, but not part of the current

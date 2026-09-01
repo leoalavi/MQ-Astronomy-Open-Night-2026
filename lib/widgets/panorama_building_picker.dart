@@ -43,6 +43,21 @@ class PanoramaBuildingPicker extends ConsumerWidget {
         AonNavMetrics.clearance(context),
       ),
       children: [
+        // Solar system walk — pinned at the top, ABOVE the D–I letter list. It
+        // is a route, not a lettered venue (Gymnasium Road carries no map disc),
+        // so it never goes through the letter path below — which is also why the
+        // unguarded `v.mapReference!` there is still safe.
+        if (tours.containsKey('gymnasium-road'))
+          Padding(
+            padding: const EdgeInsets.only(bottom: AonSpacing.space3),
+            child: _VenueCard(
+              label: l10n.panoramaSolarWalkTitle,
+              subtitleOverride: l10n.panoramaSolarWalkSubtitle,
+              iconOverride: Icons.directions_walk_rounded,
+              tour: tours['gymnasium-road'],
+              onTap: () => onOpen('gymnasium-road'),
+            ),
+          ),
         for (final v in venues)
           Padding(
             padding: const EdgeInsets.only(bottom: AonSpacing.space3),
@@ -60,7 +75,13 @@ class PanoramaBuildingPicker extends ConsumerWidget {
 }
 
 class _VenueCard extends StatelessWidget {
-  const _VenueCard({required this.label, required this.tour, this.onTap});
+  const _VenueCard({
+    required this.label,
+    required this.tour,
+    this.onTap,
+    this.subtitleOverride,
+    this.iconOverride,
+  });
 
   /// Already letter-prefixed, e.g. "A · Macquarie Theatre".
   final String label;
@@ -69,15 +90,24 @@ class _VenueCard extends StatelessWidget {
   final PanoramaTour? tour;
   final VoidCallback? onTap;
 
+  /// Non-null replaces the default subtitle (used by the Solar system walk,
+  /// which names its route rather than reading "Tap to explore").
+  final String? subtitleOverride;
+
+  /// Non-null replaces the default leading icon (the walk uses a route glyph).
+  final IconData? iconOverride;
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AonL10n.of(context);
     final hasTour = tour != null;
     final isDemo = tour?.placeholder ?? false;
-    final subtitle = tour == null
-        ? l10n.panoramaComingSoon
-        : (isDemo ? l10n.panoramaDemoFlag : l10n.panoramaTapToExplore);
+    final subtitle =
+        subtitleOverride ??
+        (tour == null
+            ? l10n.panoramaComingSoon
+            : (isDemo ? l10n.panoramaDemoFlag : l10n.panoramaTapToExplore));
     final card = GlassSurface(
       variant: GlassVariant.control,
       borderRadius: BorderRadius.circular(AonSpacing.radiusMd),
@@ -87,7 +117,10 @@ class _VenueCard extends StatelessWidget {
         child: Row(
           children: [
             Icon(
-              hasTour ? Icons.panorama_photosphere : Icons.lock_outline_rounded,
+              iconOverride ??
+                  (hasTour
+                      ? Icons.panorama_photosphere
+                      : Icons.lock_outline_rounded),
               color: hasTour ? context.aon.accent : context.aon.contentTertiary,
             ),
             const SizedBox(width: AonSpacing.space3),

@@ -130,6 +130,37 @@ void main() {
     },
   );
 
+  testWidgets(
+    'the Solar system walk is pinned at the top and opens its route tour',
+    (tester) async {
+      tall(tester);
+      String? opened;
+      await tester.pumpWidget(picker(onOpen: (id) => opened = id));
+      await tester.pump();
+
+      // Present, with its own route glyph and route subtitle (not "explore").
+      final walk = find.text('Solar system walk');
+      expect(walk, findsOneWidget);
+      expect(find.byIcon(Icons.directions_walk_rounded), findsOneWidget);
+      expect(find.text('Central Courtyard to Telescope Park, in 360°'),
+          findsOneWidget);
+
+      // Pinned ABOVE the lettered D card — "add it at the top" (Raouf).
+      expect(
+        tester.getTopLeft(walk).dy,
+        lessThan(
+          tester
+              .getTopLeft(find.text('D · 14 Sir Christopher Ondaatje Avenue'))
+              .dy,
+        ),
+      );
+
+      // Tapping it opens the route tour, not a lettered venue.
+      await tester.tap(walk);
+      expect(opened, 'gymnasium-road');
+    },
+  );
+
   testWidgets('a venue with no tour is still shown locked, not hidden', (
     tester,
   ) async {

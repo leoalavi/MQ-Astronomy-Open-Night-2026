@@ -14,6 +14,10 @@ tags: [map]
 
 - tapOn:
     text: "360°"
+# The Solar system walk is pinned at the TOP, above the D-I letters (2026-09-01).
+# It is a route tour, so it reads with its own route subtitle, not "Tap to
+# explore". Its own open+navigate proof is in map-solar-walk.yaml.
+- assertVisible: "(?s).*Solar system walk.*Central Courtyard to Telescope Park.*"
 # The picker rendered. G shipped 2026-08-31, so every D-I card is now tourable
 # and none reads "Coming soon".
 - assertVisible: "(?s).*E . 1 Central Courtyard.*Tap to explore.*"

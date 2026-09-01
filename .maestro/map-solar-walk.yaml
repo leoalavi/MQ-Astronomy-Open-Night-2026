@@ -1,0 +1,40 @@
+# Map · Solar system walk (360° route tour)
+#
+# The walk is pinned at the TOP of the 360° picker, above the D-I letter cards
+# (Raouf 2026-09-01: "add it at the top of the lists"). It is a route, not a
+# lettered venue, so it carries its own route subtitle and a walk glyph. Tapping
+# it opens the 13-scene route tour, whose title island reads the venue name,
+# "Gymnasium Road". The scene rail navigates Central Courtyard -> Telescope Park.
+#
+# Selector note: picker rows are merged multi-line a11y strings; match the walk
+# card with `(?s).*Solar system walk.*` (DOTALL crosses the subtitle line).
+appId: au.edu.mq.astronomy.aon2026
+tags: [map]
+---
+- runFlow: flows/open-map.yaml
+
+- tapOn:
+    text: "360°"
+# Pinned at the top, with its route subtitle (not "Tap to explore").
+- assertVisible: "(?s).*Solar system walk.*Central Courtyard to Telescope Park.*"
+- takeScreenshot: .maestro/screenshots/solar-walk-01-pinned-top
+
+# Open the route tour.
+- tapOn: "(?s).*Solar system walk.*"
+- waitForAnimationToEnd:
+    timeout: 8000
+# The immersive tour opened: its title island reads the venue name.
+- assertVisible: "Gymnasium Road"
+- takeScreenshot: .maestro/screenshots/solar-walk-02-tour-open
+
+# The scene rail carries the route. Later scenes sit off-screen to the end of
+# the rail; scroll the rail to a distinctive late stop to prove navigation.
+- scrollUntilVisible:
+    element:
+      text: "Telescope Park"
+    direction: RIGHT
+    timeout: 8000
+- tapOn: "Telescope Park"
+- waitForAnimationToEnd:
+    timeout: 8000
+- takeScreenshot: .maestro/screenshots/solar-walk-03-telescope-park

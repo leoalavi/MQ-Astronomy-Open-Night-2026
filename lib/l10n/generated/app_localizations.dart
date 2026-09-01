@@ -775,6 +775,18 @@ abstract class AonL10n {
   /// **'Tap to explore in 360°'**
   String get panoramaTapToExplore;
 
+  /// Title of the pinned card at the top of the 360° picker for the Solar system walk — a route tour along Gymnasium Road, not a lettered map venue.
+  ///
+  /// In en, this message translates to:
+  /// **'Solar system walk'**
+  String get panoramaSolarWalkTitle;
+
+  /// Subtitle of the pinned Solar system walk card in the 360° picker. Names the route the walk follows.
+  ///
+  /// In en, this message translates to:
+  /// **'Central Courtyard to Telescope Park, in 360°'**
+  String get panoramaSolarWalkSubtitle;
+
   /// 360° picker card title. Prefixes the venue with the letter the official AON program map prints for it, so the app list and the paper sheet read in the same alphabet.
   ///
   /// In en, this message translates to:

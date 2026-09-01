@@ -42,12 +42,14 @@ void main() {
     },
   );
 
-  test('tours are exactly the legend venues that have real photography', () {
+  test('tours are the legend venues with photography, plus the route walk', () {
     // A, B, D, E, F, G, H and I. Only C (Food and drink) has no tour: no
     // panorama is planned for it. G shipped once its two Observatory
     // originals were found unused in the source set (2026-08-31).
-    // Nothing outside the official map's A-I legend appears — notably the
-    // Jim Piper Centre panorama, which the map letters nowhere.
+    // Nothing outside the official map's A-I legend appears EXCEPT
+    // gymnasium-road — the Solar system walk, a route rather than a lettered
+    // venue (see PanoramaData doc). The Jim Piper Centre panorama, which the map
+    // letters nowhere, still does not ship.
     expect(PanoramaData.tours.map((t) => t.venueId).toSet(), {
       'macquarie-theatre',
       'mason-theatre',
@@ -57,6 +59,7 @@ void main() {
       'astronomical-observatory',
       '11-wallys-walk',
       '17-wallys-walk',
+      'gymnasium-road',
     });
   });
 
@@ -140,6 +143,7 @@ void main() {
         'astronomical-observatory': 2,
         '11-wallys-walk': 3,
         '17-wallys-walk': 4,
+        'gymnasium-road': 13,
       };
       for (final tour in PanoramaData.tours) {
         final m = IndoorManifest.fromJson(
@@ -188,13 +192,83 @@ void main() {
   );
 
   test(
-    'Stairs and held-out Downstairs image assets both remain bundled',
+    'Stairs and Downstairs image assets both remain bundled',
     () async {
+      // Downstairs is no longer held out — it is the Solar system walk's scene
+      // 4, reached by alias (not a duplicate encode). Its asset must stay put.
       for (final asset in [
         'assets/data/indoor/1-central-courtyard_stairs.jpg',
         'assets/data/indoor/1-central-courtyard_downstairs.jpg',
       ]) {
         expect((await rootBundle.load(asset)).lengthInBytes, greaterThan(0));
+      }
+    },
+  );
+
+  test(
+    'Solar system walk runs the numbered route 1->13, reusing E/F/G imagery',
+    () async {
+      // Order is the organiser's own numbering (Raouf 2026-09-01), Central
+      // Courtyard -> Telescope Park — the direction visitors walk it. This is
+      // the regression that pins the sequence; getting it reversed or reshuffled
+      // is the failure mode this test exists to catch.
+      final tour = PanoramaData.tourFor('gymnasium-road')!;
+      expect(tour.placeholder, isFalse);
+      final m = IndoorManifest.fromJson(
+        await rootBundle.loadString(tour.manifestAsset),
+      );
+
+      expect(m.nodes.map((n) => n.id).toList(), [
+        'courtyard-entrance',
+        'courtyard-approach-stairs',
+        'courtyard-stairs',
+        'courtyard-downstairs',
+        'planetarium-approach',
+        'planetarium-entrance',
+        'sport-and-aquatic-centre',
+        'sport-and-aquatic-centre-street',
+        'nextsense',
+        'gymnasium-road-south',
+        'gymnasium-road-north',
+        'observatory-gate',
+        'telescope-park',
+      ]);
+
+      // A route tour makes "add a forward arrow" tempting; the bearing would
+      // still be guessed. No source carries pose metadata, so neighbours stay
+      // empty, exactly as every other tour.
+      expect(m.nodes.every((n) => n.neighbours.isEmpty), isTrue);
+
+      // Eight of the thirteen scenes REUSE imagery E/F/G already bundle rather
+      // than duplicate it. If these stop pointing at the shared asset the bundle
+      // silently regrows by ~14 MB — pin the exact reuse.
+      final byId = {for (final n in m.nodes) n.id: n.image};
+      expect(byId['courtyard-entrance'], 'indoor/1-central-courtyard_entrance.jpg');
+      expect(byId['courtyard-stairs'], 'indoor/1-central-courtyard_stairs.jpg');
+      expect(byId['courtyard-downstairs'],
+          'indoor/1-central-courtyard_downstairs.jpg');
+      expect(byId['planetarium-approach'],
+          'indoor/sport-and-aquatic-centre_planetarium-approach.jpg');
+      expect(byId['planetarium-entrance'],
+          'indoor/sport-and-aquatic-centre_planetarium-entrance.jpg');
+      expect(byId['sport-and-aquatic-centre'],
+          'indoor/sport-and-aquatic-centre_centre.jpg');
+      // The observatory arrives northbound: gate (Entrance 2) before the wide
+      // approach with the dome (Entrance 1) — the walk's arrival order.
+      expect(byId['observatory-gate'],
+          'indoor/astronomical-observatory_entrance.jpg');
+      expect(byId['telescope-park'],
+          'indoor/astronomical-observatory_approach.jpg');
+
+      // The five scenes unique to the walk carry its own venue prefix.
+      for (final id in const [
+        'courtyard-approach-stairs',
+        'sport-and-aquatic-centre-street',
+        'nextsense',
+        'gymnasium-road-south',
+        'gymnasium-road-north',
+      ]) {
+        expect(byId[id], startsWith('indoor/gymnasium-road_'), reason: id);
       }
     },
   );

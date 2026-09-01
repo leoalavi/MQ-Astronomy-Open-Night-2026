@@ -1,0 +1,82 @@
+{
+  "nodes": [
+    {
+      "id": "courtyard-entrance",
+      "image": "indoor/1-central-courtyard_entrance.jpg",
+      "description": "Central Courtyard",
+      "neighbours": []
+    },
+    {
+      "id": "courtyard-approach-stairs",
+      "image": "indoor/gymnasium-road_courtyard-approach-stairs.jpg",
+      "description": "Leaving the Central Courtyard",
+      "neighbours": []
+    },
+    {
+      "id": "courtyard-stairs",
+      "image": "indoor/1-central-courtyard_stairs.jpg",
+      "description": "Central Courtyard stairs",
+      "neighbours": []
+    },
+    {
+      "id": "courtyard-downstairs",
+      "image": "indoor/1-central-courtyard_downstairs.jpg",
+      "description": "Down toward Gymnasium Road",
+      "neighbours": []
+    },
+    {
+      "id": "planetarium-approach",
+      "image": "indoor/sport-and-aquatic-centre_planetarium-approach.jpg",
+      "description": "Before the planetarium",
+      "neighbours": []
+    },
+    {
+      "id": "planetarium-entrance",
+      "image": "indoor/sport-and-aquatic-centre_planetarium-entrance.jpg",
+      "description": "Planetarium entrance",
+      "neighbours": []
+    },
+    {
+      "id": "sport-and-aquatic-centre",
+      "image": "indoor/sport-and-aquatic-centre_centre.jpg",
+      "description": "Sport and Aquatic Centre",
+      "neighbours": []
+    },
+    {
+      "id": "sport-and-aquatic-centre-street",
+      "image": "indoor/gymnasium-road_sport-and-aquatic-centre-street.jpg",
+      "description": "Sport and Aquatic Centre — 10 Gymnasium Road",
+      "neighbours": []
+    },
+    {
+      "id": "nextsense",
+      "image": "indoor/gymnasium-road_nextsense.jpg",
+      "description": "NextSense — 2 Gymnasium Road",
+      "neighbours": []
+    },
+    {
+      "id": "gymnasium-road-south",
+      "image": "indoor/gymnasium-road_gymnasium-road-south.jpg",
+      "description": "Along Gymnasium Road",
+      "neighbours": []
+    },
+    {
+      "id": "gymnasium-road-north",
+      "image": "indoor/gymnasium-road_gymnasium-road-north.jpg",
+      "description": "Gymnasium Road, near the Observatory",
+      "neighbours": []
+    },
+    {
+      "id": "observatory-gate",
+      "image": "indoor/astronomical-observatory_entrance.jpg",
+      "description": "Observatory gate",
+      "neighbours": []
+    },
+    {
+      "id": "telescope-park",
+      "image": "indoor/astronomical-observatory_approach.jpg",
+      "description": "Telescope Park",
+      "neighbours": []
+    }
+  ]
+}

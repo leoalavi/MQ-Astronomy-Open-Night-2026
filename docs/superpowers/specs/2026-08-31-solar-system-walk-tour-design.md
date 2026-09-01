@@ -1,5 +1,13 @@
 # Solar System Walk — 360° Route Tour — Design
 
+> **SHIPPED 2026-09-01** on branch `feat/solar-system-walk-tour`. The open
+> questions below were answered by Raouf: scene order is his own numbering 1→13
+> (§7 Q1/Q2/Q4 settled — the 13-scene route, with the two Observatory scenes in
+> arrival order, gate before dome); picker treatment is **(b) a pinned card at
+> the top** (§4). build.py gained the aliasing mechanism (§3.1). See
+> `docs/panorama-image-provenance.md` → "Solar system walk (shipped 2026-09-01)"
+> for the as-built record. The design text below is preserved as the rationale.
+
 **Status:** design, awaiting user review. **No code written.** Forked from
 `main@19d82d9`; sits on top of the G/Observatory tour shipped on branch
 `feat/panorama-observatory-tour`. Branch (at execution): `feat/solar-system-walk-tour`.

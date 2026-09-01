@@ -304,6 +304,14 @@
   "@panoramaTapToExplore": {
     "description": "360° picker card subtitle for a venue with real photography. Replaces the demo disclosure, which now shows only for placeholder tours."
   },
+  "panoramaSolarWalkTitle": "Solar system walk",
+  "@panoramaSolarWalkTitle": {
+    "description": "Title of the pinned card at the top of the 360° picker for the Solar system walk — a route tour along Gymnasium Road, not a lettered map venue."
+  },
+  "panoramaSolarWalkSubtitle": "Central Courtyard to Telescope Park, in 360°",
+  "@panoramaSolarWalkSubtitle": {
+    "description": "Subtitle of the pinned Solar system walk card in the 360° picker. Names the route the walk follows."
+  },
   "panoramaVenueWithMapLetter": "{letter} · {name}",
   "@panoramaVenueWithMapLetter": {
     "description": "360° picker card title. Prefixes the venue with the letter the official AON program map prints for it, so the app list and the paper sheet read in the same alphabet.",

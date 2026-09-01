@@ -355,7 +355,9 @@ drawn**, not only where the switch lives.
 
 ## 9. The 360° panorama subsystem (the "AR photos")
 
-**33 mapped scenes across 8 venues**, plus 1 bundled-but-unmapped route image.
+**Tours across 9 locations** — the 8 A–I legend venues plus the Solar system
+walk route — from 39 distinct bundled images (46 scene entries; the walk reuses
+8 images the legend venues already carry).
 
 ### 9.1 How it renders
 
@@ -381,12 +383,22 @@ PanoramaScreen(venueId)
 | G | Astronomical Observatory | 2 | AON shoot (added 2026-08-31) |
 | H | 11 Wally's Walk | 3 | AON shoot |
 | I | 17 Wally's Walk | 4 | MQ_Journey |
+| — | Solar system walk (`gymnasium-road`) | 13 | AON shoot (8 reuse E/F/G; 5 new) |
 
-The **picker** (`panoramaPickerVenuesProvider`) lists **D–I only**
-(`_panoramaPickerMapReferences`). A and B keep working tours reachable from
-their venue sheets, but are not in the top-level catalogue. C (Food and drink)
-is deliberately absent — no panorama is planned, so it must never read
-"coming soon".
+The **picker** lists the **D–I letter catalogue** (`panoramaPickerVenuesProvider`
+/ `_panoramaPickerMapReferences`), and pins the **Solar system walk as a card at
+the top**, above D. The walk is a route, not a lettered venue (`gymnasium-road`
+has `mapReference: null`), so it is deliberately kept OUT of the letter provider
+and rendered separately — which is also why the picker's `v.mapReference!` on the
+letter list stays safe. A and B keep working tours reachable from their venue
+sheets, but are not in the top-level catalogue. C (Food and drink) is
+deliberately absent — no panorama is planned, so it must never read "coming soon".
+
+The walk reuses imagery via **`build.py` aliasing**: a TOURS scene may carry a
+5th tuple element naming an explicit bundled asset path; the encoder skips it and
+the manifest points at the shared file, so a photo used by two tours is bundled
+once (~9.5 MB for the walk instead of ~26). `dangling_aliases()` fails the build
+if an alias resolves to no bundled file.
 
 ### 9.3 How ordering correctness is established
 
@@ -396,6 +408,11 @@ is deliberately absent — no panorama is planned, so it must never read
   bundled basemap.
 - Scene order = the photographer's own naming, corroborated by **EXIF GPS
   timestamps** (`GPSDateStamp`/`GPSTimeStamp`, UTC +10 = AEST).
+- **Solar system walk** scene order is the **organiser's own numbering**
+  (Raouf, 2026-09-01), 1 → 13, Courtyard → Telescope Park — the direction
+  visitors walk it. It supersedes the timestamp-inferred order in the design
+  spec, and every numbered source was verified byte-identical to its pinned
+  original before encoding.
 - **EXIF GPS *position* is unusable**: measured against `buildings.json` the
   error runs **21 m to 1377 m**, and `1 CC- Downstairs.JPG` places a shot taken
   beside 1 Central Courtyard **945 m** away. Never order or place a scene by it.

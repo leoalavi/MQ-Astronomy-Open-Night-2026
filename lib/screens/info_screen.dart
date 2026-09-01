@@ -10,12 +10,10 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
-import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
-import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/section_header.dart';
 
 /// Practical information: facilities, transport, parking and event guidance.
@@ -154,12 +152,6 @@ class InfoScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
-                    const SizedBox(height: AonSpacing.space3),
-                    ConfidenceNote(
-                      confidence: p.coordinateConfidence,
-                      compact: true,
-                      message: l.parkingNoConfirmedPosition,
-                    ),
                   ],
                 ),
               ),
@@ -270,14 +262,6 @@ class _InfoTile extends StatelessWidget {
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: context.aon.contentSecondary,
                       ),
-                    ),
-                  ],
-                  if (!venue.coordinateConfidence.isReliable ||
-                      !venue.hasCoordinates) ...[
-                    const SizedBox(height: AonSpacing.space2),
-                    ConfidenceNote(
-                      confidence: venue.coordinateConfidence,
-                      compact: true,
                     ),
                   ],
                 ],

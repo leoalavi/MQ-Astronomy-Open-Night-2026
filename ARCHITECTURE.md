@@ -433,19 +433,21 @@ at launch — it sits behind the `aon2026/maps_sdk` method channel.
 Consent alone is not enough: a `GoogleMap` built against an unkeyed SDK renders
 blank, so both surfaces also gate on **readiness**.
 
-**How consent is obtained (implicit, no pre-draw modal).** Google is the only
-walking-directions provider, so *opening* the Google-nav screen is treated as
-the choice to use it: a first-run `unknown` consent is **auto-accepted**
-(`google_nav_screen.dart` `_autoAcceptOnce()`), the passive privacy notice and
-the OFF switch live in Settings, and only a `declined` state shows a panel
-instead of routing. There is **no blocking disclosure modal on the live path**
-(the older `MapsNavDisclosure` dialog is now reachable only from the dead
-`wayfinding_screen.dart`). The §2b invariant still holds — the SDK/Routes gate
-on `consent == accepted`, which the auto-accept satisfies *before* any surface
-initialises or any request is sent — but note the consequence for the privacy
-copy: "sent to Google only … after you agree" now means *asking for directions
-is agreeing*. Tests: `google_nav_screen_test.dart` ("first-run auto-proceeds no
-modal"), `settings_google_consent_test.dart` (turning sharing off).
+**How consent is obtained (explicit first-use disclosure — B2, 2026-09-01).**
+A first-run `unknown` consent shows the **`MapsNavDisclosure` dialog** before any
+Google surface: `google_nav_screen.dart` `_showDisclosureOnce()` renders it, and
+its result maps to consent — **Accept** → `accepted` (the map + route then load),
+**Decline** or barrier-dismiss → `declined` (the sharing-off panel, with a
+one-tap re-enable). The passive notice and the OFF switch also live in Settings.
+The §2b invariant holds *by construction*: `mapsSdkReadyProvider` and the
+location/route reads are all reached only after `consent == accepted`, so nothing
+Google-facing initialises while consent is `unknown` (behind the disclosure) or
+`declined`. Because agreement is now an explicit step, the privacy copy
+("sent to Google only … after you agree" / the hosted policy's "asks you before")
+is accurate as written. Tests: `google_nav_screen_test.dart`
+("B2: first-run … shows the disclosure BEFORE any Google surface; Accept then
+routes" and the Decline case), `routes_consent_guard_test.dart`,
+`maps_sdk_ready_provider_test.dart`.
 
 `ConsentGuardedRoutesService` reads consent through a **callback** (never
 cached) and re-checks *after* the await. A request already on the wire cannot
@@ -634,7 +636,7 @@ incident.
 | **R2** | Google Routes returns **HTTP 401** | Directions unusable | Field log 2026-08-28; verified as GCP key restriction, not code | Configure the 4 restricted keys |
 | **R3** | Passport disabled in release builds | Headline feature inert on the night | All 9 codes are `AON-*-TBC` | Organisers must supply codes |
 | **R4** | Redistribution permission unresolved for **4 asset sets** | Blocks public release | `docs/panorama-image-provenance.md` | Confirm before store submission |
-| **R5** | 3 of 7 map E2E flows were red on `main` (map-modes, map-wayfinding, map-location) | Was false confidence | Re-run 2026-09-01 on iPhone 17 sim; each classified on-device | **Stale/flawed tests, not app defects** — all fixed: map-modes lacked a location fix for the compass list; map-wayfinding asserted the removed consent modal (auto-accept now); map-location teleported a fix the settling policy correctly rejects. 7/7 green after the fix |
+| **R5** | 3 of 7 map E2E flows were red on `main` (map-modes, map-wayfinding, map-location) | Was false confidence | Re-run 2026-09-01 on iPhone 17 sim; each classified on-device | **Stale/flawed tests, not app defects** — all fixed: map-modes lacked a location fix for the compass list; map-wayfinding was rewritten mid-Sep for the auto-accept model, then updated again after B2 restored the explicit first-use disclosure (2026-09-01); map-location teleported a fix the settling policy correctly rejects. 7/7 green after the fix |
 | **R6** | `mason-theatre` and `14-sir-…` share building, address **and coordinates** | Duplicate 360 entry points | `venues_data.dart`; source photo `14-christopher-Mason-theatre.jpg` | Decide whether to merge tours |
 | **R7** | **No CI/CD** | The gate only runs when someone remembers | No `.github/workflows` | Add a workflow running `check.sh` |
 | **R8** | `docs/architecture.md` stale since 2026-08-07 | Actively misleading ("No location permission") | File header | Superseded by this document |

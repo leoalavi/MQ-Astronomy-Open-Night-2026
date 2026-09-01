@@ -316,13 +316,44 @@ void main() {
     _expectNoExternalMapsHandoff(t);
   });
 
-  testWidgets('first-run (unknown) auto-proceeds — NO consent modal, then routes', (t) async {
+  testWidgets(
+      'B2: first-run (unknown) shows the disclosure BEFORE any Google surface; Accept then routes',
+      (t) async {
     final svc = _StubService(const RouteSuccess(NavRoute(
       polyline: [(-33.77, 151.11)], distanceMeters: 200, eta: Duration(minutes: 3), warnings: [])));
     await t.pumpWidget(_app(_c(service: svc, consent: MapsConsent.unknown)));
-    await t.pumpAndSettle();
+    // Not pumpAndSettle: the unknown-state body is a spinner (animates forever)
+    // behind the disclosure. Pump enough frames for the post-frame dialog.
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    final l = await _en();
+    // §2b boundary: the disclosure is up, and NO Google surface + NO route yet.
+    expect(find.text(l.mapNavDisclosureTitle), findsOneWidget);
+    expect(find.byKey(const Key('map-surface')), findsNothing);
+    expect(svc.calls, 0);
+    // Accept → consent accepted → the map + route load.
+    await t.tap(find.text(l.mapNavDisclosureAccept));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
     expect(find.byKey(const Key('map-surface')), findsOneWidget);
     expect(svc.calls, 1);
+  });
+
+  testWidgets(
+      'B2: first-run (unknown) Decline — no Google surface, no route, sharing-off panel',
+      (t) async {
+    final svc = _StubService(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11)], distanceMeters: 200, eta: Duration(minutes: 3))));
+    await t.pumpWidget(_app(_c(service: svc, consent: MapsConsent.unknown)));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 300));
+    final l = await _en();
+    await t.tap(find.text(l.mapNavDisclosureDecline));
+    await t.pumpAndSettle();
+    expect(find.byKey(const Key('map-surface')), findsNothing);
+    expect(find.byKey(const Key('nav-enable-sharing')), findsOneWidget);
+    expect(svc.calls, 0);
+    _expectNoExternalMapsHandoff(t);
   });
 
   testWidgets('explicitly-off (declined) shows a panel with re-enable, not a modal', (t) async {

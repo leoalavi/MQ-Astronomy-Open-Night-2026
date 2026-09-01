@@ -1,36 +1,47 @@
-# Map · walking directions (Google nav entry)
+# Map · walking directions — explicit Google consent disclosure, DECLINE (B2, §2b)
 #
 # The map's "Directions" FAB pushes the in-app Google nav screen
-# (`Routes.googleNavTo(...)`) — the app consolidated on one directions surface,
-# "always Google Maps", and the old offline origin/destination picker
-# (`wayfinding_screen.dart`) is no longer reachable (audit 2026-08-30, MAP-007).
+# (`Routes.googleNavTo(...)`); the old offline picker is gone (MAP-007). On a
+# first-run (`unknown`) consent the screen shows the EXPLICIT first-use
+# disclosure dialog BEFORE any Google surface can initialise (B2, 2026-09-01).
+# This flow is the on-device proof of the §2b consent boundary: tap Directions →
+# disclosure → Decline → the nav screen rebuilds into the sharing-off panel (a
+# one-tap re-enable + Back), and NO Google map is ever drawn — never a bounce out
+# to the external Google Maps app either.
 #
-# Consent model (verified 2026-09-01): opening the Google nav screen IS the
-# choice to use Google directions — a first-run `unknown` consent is
-# auto-accepted and the passive privacy notice + opt-out live in Settings
-# (unit: google_nav_screen_test 'first-run auto-proceeds no modal';
-#  settings_google_consent_test turning sharing OFF). So there is NO pre-draw
-# disclosure modal. The §2b boundary (no Google surface initialises before
-# consent resolves positively) is enforced by `mapsSdkReadyProvider` and proven
-# in unit tests (maps_sdk_ready_provider_test, routes_consent_guard_test); on
-# device we assert the live UI: no modal, an in-app nav screen (never a bounce
-# out to the Google Maps app, never a blank Google-tiles view), and a clean
-# return to the campus map.
+# Decline does NOT auto-return to the map: it leaves the visitor on the nav
+# screen showing the sharing-off state (honest — it re-discloses and offers the
+# way back), which is why we assert the panel here and then tap Back ourselves.
+# (README trap 6: a dialog button's LABEL may not be its hit target — tap by
+# point if `tapOn` on the label does nothing.)
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
+# Reset consent to `unknown` so the FIRST-USE disclosure is actually exercised —
+# a prior run's Decline persists as `declined` and would skip to the panel.
+- launchApp:
+    clearState: true
 - runFlow: flows/open-map.yaml
 
 - tapOn: "Directions"
 
-# No disclosure modal — the flow auto-proceeds into the in-app nav screen.
-- assertNotVisible: "Use Google Maps for directions?"
-# The nav screen for the FAB's default destination (Central Courtyard).
-- assertVisible: "Central Courtyard"
-- takeScreenshot: .maestro/screenshots/wayfinding-01-nav-screen
+# (§2b) The explicit disclosure appears BEFORE any Google surface is built. Its
+# TITLE is the distinguisher from the sharing-off panel (they share a body).
+- assertVisible: "Use Google Maps for directions?"
+- assertVisible: "(?s).*sent to Google Maps.*"
+- takeScreenshot: .maestro/screenshots/wayfinding-01-disclosure
 
-# Back returns to the campus map — the visitor never leaves AON.
+# Decline — consent set to `declined`. The dialog is dismissed and the nav screen
+# rebuilds into the sharing-off panel: destination title in the AppBar + a single
+# re-enable button. No Google map — "Zoom in" (a campus-map control) is absent.
+- tapOn: "Not now"
+- assertNotVisible: "Use Google Maps for directions?"
+- assertNotVisible: "Not now"
+- assertVisible: "Central Courtyard"
+- assertVisible: "Use Google Maps"
+- assertNotVisible: "Zoom in"
+- takeScreenshot: .maestro/screenshots/wayfinding-02-declined-sharing-off
+
+# The way back works — Back returns to the campus map.
 - tapOn: "Back"
-- assertVisible: "Directions"
 - assertVisible: "Zoom in"
-- takeScreenshot: .maestro/screenshots/wayfinding-02-back-on-map

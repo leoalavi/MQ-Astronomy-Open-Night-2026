@@ -1,0 +1,48 @@
+# Privacy · Google consent — ACCEPT then PERSISTENCE (B2)
+#
+# The companion to map-wayfinding.yaml (which proves Decline). Here the visitor
+# ACCEPTS the first-use disclosure: consent becomes `accepted`, the disclosure is
+# dismissed, and the Google surface is built for the FIRST time — the SDK-ready
+# gate and the location/route reads are reached ONLY after accept (the §2b
+# boundary, proven from the positive side: a live Google map + a real fetched
+# walking route appear only once consent is `accepted`). The choice then
+# PERSISTS: relaunching and asking for directions again does NOT re-prompt.
+# (This local build has working Google keys, so the route renders; a build
+# without them would show the in-app "directions unavailable" panel instead —
+# still post-accept, still no re-disclosure.)
+appId: au.edu.mq.astronomy.aon2026
+tags: [map]
+---
+# An on-campus fix so Accept proceeds into the real Google flow rather than the
+# need-location panel.
+- setLocation:
+    latitude: -33.7737
+    longitude: 151.1134
+# Reset consent to `unknown` so the first-use disclosure is exercised.
+- launchApp:
+    clearState: true
+- runFlow: flows/open-map.yaml
+
+- tapOn: "Directions"
+- assertVisible: "Use Google Maps for directions?"
+
+# Accept — consent accepted; the disclosure is dismissed and, for the FIRST time,
+# the Google surface initialises: a live map + a real walking route appear. This
+# is the positive-side §2b proof — nothing Google-facing rendered until now.
+- tapOn: "Use Google Maps"
+- assertNotVisible: "Use Google Maps for directions?"
+- extendedWaitUntil:
+    visible: "Walking directions"
+    timeout: 25000
+- takeScreenshot: .maestro/screenshots/consent-01-accepted-live-map
+- tapOn: "Back"
+
+# Persistence — relaunch WITHOUT clearing state; consent=accepted persists, so a
+# second Directions tap is NOT re-prompted and goes straight to the live map.
+- runFlow: flows/open-map.yaml
+- tapOn: "Directions"
+- assertNotVisible: "Use Google Maps for directions?"
+- extendedWaitUntil:
+    visible: "Walking directions"
+    timeout: 25000
+- takeScreenshot: .maestro/screenshots/consent-02-persisted-no-redisclosure

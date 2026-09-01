@@ -16,6 +16,7 @@ import 'package:aon2026/services/nav_format.dart';
 import 'package:aon2026/services/routes_service.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/embedded_map.dart';
+import 'package:aon2026/widgets/maps_nav_disclosure.dart';
 
 /// Embedded Google walking-navigation for an M3 place key. Runs the strict
 /// sequence: capability → resolve destination → consent → location (snapshot) →
@@ -40,7 +41,7 @@ class GoogleNavScreen extends ConsumerStatefulWidget {
 }
 
 class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
-  bool _autoAccepted = false;
+  bool _disclosureShown = false;
 
   @override
   Widget build(BuildContext context) {
@@ -116,16 +117,18 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           );
         }
 
-        // (3) Consent — NO blocking modal. Google is the only directions
-        // provider, so opening this screen IS the choice to use it. A first-run
-        // `unknown` consent is auto-accepted so the map + route load immediately;
-        // the passive privacy notice lives in Settings (settingsGoogleMapsNotice),
-        // where the user can also turn sharing OFF. `declined` is the one state
-        // that shows a panel (with a one-tap re-enable) instead of routing —
-        // never a modal on every Directions tap (field report, Pouya 2026-08-28).
+        // (3) Consent — EXPLICIT first-use disclosure (spec §2b / B2). Before any
+        // Google surface can transmit data, a first-run `unknown` consent shows
+        // the disclosure dialog: Accept → consent accepted (the map + route load
+        // on the next build), Decline (or barrier-dismiss) → consent declined,
+        // which shows the sharing-off panel with a one-tap re-enable. The
+        // §2b boundary is preserved by construction: the SDK gate
+        // (`mapsSdkReadyProvider`) and the location/route reads below are all
+        // reached only AFTER `consent == accepted`, so nothing Google-facing
+        // initialises while consent is unknown or declined.
         final consent = ref.watch(mapsConsentProvider);
         if (consent == MapsConsent.unknown) {
-          _autoAcceptOnce();
+          _showDisclosureOnce(context);
           return _scaffold(l, title: place.title, body: _spinner(context));
         }
         if (consent == MapsConsent.declined) {
@@ -194,15 +197,20 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     return (place!.routingLat!, place.routingLng!);
   }
 
-  /// First-run consent is accepted silently (no modal) once per screen, after
-  /// the frame so we never mutate a provider mid-build. Latched so a rebuild
-  /// while the accept is in flight does not re-post it.
-  void _autoAcceptOnce() {
-    if (_autoAccepted) return;
-    _autoAccepted = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+  /// Shows the first-use Google disclosure exactly once, after the frame (so we
+  /// never mutate a provider mid-build). Accept → consent accepted (navigation
+  /// proceeds on the next build); Decline or barrier-dismiss → consent declined
+  /// (the sharing-off panel). Latched so a rebuild while the dialog is open does
+  /// not stack a second one.
+  void _showDisclosureOnce(BuildContext context) {
+    if (_disclosureShown) return;
+    _disclosureShown = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
-      ref.read(mapsConsentProvider.notifier).accept();
+      final accepted = await showMapsNavDisclosure(context);
+      if (!mounted) return;
+      final notifier = ref.read(mapsConsentProvider.notifier);
+      accepted ? notifier.accept() : notifier.decline();
     });
   }
 

@@ -1,0 +1,47 @@
+# Privacy · Persian first-use disclosure, RTL (B2 closure §11)
+#
+# Switch the app to Persian, then from a fresh (unknown) consent ask for
+# Directions and verify the first-use disclosure renders in real Persian with a
+# correct RTL layout: title, body, Accept and Decline all Persian and reachable.
+# (Runtime proof — not an ARB/l10n-test substitute.)
+#
+# RTL note: the bottom nav mirrors under Persian, so the Map tab sits on the LEFT
+# (~42%) where it was on the right (~58%) in LTR. Directions FAB = "مسیریابی".
+appId: au.edu.mq.astronomy.aon2026
+tags: [map, settings]
+---
+- setLocation:
+    latitude: -33.7737
+    longitude: 151.1134
+- launchApp:
+    clearState: true
+- swipe:
+    direction: DOWN
+    duration: 100
+
+# ── Switch to Persian in Settings (still LTR here → Settings on the right) ──
+- tapOn:
+    point: "88%,91%"
+- scrollUntilVisible:
+    element:
+      text: "فارسی"
+    direction: DOWN
+    centerElement: true
+- tapOn: "فارسی"
+# UI is now Persian/RTL — assert an on-screen Persian label (Text size / Privacy).
+- assertVisible: "اندازهٔ متن"
+- assertVisible: "حریم خصوصی"
+
+# ── Map (RTL mirror → left side) → Directions ──
+- tapOn:
+    point: "42%,91%"
+- assertVisible: "بزرگ‌نمایی"
+# The campus-map walk-route FAB in Persian.
+- tapOn: "راهنمای مسیر"
+
+# ── The first-use disclosure, in Persian ──
+- assertVisible: "برای مسیریابی از نقشهٔ گوگل استفاده شود؟"
+- assertVisible: "استفاده از نقشهٔ گوگل"
+- assertVisible: "الان نه"
+- assertVisible: "(?s).*به نقشهٔ گوگل ارسال می‌شود.*"
+- takeScreenshot: .maestro/screenshots/fa-01-disclosure-rtl

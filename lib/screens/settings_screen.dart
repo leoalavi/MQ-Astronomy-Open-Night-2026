@@ -518,10 +518,13 @@ class _DeleteMyDataCard extends ConsumerWidget {
   }
 }
 
-/// Google Maps privacy notice + revoke control. The ToS/privacy notice is
-/// always shown; the "Revoke" action appears only once consent has been given
-/// (there's nothing to revoke otherwise). Revoking resets consent to unknown, so
-/// the next Google-nav tap re-asks (T8A / #17).
+/// Google Maps privacy notice + sharing toggle. The ToS/privacy notice is always
+/// shown. Sharing is ON unless explicitly turned OFF: "Revoke" calls `decline()`
+/// (consent -> declined), after which the button flips to "Turn back on"
+/// (`accept()`). Turning it off here means the next Directions tap lands on the
+/// in-app sharing-off panel (a re-disclosure with a one-tap re-enable), never a
+/// Google surface. (First-use consent itself is the explicit disclosure dialog on
+/// the Directions path — B2, 2026-09-01; erase-my-data resets consent to unknown.)
 class _GoogleMapsPrivacyCard extends ConsumerWidget {
   const _GoogleMapsPrivacyCard();
 
@@ -556,9 +559,10 @@ class _GoogleMapsPrivacyCard extends ConsumerWidget {
                 ),
               ],
             ),
-            // Directions no longer ask per-use — this card is the disclosure AND
-            // the only opt-out. Sharing is ON unless explicitly turned OFF
-            // (declined): "Revoke" turns it off; once off, "Turn back on" re-enables.
+            // First-use consent is the explicit disclosure on the Directions
+            // path (B2); this card is the standing opt-out. Sharing is ON unless
+            // explicitly turned OFF (declined): "Revoke" turns it off; once off,
+            // "Turn back on" re-enables.
             const SizedBox(height: AonSpacing.space2),
             Align(
               alignment: AlignmentDirectional.centerEnd,

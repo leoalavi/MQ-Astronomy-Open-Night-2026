@@ -1,0 +1,64 @@
+# Privacy · revoke → retry (B2 closure §9)
+#
+# The major remaining B2 closure test. Accept consent, then turn Google Maps
+# sharing OFF in Settings (decline), then ask for Directions again. The visitor
+# must NOT be silently re-accepted: the retry lands on the in-app sharing-off
+# panel (a re-disclosure + an explicit one-tap re-enable), with NO Google map and
+# NO route auto-loaded. Only an explicit tap on "Use Google Maps" restores it.
+#
+# Consent model (verified in source): Settings "Revoke" -> decline() -> declined;
+# the declined branch of google_nav_screen shows the sharing-off panel, whose
+# re-enable button calls accept(). (erase-my-data instead resets to unknown ->
+# the first-use modal; that path is covered elsewhere.)
+appId: au.edu.mq.astronomy.aon2026
+tags: [map, settings]
+---
+- setLocation:
+    latitude: -33.7737
+    longitude: 151.1134
+- launchApp:
+    clearState: true
+- runFlow: flows/open-map.yaml
+
+# ── Accept, reach the live map ──
+- tapOn: "Directions"
+- assertVisible: "Use Google Maps for directions?"
+- tapOn: "Use Google Maps"
+- extendedWaitUntil:
+    visible: "Walking directions"
+    timeout: 25000
+- tapOn: "Back"
+
+# ── Revoke in Settings (rightmost tab, EN 6-tab layout) ──
+- tapOn:
+    point: "88%,91%"
+# The revoke control is the last card, below the floating tab bar — center it so
+# it clears the bar before tapping (README trap: low cards are occluded).
+- scrollUntilVisible:
+    element:
+      text: "Revoke Google Maps access"
+    direction: DOWN
+    centerElement: true
+- tapOn: "Revoke Google Maps access"
+# The control flips → confirms consent is now declined.
+- assertVisible: "Turn Google Maps directions back on"
+
+# ── Retry Directions: must NOT be silently re-accepted ──
+- tapOn:
+    point: "58%,91%"
+- assertVisible: "Zoom in"
+- tapOn: "Directions"
+# Declined path → sharing-off panel, NOT the first-use modal, NOT the live map.
+- assertNotVisible: "Use Google Maps for directions?"
+- assertNotVisible: "Walking directions"
+- assertVisible: "Central Courtyard"
+- assertVisible: "Use Google Maps"
+- assertNotVisible: "Zoom in"
+- takeScreenshot: .maestro/screenshots/revoke-01-sharing-off
+
+# ── Explicit re-enable restores directions ──
+- tapOn: "Use Google Maps"
+- extendedWaitUntil:
+    visible: "Walking directions"
+    timeout: 25000
+- takeScreenshot: .maestro/screenshots/revoke-02-reenabled-live-map

@@ -630,7 +630,7 @@ incident.
 
 | # | Risk | Impact | Evidence | Recommendation |
 |---|---|---|---|---|
-| **R1** | iOS location purpose string claims location is "never sent anywhere"; the Routes path sends it (re-verified present 2026-09-01) | **High** — inaccurate App Store disclosure; contradicts the app's own policy | `ios/Runner/Info.plist:8` vs `google_routes_service.dart:58` | Reword to match `settingsPrivacyBody` (e.g. drop "and is never sent anywhere", or "…is sent to Google only when you ask for walking directions"). **Not changed here** — store-facing copy is a product/legal decision |
+| **R1** | ~~iOS location purpose string claims location is "never sent anywhere"~~ **FIXED 2026-09-01 (release blocker B1)** | Was an inaccurate App Store disclosure | `ios/Runner/Info.plist` now reads "…sent to Google only when you choose walking directions"; guarded by `ios_location_purpose_test.dart` | RESOLVED — AWAITING VERIFICATION: confirm the shipped string in the release build |
 | **R2** | Google Routes returns **HTTP 401** | Directions unusable | Field log 2026-08-28; verified as GCP key restriction, not code | Configure the 4 restricted keys |
 | **R3** | Passport disabled in release builds | Headline feature inert on the night | All 9 codes are `AON-*-TBC` | Organisers must supply codes |
 | **R4** | Redistribution permission unresolved for **4 asset sets** | Blocks public release | `docs/panorama-image-provenance.md` | Confirm before store submission |

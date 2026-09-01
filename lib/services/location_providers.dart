@@ -144,6 +144,12 @@ class LocationController extends Notifier<LocationSnapshot> {
   StreamSubscription<UserLocationFix>? _sub;
   StreamSubscription<bool>? _serviceSub;
 
+  /// Latch for the first-Map-entry auto-prompt. The Map tab requests location
+  /// once, on entry, because the live dot is a core feature of that screen —
+  /// but only once: re-entering the tab (the branch stays mounted, so this
+  /// controller and its latch survive) must never re-fire the OS dialog.
+  bool _promptedOnMapEntry = false;
+
   LocationService get _svc => ref.read(effectiveLocationServiceProvider);
 
   @override
@@ -183,6 +189,45 @@ class LocationController extends Notifier<LocationSnapshot> {
     if (s == LocationStatus.granted) {
       state = state.copyWith(active: true);
       _sync();
+    }
+  }
+
+  /// Requests location the first time the visitor opens the Map tab.
+  ///
+  /// Location is core to the Map (the live "you are here" dot), so we prompt on
+  /// entry rather than waiting for a "Locate Me" tap. Runs at most once per app
+  /// session (see [_promptedOnMapEntry]) so switching tabs never re-prompts, and
+  /// is invoked ONLY from `MapScreen` — no other tab requests location.
+  ///
+  /// Behaviour by outcome:
+  ///  - granted  → the dot goes live (`active`), but the camera is NOT put into
+  ///    follow: the opening campus-fit view is left alone. "Locate Me" then just
+  ///    recentres/follows.
+  ///  - denied / deniedForever / serviceOff → status is recorded and the Map
+  ///    stays fully usable; nothing is auto-opened. A later explicit "Locate Me"
+  ///    tap is the intentional path to a re-prompt or the Settings deep-link
+  ///    (see [onLocateTapped]).
+  ///
+  /// A no-op if location is already active (e.g. preview mode, or the visitor
+  /// tapped "Locate Me" before this ran), so it never disturbs existing follow.
+  Future<void> ensureFirstMapEntryPrompt() async {
+    if (_promptedOnMapEntry) return;
+    _promptedOnMapEntry = true;
+    if (state.active) return;
+    // This runs unprompted, the moment the Map opens — so unlike the
+    // tap-initiated [onLocateTapped], a throw here would crash the Map tab on
+    // entry. The Map must stay usable no matter what location does, so any
+    // failure just leaves location inactive with a neutral status; the visitor
+    // can still tap "Locate Me" to retry deliberately.
+    try {
+      final s = await _svc.request();
+      state = state.copyWith(status: s);
+      if (s == LocationStatus.granted) {
+        state = state.copyWith(active: true);
+        _sync();
+      }
+    } catch (_) {
+      state = state.copyWith(status: LocationStatus.unknown);
     }
   }
 

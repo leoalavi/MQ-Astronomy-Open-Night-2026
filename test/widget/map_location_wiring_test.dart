@@ -8,6 +8,7 @@ import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/user_location_fix.dart';
 import 'package:aon2026/services/campus_projection.dart';
 import 'package:aon2026/services/location_providers.dart';
+import 'package:aon2026/services/location_service.dart';
 import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/screens/map_screen.dart';
 import '../support/fake_location_service.dart';
@@ -87,6 +88,43 @@ Future<void> _zoomIn(WidgetTester t, double zoom) async {
 }
 
 void main() {
+  testWidgets('entering the Map tab requests location (no Locate tap needed)',
+      (t) async {
+    final svc = FakeLocationService(); // grants
+    final c = _container(svc);
+    await t.pumpWidget(_app(c));
+    await t.pump(); // let the post-frame entry prompt run + resolve
+    expect(svc.requestCount, 1); // prompted purely by entering the tab
+    final s = c.read(locationControllerProvider);
+    expect(s.active, isTrue); // dot goes live
+    expect(s.following, isFalse); // opening campus-fit camera not hijacked
+    // Camera untouched by the entry prompt (a fix would move it; none emitted).
+    expect(_cam(t).center.latitude, closeTo(_mapCentre.latitude, 1.0));
+  });
+
+  testWidgets('denied on entry -> Map still renders and stays usable',
+      (t) async {
+    final svc = FakeLocationService(grant: LocationStatus.denied);
+    final c = _container(svc);
+    await t.pumpWidget(_app(c));
+    await t.pump();
+    expect(t.takeException(), isNull); // no crash, no blocked navigation
+    expect(find.byType(FlutterMap), findsOneWidget); // map is fully present
+    expect(c.read(locationControllerProvider).active, isFalse);
+    // The map's controls remain interactive — Locate button is still there as
+    // the deliberate retry/re-enable path.
+    expect(svc.requestCount, 1);
+  });
+
+  testWidgets('entry prompt also fires under the Persian locale', (t) async {
+    final svc = FakeLocationService();
+    final c = _container(svc);
+    await t.pumpWidget(_app(c, locale: const Locale('fa')));
+    await t.pump();
+    expect(svc.requestCount, 1);
+    expect(t.takeException(), isNull);
+  });
+
   testWidgets('near fix -> circle + dot, camera MOVES to the fix, no banner',
       (t) async {
     final svc = FakeLocationService();

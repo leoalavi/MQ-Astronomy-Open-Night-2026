@@ -11,6 +11,11 @@ class FakeLocationService implements LocationService {
   int appSettingsOpened = 0;
   int locationSettingsOpened = 0;
 
+  /// How many times the OS permission prompt was asked for. Lets tests assert
+  /// the first-Map-entry auto-prompt fires exactly once (no re-prompting on
+  /// every tab visit).
+  int requestCount = 0;
+
   void emit(UserLocationFix f) => _fixes.add(f);
   void emitError(Object e) => _fixes.addError(e);
   void emitServiceEnabled(bool v) => _service.add(v);
@@ -18,7 +23,10 @@ class FakeLocationService implements LocationService {
   @override
   Future<LocationStatus> status() async => grant;
   @override
-  Future<LocationStatus> request() async => grant;
+  Future<LocationStatus> request() async {
+    requestCount++;
+    return grant;
+  }
   @override
   Stream<UserLocationFix> watch() => _fixes.stream;
   @override

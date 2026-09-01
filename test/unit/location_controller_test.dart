@@ -18,6 +18,24 @@ ProviderContainer _c(FakeLocationService svc, {bool visible = true}) {
 UserLocationFix _fix([double acc = 8]) => UserLocationFix(
     position: const LatLng(-33.7737, 151.1134), accuracyMeters: acc);
 
+/// A service whose every call throws — stands in for a plugin/platform failure
+/// (or a forgotten provider override) so we can prove the entry prompt swallows
+/// it and leaves the Map usable.
+class _ThrowingLocationService implements LocationService {
+  @override
+  Future<LocationStatus> request() async => throw StateError('boom');
+  @override
+  Future<LocationStatus> status() async => throw StateError('boom');
+  @override
+  Stream<UserLocationFix> watch() => const Stream.empty();
+  @override
+  Stream<bool> serviceEnabledChanges() => const Stream.empty();
+  @override
+  Future<void> openAppSettings() async {}
+  @override
+  Future<void> openLocationSettings() async {}
+}
+
 void main() {
   test('locate grants -> active + following; dot updates', () async {
     final svc = FakeLocationService();
@@ -92,6 +110,78 @@ void main() {
     final s = c.read(locationControllerProvider);
     expect(s.active, isFalse);
     expect(s.status, LocationStatus.serviceOff); // this reason we DO know
+  });
+
+  group('first Map entry auto-prompt', () {
+    test('grant -> active, dot shown, but NOT following (camera not hijacked)',
+        () async {
+      final svc = FakeLocationService();
+      final c = _c(svc);
+      await c
+          .read(locationControllerProvider.notifier)
+          .ensureFirstMapEntryPrompt();
+      final s = c.read(locationControllerProvider);
+      expect(svc.requestCount, 1); // prompted on entry, without a Locate tap
+      expect(s.active, isTrue); // location live — the dot renders
+      expect(s.following, isFalse); // opening campus-fit camera left alone
+      svc.emit(_fix());
+      await Future<void>.delayed(Duration.zero);
+      expect(c.read(locationControllerProvider).fix, isNotNull);
+    });
+
+    test('denied leaves the Map usable and does not re-prompt on a second entry',
+        () async {
+      final svc = FakeLocationService(grant: LocationStatus.denied);
+      final c = _c(svc);
+      final n = c.read(locationControllerProvider.notifier);
+      await n.ensureFirstMapEntryPrompt();
+      expect(svc.requestCount, 1);
+      expect(c.read(locationControllerProvider).active, isFalse); // still usable
+      expect(c.read(locationControllerProvider).status, LocationStatus.denied);
+      // Re-entering the Map tab (or any rebuild) must NOT prompt again.
+      await n.ensureFirstMapEntryPrompt();
+      expect(svc.requestCount, 1); // latched: still exactly one OS dialog
+    });
+
+    test('deniedForever on first entry does NOT auto-open Settings', () async {
+      // Only an explicit Locate tap should deep-link to Settings; a silent
+      // entry-time prompt must never yank the visitor out of the app.
+      final svc = FakeLocationService(grant: LocationStatus.deniedForever);
+      final c = _c(svc);
+      await c
+          .read(locationControllerProvider.notifier)
+          .ensureFirstMapEntryPrompt();
+      expect(svc.appSettingsOpened, 0);
+      expect(c.read(locationControllerProvider).status,
+          LocationStatus.deniedForever);
+    });
+
+    test('a throwing location service on entry never crashes the Map', () async {
+      final c = ProviderContainer(overrides: [
+        locationServiceProvider.overrideWithValue(_ThrowingLocationService()),
+      ]);
+      addTearDown(c.dispose);
+      c.read(mapVisibleProvider.notifier).set(true);
+      // Must complete without throwing.
+      await c
+          .read(locationControllerProvider.notifier)
+          .ensureFirstMapEntryPrompt();
+      final s = c.read(locationControllerProvider);
+      expect(s.active, isFalse); // Map stays usable, location just inactive
+      expect(s.status, LocationStatus.unknown); // neutral -> Locate offers retry
+    });
+
+    test('already active (Locate tapped first) -> entry prompt is a no-op',
+        () async {
+      final svc = FakeLocationService();
+      final c = _c(svc);
+      final n = c.read(locationControllerProvider.notifier);
+      await n.onLocateTapped(); // grants + follows
+      expect(svc.requestCount, 1);
+      await n.ensureFirstMapEntryPrompt();
+      expect(svc.requestCount, 1); // no second prompt
+      expect(c.read(locationControllerProvider).following, isTrue); // untouched
+    });
   });
 
   test('hidden map pauses the stream and drops follow', () async {

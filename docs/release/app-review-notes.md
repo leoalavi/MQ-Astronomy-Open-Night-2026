@@ -63,6 +63,12 @@ Location is optional. The app is fully usable without granting it. Location
 is used on-device to draw your position on the campus map and to point the
 compass. It is not required to review any feature.
 
+The permission is requested the first time you open the "Map" tab, because a
+live position on the map is a core feature of that screen — not on any other
+tab, and not repeatedly. If you decline, the Map still opens and works
+normally; the on-map "Locate Me" control is the deliberate path to try again
+or re-enable location later.
+
 If you are not physically on the Macquarie University campus, the map's
 position marker will naturally be off-screen. To review location-dependent
 screens from anywhere, turn ON the Settings tab → Preview → "Preview from anywhere".

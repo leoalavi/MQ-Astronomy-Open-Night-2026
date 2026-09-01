@@ -1,43 +1,61 @@
 # My Night page
 #
 # The saved-activities timeline. Covers the empty state + its Browse CTA, saving
-# from the programme, the chronological timeline with an HONEST overlap flag
-# (two 4.15pm activities genuinely clash — not a stand-in artifact), remove +
-# Undo, and Clear-all behind a confirm. My Night is bottom-nav slot 3 of 6; tap
-# it by POINT. Cards merge time/title/venue/overlap into one a11y node (match
-# with `(?s).*…*`); venue names carry bidi isolates.
+# from the programme, persistence across a relaunch, the chronological timeline
+# with an HONEST overlap flag (two 4.15pm activities genuinely clash — not a
+# stand-in artifact), remove, and Clear-all behind a confirm.
+#
+# Navigation notes (all learned on a 402×874 device, 2026-09-01):
+#  * My Night is bottom-nav slot 3 of 6 — tap by POINT at x≈42%, y=91% (the
+#    CENTRE of the tab-bar row; 95% fell BELOW the bar and silently hit the wrong
+#    tab).
+#  * Post-Liz (2026-08-31) the two "Open all night" activities lead the
+#    programme, pushing Cosmic arcade / Kids' space low enough that a direct tap
+#    on their save star can land on the floating tab bar underneath. So each is
+#    saved via SEARCH, which floats the target to the top, clear of the bar.
+#  * After the searches we RELAUNCH: it drops the keyboard/scroll state cleanly
+#    AND doubles as a persistence check (saved plan survives a restart).
+#  * Cards merge time/title/venue/overlap into one a11y node (match `(?s).*…*`);
+#    venue names carry bidi isolates.
 appId: au.edu.mq.astronomy.aon2026
 tags: [my-night]
 ---
 - launchApp:
     clearState: true
 - tapOn:
-    point: "42%,95%"
+    point: "42%,91%"
 - assertVisible: "Your night is empty"
 
 # The empty-state CTA routes to the programme.
 - tapOn: "Browse the program"
 - assertVisible: "Search talks, activities, presenters"
 
-# Save two activities that both begin 4.15pm — a real overlap.
+# Save two activities that both begin 4.15pm — a real overlap. Search each so
+# its save control is the top card, clear of the floating tab bar.
+- tapOn: "Search talks, activities, presenters"
+- inputText: "Cosmic"
 - tapOn: "(?s).*Save Cosmic arcade to My Night.*"
+# eraseText (not the Clear-search X) so the field keeps focus deterministically
+# for the next query.
+- eraseText
+- inputText: "Kids"
 - tapOn: "(?s).*Save Kids. space to My Night.*"
 
-# Back on My Night: both on the timeline, and the clash is flagged both ways
-# plus the banner. Kids' space shows "4.15pm – 10pm" but NO countdown — its 10pm
-# end is a stand-in, never presented as a fact.
+# Relaunch (saved plan persists) — clean state + persistence proof — then open
+# My Night: both on the timeline, and the clash is flagged both ways + a banner.
+- launchApp
 - tapOn:
-    point: "42%,95%"
+    point: "42%,91%"
 - assertVisible: "(?s).*Cosmic arcade.*Overlaps Kids. space.*"
 - assertVisible: "(?s).*Kids. space.*Overlaps Cosmic arcade.*"
 - assertVisible: "(?s).*run at the same time.*"
 - assertVisible: "Walk there"
 - takeScreenshot: .maestro/screenshots/my-night-01-timeline
 
-# Removing an activity takes it off the timeline (the first card, Cosmic arcade,
-# sorts ahead of Kids' space at the shared 4.15pm start). An Undo snackbar also
-# appears, but a transient SnackBar overlay isn't reliably assertable in Maestro,
-# so the remove is verified by absence; Undo is covered by the widget suite.
+# Removing an activity takes it off the timeline (Cosmic arcade sorts ahead of
+# Kids' space at the shared 4.15pm start). An Undo snackbar also appears, but a
+# transient SnackBar overlay isn't reliably assertable in Maestro, so the remove
+# is verified by absence; Undo is covered by the widget suite.
 - tapOn: "Remove from plan"
 - extendedWaitUntil:
     notVisible: "(?s).*Cosmic arcade.*"

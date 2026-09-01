@@ -68,8 +68,16 @@ class SavedEventsNotifier extends AsyncNotifier<Set<String>> {
   }
 
   Future<void> _persist(Set<String> value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, value.toList());
+    // Never throws (repo persistence convention). The optimistic in-memory state
+    // is already set before this runs, so a failed write must not surface as an
+    // unhandled Future error out of toggle/remove/clear — losing one write
+    // mid-event is not worth an error into the UI, and the next toggle retries.
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setStringList(_key, value.toList());
+    } catch (_) {
+      /* persistence failure is never fatal */
+    }
   }
 }
 

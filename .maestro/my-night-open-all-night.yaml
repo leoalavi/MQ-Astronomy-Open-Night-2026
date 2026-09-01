@@ -1,0 +1,39 @@
+# My Night · the open-all-night non-clash invariant
+#
+# Critical invariant (ARCHITECTURE §14 #4): an "open all night" drop-in must
+# NEVER clash with a scheduled session merely because its all-evening span
+# overlaps everything. `ItineraryService._overlaps` excludes `isFullEvent`
+# sessions, so Solar system walk (openAllNight, present 4pm–10pm) saved alongside
+# Cosmic arcade (scheduled 4.15–9.30pm) must show BOTH on the timeline with NO
+# "run at the same time" banner and NO "Overlaps" note.
+#
+# See .maestro/my-night.yaml for the navigation notes (tab at 42%,91%; save via
+# search to clear the floating tab bar; relaunch for a clean state + persistence).
+appId: au.edu.mq.astronomy.aon2026
+tags: [my-night]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    point: "27%,91%"          # Program tab (slot 2 of 6)
+- assertVisible: "Search talks, activities, presenters"
+
+# Save an open-all-night drop-in and a genuinely-scheduled activity.
+- tapOn: "Search talks, activities, presenters"
+- inputText: "Solar"
+- tapOn: "(?s).*Save Solar system walk to My Night.*"
+- eraseText
+- inputText: "Cosmic"
+- tapOn: "(?s).*Save Cosmic arcade to My Night.*"
+
+- launchApp
+- tapOn:
+    point: "42%,91%"          # My Night tab (slot 3 of 6)
+# The card renders the "Open all night" time label ABOVE the title, so assert
+# each rather than a fixed order.
+- assertVisible: "(?s).*Solar system walk.*"
+- assertVisible: "(?s).*Cosmic arcade.*"
+# The invariant: no false clash between the drop-in and the scheduled session.
+- assertNotVisible: "(?s).*run at the same time.*"
+- assertNotVisible: "(?s).*Overlaps.*"
+- takeScreenshot: .maestro/screenshots/my-night-02-open-all-night-no-clash

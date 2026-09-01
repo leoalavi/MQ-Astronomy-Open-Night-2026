@@ -52,6 +52,7 @@ clears the path to GO.
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport production codes remain placeholders, so Passport is disabled in release builds | Event configuration | Organisers | `OPEN` |
 | B6 | Redistribution permission remains unresolved for four panorama asset sets | Asset rights | Organisers | `OPEN` |
+| B7 | No accessible in-app Privacy Policy surface, and the production Privacy Policy / Support store URLs are not yet provisioned | Store publishing / privacy | Organisers / product | `OPEN` |
 
 ---
 
@@ -182,9 +183,78 @@ clears the path to GO.
 - **Verification evidence required.** The written permission recorded per asset
   set, or confirmation the affected assets are no longer bundled.
 
+## B7 — Store privacy/support publishing prerequisites
+
+- **Exact problem.** The app currently has **no accessible in-app Privacy Policy
+  link or text**, and the production Privacy Policy / Support store-metadata URLs
+  are not yet provisioned. (The app makes no external links at all — verified:
+  no `url_launcher` / `launchUrl` anywhere in `lib/`. The finished policy/support
+  copy exists in `docs/release/mq-hosted-pages.md` but is not hosted.)
+- **Verified 2026 store requirements.**
+  - Apple requires a **Privacy Policy URL for all apps**.
+  - Apple's App Review Guidelines require the privacy policy to also be
+    **accessible within the app**.
+  - Apple requires a **Support URL** for the app version.
+  - Apple's **Marketing URL is optional** — it must **not** be described as
+    mandatory. (Do not claim any "three URLs are mandatory" figure unless a
+    separate project requirement establishes a third required URL.)
+  - Google Play requires every app to provide a **privacy policy in Play
+    Console** and a **privacy-policy link or text within the app**.
+- **Why it matters for release.** App Store Connect / Google Play will not accept
+  a submission without the mandated policy/support metadata, and both stores
+  require the privacy policy to be reachable from inside the app — which this
+  build does not currently offer. This blocks store submission (it does not
+  affect on-the-night in-app behaviour).
+- **Evidence / source.** No `url_launcher`/`launchUrl` in `lib/` (in-app link
+  absent); `lib/screens/info_screen.dart` / `lib/screens/settings_screen.dart`
+  (no policy link); `docs/release/mq-hosted-pages.md` (ready, unhosted copy);
+  Apple App Store Connect privacy/URL fields + App Review Guidelines; Google
+  Play policy requirements.
+- **Owner.** Organisers (host the pages) + product (add the in-app entry point).
+- **Status.** `OPEN`.
+- **Exact conditions to close.**
+  1. The production Privacy Policy page is hosted at a stable HTTPS URL.
+  2. The app exposes the Privacy Policy in an easily accessible location
+     (preferably Info or Settings).
+  3. The App Store Connect Privacy Policy URL is configured.
+  4. The App Store Connect Support URL is configured and leads to real
+     support/contact information.
+  5. The Google Play privacy-policy field points to the live policy.
+  6. The Android app exposes the privacy-policy link/text as required.
+  7. The hosted policy accurately matches actual app behaviour, including the
+     Google Routes / location-sharing path (see B1).
+  8. The links are tested from release builds.
+  9. Store metadata is verified before submission.
+- **Required closure evidence.** Live production URLs; release-build
+  screenshots / E2E proving the in-app privacy-policy entry works; App Store
+  Connect metadata verification; Play Console metadata verification; a successful
+  HTTP response for the production pages; and a final privacy-content
+  consistency review.
+
+---
+
+## Info + Settings audit verdict (2026-09-01)
+
+Recorded so a stored conclusion is not stale: the Info + Settings subsystem has
+**no implementation defect** (privacy copy is truthful and test-guarded, erase is
+scope-accurate and session-before-storage, preview is session-only and badged,
+language/theme persist, RTL is correct). But because of **B7** (no accessible
+in-app privacy-policy surface) it is not store-release-ready:
+
+- **INFO → CONDITIONAL GO** — implementation is good, but the app lacks the
+  required accessible privacy-policy surface (B7).
+- **SETTINGS → CONDITIONAL GO** — implementation is safe; gated on B1 (iOS
+  purpose string), B2 (consent posture) and B7.
+- **COMBINED → CONDITIONAL GO — RELEASE DECISIONS/PREREQUISITES REMAIN.**
+
 ---
 
 ## Change log
 
 - 2026-09-01 — Register created with B1–B6 from the Home/Program and Map
   release-readiness audits. All items OPEN or UNVERIFIED; none CLOSED — VERIFIED.
+- 2026-09-01 — Added **B7** (store privacy/support publishing prerequisites) from
+  the Info + Settings audit: the app has no accessible in-app Privacy Policy
+  surface and the production URLs are unhosted. Recorded the Info + Settings
+  verdict as CONDITIONAL GO (no implementation defect; blocked by B7). Scoped to
+  the verified 2026 store rules — a Marketing URL is optional, not mandatory.

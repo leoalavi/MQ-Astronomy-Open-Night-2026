@@ -46,8 +46,8 @@ clears the path to GO.
 
 | ID | Release blocker | Category | Owner | Status |
 |----|-----------------|----------|-------|--------|
-| B1 | iOS `NSLocationWhenInUseUsageDescription` says location is "never sent anywhere", but Google Routes can transmit the user's origin after Maps consent | Store disclosure / privacy | Product/legal | `OPEN` |
-| B2 | Maps Directions currently uses implicit auto-accept on first use rather than an explicit disclosure; wording referring to "after you agree" must be reconciled with the intended consent posture | Privacy / product decision | Product/legal | `OPEN` |
+| B1 | iOS `NSLocationWhenInUseUsageDescription` says location is "never sent anywhere", but Google Routes can transmit the user's origin after Maps consent | Store disclosure / privacy | Product/legal | `CLOSED — VERIFIED` |
+| B2 | Maps Directions currently uses implicit auto-accept on first use rather than an explicit disclosure; wording referring to "after you agree" must be reconciled with the intended consent posture | Privacy / product decision | Product/legal | `CLOSED — VERIFIED` |
 | B3 | Live Google walking-route rendering still requires production GCP Routes API enablement, billing/key restrictions and successful end-to-end verification | Infrastructure | Infra | `OPEN` |
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport production codes remain placeholders, so Passport is disabled in release builds | Event configuration | Organisers | `OPEN` |
@@ -71,7 +71,7 @@ clears the path to GO.
   `lib/services/google_routes_service.dart:58` (origin in the request body);
   `ARCHITECTURE.md` §10.3 / Risk R1 (re-verified present 2026-09-01).
 - **Owner.** Product / legal (store-facing copy).
-- **Status.** `OPEN`.
+- **Status.** `CLOSED — VERIFIED` (2026-09-01).
 - **Exact condition to close.** The purpose string is reworded to truthfully
   describe the Routes transmission (e.g. drop "and is never sent anywhere", or
   state "…sent to Google only when you ask for walking directions"), consistent
@@ -79,6 +79,19 @@ clears the path to GO.
 - **Verification evidence required.** The shipped `Info.plist` string, quoted,
   showing the corrected wording in the build that is submitted; confirmation it
   matches the in-app and hosted privacy copy.
+- **Closure evidence (2026-09-01).** Implementation commit `0266e6e`. A
+  current-HEAD iOS build succeeded (`flutter build ios --simulator`), and the
+  packaged `build/ios/iphonesimulator/Runner.app/Info.plist` — an Apple binary
+  property list, not a source copy — was inspected with `PlistBuddy`:
+  `NSLocationWhenInUseUsageDescription` reads *"Shows where you are on the campus
+  map and points the compass toward venues at night. Your location is sent to
+  Google only when you choose walking directions."* The old "never sent anywhere"
+  claim is absent and the Google / walking-directions transmission is stated
+  truthfully. Guarded by `test/unit/ios_location_purpose_test.dart`; consistent
+  with `settingsPrivacyBody` (EN + FA) and the hosted policy
+  (`docs/release/mq-hosted-pages.md`). Full gate `CHECK PASSED`, exit 0, coverage
+  91.01%. (Recommend a final spot-check of the submission archive's Info.plist at
+  store-submission time; the string is build-invariant.)
 
 ## B2 — Implicit consent vs the "after you agree" wording
 
@@ -99,12 +112,28 @@ clears the path to GO.
   `consent == accepted`) still holds — this is about the *posture and copy*, not
   a leak.
 - **Owner.** Product / legal.
-- **Status.** `OPEN`.
+- **Status.** `CLOSED — VERIFIED` (2026-09-01).
 - **Exact condition to close.** A recorded decision that the implicit-accept
   model is intended (or a change back to explicit consent), with all
   user-facing consent/privacy copy reconciled to whichever model ships.
 - **Verification evidence required.** The decision recorded here; the shipped
   consent flow and the shipped copy quoted and shown to agree.
+- **Decision (2026-09-01).** Ship **explicit first-use consent** (Option B), not
+  implicit auto-accept. The auto-accept path was removed and the
+  `MapsNavDisclosure` dialog restored on the live Directions path.
+- **Closure evidence (2026-09-01).** Implementation commit `ae7d846`; closure
+  tests + comment reconciliation in `20ae574`. `mapsSdkReadyProvider` returns
+  false and never calls `ensureInitialized()` unless `consent == accepted`, so no
+  Google surface can initialise before agreement (enforcement point verified in
+  source + `maps_sdk_boundary_test.dart` / `routes_consent_guard_test.dart`).
+  On-device runtime (iPhone 17 sim, Maestro MCP): Decline `map-wayfinding.yaml`
+  16/16; Accept + persistence `privacy-consent.yaml` 16/16; Revoke → retry →
+  explicit re-enable `privacy-revoke-retry.yaml` 25/25 (the retry is NOT silently
+  re-accepted — it lands on the honest sharing-off panel); Persian RTL first-use
+  disclosure `privacy-consent-fa.yaml` 17/17. 58 targeted privacy tests green. The
+  hosted policy (`docs/release/mq-hosted-pages.md`) and the EN/FA in-app copy are
+  reconciled to the explicit model ("asks you before"; "sent to Google only … and
+  only after you agree"). Full gate `CHECK PASSED`, exit 0, coverage 91.01%.
 
 ## B3 — Live Google walking routes need production GCP configuration
 
@@ -225,6 +254,13 @@ clears the path to GO.
      Google Routes / location-sharing path (see B1).
   8. The links are tested from release builds.
   9. Store metadata is verified before submission.
+  10. The App Store **App Privacy** answers and Google Play **Data safety**
+      declarations are completed — including how the location transmitted to
+      Google Routes for walking directions is classified (app "conduit" vs
+      data "collection" under each store's definitions). **LEGAL/POLICY REVIEW
+      REQUIRED — do not self-answer this classification.** B1/B2 closure settles
+      the app's own disclosures (truthful purpose string + explicit consent); it
+      does **not** decide the store-form classification, which remains open.
 - **Required closure evidence.** Live production URLs; release-build
   screenshots / E2E proving the in-app privacy-policy entry works; App Store
   Connect metadata verification; Play Console metadata verification; a successful
@@ -258,3 +294,13 @@ in-app privacy-policy surface) it is not store-release-ready:
   surface and the production URLs are unhosted. Recorded the Info + Settings
   verdict as CONDITIONAL GO (no implementation defect; blocked by B7). Scoped to
   the verified 2026 store rules — a Marketing URL is optional, not mandatory.
+- 2026-09-01 — **B1 and B2 → CLOSED — VERIFIED.** Privacy Release Audit
+  (commits `0266e6e`, `ae7d846`, `1b0ca63`) + Privacy Closure Verification
+  (commit `20ae574`). B1: current-HEAD iOS build + packaged `Runner.app`
+  Info.plist inspected (truthful Google/walking-directions wording, old "never
+  sent anywhere" gone). B2: explicit first-use consent; `mapsSdkReadyProvider`
+  gates the SDK on `accepted`; on-device Maestro runtime — Decline 16/16, Accept +
+  persistence 16/16, Revoke → retry 25/25, Persian RTL 17/17; 58 targeted privacy
+  tests green; full gate `CHECK PASSED` at 91.01%. B7 stays OPEN. Store App
+  Privacy / Play Data safety classification of location→Google flagged
+  **LEGAL/POLICY REVIEW REQUIRED** (B7 condition 10).

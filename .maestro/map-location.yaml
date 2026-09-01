@@ -1,8 +1,10 @@
 # Map · location, permission and the honest off-campus / off-footprint notes
 #
-# Tests: the locate button drives the permission flow, an on-campus fix draws
-# the dot, and a far-away fix produces the off-campus banner rather than a
-# clamped dot at the map edge (spec §5.4/§5.5 — the projector NEVER clamps).
+# Tests: entering the Map requests location permission (it is a core feature of
+# the screen — not deferred to a "Locate Me" tap), an on-campus fix draws the
+# dot, the control then follows, and a far-away fix produces the off-campus
+# banner rather than a clamped dot at the map edge (spec §5.4/§5.5 — the
+# projector NEVER clamps).
 appId: au.edu.mq.astronomy.aon2026
 tags: [map, location]
 ---
@@ -12,11 +14,9 @@ tags: [map, location]
     longitude: 151.1134
 - runFlow: flows/open-map.yaml
 
-- assertVisible: "Show my location"
-- tapOn: "Show my location"
-
-# iOS permission sheet. Optional because the grant persists across relaunches,
-# so the dialog only appears on the very first run after install.
+# Permission is requested on ENTERING the Map tab, before any tap. iOS shows the
+# sheet here on the very first run after install (the grant persists across
+# relaunches, so both taps are optional).
 - tapOn:
     text: "Allow While Using App"
     optional: true
@@ -25,8 +25,11 @@ tags: [map, location]
     optional: true
 - takeScreenshot: .maestro/screenshots/location-01-on-campus
 
-# Once granted AND a fix arrives, the control is actively following, so its
-# accessible name is the STOP action (locate_button.dart state machine).
+# Granted on entry → the dot is already live and the control now offers to
+# FOLLOW (not the first-run "Show my location"). "Locate Me" simply recenters
+# and starts follow when permission is already held.
+- assertVisible: "Follow my location"
+- tapOn: "Follow my location"
 - assertVisible: "Stop following my location"
 
 # ── a FIRST fix far from campus must produce the honest banner, not a fake dot ──
@@ -41,12 +44,12 @@ tags: [map, location]
 - launchApp:
     clearState: true
 - runFlow: flows/open-map.yaml
-- assertVisible: "Show my location"
-- tapOn: "Show my location"
+# Fresh state → the entry-time permission sheet appears again; grant it.
 - tapOn:
     text: "Allow While Using App"
     optional: true
-# project() returns null off the illustrated footprint — the app must show the
-# honest distance banner, never a dot clamped to the edge of the artwork.
+# Granted on entry with an off-campus fix: project() returns null off the
+# illustrated footprint, so the app shows the honest distance banner with no
+# Locate tap needed — never a dot clamped to the edge of the artwork.
 - assertVisible: ".*km from campus"
 - takeScreenshot: .maestro/screenshots/location-02-off-campus

@@ -86,6 +86,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void initState() {
     super.initState();
     _maybeHandleFocus();
+    // Location is a core feature of the Map, so ask for permission on first
+    // entry rather than making the visitor discover "Locate Me". The Map branch
+    // is built lazily by StatefulShellRoute (only on first navigation here) and
+    // then kept alive, so this initState IS "first entry to the Map tab" — no
+    // other tab reaches it. The controller latches the prompt to fire once, so
+    // a remount could never double-ask. Deferred past the first frame: it must
+    // not mutate provider state mid-build.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      unawaited(
+        ref.read(locationControllerProvider.notifier).ensureFirstMapEntryPrompt(),
+      );
+    });
   }
 
   @override

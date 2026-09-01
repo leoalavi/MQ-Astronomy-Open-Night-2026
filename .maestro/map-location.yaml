@@ -29,10 +29,23 @@ tags: [map, location]
 # accessible name is the STOP action (locate_button.dart state machine).
 - assertVisible: "Stop following my location"
 
-# ── a fix far from campus must produce the honest banner, not a fake dot ────
+# ── a FIRST fix far from campus must produce the honest banner, not a fake dot ──
+# A relaunch (fresh LocationController) is deliberate: the fix-settling policy
+# (shouldAdoptFix) CORRECTLY rejects an instant on-campus→CBD teleport as a
+# physically-impossible ~10 km jump (location_fix_settling_test), so the
+# off-campus fix must arrive as the first fix of a session — exactly as it would
+# for a visitor opening the app from home. Sydney CBD, ~10 km south-east.
 - setLocation:
     latitude: -33.8688
     longitude: 151.2093
+- launchApp:
+    clearState: true
+- runFlow: flows/open-map.yaml
+- assertVisible: "Show my location"
+- tapOn: "Show my location"
+- tapOn:
+    text: "Allow While Using App"
+    optional: true
 # project() returns null off the illustrated footprint — the app must show the
 # honest distance banner, never a dot clamped to the edge of the artwork.
 - assertVisible: ".*km from campus"

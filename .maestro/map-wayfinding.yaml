@@ -1,14 +1,21 @@
-# Map · walking directions (consent gate)
+# Map · walking directions (Google nav entry)
 #
-# The map's "Directions" FAB now pushes the CONSENT-GATED Google nav screen
+# The map's "Directions" FAB pushes the in-app Google nav screen
 # (`Routes.googleNavTo(...)`) — the app consolidated on one directions surface,
 # "always Google Maps", and the old offline origin/destination picker
 # (`wayfinding_screen.dart`) is no longer reachable (audit 2026-08-30, MAP-007).
 #
-# So this flow now exercises the CONSENT INVARIANT (spec §2b): no Google surface
-# initialises until consent resolves positively. Tapping Directions must raise the
-# disclosure BEFORE any Google map is drawn, and declining must return to the
-# campus map without ever touching the network.
+# Consent model (verified 2026-09-01): opening the Google nav screen IS the
+# choice to use Google directions — a first-run `unknown` consent is
+# auto-accepted and the passive privacy notice + opt-out live in Settings
+# (unit: google_nav_screen_test 'first-run auto-proceeds no modal';
+#  settings_google_consent_test turning sharing OFF). So there is NO pre-draw
+# disclosure modal. The §2b boundary (no Google surface initialises before
+# consent resolves positively) is enforced by `mapsSdkReadyProvider` and proven
+# in unit tests (maps_sdk_ready_provider_test, routes_consent_guard_test); on
+# device we assert the live UI: no modal, an in-app nav screen (never a bounce
+# out to the Google Maps app, never a blank Google-tiles view), and a clean
+# return to the campus map.
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
@@ -16,20 +23,14 @@ tags: [map]
 
 - tapOn: "Directions"
 
-# The disclosure appears BEFORE any Google surface is built — the invariant.
-- assertVisible: "Use Google Maps for directions?"
-- assertVisible: "(?s).*your current location is sent to Google Maps.*"
-- takeScreenshot: .maestro/screenshots/wayfinding-01-consent
+# No disclosure modal — the flow auto-proceeds into the in-app nav screen.
+- assertNotVisible: "Use Google Maps for directions?"
+# The nav screen for the FAB's default destination (Central Courtyard).
+- assertVisible: "Central Courtyard"
+- takeScreenshot: .maestro/screenshots/wayfinding-01-nav-screen
 
-# Decline. Tapped by POINT: a dialog button's label is not its hit target
-# (.maestro/README.md trap 6) — `tapOn: "Not now"` reports success and does
-# nothing. "Not now" sits at [105,551]-[197,607] of a 440x956 frame → ~34%,61%.
-- tapOn:
-    point: "34%,61%"
-- waitForAnimationToEnd:
-    timeout: 5000
-
-# Declined → back on the campus map, no Google map ever drawn.
+# Back returns to the campus map — the visitor never leaves AON.
+- tapOn: "Back"
 - assertVisible: "Directions"
 - assertVisible: "Zoom in"
-- takeScreenshot: .maestro/screenshots/wayfinding-02-declined-back-on-map
+- takeScreenshot: .maestro/screenshots/wayfinding-02-back-on-map

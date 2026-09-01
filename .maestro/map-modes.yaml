@@ -5,6 +5,11 @@
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
+# An on-campus fix so Compass mode can build its nearby cardinal LIST (without a
+# fix it honestly shows "Finding your location…", not the list + its filter).
+- setLocation:
+    latitude: -33.7737
+    longitude: 151.1134
 - runFlow: flows/open-map.yaml
 - assertVisible: "Directions"
 
@@ -17,10 +22,16 @@ tags: [map]
 
 # ── compass / point-me ──────────────────────────────────────────────────────
 - tapOn: "Compass"
+# Compass requests location on entry; grant it (persists across relaunch, so
+# optional after the first run on this device).
+- tapOn:
+    text: "Allow While Using App"
+    optional: true
 - takeScreenshot: .maestro/screenshots/modes-02-compass
 - assertNotVisible: "Directions"
 # The simulator has no magnetometer, so compass mode MUST degrade to the honest
-# cardinal-bearing LIST rather than draw a rose it cannot orient (M5 §0R).
+# cardinal-bearing LIST rather than draw a rose it cannot orient (M5 §0R). The
+# list — and its "Filter places" field — appears once there is a location fix.
 - assertVisible: "Filter places"
 
 # ── back to the campus map ──────────────────────────────────────────────────

@@ -13,6 +13,7 @@ import 'package:aon2026/services/location_providers.dart';
 import 'package:aon2026/services/point_me_controller.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/widgets/bearing_math.dart';
+import 'package:aon2026/widgets/preview_location_badge.dart';
 
 class PointMeScreen extends ConsumerStatefulWidget {
   const PointMeScreen({required this.venueId, super.key});
@@ -176,7 +177,19 @@ class _PointMeScreenState extends ConsumerState<PointMeScreen> {
   }
 
   Widget _scaffold(AonL10n l, Widget child) => Scaffold(
-        appBar: AppBar(title: Text(l.pointMeTitle)),
+        // §12 honesty: Point Me's distance/direction is computed from the user
+        // position, which under preview mode is a SIMULATED campus-centre fix —
+        // so the "Simulated location" badge must travel with it, exactly as it
+        // does on the map and the compass. Renders nothing when preview is off.
+        appBar: AppBar(
+          title: Text(l.pointMeTitle),
+          actions: const [
+            Padding(
+              padding: EdgeInsets.only(right: AonSpacing.space4),
+              child: Center(child: PreviewLocationBadge()),
+            ),
+          ],
+        ),
         body: SafeArea(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(AonSpacing.space5),

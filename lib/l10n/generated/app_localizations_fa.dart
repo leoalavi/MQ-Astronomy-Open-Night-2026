@@ -874,6 +874,13 @@ class AonL10nFa extends AonL10n {
       'هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود.';
 
   @override
+  String get settingsPrivacyPolicy => 'سیاست حریم خصوصی';
+
+  @override
+  String get settingsPrivacyPolicyUnavailable =>
+      'باز کردن سیاست حریم خصوصی ممکن نشد. لطفاً دوباره تلاش کنید.';
+
+  @override
   String get mapModeMap => 'نقشه';
 
   @override

@@ -722,6 +722,14 @@
   "@settingsGoogleMapsNotice": {
     "description": "Settings/Info notice about Google Maps usage + ToS"
   },
+  "settingsPrivacyPolicy": "Privacy Policy",
+  "@settingsPrivacyPolicy": {
+    "description": "Settings row that opens the hosted privacy policy in the browser"
+  },
+  "settingsPrivacyPolicyUnavailable": "Couldn't open the privacy policy. Please try again.",
+  "@settingsPrivacyPolicyUnavailable": {
+    "description": "Shown when the privacy-policy link cannot be opened"
+  },
   "mapModeMap": "Map",
   "mapModePanorama": "360°",
   "mapModeCompass": "Compass",

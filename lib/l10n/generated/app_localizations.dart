@@ -1477,6 +1477,18 @@ abstract class AonL10n {
   /// **'When you use Google Maps directions, your location is sent to Google. Google\'s terms and privacy policy apply.'**
   String get settingsGoogleMapsNotice;
 
+  /// Settings row that opens the hosted privacy policy in the browser
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy'**
+  String get settingsPrivacyPolicy;
+
+  /// Shown when the privacy-policy link cannot be opened
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t open the privacy policy. Please try again.'**
+  String get settingsPrivacyPolicyUnavailable;
+
   /// No description provided for @mapModeMap.
   ///
   /// In en, this message translates to:

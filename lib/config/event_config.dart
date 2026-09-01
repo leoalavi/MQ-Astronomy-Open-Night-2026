@@ -48,6 +48,7 @@ class EventConfig {
     required this.quickAccess,
     required this.features,
     this.defaultThemeMode = AppThemeMode.dark,
+    this.privacyPolicyUrl,
   });
 
   /// Stable identifier. Used for persistence keys, so changing it orphans
@@ -86,7 +87,32 @@ class EventConfig {
   /// because the event is after sunset; the user can still override it.
   final AppThemeMode defaultThemeMode;
 
+  /// The production, publicly-reachable HTTPS Privacy Policy URL (App Store /
+  /// Play require the policy to be accessible from inside the app). **Null until
+  /// Macquarie hosts the page** — do NOT guess an `mq.edu.au` path (release
+  /// blocker B7). When null, the Settings Privacy Policy row is hidden rather
+  /// than offering a dead link; setting this one value activates it.
+  final String? privacyPolicyUrl;
+
   Duration get duration => endsAt.difference(startsAt);
+
+  EventConfig copyWith({String? privacyPolicyUrl}) => EventConfig(
+        id: id,
+        name: name,
+        shortName: shortName,
+        tagline: tagline,
+        host: host,
+        faculty: faculty,
+        startsAt: startsAt,
+        endsAt: endsAt,
+        heroAsset: heroAsset,
+        heroCredit: heroCredit,
+        terminology: terminology,
+        quickAccess: quickAccess,
+        features: features,
+        defaultThemeMode: defaultThemeMode,
+        privacyPolicyUrl: privacyPolicyUrl ?? this.privacyPolicyUrl,
+      );
 
   // ══════════════════════════════════════════════════════
   // Astronomy Open Night 2026 — the shipped configuration

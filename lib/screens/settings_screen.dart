@@ -20,6 +20,7 @@ import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/passport_preview.dart';
 import 'package:aon2026/services/preview_location.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
+import 'package:aon2026/services/url_opener.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/widgets/event_time_preview.dart';
 import 'package:aon2026/widgets/section_header.dart';
@@ -139,6 +140,15 @@ class SettingsScreen extends ConsumerWidget {
           // The one exception to "nothing leaves your phone" — surfaced
           // honestly, with a revoke control once consent has been given.
           const _GoogleMapsPrivacyCard(),
+
+          // In-app Privacy Policy entry point (store requirement — the policy
+          // must be reachable from inside the app). Shown ONLY when a real
+          // hosted URL is configured (EventConfig.privacyPolicyUrl); null until
+          // Macquarie hosts the page, so no dead link ships (release blocker B7).
+          if (config.privacyPolicyUrl case final String policyUrl) ...[
+            _gap,
+            _PrivacyPolicyCard(url: policyUrl),
+          ],
 
           // ── Your data ──
           SectionHeader(
@@ -568,6 +578,39 @@ class _GoogleMapsPrivacyCard extends ConsumerWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// The in-app Privacy Policy link. Opens the hosted policy in the browser; if
+/// the browser cannot open it, says so honestly rather than doing nothing.
+class _PrivacyPolicyCard extends ConsumerWidget {
+  const _PrivacyPolicyCard({required this.url});
+
+  final String url;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l = AonL10n.of(context);
+    return Card(
+      child: ListTile(
+        key: const Key('settings-privacy-policy'),
+        leading: Icon(Icons.policy_outlined, color: context.aon.accent),
+        title: Text(l.settingsPrivacyPolicy),
+        trailing: const Icon(Icons.open_in_new_rounded),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AonSpacing.space4,
+          vertical: AonSpacing.space1,
+        ),
+        onTap: () async {
+          final opener = ref.read(urlOpenerProvider);
+          final ok = await opener(Uri.parse(url));
+          if (!context.mounted || ok) return;
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(l.settingsPrivacyPolicyUnavailable)),
+          );
+        },
       ),
     );
   }

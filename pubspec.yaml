@@ -57,6 +57,10 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   shared_preferences_platform_interface: ^2.4.2
   crypto: ^3.0.0 # test-only: verify the vendored buildings.json SHA-256 in-suite
+  # test-only: mock the url_launcher platform in url_opener_test (drives the real
+  # provider closure without launching a browser). Already resolved transitively.
+  url_launcher_platform_interface: ^2.3.2
+  plugin_platform_interface: ^2.1.8
 
 flutter:
   uses-material-design: true

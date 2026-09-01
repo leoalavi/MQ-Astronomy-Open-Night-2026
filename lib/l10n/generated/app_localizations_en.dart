@@ -871,6 +871,13 @@ class AonL10nEn extends AonL10n {
       'When you use Google Maps directions, your location is sent to Google. Google\'s terms and privacy policy apply.';
 
   @override
+  String get settingsPrivacyPolicy => 'Privacy Policy';
+
+  @override
+  String get settingsPrivacyPolicyUnavailable =>
+      'Couldn\'t open the privacy policy. Please try again.';
+
+  @override
   String get mapModeMap => 'Map';
 
   @override

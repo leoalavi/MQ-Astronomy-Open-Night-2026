@@ -230,6 +230,8 @@
   "settingsRevokeGoogleConsent": "لغو دسترسی نقشهٔ گوگل",
   "settingsEnableGoogleConsent": "روشن‌کردن دوبارهٔ مسیریابی گوگل‌مپ",
   "settingsGoogleMapsNotice": "هنگام استفاده از مسیریابی نقشهٔ گوگل، موقعیت شما به گوگل ارسال می‌شود. شرایط و سیاست حریم خصوصی گوگل اعمال می‌شود.",
+  "settingsPrivacyPolicy": "سیاست حریم خصوصی",
+  "settingsPrivacyPolicyUnavailable": "باز کردن سیاست حریم خصوصی ممکن نشد. لطفاً دوباره تلاش کنید.",
   "mapModeMap": "نقشه",
   "mapModePanorama": "۳۶۰°",
   "mapModeCompass": "قطب‌نما",

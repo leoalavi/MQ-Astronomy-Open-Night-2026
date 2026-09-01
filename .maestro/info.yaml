@@ -1,0 +1,25 @@
+# Info page — practical event information
+#
+# The Info tab is data-driven (venues + parking + guidance from compiled data).
+# This verifies the page opens, shows the practical sections a visitor needs
+# (first aid, toilets), and scrolls down through parking to the transport
+# section. Section headers merge title+subtitle into one a11y node — match with
+# `(?s).*…*`. Info is bottom-nav slot 5 of 6; tap by POINT (x≈73%, y=91%).
+appId: au.edu.mq.astronomy.aon2026
+tags: [info]
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    point: "73%,91%"
+- assertVisible: "Useful information"
+- assertVisible: "First aid"
+- assertVisible: "Toilets"
+# Scroll down through the practical sections; the transport section proves the
+# page scrolls and the lower content renders.
+- scrollUntilVisible:
+    element:
+      text: "(?s).*Getting here.*"
+    direction: DOWN
+- assertVisible: "(?s).*Getting here.*"
+- takeScreenshot: .maestro/screenshots/info-01

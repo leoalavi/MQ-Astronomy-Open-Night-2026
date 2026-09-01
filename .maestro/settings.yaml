@@ -4,14 +4,16 @@
 # appearance card, the language switch (a real, whole-app RTL flip and back),
 # the destructive Delete-my-data confirm dialog, and proves the LAST actionable
 # row (Google Maps licences) is reachable above the floating tab bar and opens.
-# Settings is bottom-nav slot 6 of 6; tap it by POINT.
+# Settings is bottom-nav slot 6 of 6; tap it by POINT — x≈88%, y=91% (the CENTRE
+# of the tab-bar row; 95% fell BELOW the bar on a 402×874 device and hit nothing,
+# leaving the app on Home while the tab-label "Settings" still matched).
 appId: au.edu.mq.astronomy.aon2026
 tags: [settings]
 ---
 - launchApp:
     clearState: true
 - tapOn:
-    point: "88%,95%"
+    point: "88%,91%"
 - assertVisible: "Settings"
 - assertVisible: "Appearance"
 - assertVisible: "(?s).*Dark.*Recommended.*night vision.*"

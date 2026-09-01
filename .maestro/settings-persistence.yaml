@@ -1,0 +1,51 @@
+# Settings · persistence across a restart
+#
+# Two release-critical restart behaviours the base settings.yaml does not cover:
+#   1. a chosen LANGUAGE survives a restart — and Persian RTL mirrors the tab bar,
+#      so Settings moves from the RIGHT (~88%) to the LEFT (~12%).
+#   2. "Delete my data" stays DELETED after a restart (a NO-GO condition — erased
+#      data must never return).
+#
+# Tab taps are by POINT, y=91% (tab-bar row centre). Slots (LTR): Home 8%,
+# Program 27%, Night 42%, Map 58%, Info 73%, Settings 88%. Persian mirrors them.
+appId: au.edu.mq.astronomy.aon2026
+tags: [settings]
+---
+# ── 1. A chosen language survives a restart ──
+- launchApp:
+    clearState: true
+- tapOn:
+    point: "88%,91%"          # Settings (LTR: slot 6, right)
+- assertVisible: "Appearance"
+- tapOn: "فارسی"
+- assertVisible: "تنظیمات"     # the whole app flips to Persian
+- launchApp                    # restart — the choice must survive
+- tapOn:
+    point: "12%,91%"          # Settings (Persian RTL: tab bar mirrored → LEFT)
+- assertVisible: "زبان"        # on the Persian Settings screen (Language)
+- tapOn: "English"            # endonym, never translated — restore English
+- assertVisible: "Settings"
+
+# ── 2. "Delete my data" stays erased across a restart ──
+# Create real persisted state to delete.
+- tapOn:
+    point: "27%,91%"          # Program
+- assertVisible: "Search talks, activities, presenters"
+- tapOn: "Search talks, activities, presenters"
+- inputText: "Cosmic"
+- tapOn: "(?s).*Save Cosmic arcade to My Night.*"
+- launchApp                    # clean, keyboard-free state; the saved plan persists
+- tapOn:
+    point: "88%,91%"          # Settings
+- assertVisible: "Appearance"
+- scrollUntilVisible:
+    element:
+      text: "(?s).*Delete my data.*"
+    direction: DOWN
+- tapOn: "Delete"             # opens the confirm dialog
+- assertVisible: "Delete data stored on this device?"
+- tapOn: "Delete"             # confirm — the dialog is modal, so this is the only "Delete"
+- launchApp                    # restart — deleted data must NOT return
+- tapOn:
+    point: "42%,91%"          # My Night
+- assertVisible: "Your night is empty"

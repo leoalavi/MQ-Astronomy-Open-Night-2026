@@ -12,7 +12,6 @@ import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/config/event_config.dart';
-import 'package:aon2026/widgets/compass_mode_view.dart';
 import 'package:aon2026/widgets/map_mode_toggle.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/widgets/preview_location_badge.dart';
@@ -304,8 +303,6 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 onOpen: (id) => context.push(Routes.panoramaFor(id)),
               ),
             )
-          else if (_mode == MapMode.compass)
-            const Expanded(child: CompassModeView()) // M5 (§0-A/§0.4)
           else ...[
           MapCategoryFilterBar(
             selected: _visible,
@@ -906,21 +903,6 @@ class VenueSheet extends ConsumerWidget {
               label: Text(l.mapDirections),
             ),
           ),
-
-          if (venue.hasCoordinates) ...[
-            const SizedBox(height: AonSpacing.space3),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                  context.push(Routes.pointMeTo(venue.id));
-                },
-                icon: const Icon(Icons.navigation_rounded),
-                label: Text(l.pointMeTitle),
-              ),
-            ),
-          ],
 
           // Secondary detail, below the actions: visible on drag, never in the
           // way of the primary CTA.

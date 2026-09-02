@@ -13,20 +13,21 @@ Widget _app(MapMode v, ValueChanged<MapMode> onCh, {Locale locale = const Locale
     );
 
 void main() {
-  testWidgets('renders 3 segments; compass selectable via a single Semantics node', (t) async {
+  testWidgets('renders 2 segments (Map, 360°); no Compass; panorama selectable via a single Semantics node', (t) async {
     MapMode? picked;
     await t.pumpWidget(_app(MapMode.campusMap, (m) => picked = m));
     final l = await AonL10n.delegate.load(const Locale('en'));
     // §0-E: one labeled node each (container + excludeSemantics), so findsOneWidget.
     expect(find.bySemanticsLabel(l.mapModeMap), findsOneWidget);
     expect(find.bySemanticsLabel(l.mapModePanorama), findsOneWidget);
-    expect(find.bySemanticsLabel(l.mapModeCompass), findsOneWidget);
-    await t.tap(find.bySemanticsLabel(l.mapModeCompass));
-    expect(picked, MapMode.compass);
+    // Compass sub-tab removed — its segment must be gone.
+    expect(find.bySemanticsLabel(l.mapModeCompass), findsNothing);
+    await t.tap(find.bySemanticsLabel(l.mapModePanorama));
+    expect(picked, MapMode.panorama);
   });
 
   for (final locale in const [Locale('en'), Locale('fa')]) {
-    testWidgets('3 segments @ 320x568 / textScale 2.0 — no overflow (${locale.languageCode}) [§0-D]',
+    testWidgets('2 segments @ 320x568 / textScale 2.0 — no overflow (${locale.languageCode}) [§0-D]',
         (t) async {
       t.view.physicalSize = const Size(320, 568);
       t.view.devicePixelRatio = 1.0;
@@ -34,7 +35,7 @@ void main() {
       addTearDown(t.view.resetDevicePixelRatio);
       await t.pumpWidget(MediaQuery(
         data: const MediaQueryData(textScaler: TextScaler.linear(2.0)),
-        child: _app(MapMode.compass, (_) {}, locale: locale),
+        child: _app(MapMode.panorama, (_) {}, locale: locale),
       ));
       await t.pump();
       expect(t.takeException(), isNull); // FittedBox(scaleDown) prevents RenderFlex overflow

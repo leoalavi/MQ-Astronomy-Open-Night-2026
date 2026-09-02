@@ -5,10 +5,10 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 
-enum MapMode { campusMap, panorama, compass }
+enum MapMode { campusMap, panorama }
 
-/// A glass segmented control switching the Map tab between the campus map, the
-/// 360° panorama picker, and the compass/radar finder (M5).
+/// A glass segmented control switching the Map tab between the campus map and
+/// the 360° panorama picker.
 class MapModeToggle extends StatelessWidget {
   const MapModeToggle({super.key, required this.value, required this.onChanged});
 
@@ -18,7 +18,6 @@ class MapModeToggle extends StatelessWidget {
   static String _label(AonL10n l, MapMode m) => switch (m) {
         MapMode.campusMap => l.mapModeMap,
         MapMode.panorama => l.mapModePanorama,
-        MapMode.compass => l.mapModeCompass,
       };
 
   @override
@@ -28,7 +27,7 @@ class MapModeToggle extends StatelessWidget {
       variant: GlassVariant.control,
       borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
       padding: const EdgeInsets.all(4),
-      // §0-D: scale the 3-segment row down rather than overflow at 320/2.0.
+      // §0-D: scale the 2-segment row down rather than overflow at 320/2.0.
       child: FittedBox(
         fit: BoxFit.scaleDown,
         child: Row(

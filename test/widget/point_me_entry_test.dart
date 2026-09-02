@@ -14,15 +14,16 @@ Widget _host(Widget child) => ProviderScope(
     );
 
 void main() {
-  testWidgets('VenueSheet with coords shows a Point-me-there button',
+  testWidgets('VenueSheet no longer shows a Point-me-there button',
       (t) async {
+    // Even a coordinate-bearing venue (which used to show it) must not: the
+    // venue sheet's actions are now Directions + Look inside in 360° only.
     await t.pumpWidget(_host(const VenueSheet(venueId: 'macquarie-theatre')));
     await t.pumpAndSettle();
-    expect(
-        find.widgetWithText(OutlinedButton, 'Point me there'), findsOneWidget);
+    expect(find.text('Point me there'), findsNothing);
   });
 
-  testWidgets('ParkingSheet with coords shows a Point-me-there button',
+  testWidgets('ParkingSheet with coords still shows a Point-me-there button',
       (t) async {
     await t.pumpWidget(_host(const ParkingSheet(parkingId: 'west-5')));
     await t.pumpAndSettle();
@@ -30,14 +31,7 @@ void main() {
         find.widgetWithText(OutlinedButton, 'Point me there'), findsOneWidget);
   });
 
-  testWidgets('a no-coordinate venue hides the Point-me-there button',
-      (t) async {
-    await t.pumpWidget(_host(const VenueSheet(venueId: 'first-aid')));
-    await t.pumpAndSettle();
-    expect(find.text('Point me there'), findsNothing);
-  });
-
-  testWidgets('tapping Point me there navigates to the point-me route',
+  testWidgets('tapping Point me there (from a parking sheet) navigates to the point-me route',
       (t) async {
     final router = GoRouter(
       routes: [
@@ -61,7 +55,7 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.widgetWithText(OutlinedButton, 'Point me there'));
     await t.pumpAndSettle();
-    expect(find.text('PM macquarie-theatre'), findsOneWidget);
+    expect(find.text('PM west-5'), findsOneWidget);
   });
 }
 
@@ -74,7 +68,7 @@ class _Opener extends StatelessWidget {
             onPressed: () => showModalBottomSheet<void>(
               context: context,
               isScrollControlled: true,
-              builder: (_) => const VenueSheet(venueId: 'macquarie-theatre'),
+              builder: (_) => const ParkingSheet(parkingId: 'west-5'),
             ),
             child: const Text('open sheet'),
           ),

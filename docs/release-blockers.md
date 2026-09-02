@@ -196,6 +196,13 @@ clears the path to GO.
 - **Verification evidence required.** The nine confirmed codes recorded by the
   organisers; a release build showing Passport collection enabled and a stamp
   successfully redeemed.
+- **Signage is ready and is not what is blocking.** `tools/passport/build_station_qr.py`
+  generates the nine printable A4 station signs directly from
+  `stamp_stations_data.dart`, so the artwork follows the codes automatically.
+  Proof run 2026-09-02: all nine pages rasterised at 300 dpi and decoded back to
+  the exact `AON2026:<CODE>` payload `StampService` accepts. Every page is
+  watermarked DRAFT while its code is a placeholder. Nothing here can close B5 —
+  only the organisers' codes can.
 
 ## B6 — Panorama asset redistribution permission unresolved
 

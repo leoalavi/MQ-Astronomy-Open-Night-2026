@@ -300,11 +300,8 @@ abstract final class VenuesData {
       category: VenueCategory.firstAid,
       // PLACEHOLDER: the map shows a first-aid symbol but the supplied
       // materials give no address or building for it, and this is exactly the
-      // wrong thing to guess. Ask the organisers before the event.
-      notes:
-          'Marked on the official printed map. Exact location still to be '
-          'confirmed with the event organisers — ask at any information '
-          'point in the Central Courtyard.',
+      // wrong thing to guess. No note is shown rather than an unconfirmed one:
+      // an "exact location to be confirmed" placeholder must never render.
     ),
     Venue(
       id: 'food-and-drink',
@@ -346,10 +343,8 @@ abstract final class VenuesData {
       // PLACEHOLDER: the map legend lists a complimentary shuttle bus, but no
       // stop locations, route or timetable are given in the supplied material.
       aliases: ['Shuttle', 'Free bus', 'شاتل', 'اتوبوس رایگان'],
-      notes:
-          'A complimentary shuttle bus is shown on the official map. Stop '
-          'locations and timetable are still to be confirmed with the event '
-          'organisers.',
+      // No note: stop locations/timetable are unconfirmed, so an unconfirmed
+      // placeholder line is omitted rather than shown.
     ),
     Venue(
       id: 'bus-stop',
@@ -358,9 +353,7 @@ abstract final class VenuesData {
       category: VenueCategory.busStop,
       // PLACEHOLDER: marked on the map legend without a listed location.
       aliases: ['Bus', 'اتوبوس', 'ایستگاه اتوبوس'],
-      notes:
-          'Transport NSW bus stops are marked on the official printed map. '
-          'Exact stop locations still to be confirmed.',
+      // No note: exact stop locations are unconfirmed, so no placeholder line.
     ),
   ];
 

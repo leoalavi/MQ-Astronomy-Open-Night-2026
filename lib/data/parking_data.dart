@@ -35,10 +35,8 @@ abstract final class ParkingData {
       // confirming with the organisers which of the two "West 6" labels is
       // the event car park.
       coordinateConfidence: DataConfidence.placeholder,
-      notes:
-          'Exact location still to be confirmed with the event organisers. '
-          'The official map shows the West 6 label in more than one position. '
-          'Follow on-site signage and marshals on the night.',
+      // No note: the exact West 6 position is unconfirmed, so an
+      // "to be confirmed" placeholder line is omitted rather than shown.
     ),
     ParkingArea(
       id: 'south-2',

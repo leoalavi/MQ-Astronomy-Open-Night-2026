@@ -333,20 +333,22 @@ void main() {
       await tester.scrollUntilVisible(find.text('Language'), 200);
       expect(find.text('Language'), findsOneWidget);
       expect(find.text('English'), findsOneWidget);
-      expect(find.text('فارسی'), findsOneWidget);
+      // English UI labels the Persian option with the English exonym "Persian".
+      expect(find.text('Persian'), findsOneWidget);
       expect(find.text('Match my device'), findsOneWidget);
     });
 
-    testWidgets('language names are endonyms — Persian is never romanised', (
+    testWidgets('English UI shows the "Persian" exonym, never the "Farsi" romanisation', (
       tester,
     ) async {
       await tester.pumpWidget(settings(null));
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('فارسی'), 200);
+      await tester.scrollUntilVisible(find.text('Persian'), 200);
 
-      // "Persian" or "Farsi" in the picker would be unreadable to the person
-      // the option is for.
-      expect(find.text('Persian'), findsNothing);
+      // The Persian option reads "Persian" (English exonym) in the English UI;
+      // the "Farsi" romanisation is never used. (The Persian-locale UI keeps the
+      // فارسی endonym — see the RTL layout test below.)
+      expect(find.text('Persian'), findsOneWidget);
       expect(find.text('Farsi'), findsNothing);
     });
 
@@ -356,10 +358,10 @@ void main() {
       await tester.pumpWidget(settings(null));
       await tester.pumpAndSettle();
 
-      await tester.scrollUntilVisible(find.text('فارسی'), 200);
-      await tester.ensureVisible(find.text('فارسی'));
+      await tester.scrollUntilVisible(find.text('Persian'), 200);
+      await tester.ensureVisible(find.text('Persian'));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('فارسی'));
+      await tester.tap(find.text('Persian'));
       await tester.pumpAndSettle();
 
       final container = ProviderScope.containerOf(
@@ -506,7 +508,10 @@ void _languagePickerGeometryTests() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.scrollUntilVisible(find.text('فارسی'), 200);
+      // Scroll to a label present in BOTH locales (the language section) — the
+      // Persian option label differs by locale (English UI: "Persian";
+      // Persian UI: "فارسی"), so it is not a stable cross-locale anchor.
+      await tester.scrollUntilVisible(find.text('English'), 200);
       await tester.pumpAndSettle();
     }
 
@@ -526,20 +531,20 @@ void _languagePickerGeometryTests() {
           : tileRect.right - labelRect.right;
     }
 
-    testWidgets('in English, فارسی is as close to its control as English is', (
+    testWidgets('in English, Persian is as close to its control as English is', (
       tester,
     ) async {
       await pumpSettings(tester, const Locale('en'));
 
       final englishGap = gapToRadio(tester, 'English', 'en');
-      final persianGap = gapToRadio(tester, 'فارسی', 'fa');
+      final persianGap = gapToRadio(tester, 'Persian', 'fa');
 
       // Both labels start just after the radio; allow a little slack for
-      // glyph-metric differences between the two scripts.
+      // glyph-metric differences.
       expect(
         persianGap,
         closeTo(englishGap, 24),
-        reason: 'فارسی is ${persianGap.round()}pt from its control but English '
+        reason: 'Persian is ${persianGap.round()}pt from its control but English '
             'is ${englishGap.round()}pt — the Persian label is stranded across '
             'the row',
       );
@@ -551,7 +556,7 @@ void _languagePickerGeometryTests() {
       await pumpSettings(tester, const Locale('en'));
 
       final english = tester.getRect(find.text('English')).left;
-      final persian = tester.getRect(find.text('فارسی')).left;
+      final persian = tester.getRect(find.text('Persian')).left;
       final system = tester.getRect(find.text('Match my device')).left;
 
       expect(persian, closeTo(english, 2));
@@ -573,9 +578,10 @@ void _languagePickerGeometryTests() {
       );
     });
 
-    testWidgets('no language label is romanised', (tester) async {
+    testWidgets('no language label uses the "Farsi" romanisation', (tester) async {
       await pumpSettings(tester, const Locale('en'));
-      expect(find.text('Persian'), findsNothing);
+      // "Persian" (English exonym) is intentional in the English UI; "Farsi"
+      // (a romanisation) is never used.
       expect(find.text('Farsi'), findsNothing);
     });
   });

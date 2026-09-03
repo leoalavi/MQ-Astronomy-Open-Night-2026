@@ -1034,20 +1034,6 @@ class ParkingSheet extends ConsumerWidget {
                   ),
                 ),
               ],
-              if (parking.hasCoordinates) ...[
-                const SizedBox(height: AonSpacing.space3),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      context.push(Routes.pointMeTo(parking.id));
-                    },
-                    icon: const Icon(Icons.navigation_rounded),
-                    label: Text(l.pointMeTitle),
-                  ),
-                ),
-              ],
             ],
           ),
         ),

@@ -2011,10 +2011,10 @@ abstract class AonL10n {
   /// **'English'**
   String get settingsLanguageEnglish;
 
-  /// The Persian option, written in Persian (an endonym), for the same reason.
+  /// The Persian-language option, labelled in English ('Persian', not the 'Farsi' endonym) so an English reader recognises it. The Persian-locale ARB keeps the فارسی endonym.
   ///
   /// In en, this message translates to:
-  /// **'فارسی'**
+  /// **'Persian'**
   String get settingsLanguagePersian;
 
   /// Map/navigation attribution: the illustrated campus map is Macquarie University; walking directions and their basemap come from Google.

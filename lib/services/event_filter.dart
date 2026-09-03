@@ -21,8 +21,22 @@ enum TimeBand {
   final int endHour;
 
   /// Whether any session of [event] overlaps this band on the event date.
+  ///
+  /// Timing confidence gates the test, so the filter never claims an event is on
+  /// in a band the programme never published:
+  ///  * No time at all ([EventSession.isUnscheduled]) → matches no band.
+  ///  * Open all evening ([EventSession.isFullEvent]) → matches every band.
+  ///  * A published start AND finish → true interval overlap.
+  ///  * A published start but NO finish ([TimingConfidence.startOnly] /
+  ///    [TimingConfidence.repeating]) → only the band that contains the start.
+  ///    Its end is a 10pm stand-in, so a plain interval test used to show a
+  ///    "4.15pm start, finish not published" activity (e.g. Kids' space) under
+  ///    the 8–10pm band as if it were still running then.
   bool overlaps(AonEvent event) {
     for (final s in event.sessions) {
+      if (s.isUnscheduled) continue;
+      if (s.isFullEvent) return true;
+
       final bandStart = DateTime(
         s.start.year,
         s.start.month,
@@ -35,11 +49,19 @@ enum TimeBand {
         s.start.day,
         endHour,
       );
-      // Overlap test: session starts before band ends AND ends after band
-      // starts. Using strict `isBefore`/`isAfter` means an event that finishes
-      // exactly at 6pm does not show under the 6–8pm band.
-      if (s.start.isBefore(bandEnd) && s.end.isAfter(bandStart)) {
-        return true;
+
+      if (s.hasPublishedEnd) {
+        // Real start AND end. Strict `isBefore`/`isAfter` so an event finishing
+        // exactly at 6pm does not show under the 6–8pm band.
+        if (s.start.isBefore(bandEnd) && s.end.isAfter(bandStart)) {
+          return true;
+        }
+      } else {
+        // Published start, unknown finish: place it only in the band that holds
+        // its start, never in later bands off the stand-in end.
+        if (!s.start.isBefore(bandStart) && s.start.isBefore(bandEnd)) {
+          return true;
+        }
       }
     }
     return false;

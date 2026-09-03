@@ -164,7 +164,10 @@ void main() {
       final west6 = ParkingData.byId('west-6')!;
       expect(west6.hasCoordinates, isFalse);
       expect(west6.coordinateConfidence, DataConfidence.placeholder);
-      expect(west6.notes, isNotNull);
+      // The unconfirmed "exact location still to be confirmed" note was removed
+      // (Info tab must not show placeholder/unconfirmed values), so West 6 now
+      // carries no note rather than a to-be-confirmed one.
+      expect(west6.notes, isNull);
     });
 
     test('coordinates that do exist are inside the campus bounding box', () {

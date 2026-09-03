@@ -939,9 +939,9 @@
   "@settingsLanguageEnglish": {
     "description": "The English option. Always written in English — a language name must be legible to someone who does not yet read the current language."
   },
-  "settingsLanguagePersian": "فارسی",
+  "settingsLanguagePersian": "Persian",
   "@settingsLanguagePersian": {
-    "description": "The Persian option, written in Persian (an endonym), for the same reason."
+    "description": "The Persian-language option, labelled in English ('Persian', not the 'Farsi' endonym) so an English reader recognises it. The Persian-locale ARB keeps the فارسی endonym."
   },
   "creditsMapDataBody": "Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.",
   "@creditsMapDataBody": {

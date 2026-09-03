@@ -1182,7 +1182,7 @@ class AonL10nEn extends AonL10n {
   String get settingsLanguageEnglish => 'English';
 
   @override
-  String get settingsLanguagePersian => 'فارسی';
+  String get settingsLanguagePersian => 'Persian';
 
   @override
   String get creditsMapDataBody =>

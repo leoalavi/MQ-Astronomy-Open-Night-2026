@@ -31,6 +31,7 @@ import 'package:aon2026/widgets/quick_link_tile.dart';
 import 'package:aon2026/widgets/section_header.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
+import 'package:aon2026/widgets/parking_choices_sheet.dart';
 
 /// Landing screen: branding, when and where, and the four things people
 /// actually open the app for.
@@ -591,9 +592,10 @@ class _NextUpCard extends ConsumerWidget {
                         ),
                         // Only a published start; an open-all-night activity's
                         // 4pm is a stand-in, not a time the programme printed.
-                        _ => entry.session.hasPublishedStart
-                            ? TimeFormat.time(entry.session.start)
-                            : null,
+                        _ =>
+                          entry.session.hasPublishedStart
+                              ? TimeFormat.time(entry.session.start)
+                              : null,
                       },
                     ),
                   ),
@@ -819,7 +821,8 @@ class _QuickAccessTile extends ConsumerWidget {
         ? null
         : ref.watch(venueByIdProvider(item.venueId!));
 
-    // Parking has no single venue — it opens the walking-route planner.
+    // Parking has no single venue — Home asks the visitor which official area
+    // they mean instead of silently choosing one.
     final isParking = item.venueId == null;
     final icon = isParking
         ? Icons.local_parking_rounded
@@ -830,9 +833,8 @@ class _QuickAccessTile extends ConsumerWidget {
 
     // The venue's own name as the subtitle — so "Telescopes" is immediately
     // grounded in "Observatory", which is what the printed map calls it.
-    // But when the shortcut label and the venue name are the same word
-    // ("First aid", "Toilets"), repeating it read as a rendering bug — fall
-    // back to the building it is in.
+    // When the shortcut label and venue name are the same word ("Toilets"),
+    // repeating it reads as a rendering bug, so use its building instead.
     final venueLabel = venue?.chipLabel;
     final description = isParking
         ? l.quickAccessWalkingRoutes
@@ -847,8 +849,7 @@ class _QuickAccessTile extends ConsumerWidget {
       accent: accent,
       onTap: () {
         if (isParking) {
-          // Google walking/driving directions to the primary free car park.
-          context.push(Routes.googleNavTo('parking:west-5'));
+          ParkingChoicesSheet.show(context);
         } else {
           // Everything else opens the venue sheet, which answers "where is
           // this and what's on here" and offers walking directions only when

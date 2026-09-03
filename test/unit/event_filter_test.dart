@@ -94,6 +94,30 @@ void main() {
         expect(result.map((e) => e.id), contains('physics-magic-show'));
       }
     });
+
+    test('a published-start / no-published-finish session is NOT inferred into later bands',
+        () {
+      // Kids' space publishes a 4.15pm start but NO finish (startOnly), so its
+      // `end` is a 10pm stand-in, not a fact. The old filter did a plain
+      // start/end overlap and so matched it against 6-8pm and 8-10pm as if it
+      // were proven to run that late — objectively wrong. It must match ONLY the
+      // band that contains its published start (4-6pm).
+      final kids = EventsData.byId('kids-space')!.sessions.single;
+      expect(kids.timing, TimingConfidence.startOnly);
+      expect(kids.hasPublishedEnd, isFalse);
+
+      bool inBand(TimeBand b) => EventFilterService.apply(
+            all,
+            EventFilter(timeBands: {b}),
+          ).map((e) => e.id).contains('kids-space');
+
+      expect(inBand(TimeBand.earlyEvening), isTrue,
+          reason: '4.15pm start falls inside 4-6pm');
+      expect(inBand(TimeBand.evening), isFalse,
+          reason: 'finish unpublished — must not be inferred into 6-8pm');
+      expect(inBand(TimeBand.lateEvening), isFalse,
+          reason: 'finish unpublished — must not be inferred into 8-10pm');
+    });
   });
 
   group('search', () {

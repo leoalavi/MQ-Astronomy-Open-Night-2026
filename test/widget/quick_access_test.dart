@@ -10,11 +10,11 @@ import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/data/routes_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
-import 'package:aon2026/screens/google_nav_screen.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
+import 'package:aon2026/widgets/parking_choices_sheet.dart';
 
 /// Quick Access must never dead-end.
 ///
@@ -22,7 +22,7 @@ import 'package:aon2026/widgets/venue_info_sheet.dart';
 ///
 /// Every Quick Access tile used to push the walking-directions planner with a
 /// pre-seeded destination. Only two of the eight destinations have an authored
-/// route, so five tiles (Toilets, First aid, Food and drink, Talks, Kids'
+/// route, so four tiles (Toilets, Food and drink, Talks, Kids'
 /// activities) landed the visitor on an empty planner with nothing selected —
 /// on Home, the first screen they ever see.
 void main() {
@@ -107,18 +107,20 @@ void main() {
       expect(find.byType(WayfindingScreen), findsNothing);
     });
 
-    testWidgets('the sheet offers Google directions for every venue', (
+    testWidgets('the sheet offers Google directions for a located venue', (
       tester,
     ) async {
       // Google Maps routes anywhere, so there is no "no route" dead-end any
       // more — every venue sheet offers one Directions action.
-      await openQuickAccess(tester, 'First aid');
+      await openQuickAccess(tester, 'Food and drink');
 
       expect(find.byType(VenueInfoSheet), findsOneWidget);
       await scrollInSheet(tester, find.text('Directions'));
       expect(find.text('Directions'), findsOneWidget);
-      expect(find.textContaining('don’t have written walking directions'),
-          findsNothing);
+      expect(
+        find.textContaining('don’t have written walking directions'),
+        findsNothing,
+      );
     });
 
     testWidgets('the sheet still offers the map as a fallback', (tester) async {
@@ -132,7 +134,7 @@ void main() {
 
     testWidgets('a facility with no programme says so rather than showing an '
         'empty list', (tester) async {
-      await openQuickAccess(tester, 'First aid');
+      await openQuickAccess(tester, 'Toilets');
       await scrollInSheet(tester, find.text('Nothing scheduled here tonight.'));
       expect(find.text('Nothing scheduled here tonight.'), findsOneWidget);
     });
@@ -156,15 +158,45 @@ void main() {
   });
 
   group('parking', () {
-    testWidgets('Parking opens Google directions to a car park', (
+    testWidgets('Parking opens a chooser and never silently selects West 5', (
       tester,
     ) async {
       await openQuickAccess(tester, 'Parking');
-      // Google-only navigation: parking hands off to the Google nav screen
-      // (route with a key, or a config message without one), never the old
-      // draft planner.
+      expect(find.byType(ParkingChoicesSheet), findsOneWidget);
+      expect(find.textContaining('West 5'), findsWidgets);
+      expect(find.textContaining('West 6'), findsWidgets);
+      expect(find.textContaining('South 2'), findsWidgets);
       expect(find.byType(WayfindingScreen), findsNothing);
-      expect(find.byType(GoogleNavScreen), findsOneWidget);
+      expect(
+        find.byKey(const Key('directions-parking:west-5')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('show-map-parking:west-5')), findsOneWidget);
+      expect(
+        find.byKey(const Key('directions-parking:south-2')),
+        findsOneWidget,
+      );
+      expect(find.byKey(const Key('show-map-parking:south-2')), findsOneWidget);
+      expect(find.byKey(const Key('directions-parking:west-6')), findsNothing);
+      expect(find.byKey(const Key('show-map-parking:west-6')), findsNothing);
+      expect(
+        find.textContaining('confirmed position for this car park'),
+        findsNothing,
+      );
+    });
+
+    testWidgets('parking actions can scroll fully above the floating tab bar', (
+      tester,
+    ) async {
+      await openQuickAccess(tester, 'Parking');
+      final southDirections = find.byKey(
+        const Key('directions-parking:south-2'),
+      );
+      await tester.ensureVisible(southDirections);
+      await tester.pumpAndSettle();
+
+      expect(southDirections.hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
     });
   });
 }

@@ -167,8 +167,9 @@ void main() {
       expect(find.textContaining('3 activities saved'), findsOneWidget);
     });
 
-    testWidgets('never counts down to an UNPUBLISHED finish (audit HP-A)',
-        (tester) async {
+    testWidgets('never counts down to an UNPUBLISHED finish (audit HP-A)', (
+      tester,
+    ) async {
       // kids-space is startOnly: a published 4.15pm start and a 10pm STAND-IN
       // end. At 7pm it is "happening now". The card must show the timing label
       // but NOT a fabricated "ends in 3 hr" countdown to a finish the programme
@@ -186,8 +187,11 @@ void main() {
       final badge = tester.widget<TimingBadge>(
         find.descendant(of: card, matching: find.byType(TimingBadge)),
       );
-      expect(badge.trailingText, isNull,
-          reason: 'a startOnly session has no published finish to count down to');
+      expect(
+        badge.trailingText,
+        isNull,
+        reason: 'a startOnly session has no published finish to count down to',
+      );
     });
   });
 
@@ -199,10 +203,8 @@ void main() {
 
       await scrollTo(tester, find.text('Open the campus map'));
       expect(find.text('Open the campus map'), findsOneWidget);
-      expect(
-        find.textContaining('walking directions from the car parks'),
-        findsOneWidget,
-      );
+      expect(find.textContaining('walking directions'), findsOneWidget);
+      expect(find.textContaining('first aid'), findsNothing);
     });
 
     testWidgets('quick access uses the official venue vocabulary', (
@@ -216,9 +218,10 @@ void main() {
       // Every one of these is backed by the printed programme or map legend.
       expect(find.text('Telescopes'), findsOneWidget);
       expect(find.text('Planetariums'), findsOneWidget);
-      // "First aid" is both the shortcut label and the venue's own name, so
-      // it legitimately appears twice on the tile.
-      expect(find.text('First aid'), findsWidgets);
+      // The official map gives no named/routable First Aid destination, so it
+      // must not be presented as a confirmed interactive shortcut.
+      expect(find.text('First aid'), findsNothing);
+      expect(find.textContaining('first aid'), findsNothing);
       expect(find.text('Parking'), findsOneWidget);
     });
 

@@ -43,15 +43,22 @@ void main() {
     expect(find.text('Astronomy Passport'), findsWidgets);
   });
 
-  testWidgets('Info menu has a passport entry that navigates', (t) async {
+  testWidgets('Passport is absent from Info and exposed in Settings', (
+    t,
+  ) async {
     await t.pumpWidget(_app());
     await t.pumpAndSettle();
     await t.tap(find.byIcon(Icons.info_outline_rounded));
     await t.pumpAndSettle();
-    final infoEntry = find.widgetWithText(FilledButton, 'Astronomy Passport');
-    expect(infoEntry, findsOneWidget);
-    await t.tap(infoEntry);
+    expect(find.text('Astronomy Passport'), findsNothing);
+
+    await t.tap(find.byIcon(Icons.settings_outlined));
     await t.pumpAndSettle();
-    expect(find.textContaining('/ 9'), findsWidgets); // reached the screen
+    await t.scrollUntilVisible(
+      find.text('Preview the Astronomy Passport'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.text('Preview the Astronomy Passport'), findsOneWidget);
   });
 }

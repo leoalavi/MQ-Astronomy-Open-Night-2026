@@ -293,17 +293,6 @@ abstract final class VenuesData {
       notes: 'Building-level location. Follow signage inside.',
     ),
     Venue(
-      id: 'first-aid',
-      artworkX: 2544, artworkY: 1665, // official map: marker "+"
-      name: 'First aid',
-      aliases: ['کمک‌های اولیه', 'اورژانس', 'امداد'],
-      category: VenueCategory.firstAid,
-      // PLACEHOLDER: the map shows a first-aid symbol but the supplied
-      // materials give no address or building for it, and this is exactly the
-      // wrong thing to guess. No note is shown rather than an unconfirmed one:
-      // an "exact location to be confirmed" placeholder must never render.
-    ),
-    Venue(
       id: 'food-and-drink',
       artworkX: 2594, artworkY: 1506, // official map: marker "C"
       name: 'Food and drink',

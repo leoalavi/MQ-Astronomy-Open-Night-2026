@@ -153,16 +153,16 @@ void main() {
       size: const Size(320, 568),
     );
 
-    // Mandatory: ConfidenceNote is unique to the parking sheet — proves it opened.
-    expect(find.byType(ConfidenceNote), findsOneWidget);
+    expect(find.byType(ParkingSheet), findsOneWidget);
+    expect(find.byType(ConfidenceNote), findsNothing);
     // Prove the sheet is genuinely at 2.0 (not 1.0) BEFORE judging overflow.
-    expect(scaleAt(tester, find.byType(ConfidenceNote)), 200);
+    expect(scaleAt(tester, find.text('West 6')), 200);
     expect(tester.takeException(), isNull);
     // Scoped: THIS sheet scrolls (ancestor of its own content), not "exactly one
     // SingleChildScrollView in the whole app tree".
     expect(
       find.ancestor(
-        of: find.byType(ConfidenceNote),
+        of: find.text('West 6'),
         matching: find.byType(SingleChildScrollView),
       ),
       findsOneWidget,
@@ -182,6 +182,7 @@ void main() {
 
     // DraggableScrollableSheet is unique to the venue sheet — proves it opened.
     expect(find.byType(DraggableScrollableSheet), findsOneWidget);
+    expect(find.byType(ConfidenceNote), findsNothing);
     expect(scaleAt(tester, find.byType(DraggableScrollableSheet)), 200);
     expect(tester.takeException(), isNull);
     expect(find.byType(Scrollable), findsWidgets);

@@ -10,7 +10,7 @@ import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/data/event_info.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/building.dart';
-import 'package:aon2026/screens/map_screen.dart' show VenueSheet;
+import 'package:aon2026/screens/map_screen.dart' show ParkingSheet, VenueSheet;
 import 'package:aon2026/services/building_providers.dart';
 import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/location_providers.dart';
@@ -74,16 +74,20 @@ void main() {
     await t.pump(const Duration(milliseconds: 500));
   }
 
-  testWidgets('the SAME venue shows on the map on the second attempt too',
-      (t) async {
+  testWidgets('the SAME venue shows on the map on the second attempt too', (
+    t,
+  ) async {
     await t.pumpWidget(app());
     await t.pump();
 
     // First "Show on map".
     router.go(Routes.mapFocus(venue));
     await pumpFocus(t);
-    expect(find.byType(VenueSheet), findsOneWidget,
-        reason: 'first Show on map should open the venue sheet');
+    expect(
+      find.byType(VenueSheet),
+      findsOneWidget,
+      reason: 'first Show on map should open the venue sheet',
+    );
 
     // Dismiss, then leave the Map tab entirely.
     await dismissSheet(t);
@@ -94,8 +98,11 @@ void main() {
     // Second "Show on map" for the SAME venue — this is the regression.
     router.go(Routes.mapFocus(venue));
     await pumpFocus(t);
-    expect(find.byType(VenueSheet), findsOneWidget,
-        reason: 'second Show on map of the same venue must re-open the sheet');
+    expect(
+      find.byType(VenueSheet),
+      findsOneWidget,
+      reason: 'second Show on map of the same venue must re-open the sheet',
+    );
   });
 
   testWidgets('venue A -> venue B -> venue A each re-shows', (t) async {
@@ -114,16 +121,20 @@ void main() {
     // Back to A: stale focus state must not swallow it.
     router.go(Routes.mapFocus(venue));
     await pumpFocus(t);
-    expect(find.byType(VenueSheet), findsOneWidget,
-        reason: 'returning to venue A must re-show, not stay on stale state');
+    expect(
+      find.byType(VenueSheet),
+      findsOneWidget,
+      reason: 'returning to venue A must re-show, not stay on stale state',
+    );
   });
 
   /// The live camera of the mounted campus map.
   MapCamera camera(WidgetTester t) =>
       MapCamera.of(t.element(find.byType(MarkerLayer).first));
 
-  testWidgets('the FIRST Show on map lands on the venue, not the campus fit',
-      (t) async {
+  testWidgets('the FIRST Show on map lands on the venue, not the campus fit', (
+    t,
+  ) async {
     // ## The bug this test exists to prevent
     //
     // Post-frame callbacks run in REGISTRATION order. `initState` registered
@@ -140,13 +151,18 @@ void main() {
     await pumpFocus(t);
 
     expect(find.byType(VenueSheet), findsOneWidget);
-    expect(camera(t).zoom, closeTo(MapConfig.mapFocusZoom, 1e-6),
-        reason: 'the first focus must survive the opening fit, which sits at '
-            'the much wider whole-campus zoom');
+    expect(
+      camera(t).zoom,
+      closeTo(MapConfig.mapFocusZoom, 1e-6),
+      reason:
+          'the first focus must survive the opening fit, which sits at '
+          'the much wider whole-campus zoom',
+    );
   });
 
-  testWidgets('the first focus is offset above the sheet, like later ones',
-      (t) async {
+  testWidgets('the first focus is offset above the sheet, like later ones', (
+    t,
+  ) async {
     // The offset and the zoom are applied by the same `move`, so a first focus
     // that lost its zoom lost its sheet-clearance too. Pin both.
     await t.pumpWidget(app());
@@ -163,8 +179,24 @@ void main() {
     router.go(Routes.mapFocus(venue));
     await pumpFocus(t);
 
-    expect(camera(t).center.latitude, closeTo(first.latitude, 1e-6),
-        reason: 'first and later focuses must frame the venue identically');
+    expect(
+      camera(t).center.latitude,
+      closeTo(first.latitude, 1e-6),
+      reason: 'first and later focuses must frame the venue identically',
+    );
     expect(camera(t).center.longitude, closeTo(first.longitude, 1e-6));
+  });
+
+  testWidgets('a parking focus opens the matching parking sheet', (t) async {
+    await t.pumpWidget(app());
+    await t.pump();
+
+    router.go(Routes.mapFocus('parking:west-5'));
+    await pumpFocus(t);
+
+    expect(find.byType(ParkingSheet), findsOneWidget);
+    expect(find.text('West 5'), findsOneWidget);
+    expect(find.byType(VenueSheet), findsNothing);
+    expect(camera(t).zoom, closeTo(MapConfig.mapFocusZoom, 1e-6));
   });
 }

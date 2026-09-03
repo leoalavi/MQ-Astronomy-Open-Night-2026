@@ -153,8 +153,8 @@ void main() {
       );
     });
 
-    test('eventsAtVenueProvider returns empty for a venue with nothing on', () {
-      expect(container.read(eventsAtVenueProvider('first-aid')), isEmpty);
+    test('eventsAtVenueProvider returns empty for a missing venue', () {
+      expect(container.read(eventsAtVenueProvider('missing-venue')), isEmpty);
     });
 
     test('eventsAtVenueProvider finds events and sorts them by start', () {

@@ -10,6 +10,7 @@ import 'package:aon2026/data/passport_facts_data.dart';
 import 'package:aon2026/data/routes_data.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
 import 'package:aon2026/data/venues_data.dart';
+import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/venue.dart';
 
@@ -209,7 +210,6 @@ void main() {
       'astronomical-observatory',
       'metro-station',
       'shuttle-stop',
-      'first-aid',
     ];
 
     for (final id in required) {
@@ -225,11 +225,18 @@ void main() {
       );
     });
 
-    test('toilets, first aid and information points are all mapped', () {
+    test('toilets and information points are mapped', () {
       final categories = VenuesData.all.map((v) => v.category).toSet();
       expect(categories, contains(VenueCategory.toilets));
-      expect(categories, contains(VenueCategory.firstAid));
       expect(categories, contains(VenueCategory.informationPoint));
+    });
+
+    test('unverified First Aid is not exposed as an interactive venue', () {
+      expect(VenuesData.byId('first-aid'), isNull);
+      expect(
+        EventConfig.astronomyOpenNight.quickAccess.map((q) => q.id),
+        isNot(contains('first-aid')),
+      );
     });
   });
 
@@ -279,12 +286,18 @@ void main() {
     test('every sourceRef used is registered; every derived fact has one', () {
       for (final f in facts) {
         if (f.sourceRef != null) {
-          expect(PassportFactsData.sourceRegistry, contains(f.sourceRef),
-              reason: '${f.venueId} uses unregistered sourceRef ${f.sourceRef}');
+          expect(
+            PassportFactsData.sourceRegistry,
+            contains(f.sourceRef),
+            reason: '${f.venueId} uses unregistered sourceRef ${f.sourceRef}',
+          );
         }
         if (f.confidence == DataConfidence.derived) {
-          expect(f.sourceRef, isNotNull,
-              reason: '${f.venueId} derived w/o source');
+          expect(
+            f.sourceRef,
+            isNotNull,
+            reason: '${f.venueId} derived w/o source',
+          );
         }
       }
     });
@@ -292,8 +305,11 @@ void main() {
     test('the Markdown registry documents every registered source (C1)', () {
       final md = File('docs/passport-fact-sources.md').readAsStringSync();
       for (final ref in PassportFactsData.sourceRegistry) {
-        expect(md, contains(ref),
-            reason: '$ref not documented in docs/passport-fact-sources.md');
+        expect(
+          md,
+          contains(ref),
+          reason: '$ref not documented in docs/passport-fact-sources.md',
+        );
       }
     });
   });
@@ -321,8 +337,11 @@ void main() {
           .where((e) => e.sourceNote == null || e.sourceNote!.trim().isEmpty)
           .map((e) => e.id)
           .toList();
-      expect(orphans, isEmpty,
-          reason: 'these entries have no source provenance: $orphans');
+      expect(
+        orphans,
+        isEmpty,
+        reason: 'these entries have no source provenance: $orphans',
+      );
     });
   });
 
@@ -341,19 +360,24 @@ void main() {
         'Capture the cosmos': '17-wallys-walk',
       };
       for (final entry in expected.entries) {
-        final matches =
-            EventsData.all.where((e) => e.title == entry.key).toList();
+        final matches = EventsData.all
+            .where((e) => e.title == entry.key)
+            .toList();
         expect(matches, isNotEmpty, reason: 'missing activity "${entry.key}"');
         for (final e in matches) {
-          expect(e.venueId, entry.value,
-              reason: '"${entry.key}" must be at ${entry.value}');
+          expect(
+            e.venueId,
+            entry.value,
+            reason: '"${entry.key}" must be at ${entry.value}',
+          );
         }
       }
     });
 
     test('the keynote is Professor Fred Watson AM at Macquarie Theatre', () {
-      final keynote =
-          EventsData.all.firstWhere((e) => e.category == EventCategory.keynote);
+      final keynote = EventsData.all.firstWhere(
+        (e) => e.category == EventCategory.keynote,
+      );
       expect(keynote.presenter, 'Professor Fred Watson AM');
       expect(keynote.venueId, 'macquarie-theatre');
     });

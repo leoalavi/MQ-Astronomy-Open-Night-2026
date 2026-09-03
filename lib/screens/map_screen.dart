@@ -30,7 +30,6 @@ import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_basemap_layer.dart';
 import 'package:aon2026/widgets/campus_search_sheet.dart';
-import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/favorites_sheet.dart';
 import 'package:aon2026/widgets/map_category_filter_bar.dart';
 import 'package:aon2026/widgets/map_config.dart';
@@ -95,7 +94,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       unawaited(
-        ref.read(locationControllerProvider.notifier).ensureFirstMapEntryPrompt(),
+        ref
+            .read(locationControllerProvider.notifier)
+            .ensureFirstMapEntryPrompt(),
       );
     });
   }
@@ -175,12 +176,15 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // Project the current fix ONCE (null off the illustrated footprint — never
     // clamped). Reused by the dot, the accuracy circle, and the note.
     final fix = loc.fix;
-    final projected = fix == null ? null : _proj.project(GpsPoint(fix.position));
+    final projected = fix == null
+        ? null
+        : _proj.project(GpsPoint(fix.position));
 
     // Current search/favorites selection (a stable PlaceKey). A selected venue
     // decorates its existing pin; a selected building gets a transient marker.
     final selectedKey = ref.watch(selectedPlaceKeyProvider);
-    final selectedBuilding = (selectedKey != null && selectedKey.startsWith('building:'))
+    final selectedBuilding =
+        (selectedKey != null && selectedKey.startsWith('building:'))
         ? ref.watch(placeResolverProvider(selectedKey)).asData?.value
         : null;
 
@@ -230,18 +234,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // course, at the Macquarie Theatre). MarkerLayer paints in list order, so
     // without this sort the toilet pin lands on top of the "A" venue pin and
     // the venue vanishes. Event venues are painted last so they always win.
-    final visibleVenues = venues
-        .where((v) => v.hasCoordinates && _visible.contains(v.category))
-        .toList()
-      ..sort((a, b) {
-        int rank(Venue v) => switch (v.category) {
+    final visibleVenues =
+        venues
+            .where((v) => v.hasCoordinates && _visible.contains(v.category))
+            .toList()
+          ..sort((a, b) {
+            int rank(Venue v) => switch (v.category) {
               VenueCategory.eventVenue => 3,
               VenueCategory.registration => 2,
               VenueCategory.informationPoint => 1,
               _ => 0,
             };
-        return rank(a).compareTo(rank(b));
-      });
+            return rank(a).compareTo(rank(b));
+          });
 
     final markers = <Marker>[
       for (final p in parking)
@@ -283,9 +288,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     return Scaffold(
       // Content-page AppBar stays opaque (governance rule 4). Recentre moved to
       // the floating glass control island over the tiles (Phase 2).
-      appBar: AppBar(
-        title: Text(l.mapTitle),
-      ),
+      appBar: AppBar(title: Text(l.mapTitle)),
       body: Column(
         children: [
           Padding(
@@ -304,204 +307,206 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               ),
             )
           else ...[
-          MapCategoryFilterBar(
-            selected: _visible,
-            onToggle: (category) => setState(() {
-              _visible.contains(category)
-                  ? _visible.remove(category)
-                  : _visible.add(category);
-            }),
-          ),
-          Expanded(
-            child: Stack(
-              children: [
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    // STRICT zoom-OUT floor for THIS viewport (Pouya): the map
-                    // can never shrink below COVERING its box (fills the screen,
-                    // long edges crop — Raouf's choice over black letterbox
-                    // bands). Wired as flutter_map's native, idempotent
-                    // MapOptions.minZoom — a zoom-clamping CameraConstraint breaks
-                    // its option-change invariant. Clamped to the absolute
-                    // [mapMinZoom, mapMaxZoom] range so minZoom <= maxZoom holds.
-                    final minZoom = MapConfig
-                        .minZoomForViewport(constraints.biggest)
-                        .clamp(MapConfig.mapMinZoom, MapConfig.mapMaxZoom);
-                    return FlutterMap(
-                      mapController: _controller,
-                      options: MapOptions(
-                        // CrsSimple illustrated campus basemap (Map Parity M1).
-                        // initialCameraFit is authoritative — it takes precedence
-                        // over initialCenter/initialZoom, so those are dropped.
-                        crs: const CrsSimple(),
-                        initialCameraFit: CameraFit.bounds(
-                          bounds: MapConfig.aonMapBounds,
-                          padding: MapConfig.mapFitPadding,
+            MapCategoryFilterBar(
+              selected: _visible,
+              onToggle: (category) => setState(() {
+                _visible.contains(category)
+                    ? _visible.remove(category)
+                    : _visible.add(category);
+              }),
+            ),
+            Expanded(
+              child: Stack(
+                children: [
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      // STRICT zoom-OUT floor for THIS viewport (Pouya): the map
+                      // can never shrink below COVERING its box (fills the screen,
+                      // long edges crop — Raouf's choice over black letterbox
+                      // bands). Wired as flutter_map's native, idempotent
+                      // MapOptions.minZoom — a zoom-clamping CameraConstraint breaks
+                      // its option-change invariant. Clamped to the absolute
+                      // [mapMinZoom, mapMaxZoom] range so minZoom <= maxZoom holds.
+                      final minZoom = MapConfig.minZoomForViewport(
+                        constraints.biggest,
+                      ).clamp(MapConfig.mapMinZoom, MapConfig.mapMaxZoom);
+                      return FlutterMap(
+                        mapController: _controller,
+                        options: MapOptions(
+                          // CrsSimple illustrated campus basemap (Map Parity M1).
+                          // initialCameraFit is authoritative — it takes precedence
+                          // over initialCenter/initialZoom, so those are dropped.
+                          crs: const CrsSimple(),
+                          initialCameraFit: CameraFit.bounds(
+                            bounds: MapConfig.aonMapBounds,
+                            padding: MapConfig.mapFitPadding,
+                            minZoom: minZoom,
+                            maxZoom: MapConfig.mapMaxZoom,
+                          ),
+                          // initialCameraFit runs before the map is laid out (size
+                          // 0), so it under-fits and the map opens zoomed-in. Re-fit
+                          // once the real viewport exists (Map Parity M1).
+                          onMapReady: () {
+                            _controller.fitCamera(
+                              CameraFit.bounds(
+                                bounds: MapConfig.aonMapBounds,
+                                padding: MapConfig.mapFitPadding,
+                                minZoom: minZoom,
+                                maxZoom: MapConfig.mapMaxZoom,
+                              ),
+                            );
+                            _mapReady = true;
+                            // A "Show on map" that raced this fit was overwritten
+                            // by it. Replay it now that the opening camera is
+                            // settled — see [_deferOrApplyFocus].
+                            final pending = _pendingFocus;
+                            if (pending != null) {
+                              _pendingFocus = null;
+                              _deferOrApplyFocus(pending);
+                            }
+                          },
                           minZoom: minZoom,
                           maxZoom: MapConfig.mapMaxZoom,
+                          // North-up only: the official artwork is unreadable rotated.
+                          interactionOptions: const InteractionOptions(
+                            flags: MapConfig.mapInteractiveFlags,
+                          ),
+                          // Per-axis contain-or-centre: the artwork can never be
+                          // dragged off into empty background, and it stays centred
+                          // at zoom levels where it is smaller than the viewport.
+                          cameraConstraint: ContainOrCentreCamera(
+                            bounds: MapConfig.aonMapBounds,
+                          ),
+                          backgroundColor: context.aon.surfaceBase,
+                          // A deliberate user pan exits follow but keeps the dot; a
+                          // programmatic follow-move fires with hasGesture:false, so
+                          // it does not self-cancel follow (Phase A §5.7).
+                          onPositionChanged: (camera, hasGesture) {
+                            if (hasGesture) {
+                              ref
+                                  .read(locationControllerProvider.notifier)
+                                  .onUserPan();
+                            }
+                          },
                         ),
-                        // initialCameraFit runs before the map is laid out (size
-                        // 0), so it under-fits and the map opens zoomed-in. Re-fit
-                        // once the real viewport exists (Map Parity M1).
-                        onMapReady: () {
-                          _controller.fitCamera(
-                            CameraFit.bounds(
-                              bounds: MapConfig.aonMapBounds,
-                              padding: MapConfig.mapFitPadding,
-                              minZoom: minZoom,
-                              maxZoom: MapConfig.mapMaxZoom,
-                            ),
-                          );
-                          _mapReady = true;
-                          // A "Show on map" that raced this fit was overwritten
-                          // by it. Replay it now that the opening camera is
-                          // settled — see [_deferOrApplyFocus].
-                          final pending = _pendingFocus;
-                          if (pending != null) {
-                            _pendingFocus = null;
-                            _deferOrApplyFocus(pending);
-                          }
-                        },
-                        minZoom: minZoom,
-                        maxZoom: MapConfig.mapMaxZoom,
-                        // North-up only: the official artwork is unreadable rotated.
-                        interactionOptions: const InteractionOptions(
-                          flags: MapConfig.mapInteractiveFlags,
+                        children: [
+                          const CampusBasemapLayer(),
+                          // Accuracy circle UNDER the venue pins; dot ON TOP (§5.5).
+                          if (loc.active && projected != null)
+                            UserLocationCircle(center: projected, fix: fix!),
+                          MarkerLayer(markers: markers),
+                          if (selectedBuildingMarker != null)
+                            MarkerLayer(markers: [selectedBuildingMarker]),
+                          if (loc.active && projected != null)
+                            UserLocationDot(center: projected),
+                        ],
+                      );
+                    },
+                  ),
+                  // One status note: off-campus takes priority over low-accuracy.
+                  if (loc.active && loc.fix != null)
+                    if (!MapConfig.isNearCampus(GpsPoint(loc.fix!.position)))
+                      Positioned(
+                        top: AonSpacing.space4,
+                        // Clear the top-left control column AND the top-right
+                        // control island — both are minTapTarget wide.
+                        left: AonSpacing.space4 + AonSpacing.minTapTarget,
+                        right: AonSpacing.space4 + AonSpacing.minTapTarget,
+                        child: _MapNote(
+                          text: l.mapOffCampus(
+                            (MapConfig.distanceFromCampusMeters(
+                                      GpsPoint(loc.fix!.position),
+                                    ) /
+                                    1000)
+                                .toStringAsFixed(1),
+                          ),
                         ),
-                        // Per-axis contain-or-centre: the artwork can never be
-                        // dragged off into empty background, and it stays centred
-                        // at zoom levels where it is smaller than the viewport.
-                        cameraConstraint: ContainOrCentreCamera(
-                          bounds: MapConfig.aonMapBounds,
-                        ),
-                        backgroundColor: context.aon.surfaceBase,
-                        // A deliberate user pan exits follow but keeps the dot; a
-                        // programmatic follow-move fires with hasGesture:false, so
-                        // it does not self-cancel follow (Phase A §5.7).
-                        onPositionChanged: (camera, hasGesture) {
-                          if (hasGesture) {
-                            ref
-                                .read(locationControllerProvider.notifier)
-                                .onUserPan();
-                          }
-                        },
+                      )
+                    else if (loc.fix!.isLowAccuracy)
+                      Positioned(
+                        top: AonSpacing.space4,
+                        left: AonSpacing.space4 + AonSpacing.minTapTarget,
+                        right: AonSpacing.space4 + AonSpacing.minTapTarget,
+                        child: _MapNote(text: l.mapLowAccuracy),
+                      )
+                    // Near campus but off the illustrated footprint: honest note,
+                    // never a fake dot at a clamped edge.
+                    else if (projected == null)
+                      Positioned(
+                        top: AonSpacing.space4,
+                        left: AonSpacing.space4 + AonSpacing.minTapTarget,
+                        right: AonSpacing.space4 + AonSpacing.minTapTarget,
+                        child: _MapNote(text: l.mapLocatingOnCampus),
                       ),
+                  Positioned(
+                    left: AonSpacing.space2,
+                    bottom:
+                        AonNavMetrics.clearance(context) - AonSpacing.space4,
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const CampusBasemapLayer(),
-                        // Accuracy circle UNDER the venue pins; dot ON TOP (§5.5).
-                        if (loc.active && projected != null)
-                          UserLocationCircle(center: projected, fix: fix!),
-                        MarkerLayer(markers: markers),
-                        if (selectedBuildingMarker != null)
-                          MarkerLayer(markers: [selectedBuildingMarker]),
-                        if (loc.active && projected != null)
-                          UserLocationDot(center: projected),
+                        _MapAttribution(),
+                        SizedBox(width: AonSpacing.space2),
+                        // §3c: the dot may be simulated, and the Settings toggle
+                        // that says so is not on this screen.
+                        PreviewLocationBadge(),
                       ],
-                    );
-                  },
-                ),
-                // One status note: off-campus takes priority over low-accuracy.
-                if (loc.active && loc.fix != null)
-                  if (!MapConfig.isNearCampus(GpsPoint(loc.fix!.position)))
-                    Positioned(
-                      top: AonSpacing.space4,
-                      // Clear the top-left control column AND the top-right
-                      // control island — both are minTapTarget wide.
-                      left: AonSpacing.space4 + AonSpacing.minTapTarget,
-                      right: AonSpacing.space4 + AonSpacing.minTapTarget,
-                      child: _MapNote(
-                        text: l.mapOffCampus(
-                          (MapConfig.distanceFromCampusMeters(
-                                      GpsPoint(loc.fix!.position)) /
-                                  1000)
-                              .toStringAsFixed(1),
+                    ),
+                  ),
+                  // Floating glass control island over the live tiles — the Phase 2
+                  // refraction payoff. Right edge, upper map area: clear of the
+                  // bottom-right FAB and the filter row above.
+                  Positioned(
+                    top: AonSpacing.space4,
+                    right: AonSpacing.space4,
+                    child: MapControlIsland(
+                      onZoomIn: () => _controller.move(
+                        _controller.camera.center,
+                        clampZoom(
+                          _controller.camera.zoom,
+                          1,
+                          min: MapConfig.mapMinZoom,
+                          max: MapConfig.mapMaxZoom,
                         ),
                       ),
-                    )
-                  else if (loc.fix!.isLowAccuracy)
-                    Positioned(
-                      top: AonSpacing.space4,
-                      left: AonSpacing.space4 + AonSpacing.minTapTarget,
-                      right: AonSpacing.space4 + AonSpacing.minTapTarget,
-                      child: _MapNote(text: l.mapLowAccuracy),
-                    )
-                  // Near campus but off the illustrated footprint: honest note,
-                  // never a fake dot at a clamped edge.
-                  else if (projected == null)
-                    Positioned(
-                      top: AonSpacing.space4,
-                      left: AonSpacing.space4 + AonSpacing.minTapTarget,
-                      right: AonSpacing.space4 + AonSpacing.minTapTarget,
-                      child: _MapNote(text: l.mapLocatingOnCampus),
+                      onZoomOut: () => _controller.move(
+                        _controller.camera.center,
+                        clampZoom(
+                          _controller.camera.zoom,
+                          -1,
+                          min: MapConfig.mapMinZoom,
+                          max: MapConfig.mapMaxZoom,
+                        ),
+                      ),
+                      locateButton: const LocateButton(),
                     ),
-                Positioned(
-                  left: AonSpacing.space2,
-                  bottom: AonNavMetrics.clearance(context) - AonSpacing.space4,
-                  child: const Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      _MapAttribution(),
-                      SizedBox(width: AonSpacing.space2),
-                      // §3c: the dot may be simulated, and the Settings toggle
-                      // that says so is not on this screen.
-                      PreviewLocationBadge(),
-                    ],
                   ),
-                ),
-                // Floating glass control island over the live tiles — the Phase 2
-                // refraction payoff. Right edge, upper map area: clear of the
-                // bottom-right FAB and the filter row above.
-                Positioned(
-                  top: AonSpacing.space4,
-                  right: AonSpacing.space4,
-                  child: MapControlIsland(
-                    onZoomIn: () => _controller.move(
-                      _controller.camera.center,
-                      clampZoom(
-                        _controller.camera.zoom,
-                        1,
-                        min: MapConfig.mapMinZoom,
-                        max: MapConfig.mapMaxZoom,
-                      ),
+                  // Top-left control column (G18): Search, Favorites.
+                  // One minTapTarget-wide stack, mirroring the top-right island;
+                  // the status notes clear it via `left: space4 + minTapTarget`.
+                  // This whole Stack only builds in MapMode.campusMap.
+                  Positioned(
+                    top: AonSpacing.space4,
+                    left: AonSpacing.space4,
+                    child: Column(
+                      children: [
+                        _GlassMapButton(
+                          icon: Icons.search_rounded,
+                          tooltip: l.mapSearchTooltip,
+                          onTap: _openSearch,
+                        ),
+                        const SizedBox(height: AonSpacing.space2),
+                        _GlassMapButton(
+                          icon: Icons.favorite_rounded,
+                          tooltip: l.mapFavoritesTooltip,
+                          onTap: _openFavorites,
+                        ),
+                      ],
                     ),
-                    onZoomOut: () => _controller.move(
-                      _controller.camera.center,
-                      clampZoom(
-                        _controller.camera.zoom,
-                        -1,
-                        min: MapConfig.mapMinZoom,
-                        max: MapConfig.mapMaxZoom,
-                      ),
-                    ),
-                    locateButton: const LocateButton(),
                   ),
-                ),
-                // Top-left control column (G18): Search, Favorites.
-                // One minTapTarget-wide stack, mirroring the top-right island;
-                // the status notes clear it via `left: space4 + minTapTarget`.
-                // This whole Stack only builds in MapMode.campusMap.
-                Positioned(
-                  top: AonSpacing.space4,
-                  left: AonSpacing.space4,
-                  child: Column(
-                    children: [
-                      _GlassMapButton(
-                        icon: Icons.search_rounded,
-                        tooltip: l.mapSearchTooltip,
-                        onTap: _openSearch,
-                      ),
-                      const SizedBox(height: AonSpacing.space2),
-                      _GlassMapButton(
-                        icon: Icons.favorite_rounded,
-                        tooltip: l.mapFavoritesTooltip,
-                        onTap: _openFavorites,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
           ],
         ],
       ),
@@ -517,18 +522,18 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       floatingActionButton: (_mode != MapMode.campusMap || selectedKey != null)
           ? null
           : Padding(
-        padding: EdgeInsets.only(
-          bottom: AonNavMetrics.clearance(context) - AonSpacing.space3,
-        ),
-        child: FloatingActionButton.extended(
-          onPressed: () =>
-              context.push(Routes.googleNavTo('venue:central-courtyard')),
-          backgroundColor: context.aon.accent,
-          foregroundColor: context.aon.onAccent,
-          icon: const Icon(Icons.directions_walk_rounded),
-          label: Text(l.wayfindingDirections),
-        ),
-      ),
+              padding: EdgeInsets.only(
+                bottom: AonNavMetrics.clearance(context) - AonSpacing.space3,
+              ),
+              child: FloatingActionButton.extended(
+                onPressed: () =>
+                    context.push(Routes.googleNavTo('venue:central-courtyard')),
+                backgroundColor: context.aon.accent,
+                foregroundColor: context.aon.onAccent,
+                icon: const Icon(Icons.directions_walk_rounded),
+                label: Text(l.wayfindingDirections),
+              ),
+            ),
     );
   }
 
@@ -536,7 +541,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // G14: linked venues place pixel-exact; unlinked keep GPS-affine — via the
     // single shared placement helper (also used by placeResolver).
     final pt = placeVenue(v, _proj);
-    if (pt == null) return null; // off the illustrated footprint (integrity-gated)
+    if (pt == null) {
+      return null; // off the illustrated footprint (integrity-gated)
+    }
     // G8: a selected venue decorates its EXISTING pin (bigger ring), never adds
     // a second marker.
     final selected = selectedKey == 'venue:${v.id}';
@@ -593,7 +600,9 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       useSafeArea: true,
       builder: (_) => const CampusSearchSheet(),
     );
-    ref.read(mapSearchQueryProvider.notifier).setQuery(''); // G16: fresh next open
+    ref
+        .read(mapSearchQueryProvider.notifier)
+        .setQuery(''); // G16: fresh next open
     if (key == null || !mounted) return;
     // Parking search hands off to the Wayfinding planner (every car park + its
     // walking route) rather than a map pin — the carparks are at the campus
@@ -634,8 +643,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     final rp = resolved?.renderPoint;
     if (rp != null) {
       // Clamp: a focus zoom must still obey the campus map's zoom bounds.
-      final z = (zoom ?? _controller.camera.zoom)
-          .clamp(MapConfig.mapMinZoom, MapConfig.mapMaxZoom);
+      final z = (zoom ?? _controller.camera.zoom).clamp(
+        MapConfig.mapMinZoom,
+        MapConfig.mapMaxZoom,
+      );
 
       // Offset for the sheet. `move` centres the target in the FULL viewport,
       // but the selected-place sheet covers the bottom ~35% of it — so a
@@ -652,7 +663,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                   MapConfig.focusOffsetMapUnits(
                     zoom: z,
                     obscuredBottomPx: MapConfig.sheetObscuredHeight(
-                        MediaQuery.sizeOf(context).height),
+                      MediaQuery.sizeOf(context).height,
+                    ),
                   ),
               target.longitude,
             );
@@ -670,13 +682,19 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   }
 
   Future<void> _openDetail(String key) => showModalBottomSheet<void>(
-        context: context,
-        isScrollControlled: true,
-        useSafeArea: true,
-        builder: (_) => key.startsWith('building:')
-            ? BuildingSheet(buildingId: key.substring('building:'.length))
-            : VenueSheet(venueId: key.substring('venue:'.length)),
-      );
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    builder: (_) {
+      if (key.startsWith('building:')) {
+        return BuildingSheet(buildingId: key.substring('building:'.length));
+      }
+      if (key.startsWith('parking:')) {
+        return ParkingSheet(parkingId: key.substring('parking:'.length));
+      }
+      return VenueSheet(venueId: key.substring('venue:'.length));
+    },
+  );
 }
 
 class _MarkerPin extends StatelessWidget {
@@ -719,17 +737,17 @@ class _MarkerPin extends StatelessWidget {
             border: Border.all(color: color, width: selected ? 4.0 : 2.5),
             boxShadow: [
               const BoxShadow(color: Color(0x8805070F), blurRadius: 6),
-              if (selected) BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12),
+              if (selected)
+                BoxShadow(color: color.withValues(alpha: 0.6), blurRadius: 12),
             ],
           ),
           alignment: Alignment.center,
           child: label != null
               ? Text(
                   label!,
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelMedium
-                      ?.copyWith(color: color),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.labelMedium?.copyWith(color: color),
                 )
               : Icon(icon, size: AonSpacing.iconMd, color: color),
         ),
@@ -781,7 +799,9 @@ class _MapNote extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(
-          horizontal: AonSpacing.space3, vertical: AonSpacing.space2),
+        horizontal: AonSpacing.space3,
+        vertical: AonSpacing.space2,
+      ),
       decoration: BoxDecoration(
         color: context.aon.surfaceBase.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(AonSpacing.radiusSm),
@@ -790,16 +810,18 @@ class _MapNote extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.info_outline_rounded,
-              size: AonSpacing.iconSm, color: context.aon.contentSecondary),
+          Icon(
+            Icons.info_outline_rounded,
+            size: AonSpacing.iconSm,
+            color: context.aon.contentSecondary,
+          ),
           const SizedBox(width: AonSpacing.space2),
           Flexible(
             child: Text(
               text,
-              style: Theme.of(context)
-                  .textTheme
-                  .labelMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
           ),
         ],
@@ -823,10 +845,10 @@ class _MapAttribution extends StatelessWidget {
       ),
       child: Text(
         AonL10n.of(context).mapAttributionCampus,
-        style: Theme.of(context)
-            .textTheme
-            .labelSmall
-            ?.copyWith(color: context.aon.contentTertiary, fontSize: 11),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          color: context.aon.contentTertiary,
+          fontSize: 11,
+        ),
       ),
     );
   }
@@ -869,7 +891,10 @@ class VenueSheet extends ConsumerWidget {
               ),
               const SizedBox(width: AonSpacing.space3),
               Expanded(
-                child: Text(Bidi.isolate(venue.name), style: theme.textTheme.headlineSmall),
+                child: Text(
+                  Bidi.isolate(venue.name),
+                  style: theme.textTheme.headlineSmall,
+                ),
               ),
             ],
           ),
@@ -877,8 +902,9 @@ class VenueSheet extends ConsumerWidget {
             const SizedBox(height: AonSpacing.space1),
             Text(
               venue.building!,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
           ],
           const SizedBox(height: AonSpacing.space4),
@@ -910,13 +936,11 @@ class VenueSheet extends ConsumerWidget {
             const SizedBox(height: AonSpacing.space4),
             Text(
               venue.notes!,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
           ],
-          const SizedBox(height: AonSpacing.space3),
-          ConfidenceNote(confidence: venue.coordinateConfidence),
-
           // 360° entry. Present only when Raouf's panorama layer actually has
           // a tour for this venue id — availability comes from
           // `venuesWithPanoramaProvider`, never from guessing an asset path.
@@ -995,8 +1019,10 @@ class ParkingSheet extends ConsumerWidget {
                   ),
                   const SizedBox(width: AonSpacing.space3),
                   Expanded(
-                    child: Text(parking.name,
-                        style: theme.textTheme.headlineSmall),
+                    child: Text(
+                      parking.name,
+                      style: theme.textTheme.headlineSmall,
+                    ),
                   ),
                 ],
               ),
@@ -1004,20 +1030,20 @@ class ParkingSheet extends ConsumerWidget {
                 const SizedBox(height: AonSpacing.space2),
                 Text(
                   l.infoParkingFree,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: context.aon.live),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: context.aon.live,
+                  ),
                 ),
               ],
               if (parking.notes != null) ...[
                 const SizedBox(height: AonSpacing.space3),
                 Text(
                   parking.notes!,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: context.aon.contentSecondary),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: context.aon.contentSecondary,
+                  ),
                 ),
               ],
-              const SizedBox(height: AonSpacing.space3),
-              ConfidenceNote(confidence: parking.coordinateConfidence),
               // Google directions to this car park (only when it has a confirmed
               // coordinate — West 6 does not, so no false destination).
               if (parking.hasCoordinates) ...[

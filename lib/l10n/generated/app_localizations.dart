@@ -328,13 +328,13 @@ abstract class AonL10n {
   /// No description provided for @homeOpenMapBody.
   ///
   /// In en, this message translates to:
-  /// **'Venues, toilets, first aid — and walking directions from the car parks'**
+  /// **'Venues, toilets, parking — and walking directions'**
   String get homeOpenMapBody;
 
   /// No description provided for @homeOpenMapBodyNoWayfinding.
   ///
   /// In en, this message translates to:
-  /// **'Venues, toilets, first aid and parking'**
+  /// **'Venues, toilets and parking'**
   String get homeOpenMapBodyNoWayfinding;
 
   /// No description provided for @homeQuickAccessTitle.
@@ -2112,6 +2112,12 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Developed by'**
   String get settingsCreditsDevelopers;
+
+  /// Credits caption acknowledging the app was built by two MQ student developers for the AON team. An appreciation, NOT a claim of official University ownership.
+  ///
+  /// In en, this message translates to:
+  /// **'Two Macquarie University student app developers, in appreciation of the Astronomy Open Night team.'**
+  String get creditsAcknowledgement;
 
   /// Settings section header for the delete-my-data control.
   ///

@@ -2,9 +2,6 @@ import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/utils/bidi.dart';
@@ -15,6 +12,7 @@ import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/section_header.dart';
+import 'package:aon2026/widgets/place_action_buttons.dart';
 
 /// Practical information: facilities, transport, parking and event guidance.
 class InfoScreen extends ConsumerWidget {
@@ -66,26 +64,6 @@ class InfoScreen extends ConsumerWidget {
             ),
           ),
 
-          // ── Astronomy Passport ──
-          const SizedBox(height: AonSpacing.space4),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.push(Routes.passport),
-              icon: const Icon(Icons.workspace_premium_rounded),
-              label: Text(l.passportTitle),
-            ),
-          ),
-
-          // ── First aid ──
-          SectionHeader(
-            title: l.infoFirstAid,
-            icon: Icons.medical_services_rounded,
-            iconColor: context.aon.error,
-          ),
-          for (final v in byCategory(VenueCategory.firstAid))
-            _InfoTile(venue: v),
-
           // ── Toilets ──
           SectionHeader(
             title: l.infoToilets,
@@ -126,6 +104,7 @@ class InfoScreen extends ConsumerWidget {
           ),
           for (final p in parking)
             Card(
+              key: Key('parking-card-${p.id}'),
               margin: const EdgeInsets.only(bottom: AonSpacing.space3),
               child: Padding(
                 padding: const EdgeInsets.all(AonSpacing.space4),
@@ -140,7 +119,10 @@ class InfoScreen extends ConsumerWidget {
                           size: AonSpacing.iconMd,
                         ),
                         const SizedBox(width: AonSpacing.space3),
-                        Text(Bidi.isolate(p.name), style: theme.textTheme.titleMedium),
+                        Text(
+                          Bidi.isolate(p.name),
+                          style: theme.textTheme.titleMedium,
+                        ),
                       ],
                     ),
                     if (p.notes != null) ...[
@@ -152,19 +134,14 @@ class InfoScreen extends ConsumerWidget {
                         ),
                       ),
                     ],
+                    if (p.hasCoordinates) ...[
+                      const SizedBox(height: AonSpacing.space3),
+                      PlaceActionButtons(placeKey: 'parking:${p.id}'),
+                    ],
                   ],
                 ),
               ),
             ),
-          SizedBox(
-            width: double.infinity,
-            child: FilledButton.icon(
-              onPressed: () => context.push(Routes.googleNavTo('parking:west-5')),
-              icon: const Icon(Icons.directions_walk_rounded),
-              label: Text(l.infoWalkingFromParking),
-            ),
-          ),
-
           // ── Transport ──
           SectionHeader(
             title: l.infoGettingHere,
@@ -208,7 +185,6 @@ class InfoScreen extends ConsumerWidget {
             title: l.infoCloudTitle,
             body: l.infoCloudBody,
           ),
-
         ],
       ),
     );
@@ -263,6 +239,10 @@ class _InfoTile extends StatelessWidget {
                         color: context.aon.contentSecondary,
                       ),
                     ),
+                  ],
+                  if (venue.hasCoordinates) ...[
+                    const SizedBox(height: AonSpacing.space3),
+                    PlaceActionButtons(placeKey: 'venue:${venue.id}'),
                   ],
                 ],
               ),

@@ -145,7 +145,6 @@ class EventConfig {
       QuickAccessItem(id: 'kids', venueId: '1-central-courtyard'),
       QuickAccessItem(id: 'food', venueId: 'food-and-drink'),
       QuickAccessItem(id: 'toilets', venueId: 'toilets-1-central-courtyard'),
-      QuickAccessItem(id: 'first-aid', venueId: 'first-aid'),
       QuickAccessItem(id: 'parking', venueId: null),
     ],
     features: const EventFeatures(
@@ -252,7 +251,6 @@ class QuickAccessItem {
     'kids' => l.quickAccessKids,
     'food' => l.quickAccessFood,
     'toilets' => l.quickAccessToilets,
-    'first-aid' => l.quickAccessFirstAid,
     'parking' => l.quickAccessParking,
     _ => id,
   };

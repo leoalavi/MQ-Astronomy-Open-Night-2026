@@ -703,6 +703,11 @@ class _CreditsCard extends StatelessWidget {
               ),
               style: body,
             ),
+            // Acknowledgement (Charanya-approved): frames the app as an
+            // appreciation by two MQ student developers — NOT an official
+            // University product. No University logo accompanies it.
+            const SizedBox(height: AonSpacing.space2),
+            Text(l.creditsAcknowledgement, style: body),
             // Google Maps SDK open-source licences — a legal requirement of
             // using the SDK. Static bundled text; reading it never contacts
             // Google, so it is safe to surface before consent.

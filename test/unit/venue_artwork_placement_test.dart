@@ -49,7 +49,6 @@ void main() {
       'toilets-macquarie-theatre',
       'toilets-1-central-courtyard',
       'toilets-mason-theatre',
-      'first-aid',
     };
     final placed = venues
         .where((v) => v.artworkX != null && v.artworkY != null)
@@ -81,15 +80,8 @@ void main() {
     expect(placeVenue(metro, proj), isNotNull);
   });
 
-  test('FIRST AID is on the map at all — it has no GPS fix and never was', () {
-    // Regression for the real gap this closes: the organisers never supplied a
-    // location for first aid, so it was correctly refused a guessed coordinate
-    // and therefore never rendered. The printed map DOES show it.
-    final aid = byId('first-aid');
-    expect(aid.hasCoordinates, isFalse,
-        reason: 'first aid still must not claim a GPS position it lacks');
-    expect(placeVenue(aid, proj), isNotNull,
-        reason: 'but it must now appear on the map, where the artwork puts it');
+  test('unverified First Aid is not made into an interactive map place', () {
+    expect(VenuesData.byId('first-aid'), isNull);
   });
 
   test('the Central Courtyard cluster no longer collides', () {
@@ -105,10 +97,14 @@ void main() {
     final pts = [for (final id in ids) placeVenue(byId(id), proj)!.value];
     for (var i = 0; i < pts.length; i++) {
       for (var j = i + 1; j < pts.length; j++) {
-        final d = (pts[i].latitude - pts[j].latitude).abs() +
+        final d =
+            (pts[i].latitude - pts[j].latitude).abs() +
             (pts[i].longitude - pts[j].longitude).abs();
-        expect(d, greaterThan(0.8),
-            reason: '${ids[i]} and ${ids[j]} still overlap (separation $d)');
+        expect(
+          d,
+          greaterThan(0.8),
+          reason: '${ids[i]} and ${ids[j]} still overlap (separation $d)',
+        );
       }
     }
   });
@@ -133,8 +129,11 @@ void main() {
     for (final v in venues) {
       final ref = v.mapReference;
       if (ref == null) continue;
-      expect(seen.containsKey(ref), isFalse,
-          reason: '"$ref" claimed by both ${seen[ref]} and ${v.id}');
+      expect(
+        seen.containsKey(ref),
+        isFalse,
+        reason: '"$ref" claimed by both ${seen[ref]} and ${v.id}',
+      );
       seen[ref] = v.id;
     }
   });

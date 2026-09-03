@@ -166,11 +166,10 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get homeOpenMapBody =>
-      'Venues, toilets, first aid — and walking directions from the car parks';
+      'Venues, toilets, parking — and walking directions';
 
   @override
-  String get homeOpenMapBodyNoWayfinding =>
-      'Venues, toilets, first aid and parking';
+  String get homeOpenMapBodyNoWayfinding => 'Venues, toilets and parking';
 
   @override
   String get homeQuickAccessTitle => 'Find your way to';
@@ -1239,6 +1238,10 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get settingsCreditsDevelopers => 'Developed by';
+
+  @override
+  String get creditsAcknowledgement =>
+      'Two Macquarie University student app developers, in appreciation of the Astronomy Open Night team.';
 
   @override
   String get settingsYourData => 'Your data';

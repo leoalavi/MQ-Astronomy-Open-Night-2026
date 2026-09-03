@@ -140,8 +140,8 @@
     }
   },
   "homeOpenMapTitle": "Open the campus map",
-  "homeOpenMapBody": "Venues, toilets, first aid — and walking directions from the car parks",
-  "homeOpenMapBodyNoWayfinding": "Venues, toilets, first aid and parking",
+  "homeOpenMapBody": "Venues, toilets, parking — and walking directions",
+  "homeOpenMapBodyNoWayfinding": "Venues, toilets and parking",
   "homeQuickAccessTitle": "Find your way to",
   "homeGoodToKnow": "Good to know",
   "homeImageCredit": "Image credit",
@@ -1024,6 +1024,10 @@
   "settingsCreditsDevelopers": "Developed by",
   "@settingsCreditsDevelopers": {
     "description": "Credits sub-heading above the two developer names."
+  },
+  "creditsAcknowledgement": "Two Macquarie University student app developers, in appreciation of the Astronomy Open Night team.",
+  "@creditsAcknowledgement": {
+    "description": "Credits caption acknowledging the app was built by two MQ student developers for the AON team. An appreciation, NOT a claim of official University ownership."
   },
   "settingsYourData": "Your data",
   "@settingsYourData": {

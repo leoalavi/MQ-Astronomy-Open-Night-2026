@@ -166,11 +166,10 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get homeOpenMapBody =>
-      'مکان‌ها، سرویس بهداشتی، کمک‌های اولیه — و مسیر پیاده از پارکینگ‌ها';
+      'مکان‌ها، سرویس بهداشتی و پارکینگ — همراه با مسیرهای پیاده‌روی';
 
   @override
-  String get homeOpenMapBodyNoWayfinding =>
-      'مکان‌ها، سرویس بهداشتی، کمک‌های اولیه و پارکینگ';
+  String get homeOpenMapBodyNoWayfinding => 'مکان‌ها، سرویس بهداشتی و پارکینگ';
 
   @override
   String get homeQuickAccessTitle => 'مسیر رسیدن به';
@@ -1245,6 +1244,10 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get settingsCreditsDevelopers => 'ساخته‌شده توسط';
+
+  @override
+  String get creditsAcknowledgement =>
+      'دو دانشجوی برنامه‌نویس دانشگاه مکواری، با قدردانی از تیم شب باز نجوم.';
 
   @override
   String get settingsYourData => 'داده‌های شما';

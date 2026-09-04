@@ -1,0 +1,8 @@
+{
+  "_comment": "Store and web links for the app flyer. Leave a value null until the real link exists — the flyer then prints a labelled placeholder slot and a DRAFT watermark instead of a QR that goes nowhere. Fill in, re-run tools/marketing/build_app_flyer.py, re-print.",
+  "app_store_url": null,
+  "play_store_url": null,
+  "web_url": null,
+  "apple_badge_png": null,
+  "google_badge_png": null
+}

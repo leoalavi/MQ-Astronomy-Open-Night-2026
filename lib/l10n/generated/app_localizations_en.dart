@@ -1263,7 +1263,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get settingsPassportPreviewBody =>
-      'The venue codes aren\'t final yet, so collecting stamps is off until event night. Turn this on to try the rally now using preview codes. Practice stamps are kept on this device — clear them with Delete my data.';
+      'The station codes are live, so stamps can be collected on any build. Turn this on only to practise the rally away from the venue signs — a preview badge shows while it\'s on. Practice stamps stay on this device like real ones; clear them with Delete my data.';
 
   @override
   String get passportPreviewBadge => 'Preview stamps';

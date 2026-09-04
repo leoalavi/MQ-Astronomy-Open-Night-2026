@@ -2137,10 +2137,10 @@ abstract class AonL10n {
   /// **'Preview the Astronomy Passport'**
   String get settingsPassportPreviewTitle;
 
-  /// Explains why the passport is gated and what preview does. Guideline 2.3.1(a): the passport must be reachable, not dormant.
+  /// Explains what the passport preview switch does now that the station codes are live: it only adds a preview badge; stamps are stored like real ones. Must not claim the codes are unconfirmed.
   ///
   /// In en, this message translates to:
-  /// **'The venue codes aren\'t final yet, so collecting stamps is off until event night. Turn this on to try the rally now using preview codes. Practice stamps are kept on this device — clear them with Delete my data.'**
+  /// **'The station codes are live, so stamps can be collected on any build. Turn this on only to practise the rally away from the venue signs — a preview badge shows while it\'s on. Practice stamps stay on this device like real ones; clear them with Delete my data.'**
   String get settingsPassportPreviewBody;
 
   /// Badge shown on the passport whenever preview collection is engaged, so a practice stamp is never mistaken for a real one.

@@ -47,7 +47,7 @@ ProviderContainer _c(
 }
 
 void main() {
-  const codeA = 'AON-A-TBC';
+  const codeA = 'AON-A-FL3R';
   const venueA = 'macquarie-theatre';
 
   test('collect adds a stamp', () {
@@ -86,8 +86,8 @@ void main() {
     final store = _RecordingStore();
     final c = _c(store);
     final n = c.read(passportProvider.notifier);
-    n.collect(const StampInput.manual('AON-A-TBC'));
-    n.collect(const StampInput.manual('AON-B-TBC'));
+    n.collect(const StampInput.manual('AON-A-FL3R'));
+    n.collect(const StampInput.manual('AON-B-HFUM'));
     await pumpEventQueue();
     expect(store.maxConcurrent, 1); // never two writes at once
     expect(store.writes.last, {'macquarie-theatre', 'mason-theatre'});

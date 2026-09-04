@@ -173,7 +173,7 @@ void main() {
   group('exact-lookup helpers reject what they do not know', () {
     test('StampStationsData.byVenueId', () {
       expect(StampStationsData.byVenueId('macquarie-theatre')?.code,
-          'AON-A-TBC');
+          'AON-A-FL3R');
       expect(StampStationsData.byVenueId('first-aid'), isNull);
       expect(StampStationsData.byVenueId(''), isNull);
     });

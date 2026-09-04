@@ -1,12 +1,16 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-/// Lets someone try the stamp rally before the codes on the venue signs exist.
+/// Lets someone try the stamp rally without standing in front of a venue sign.
 ///
-/// Every release build ships with the nine station codes still `AON-*-TBC`, so
-/// `PassportPolicy.isCollectionEnabled` refuses collection and the Passport tab
-/// reduces to a single sentence. That is a *dormant feature*, which App Review
-/// guideline 2.3.1(a) forbids outright — and it is also simply a worse app:
-/// nobody can see what the passport is until the one night it works.
+/// This existed because every release build once shipped with the nine station
+/// codes still `AON-*-TBC`: `PassportPolicy.isCollectionEnabled` refused
+/// collection and the Passport tab reduced to a single sentence. That is a
+/// *dormant feature*, which App Review guideline 2.3.1(a) forbids outright.
+///
+/// The real codes have since landed, so the domain gate now opens on its own
+/// and this is no longer what makes the rally reachable. It stays because it
+/// is still the only way to see what the passport does away from campus, and
+/// because it can only ever *open* the gate — never close one already open.
 ///
 /// So this mirrors [PreviewLocationService] deliberately, for the same stated
 /// reason: a first-class, user-visible control in Settings rather than a hidden

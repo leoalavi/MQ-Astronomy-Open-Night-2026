@@ -169,10 +169,15 @@ See `docs/navigation-strategy.md`.
    printed on each venue sign that an attendee scans or types to collect a
    stamp. They are **low-friction event tokens, not secrets or proof of
    attendance** — staff redemption at the prize booth is the actual control
-   (see the Phase 6 design §4.1). Until the organiser confirms them, all 9 ship
-   as placeholders (`AON-A-TBC` … `AON-I-TBC`, `DataConfidence.placeholder`),
-   and the domain release gate keeps prize collection **disabled in release
-   builds** while any code is a placeholder (design §10). They must also be
+   (see the Phase 6 design §4.1). **Resolved 2026-09-04:** rather than wait on
+   an external list, the codes are minted in the app
+   (`AON-A-FL3R` … `AON-I-JRYL`, all `DataConfidence.confirmed`) and
+   `tools/passport/build_station_qr.py` generates the printed signs from that
+   same list, so sign and app cannot disagree. The domain release gate no
+   longer disables collection (design §10). The standing condition is
+   operational, not technical: **the signs installed at the venues must be the
+   ones that generator produces**, because the app accepts these codes and
+   nothing else. They must also be
    available in an accessible form (staff assistance, large high-contrast print,
    or a spoken/tactile alternative) for attendees who cannot read the sign
    unaided (design §14).

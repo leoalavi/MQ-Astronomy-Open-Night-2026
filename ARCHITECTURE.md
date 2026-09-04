@@ -651,7 +651,7 @@ incident.
 |---|---|---|---|---|
 | **R1** | ~~iOS location purpose string claims location is "never sent anywhere"~~ **FIXED 2026-09-01 (release blocker B1)** | Was an inaccurate App Store disclosure | `ios/Runner/Info.plist` now reads "…sent to Google only when you choose walking directions"; guarded by `ios_location_purpose_test.dart` | RESOLVED — AWAITING VERIFICATION: confirm the shipped string in the release build |
 | **R2** | Google Routes returns **HTTP 401** | Directions unusable | Field log 2026-08-28; verified as GCP key restriction, not code | Configure the 4 restricted keys |
-| **R3** | Passport disabled in release builds | Headline feature inert on the night | All 9 codes are `AON-*-TBC` | Organisers must supply codes |
+| **R3** | ~~Passport disabled in release builds~~ **RESOLVED 2026-09-04** — residual risk is signage, not code | Headline feature inert on the night | All 9 codes were `AON-*-TBC`; now live (`AON-A-FL3R` … `AON-I-JRYL`, all `confirmed`) and the release gate opens | Signs must be the ones `tools/passport/build_station_qr.py` generates — the app accepts these codes and nothing else |
 | **R4** | Redistribution permission unresolved for **4 asset sets** | Blocks public release | `docs/panorama-image-provenance.md` | Confirm before store submission |
 | **R5** | 3 of 7 map E2E flows were red on `main` (map-modes, map-wayfinding, map-location) | Was false confidence | Re-run 2026-09-01 on iPhone 17 sim; each classified on-device | **Stale/flawed tests, not app defects** — all fixed: map-modes lacked a location fix for the compass list; map-wayfinding was rewritten mid-Sep for the auto-accept model, then updated again after B2 restored the explicit first-use disclosure (2026-09-01); map-location teleported a fix the settling policy correctly rejects. 7/7 green after the fix |
 | **R6** | `mason-theatre` and `14-sir-…` share building, address **and coordinates** | Duplicate 360 entry points | `venues_data.dart`; source photo `14-christopher-Mason-theatre.jpg` | Decide whether to merge tours |
@@ -685,7 +685,7 @@ of the two Observatory scenes for a northbound walker.
 - ❌ **No CI/CD** — verified: no `.github/workflows`, no other pipeline config (R7)
 
 ### Known blockers to complete verification
-GCP keys (R2), physical-device testing, stamp codes (R3), MQ-hosted URLs.
+GCP keys (R2), physical-device testing, passport signage install (R3), MQ-hosted URLs.
 
 ### Manual validation still required
 On-device heading with a real magnetometer; live Google route render; panorama

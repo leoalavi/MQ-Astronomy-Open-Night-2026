@@ -15,11 +15,11 @@ from anywhere else is rejected) and upper-cases the remainder before matching.
 The code is deliberately NOT a secret — see the doc comment on `StampStation`;
 staff redemption at the booth is the real control.
 
-While any station code is still a placeholder (`AON-*-TBC`), every poster is
-stamped DRAFT and carries a red watermark, because a poster printed with a
-placeholder code would scan to nothing on the night: the app's own release gate
-(`PassportPolicy.isCollectionEnabled`) disables collection in release builds
-until every code is confirmed.
+A poster is stamped DRAFT unless its station is `DataConfidence.confirmed` —
+the *same field* `PassportPolicy.isCollectionEnabled` reads. Keying the
+watermark off the code text alone would let a real-looking code with a
+placeholder confidence print clean while release builds silently refused every
+stamp on the night, which is the exact drift this script exists to prevent.
 
 Usage:
     python3 tools/passport/build_station_qr.py [--out DIR]
@@ -56,18 +56,29 @@ EVENT_TITLE = "Astronomy Open Night 2026"
 EVENT_DATE = "Saturday 19 September 2026  ·  4–10pm  ·  Macquarie University"
 
 
-def parse_stations(path: Path) -> list[tuple[str, str]]:
-    """Return [(venueId, code)] in declaration order."""
+def parse_stations(path: Path) -> list[tuple[str, str, bool]]:
+    """Return [(venueId, code, isConfirmed)] in declaration order.
+
+    `isConfirmed` mirrors `DataConfidence.isReliable` on the Dart side: the
+    field is optional and defaults to `placeholder`, so an entry that omits it
+    is NOT confirmed and its poster is stamped DRAFT.
+    """
     src = path.read_text(encoding="utf-8")
     body = src.split("static const List<StampStation> all = [", 1)
     if len(body) != 2:
         sys.exit(f"could not find the station list in {path}")
-    # Each entry has a venueId and a code, in that order, possibly split
-    # across lines by the formatter.
-    entries = re.findall(
-        r"venueId:\s*'([^']+)'\s*,\s*(?:\n\s*)?code:\s*'([^']+)'",
+    # Each entry has a venueId then a code, possibly split across lines by the
+    # formatter, optionally followed by codeConfidence before the entry closes.
+    entries = []
+    for m in re.finditer(
+        r"venueId:\s*'([^']+)'\s*,\s*(?:\n\s*)?code:\s*'([^']+)'"
+        r"(?P<tail>(?:[^)]|\)(?!\s*,\s*(?:\n\s*)?(?:StampStation|\])))*)",
         body[1],
-    )
+    ):
+        venue_id, code = m.group(1), m.group(2)
+        conf = re.search(r"codeConfidence:\s*DataConfidence\.(\w+)", m.group("tail"))
+        confirmed = bool(conf) and conf.group(1) != "placeholder"
+        entries.append((venue_id, code, confirmed))
     if not entries:
         sys.exit(f"no stations parsed from {path}")
     return entries
@@ -91,7 +102,10 @@ def make_qr(payload: str) -> qrcode.image.pil.PilImage:
         version=None,
         error_correction=ERROR_CORRECT_H,  # survives scuffs, damp, night glare
         box_size=20,
-        border=2,
+        # The QR spec's 4-module quiet zone, not the 2 that still decodes on a
+        # white A4 poster. The bare PNGs are handed to designers who may drop
+        # one onto a coloured panel, where a short quiet zone stops scanning.
+        border=4,
     )
     qr.add_data(payload)
     qr.make(fit=True)
@@ -222,18 +236,18 @@ def main() -> int:
     out = args.out
     (out / "qr").mkdir(parents=True, exist_ok=True)
 
-    any_placeholder = any(PLACEHOLDER_RE.search(code) for _, code in stations)
+    any_placeholder = any(not confirmed for _, _, confirmed in stations)
 
     pdf_path = out / "AON2026-passport-stations.pdf"
     c = canvas.Canvas(str(pdf_path), pagesize=A4)
     c.setTitle("Astronomy Open Night 2026 — Passport station signs")
 
     rows = []
-    for index, (venue_id, code) in enumerate(stations):
+    for index, (venue_id, code, confirmed) in enumerate(stations):
         letter = chr(ord("A") + index)
         venue = names.get(venue_id, venue_id)
         payload = f"{QR_NAMESPACE}{code.upper()}"
-        is_draft = bool(PLACEHOLDER_RE.search(code))
+        is_draft = not confirmed or bool(PLACEHOLDER_RE.search(code))
 
         qr_path = out / "qr" / f"station-{letter}-{venue_id}.png"
         make_qr(payload).save(qr_path)

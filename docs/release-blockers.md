@@ -50,7 +50,7 @@ clears the path to GO.
 | B2 | Maps Directions currently uses implicit auto-accept on first use rather than an explicit disclosure; wording referring to "after you agree" must be reconciled with the intended consent posture | Privacy / product decision | Product/legal | `CLOSED — VERIFIED` |
 | B3 | Live Google walking-route rendering still requires production GCP Routes API enablement, billing/key restrictions and successful end-to-end verification | Infrastructure | Infra | `OPEN` |
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
-| B5 | Passport production codes remain placeholders, so Passport is disabled in release builds | Event configuration | Organisers | `OPEN` |
+| B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
 | B6 | Redistribution permission remains unresolved for four panorama asset sets | Asset rights | Organisers | `OPEN` |
 | B7 | No accessible in-app Privacy Policy surface, and the production Privacy Policy / Support store URLs are not yet provisioned | Store publishing / privacy | Organisers / product | `OPEN` |
 
@@ -179,30 +179,43 @@ clears the path to GO.
   recording from a real iPhone (and ideally Android) on campus, naming the
   device and OS.
 
-## B5 — Passport production codes are placeholders
+## B5 — Passport production codes (was: placeholders)
 
-- **Exact problem.** All nine Astronomy Passport station codes ship as
-  `AON-*-TBC` placeholders; the domain release gate keeps prize collection
-  disabled in release builds while any code is a placeholder.
-- **Why it matters for release.** The Passport stamp rally is a headline
-  engagement feature and is inert on the night until real codes are supplied.
+- **Exact problem (as raised).** All nine Astronomy Passport station codes
+  shipped as `AON-*-TBC` placeholders; the domain release gate kept prize
+  collection disabled in release builds while any code was a placeholder.
+- **Why it mattered for release.** The Passport stamp rally is a headline
+  engagement feature and was inert on the night until real codes existed.
 - **Evidence / source.** `docs/data-sources.md` open question 9;
   `ARCHITECTURE.md` Risk R3.
-- **Owner.** Organisers.
-- **Status.** `OPEN`.
-- **Exact condition to close.** The organisers supply the nine real station
-  codes (and confirm an accessible redemption alternative), the codes are
-  compiled in, and the release gate no longer disables collection.
-- **Verification evidence required.** The nine confirmed codes recorded by the
-  organisers; a release build showing Passport collection enabled and a stamp
-  successfully redeemed.
-- **Signage is ready and is not what is blocking.** `tools/passport/build_station_qr.py`
-  generates the nine printable A4 station signs directly from
-  `stamp_stations_data.dart`, so the artwork follows the codes automatically.
-  Proof run 2026-09-02: all nine pages rasterised at 300 dpi and decoded back to
-  the exact `AON2026:<CODE>` payload `StampService` accepts. Every page is
-  watermarked DRAFT while its code is a placeholder. Nothing here can close B5 —
-  only the organisers' codes can.
+- **Owner.** Organisers (print + install); product (codes).
+- **Status.** `CLOSED IN APP — SIGNAGE INSTALL PENDING`.
+- **What changed (2026-09-04).** Rather than wait on an external code list, the
+  nine codes were minted in the app itself and the signs are generated from
+  them, which removes the drift risk entirely: there is exactly one source.
+  `lib/data/stamp_stations_data.dart` now carries live codes
+  (`AON-A-FL3R` … `AON-I-JRYL`), every station is
+  `DataConfidence.confirmed`, and `PassportPolicy.isCollectionEnabled` returns
+  true for release builds. The suffix alphabet excludes `0/O`, `1/I`, `2/Z`,
+  `5/S`, `6/G` and `8/B` so the printed manual-entry fallback survives being
+  typed in the dark; a test enforces that.
+- **Verification (2026-09-04).** `tools/passport/build_station_qr.py`
+  regenerated the nine A4 signs. All nine bare QR PNGs and all nine PDF pages
+  (rasterised at 300 dpi) decoded back to exactly the `AON2026:<CODE>` payload
+  `StampService` accepts — 18/18 — and no page carries the DRAFT watermark.
+  Dart side: `test/unit/stamp_service_test.dart` group *printed station signs*
+  asserts every station's printed payload resolves to that station by scan and
+  by hand.
+- **What is genuinely left, and it is not code.** The app now accepts these
+  nine codes and nothing else. **The signs the organisers print must be the ones
+  this generator produces** (`build/passport-qr/AON2026-passport-stations.pdf`).
+  If MQ has its own signage or its own code scheme, that list must replace these
+  in `stamp_stations_data.dart` and the signs must be regenerated — the app is
+  the source of truth, so a sign made anywhere else will scan to nothing.
+- **Remaining evidence required.** Confirmation the nine generated signs are
+  printed and installed at stations A–I, and one on-campus scan of a release
+  build producing a stamp. Also still open: the accessible redemption
+  alternative at the prize booth.
 
 ## B6 — Panorama asset redistribution permission unresolved
 

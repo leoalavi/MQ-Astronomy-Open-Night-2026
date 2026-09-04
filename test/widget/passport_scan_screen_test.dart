@@ -31,7 +31,7 @@ Future<void> _enter(WidgetTester t, String code) async {
 void main() {
   testWidgets('valid manual code collects (no camera)', (t) async {
     await t.pumpWidget(_host());
-    await _enter(t, 'AON-A-TBC');
+    await _enter(t, 'AON-A-FL3R');
     expect(find.textContaining('collected'), findsOneWidget);
   });
 
@@ -48,7 +48,7 @@ void main() {
     t,
   ) async {
     await t.pumpWidget(_host(enabled: false));
-    await _enter(t, 'AON-A-TBC');
+    await _enter(t, 'AON-A-FL3R');
     expect(find.textContaining('live yet'), findsOneWidget);
   });
 

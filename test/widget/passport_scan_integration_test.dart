@@ -20,7 +20,7 @@ void main() {
             // Fake scanner: a button that emits a decoded QR string on tap.
             scannerBuilder: (onDecoded) => ElevatedButton(
               key: const Key('fake-decode'),
-              onPressed: () => onDecoded('AON2026:AON-A-TBC'),
+              onPressed: () => onDecoded('AON2026:AON-A-FL3R'),
               child: const Text('emit'),
             ),
           ),

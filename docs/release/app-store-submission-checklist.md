@@ -49,7 +49,7 @@ Apple: *over 40% of unresolved issues are guideline 2.1*.
 
 | Item | Status | Evidence |
 |---|---|---|
-| **No dormant features** | **DONE** | The Astronomy Passport was inert in every release build (all nine codes `AON-*-TBC`). Now reachable via a user-visible preview — `lib/services/passport_preview.dart`, Settings → Preview. 6 tests in `test/unit/passport_preview_test.dart`. |
+| **No dormant features** | **DONE** | The Astronomy Passport was inert in every release build (all nine codes `AON-*-TBC`). The live codes landed 2026-09-04, so the domain gate now opens on its own and the passport works unaided; the user-visible preview in Settings → Preview remains as a try-it-anywhere control. 6 tests in `test/unit/passport_preview_test.dart`. |
 | Review notes written, with **verified** navigation steps | **DONE** | `docs/release/app-review-notes.md`. Steps verified against the actual widget tree: six tabs (Home, Program, Night, Map, Info, Settings); the passport is **not** a tab — it is the Home card / Info button. |
 | Demo account | **N/A** | No account, no sign-in, no server. Stated in the notes. |
 | Backend live during review | **N/A** | Offline-first; no backend. |
@@ -109,7 +109,7 @@ Run on an iPhone 17 Pro Max (iOS 26.5) with the release-configuration Dart code.
 | Claim | Result |
 |---|---|
 | **The 360° tours render** | **YES — first time ever observed.** Tour A loads its equirectangular image in the WKWebView over `http://localhost` and the scene rail switches Entrance ↔ Theatre foyer. |
-| The passport is reachable by a reviewer | **YES.** Settings → Preview → on, then `AON-A-TBC` → "Stamp collected!", fact sheet opens, "Preview stamps" badge shows, progress reads 1 / 9. |
+| The passport is reachable by a reviewer | **YES.** Open the passport and enter `AON-A-FL3R` → "Stamp collected!", fact sheet opens, progress reads 1 / 9. No preview switch needed; the nine live codes are listed in `docs/release/app-review-notes.md`. |
 | Wayfinding renders no OSM tiles | **Confirmed gone.** Choosing a destination raises the Google consent disclosure *before* any map is drawn. |
 | The consent gate holds on a device | **YES** for the UI half of spec §2b — declining leaves no map and says "Map not shown. The written directions below are complete on their own." A packet capture is still the only thing that can prove zero traffic. |
 | Map E2E suite | **6/6 flows, 130 commands.** |

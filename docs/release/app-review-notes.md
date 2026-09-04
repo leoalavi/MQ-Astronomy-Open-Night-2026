@@ -34,20 +34,22 @@ by the university closer to the event, so the final QR codes do not exist
 yet. Rather than ship the feature dormant, we included a user-visible
 preview so it is fully reviewable today:
 
-  1. Open the app and tap the "Settings" tab (last of the six tabs).
-  2. Scroll to the "Preview" section.
-  3. Turn ON "Preview the Astronomy Passport".
-  4. Open the passport: either tap the "Astronomy Passport" card on the
+  1. Open the passport: either tap the "Astronomy Passport" card on the
      "Home" tab, or tap the "Astronomy Passport" button on the "Info" tab.
-  5. Tap "Scan or enter a code", then "Enter a code".
-  6. Type any of these preview codes and tap "Add stamp":
-        AON-A-TBC   AON-B-TBC   AON-C-TBC
-        AON-D-TBC   AON-E-TBC   AON-F-TBC
-        AON-G-TBC   AON-H-TBC   AON-I-TBC
-     Each code adds one stamp and reveals an astronomy fact.
-     Entering all nine opens the completion reward screen.
-  7. The QR scanner can be reviewed with the same values encoded as a QR
-     code with the prefix "AON2026:" (for example: AON2026:AON-A-TBC).
+  2. Tap "Scan or enter a code", then "Enter a code".
+  3. Type any of these station codes and tap "Add stamp":
+        AON-A-FL3R   AON-B-HFUM   AON-C-MU4T
+        AON-D-H3HA   AON-E-CJQX   AON-F-UF37
+        AON-G-YHVN   AON-H-3WNQ   AON-I-JRYL
+     These are the live codes printed on the nine venue signs. Each adds one
+     stamp and reveals an astronomy fact. Entering all nine opens the
+     completion reward screen.
+  4. The QR scanner can be reviewed with the same values encoded as a QR
+     code with the prefix "AON2026:" (for example: AON2026:AON-A-FL3R).
+
+  No preview switch is needed — the passport is fully enabled in this build.
+  Settings › Preview › "Preview the Astronomy Passport" still exists and is
+  harmless; it only ever opens the capture gate, never closes it.
 
 NAVIGATION NOTE
 The app has six tabs: Home, Program, Night, Map, Info, Settings. The
@@ -111,11 +113,11 @@ CONTACT
 |---|---|
 | `<NAME>` / `<EMAIL>` / `<PHONE>` | The App Review contact. Must be reachable during review. |
 
-If the organisers supply the **real** stamp codes before submission, replace
-the `AON-*-TBC` list above with the real ones **and** delete the preview
-paragraph — the release gate opens by itself once every code is marked
-reliable, and `test/unit/passport_preview_test.dart` has a canary that fails
-to remind you.
+The codes above are the live ones as of 2026-09-04 and must stay in step with
+`lib/data/stamp_stations_data.dart`. If a code changes there, update this list,
+re-run `tools/passport/build_station_qr.py`, and re-print the venue signs — the
+app accepts these codes and nothing else. `test/unit/passport_preview_test.dart`
+carries a canary that fails if any station goes back to a placeholder.
 
 ---
 
@@ -125,9 +127,9 @@ Guideline **2.3.1(a)**: *"Don't include any hidden, dormant, or undocumented
 features in your app; your app's functionality should be clear to end users
 and App Review… and accessible for review."*
 
-Before this change, `PassportPolicy.isCollectionEnabled` refused all
+Before the codes landed, `PassportPolicy.isCollectionEnabled` refused all
 collection in any release build while a station code was still
-`AON-*-TBC` — which is all nine of them. A reviewer opening the passport
+`AON-*-TBC` — which was all nine of them. A reviewer opening the passport
 saw one sentence, "Astronomy Passport opens on event night", and had no way
 to reach the feature. That is textbook dormant functionality, and the app
 also *advertised* the passport, engaging guideline **2.3** (accurate

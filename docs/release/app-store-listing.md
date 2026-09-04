@@ -4,9 +4,11 @@ Every field App Store Connect asks for, filled in. Character limits are Apple's
 and are respected; the count is given so you can see the headroom.
 
 Guideline **2.3.1** requires metadata to describe what the app actually does.
-Nothing below promises a feature the shipped build does not have — in
-particular, the description does **not** claim the passport works on the night,
-because the station codes are still `AON-*-TBC`.
+Nothing below promises a feature the shipped build does not have. The station
+codes are live as of 2026-09-04 and the passport is enabled in release builds,
+but the description still does **not** claim the passport works on the night:
+that depends on the generated signs being printed and installed at the nine
+venues, which is not something the build can guarantee.
 
 ---
 

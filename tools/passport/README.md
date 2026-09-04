@@ -42,20 +42,26 @@ re-print.
 code necessarily contains everything needed to forge one — see the doc comment
 on `StampStation`. Staff redemption at the prize booth is the actual control.
 
-## While the codes are placeholders
+## Status: the codes are live
 
-Every station currently ships as `AON-<L>-TBC`. The script stamps those pages
-DRAFT and refuses to pretend otherwise, because:
+As of 2026-09-04 all nine stations carry real codes (`AON-A-FL3R` …
+`AON-I-JRYL`) marked `DataConfidence.confirmed`, so the signs print clean and
+the app's release gate (`PassportPolicy.isCollectionEnabled`) allows collection
+in release builds.
 
-- the app's own release gate (`PassportPolicy.isCollectionEnabled`) disables
-  passport collection in release builds while any code is a placeholder, so a
-  visitor scanning one of these signs on the night would get nothing; and
-- release blocker **B5** in `docs/release-blockers.md` stays open until the
-  organisers supply the nine real codes.
+**These are the signs to print.** The app accepts these nine codes and nothing
+else, so a sign produced anywhere else will scan to nothing on the night. If a
+code has to change, change it in `stamp_stations_data.dart`, re-run this
+script, and re-print — never edit a sign by hand.
 
-When the real codes arrive: edit `stamp_stations_data.dart`, set each station's
-`codeConfidence` to `DataConfidence.confirmed`, re-run this script, and the
-DRAFT watermark disappears on its own.
+## The DRAFT watermark
+
+A page is stamped DRAFT unless its station is `DataConfidence.confirmed` — the
+same field the app's release gate reads. Keying it off the code text alone
+would let a real-looking code with a placeholder confidence print clean while
+release builds silently refused every stamp, which is the drift this script
+exists to prevent. Set a station back to `placeholder` and its page is
+watermarked again on the next run.
 
 ## Verifying a batch before it goes to the printer
 

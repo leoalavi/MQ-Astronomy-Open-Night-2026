@@ -396,13 +396,15 @@ class _PreviewLocationCard extends ConsumerWidget {
   }
 }
 
-/// Opens passport collection while the nine station codes are still `AON-*-TBC`.
+/// Opens passport collection away from the venue signs.
 ///
-/// Without this the Passport tab is inert in every release build — a dormant
-/// feature, which guideline 2.3.1(a) forbids and which no reviewer or visitor
-/// could evaluate. Deliberately here, beside the other preview controls, rather
-/// than behind a hidden gesture: the same reasoning `PreviewLocationService`
-/// records for the simulated position.
+/// It was load-bearing while the nine station codes were `AON-*-TBC`: without
+/// it the Passport tab was inert in every release build — a dormant feature,
+/// which guideline 2.3.1(a) forbids and which no reviewer or visitor could
+/// evaluate. The real codes have landed, so the gate now opens on its own and
+/// this is the try-it-anywhere control. Deliberately here, beside the other
+/// preview controls, rather than behind a hidden gesture: the same reasoning
+/// `PreviewLocationService` records for the simulated position.
 class _PassportPreviewCard extends ConsumerWidget {
   const _PassportPreviewCard();
 

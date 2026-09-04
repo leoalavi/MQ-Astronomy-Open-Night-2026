@@ -189,5 +189,7 @@ CONTACT
   that screen's routes are hand-authored and offline, and its Google map is
   requested without a position.
 - It does **not** promise the passport will work on the night. The station codes
-  are still `AON-*-TBC`; the support page says the codes "go live for the
-  event", which is the truthful version of that sentence.
+  are live in the app as of 2026-09-04, but whether a visitor can actually
+  collect a stamp depends on the generated signs being installed at the venues;
+  the support page says the codes "go live for the event", which remains the
+  truthful version of that sentence.

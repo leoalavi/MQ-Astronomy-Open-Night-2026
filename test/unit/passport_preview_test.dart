@@ -2,21 +2,28 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:aon2026/data/stamp_stations_data.dart';
+import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/stamp_io.dart';
 import 'package:aon2026/services/passport_preview.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/stamp_service.dart';
 
 /// App Review guideline 2.3.1(a) forbids dormant functionality: a feature the
-/// app ships but a reviewer cannot reach is grounds for rejection. Every
-/// release build currently disables passport collection (all nine station codes
-/// are `AON-*-TBC`), so the whole stamp rally was unreachable — the screen just
-/// said "opens on event night".
+/// app ships but a reviewer cannot reach is grounds for rejection. While the
+/// nine station codes were `AON-*-TBC` placeholders every release build
+/// disabled passport collection, so the whole stamp rally was unreachable —
+/// the screen just said "opens on event night".
 ///
-/// `passportPreviewProvider` is the answer, and it deliberately mirrors
-/// [PreviewLocationService]'s design: a first-class, user-visible control in
-/// Settings rather than a hidden review switch, session-only so it can never
-/// silently mislead a returning visitor.
+/// The real codes have since landed, so the domain gate now opens on its own
+/// and preview is no longer load-bearing for review. It is kept because it is
+/// still the only way to try the rally away from the venue signs, and because
+/// these tests are what guarantee it can only ever *open* the gate, never
+/// close one that is already open.
+///
+/// `passportPreviewProvider` deliberately mirrors [PreviewLocationService]'s
+/// design: a first-class, user-visible control in Settings rather than a hidden
+/// review switch, session-only so it can never silently mislead a returning
+/// visitor.
 void main() {
   group('passport preview mode', () {
     test('is off by default — a normal launch is unchanged', () {
@@ -26,7 +33,7 @@ void main() {
       expect(c.read(passportPreviewProvider), isFalse);
     });
 
-    test('turning it on enables collection even when the codes are TBC', () {
+    test('turning it on enables collection even with the domain gate shut', () {
       final c = ProviderContainer(
         overrides: [
           // Force the domain gate CLOSED, exactly as a release build does
@@ -106,18 +113,25 @@ void main() {
     });
 
     test(
-      'the real codes are still TBC — this is why the gate exists at all',
+      'the shipped codes are real, so the release gate is open on its own',
       () {
-        // A canary. When the organisers supply real codes and this flips, the
-        // release gate opens on its own and preview stops being load-bearing.
+        // This canary used to assert the opposite: while every station code was
+        // an `AON-*-TBC` placeholder the gate stayed shut and preview was the
+        // only way in. The real codes have landed, so it now guards the other
+        // direction — reintroduce a placeholder and the rally silently stops
+        // working on the night, which is exactly what must not happen quietly.
         expect(
           PassportPolicy.isCollectionEnabled(
             StampStationsData.all,
             isRelease: true,
           ),
-          isFalse,
-          reason: 'if this fails, real stamp codes have landed — good news; '
-              'update the release checklist in docs/release/',
+          isTrue,
+          reason: 'a station code has gone back to placeholder — release '
+              'builds will refuse every stamp on the night',
+        );
+        expect(
+          StampStationsData.all.every((s) => s.codeConfidence.isReliable),
+          isTrue,
         );
       },
     );

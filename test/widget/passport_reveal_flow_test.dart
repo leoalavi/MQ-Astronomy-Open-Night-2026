@@ -71,7 +71,7 @@ void main() {
     t,
   ) async {
     _installHapticSpy();
-    await t.pumpWidget(_app(_scan('AON2026:AON-A-TBC')));
+    await t.pumpWidget(_app(_scan('AON2026:AON-A-FL3R')));
     await _scanOnce(t);
     // Macquarie Theatre fact title (debug build shows the draft).
     expect(find.textContaining('Gravity can bend light'), findsOneWidget);
@@ -94,7 +94,7 @@ void main() {
   testWidgets('a duplicate fires no haptic and opens no sheet', (t) async {
     _installHapticSpy();
     await t.pumpWidget(
-      _app(_scan('AON2026:AON-A-TBC'), snapshot: {'macquarie-theatre'}),
+      _app(_scan('AON2026:AON-A-FL3R'), snapshot: {'macquarie-theatre'}),
     );
     await _scanOnce(t);
     expect(_lightImpacts, 0);
@@ -125,7 +125,7 @@ void main() {
           supportedLocales: AonL10n.supportedLocales,
           routerConfig: GoRouter(
             routes: [
-              GoRoute(path: '/', builder: (_, _) => _scan('AON2026:AON-A-TBC')),
+              GoRoute(path: '/', builder: (_, _) => _scan('AON2026:AON-A-FL3R')),
               GoRoute(
                 path: Routes.passportReward,
                 builder: (_, _) => const Scaffold(body: Text('REWARD')),

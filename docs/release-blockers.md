@@ -51,7 +51,7 @@ clears the path to GO.
 | B3 | Live Google walking-route rendering still requires production GCP Routes API enablement, billing/key restrictions and successful end-to-end verification | Infrastructure | Infra | `OPEN` |
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
-| B6 | Redistribution permission remains unresolved for four panorama asset sets | Asset rights | Organisers | `OPEN` |
+| B6 | Redistribution permission — three University asset sets settled by the owner's attestation (2026-09-05); the **Home hero photograph** is a third party's and is only *credited*, not licensed | Asset rights | Organisers / photographer | `OPEN` — narrowed to one asset |
 | B7 | Production Privacy Policy / Support store URLs are not yet provisioned (the in-app policy surface was added 2026-09-05 by `46dc81e` and works offline) | Store publishing / privacy | Organisers / product | `OPEN` |
 
 ---
@@ -217,20 +217,38 @@ clears the path to GO.
   build producing a stamp. Also still open: the accessible redemption
   alternative at the prize booth.
 
-## B6 — Panorama asset redistribution permission unresolved
+## B6 — Asset redistribution permission (narrowed to the Home hero photograph)
 
-- **Exact problem.** Redistribution permission is unconfirmed for four of the
-  360° panorama asset sets bundled in the app.
-- **Why it matters for release.** Shipping imagery without redistribution rights
-  is a legal/store-compliance risk that blocks public release.
-- **Evidence / source.** `docs/panorama-image-provenance.md`;
+- **Exact problem.** Redistribution permission was unconfirmed for four bundled
+  asset sets: the campus basemap artwork, `buildings.json`, the 39 360°
+  photographs, and the Home hero photograph.
+- **Narrowed 2026-09-05 by the owner's attestation.** Raouf stated: *"all the
+  assets and material are ours. And if it's not ours, we already cited."* That
+  settles the three University sets — basemap artwork, `buildings.json` and
+  `assets/data/indoor/*.jpg` — which are the project's own material.
+- **The fourth is not settled, and the reason is not a technicality.**
+  `assets/images/hero_deep_triangulum_galaxy.jpg` ("A Deep Triangulum Galaxy")
+  is Aleix Roig's photograph. The app **credits** it; a credit is not a licence.
+  The repo README states the position itself: *"Rights remain with the
+  photographer. Do not reuse it outside this project without permission."* Two
+  surfaces are affected — the bundled app, and the store screenshots
+  (`01-home.png` on both iPhone and iPad show the hero), which are marketing
+  rather than "this project".
+- **Why it matters for release.** Apple guideline 5.2 makes the submitter
+  responsible for third-party content and App Review can ask for the written
+  authorisation. This is also a straightforward copyright question independent
+  of either store.
+- **Evidence / source.** `docs/release/organiser-requests.md` §1;
+  `docs/panorama-image-provenance.md`; `README.md` (hero image licence note);
   `ARCHITECTURE.md` Risk R4.
-- **Owner.** Organisers (rights holders / photographer sign-off).
-- **Status.** `OPEN`.
-- **Exact condition to close.** Written redistribution permission obtained for
-  each of the four asset sets (or the unlicensed assets removed).
-- **Verification evidence required.** The written permission recorded per asset
-  set, or confirmation the affected assets are no longer bundled.
+- **Owner.** The photographer (permission), or product (substitute the hero).
+- **Status.** `OPEN` — one asset.
+- **Exact condition to close.** Either written permission from Aleix Roig
+  covering (a) distribution inside a free public app on both stores and (b)
+  appearance in store screenshots; **or** the hero image is replaced with one
+  the project owns.
+- **Verification evidence required.** The written permission recorded here, or
+  the commit that substitutes the image.
 
 ## B7 — Store privacy/support publishing prerequisites
 
@@ -269,6 +287,14 @@ clears the path to GO.
   `docs/release/mq-hosted-pages.md` (ready, unhosted copy);
   Apple App Store Connect privacy/URL fields + App Review Guidelines; Google
   Play policy requirements.
+- **Hosting decided 2026-09-05.** Asked whether the University's own privacy
+  policy could be used: no — it does not describe this app's behaviour (Routes,
+  Google Maps' own collection, ML Kit) and a policy that does not match the app
+  is itself a 5.1.1 defect. What *is* right, and is what this blocker always
+  wanted, is **MQ hosting the app's own policy** — the finished copy in
+  `mq-hosted-pages.md` — at an `mq.edu.au` URL. Any stable public HTTPS URL
+  satisfies both stores if MQ hosting is slow. Reasoning recorded in
+  `docs/release/mq-hosted-pages.md`.
 - **Owner.** Organisers (host the pages) + product (add the in-app entry point).
 - **Status.** `OPEN`.
 - **Exact conditions to close.**

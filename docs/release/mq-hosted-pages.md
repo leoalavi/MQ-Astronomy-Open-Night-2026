@@ -182,6 +182,38 @@ CONTACT
 
 ---
 
+## "Can we just point at Macquarie's existing Privacy Policy?" — no, but MQ can host these *(asked 2026-09-05)*
+
+Two different things get confused here, so separate them:
+
+- **Whose policy it is.** The store field must point at a policy that describes
+  *this app's* data handling. Macquarie's institutional privacy policy describes
+  how the University handles personal information across its own services. It
+  says nothing about this app sending a route origin to the Google Routes API,
+  nothing about Google Maps' own collection once directions are opened, and
+  nothing about ML Kit diagnostics on Android. Pointing App Review at a policy
+  that does not cover the app's actual behaviour is its own 5.1.1 problem — the
+  same class of defect as blocker B1, one layer out. Cooperation with the
+  University does not make its general policy an accurate description of this
+  software.
+- **Who hosts it.** This is where the MQ association belongs and is entirely
+  fine. Page 1 below *is* the app's policy, already written and already checked
+  against the code; MQ publishing it at an `mq.edu.au` URL gives both the
+  University association and an accurate document. That is what this file is
+  for.
+
+If MQ hosting is slow, any stable public HTTPS URL satisfies both stores — the
+requirement is that the page is live, reachable and stays put, not that it sits
+on a particular domain. Android already takes this route: Leo's Play account
+uses `android-privacy-policy.html` (see the correction note at the top).
+
+**Terms of Use is a narrower question.** Apple does *not* require a Terms of Use
+or EULA URL — apps without one are covered by Apple's standard licence
+agreement. Page 3 exists for a different reason: Google Maps Platform requires
+the app's terms to flow its Maps/Earth Additional Terms of Service down to end
+users. So it is needed because the app embeds Google Maps, not because a store
+demands it.
+
 ## What to do with these
 
 1. Fill in `[DATE]`, `[CONTACT NAME OR TEAM]` and `[CONTACT EMAIL @mq.edu.au]`.

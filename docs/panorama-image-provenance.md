@@ -145,8 +145,11 @@ and picker-placement questions it left open are now answered as above).
   not the timestamps — see that section above.)
 - **Scene labels are English only.** Descriptions live in the manifest JSON,
   which is not localised. Pre-existing; the picker's card titles ARE localised.
-- **Rights are for a private repo, not for publication.** Committing these to
-  a private repository is not the same as permission to ship them to the App
-  Store or Google Play. This sits with the same unresolved redistribution IOU
-  as `buildings.json` and the official basemap artwork, and it is now the
-  largest of the three by volume. **Confirm before any public release.**
+- **Rights: settled for these photographs as of 2026-09-05.** Committing images
+  to a private repository is not the same as permission to ship them to the App
+  Store or Google Play, so this was carried as an IOU alongside
+  `buildings.json` and the official basemap artwork. The project owner (Raouf)
+  has now attested that the University material is the project's own: *"all the
+  assets and material are ours."* That covers all three. It does **not** cover
+  the Home hero photograph, which is Aleix Roig's and is credited rather than
+  licensed — see `docs/release-blockers.md` B6, still open.

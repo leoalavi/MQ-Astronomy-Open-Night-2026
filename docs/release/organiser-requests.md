@@ -1,11 +1,15 @@
-# The four things only a person can unblock
+# The things only a person can unblock
 
 Everything in the codebase that can be fixed has been. What is left needs a
 decision, a permission, or an account. Each item below is written as a message
 you can send as-is.
 
-Send **1 and 2 together** — they go to overlapping people and both are on the
-critical path.
+> **Updated 2026-09-05 (Raouf).** Two of the four are now answered by the
+> project owner: the Apple Developer account is in hand (item 4), and the
+> University material is the project's own (item 1). **One asset is not
+> covered** — the Home hero photograph is a third party's, and the app credits
+> it rather than licensing it. Attribution is not permission. That is now the
+> only live item in section 1.
 
 ---
 
@@ -16,21 +20,30 @@ permission to publish them in an app store.** Apple guideline 5.2 makes the
 submitter responsible for third-party content, and App Review asks for written
 authorisation when an app carries an institution's material.
 
-Three assets are affected:
+Four assets are affected. **Three are settled; one is not.**
 
-| Asset | What it is | Whose permission |
-|---|---|---|
-| `assets/maps/aon_event_map.png` + `tools/aon_map/source/*.pdf` | Page 1 of the published AON 2026 Program and Map A3 PDF, used as the app's basemap | Macquarie University |
-| `assets/data/buildings.json` | 170 campus buildings with names and coordinates, ported from the university's Open Day app | Macquarie University |
-| `assets/panorama/**` (28 images) | Photographs of six campus venues | Macquarie University |
-| `assets/images/hero_deep_triangulum_galaxy.jpg` | "A Deep Triangulum Galaxy" — the Home screen hero | **Aleix Roig (the photographer), not MQ** |
+| Asset | What it is | Whose permission | Status |
+|---|---|---|---|
+| `assets/maps/aon_event_map.png` + `tools/aon_map/source/*.pdf` | Page 1 of the published AON 2026 Program and Map A3 PDF, used as the app's basemap | Macquarie University | Settled — owner's attestation, 2026-09-05 |
+| `assets/data/buildings.json` | 170 campus buildings with names and coordinates, ported from the university's Open Day app | Macquarie University | Settled — same |
+| `assets/data/indoor/*.jpg` (39 images) | 360° photographs of nine campus locations | Macquarie University | Settled — same |
+| `assets/images/hero_deep_triangulum_galaxy.jpg` | "A Deep Triangulum Galaxy" — the Home screen hero | **Aleix Roig (the photographer), not MQ** | **OPEN — see below** |
 
-> **The hero image is the one that is not the University's to grant.** This
-> repo's own README says it plainly: *"Supplied for this project by the event
-> organisers… Not covered by any licence applied to this repository's source
-> code. Rights remain with the photographer. Do not reuse it outside this
-> project without permission."*
->
+**The attestation, recorded verbatim so the basis is auditable.** On 2026-09-05
+the project owner (Raouf) stated: *"all the assets and material are ours. And if
+it's not ours, we already cited."* That settles the three University sets — they
+are the project's own material to publish, produced for this event or ported
+from the same owner's sibling app.
+
+**It does not settle the fourth**, and the difference matters:
+
+> **Citing a photograph is not a licence to redistribute it.** A credit line
+> says who made the work; permission is what lets you ship it. The app does
+> credit Aleix Roig on the Home screen, and this repo's own README is explicit
+> that this is not a licence: *"Not covered by any licence applied to this
+> repository's source code. Rights remain with the photographer. Do not reuse it
+> outside this project without permission."*
+
 > Publishing the app is arguably still "this project"; using the image on a
 > **store listing** is not obviously within it. Two concrete consequences:
 >
@@ -152,11 +165,15 @@ letter; if not, the photographs go unused.
 
 ---
 
-## 4. The Apple Developer account *(explicitly out of scope for now)*
+## 4. The Apple Developer account — *answered 2026-09-05*
 
-Noted here only so the list is complete — you have said this is waiting on the
-University. The bundle identifier is `au.edu.mq.astronomy.aon2026`, so the app
-must be published from Macquarie University's Apple Developer account, or with
-written authority to publish on the University's behalf. Submitting a
-university-branded app from an unaffiliated individual account risks rejection
-under guidelines 4.1 and 5.1.1.1 regardless of everything else in this document.
+The owner has confirmed the account is in hand, and TestFlight Builds 1 and 2
+were uploaded from team `94273WB4G3` ("Leo Alavi"), so this is no longer a
+blocker.
+
+One thing to keep in view rather than act on: the bundle identifier is
+`au.edu.mq.astronomy.aon2026` and the app is University-branded. If the
+publishing account is an individual's rather than Macquarie's, App Review can
+ask for written authority to publish on the University's behalf (guidelines 4.1
+and 5.1.1.1). If MQ have authorised the app in writing anywhere — an email is
+enough — keep it with the review notes so it can be produced on request.

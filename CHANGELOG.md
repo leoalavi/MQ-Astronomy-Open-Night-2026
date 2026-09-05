@@ -7,6 +7,57 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-05 — record the owner's answers on assets, the account and policy hosting
+
+**Scope:** release blockers B6 and B7, organiser requests, provenance. Docs only
+— no code, no behaviour change.
+
+**Summary**
+- **Assets (B6).** The owner attested: *"all the assets and material are ours.
+  And if it's not ours, we already cited."* That settles three of the four sets
+  — the basemap artwork, `buildings.json`, and the 39 360° photographs. B6 is
+  narrowed from four assets to **one**.
+- **The exception is the Home hero photograph**, and it is not a technicality:
+  "A Deep Triangulum Galaxy" is Aleix Roig's, and the app *credits* it. A credit
+  says who made a work; a licence is what permits shipping it. The repo's own
+  README already states *"Rights remain with the photographer. Do not reuse it
+  outside this project without permission."* Two surfaces are affected — the
+  bundled app and the store screenshots, where `01-home.png` (iPhone and iPad)
+  shows the hero, and a store listing is marketing rather than "this project".
+  Closing needs the photographer's written yes for **both**, or a different hero.
+- **Apple Developer account.** Confirmed in hand; TestFlight Builds 1 and 2 were
+  uploaded from team `94273WB4G3`. No longer a blocker. The residual point, kept
+  as a note rather than a blocker: a University-branded bundle id published from
+  an individual account can draw a 4.1 request for written authority — worth
+  keeping any MQ authorisation email with the review notes.
+- **"Can we use Macquarie's privacy policy?" — no, but MQ can host ours.** MQ's
+  institutional policy describes the University's services, not this app: it
+  says nothing about the Routes origin, Google Maps' own collection, or ML Kit
+  diagnostics. A policy that does not describe the app is a 5.1.1 defect of the
+  same kind as B1. The right shape — and what `mq-hosted-pages.md` was always
+  for — is MQ **hosting the app's own policy** at an `mq.edu.au` URL. Any stable
+  HTTPS URL works if that is slow; Android already does this with
+  `android-privacy-policy.html` on Leo's Play account.
+- **Terms of Use** is not an Apple requirement — apps without one fall under
+  Apple's standard licence agreement. Page 3 exists because Google Maps Platform
+  requires the app's terms to flow its Maps/Earth Additional ToS down to users.
+- Fixed stale facts in `organiser-requests.md`: the panoramas are **39 images
+  across nine locations in `assets/data/indoor/`**, not "28 images of six
+  venues" under `assets/panorama/**`.
+
+**Files changed:** `docs/release-blockers.md` (B6 rewritten and narrowed, B7
+hosting decision), `docs/release/organiser-requests.md`, `docs/release/mq-hosted-pages.md`,
+`docs/panorama-image-provenance.md`, `ARCHITECTURE.md` (R4).
+
+**Verification:** `./scripts/check.sh` → CHECK PASSED, 7/7, exit 0.
+
+**Follow-ups**
+- Still open and only a person can close them: the hero-image permission (B6),
+  the hosted Privacy Policy / Support / Terms URLs (B7), the GCP Routes keys
+  (B3), a physical-device pass (B4), and the App Store Connect metadata —
+  age rating, App Privacy answers, screenshots, and the review contact, which
+  is still `<NAME>/<EMAIL>/<PHONE>` in the notes.
+
 ## Raouf: 2026-09-05 — ITMS-90683: add the iOS Always-location purpose string
 
 **Scope:** iOS Info.plist purpose strings, App Review notes, architecture doc.

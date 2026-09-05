@@ -480,13 +480,37 @@ consumer, or if an OSM endpoint reappears.
 
 | Permission | Why | When asked | If denied | What leaves the device |
 |---|---|---|---|---|
-| Location (`ACCESS_FINE`/`COARSE`, `NSLocationWhenInUse`) | Dot on campus map; compass; nav origin | First Locate tap / compass entry | Map still works; honest empty states | **Nothing — except** the origin `latLng` POSTed to Google Routes *after* consent |
+| Location (`ACCESS_FINE`/`COARSE`, `NSLocationWhenInUse`) | Dot on campus map; compass; nav origin | **First entry to the Map tab**, once per session (`LocationController.ensureFirstMapEntryPrompt`, latched); a declined prompt is only re-raised by an explicit Locate tap or compass entry. Never at launch, never on any other tab | Map still works; honest empty states | **Nothing — except** the origin `latLng` POSTed to Google Routes *after* consent |
 | Camera | QR passport stamps **only** | Entering the scanner | Passport unusable, rest fine | Nothing — decoded on device |
 | Motion (`NSMotionUsageDescription`) | Magnetometer heading | Compass mode | Cardinal-list fallback | Nothing |
 
 No `AD_ID`, no storage/media, no `GET_ACCOUNTS`, no background location —
 which is the only reason the Play Data-safety form can answer "no data
 collected". `android_permissions_policy_test.dart` fails if that changes.
+
+### 10.2a iOS privacy manifest — what it declares and why
+
+`ios/Runner/PrivacyInfo.xcprivacy` (in the Runner *Resources* phase; guarded by
+`ios_privacy_manifest_test.dart`) declares **no collected data, no tracking**,
+and exactly two required-reason APIs: **SystemBootTime 35F9.1** and
+**FileTimestamp C617.1**. Those are not "just in case": Flutter 3.47 links the
+SwiftPM plugins *statically* into the Runner executable, and two of them call a
+required-reason API while shipping an *empty* manifest — `sensors_plus 7.1.0`
+(`ProcessInfo.systemUptime`, compass timestamps) and `package_info_plus 10.2.1`
+(`fileModificationDate` on the app bundle; a transitive dependency via
+`geolocator_linux` that the app never calls but the linker still includes).
+App Store Connect attributes those symbols to "Runner", so the app manifest is
+the only place the reason can live. `shared_preferences_foundation`
+(UserDefaults 1C8F.1) and `Flutter.framework` declare their own. Re-verify the
+plugin manifests in the pub cache before changing this list.
+
+### 10.2b No onboarding — by decision
+
+First launch opens directly on Home; there is no welcome flow, no permission
+pre-prompt and no gate. The evaluation and the reasons are in
+`docs/onboarding-decision.md`; `test/widget/first_launch_test.dart` fails if a
+gate is ever added. The one comprehension gap it found (what the passport *is*)
+is answered on the passport screen itself, at zero stamps (`passportHowItWorks`).
 
 ### 10.3 ⚠️ Confirmed discrepancy (see Risk R1)
 
@@ -542,9 +566,9 @@ flowchart LR
 - **Android release signing fails CLOSED** — the check lives in
   `gradle.taskGraph.whenReady`, deliberately *not* in `buildTypes { release }`
   (which is configuration-time and would break debug builds).
-- **Logging:** 7 `debugPrint`/`print` calls in `lib/`. `nav_trace.dart` is
-  `kDebugMode`-gated, so traces vanish in profile/release. No sensitive-value
-  logging found.
+- **Logging:** 4 `debugPrint` calls in `lib/`, every one behind `kDebugMode`
+  (`nav_trace.dart`, `building_providers.dart`, `glass_shader.dart`), so a
+  release build writes nothing to the device log. No sensitive-value logging.
 
 ---
 
@@ -658,7 +682,7 @@ incident.
 | **R7** | **No CI/CD** | The gate only runs when someone remembers | No `.github/workflows` | Add a workflow running `check.sh` |
 | **R8** | `docs/architecture.md` stale since 2026-08-07 | Actively misleading ("No location permission") | File header | Superseded by this document |
 | **R9** | 22 orphaned ARB keys; no gate detects them | Copy drifts back to hardcoded English beside a good key | i18n audit 2026-08-24 | Add an orphan tripwire |
-| **R10** | `1.0.0+1` already spent on a Play upload | Upload rejected | Plan B C1 | Bump before RC |
+| **R10** | `1.0.0+1` spent on a Play upload **and** on TestFlight Build 1 (2026-09-05) | Upload rejected if reused | `pubspec.yaml` still `1.0.0+1` by decision — the bump is made on the commit that is archived | Set `1.0.0+2` immediately before the Build 2 archive; one bump per upload |
 | **R11** | Web runtime black-screens at bootstrap | Web unusable | Pre-existing; web *build* passes | Out of scope for the event |
 | **R12** | `lib/data/` content is English-only | Persian users see English event copy | Deliberate — translating is an organiser decision | Confirm with organisers |
 | **R13** | Room 106 keeps a 360 scene but has no activity | Minor tour noise | Kids' space moved to 109 | Decide whether to drop the scene |
@@ -701,6 +725,8 @@ on real hardware (simulator-verified only); Android screenshots at ≤2:1.
 | Panorama rights & limitations | `docs/panorama-image-provenance.md` |
 | Programme sources & open questions | `docs/data-sources.md`, `docs/mq-staff-questions.md` |
 | Release artefacts | `docs/release/` |
+| Apple App Store release audit (2026-09-05) | `APPLE_RELEASE_AUDIT.md` |
+| Why there is no onboarding | `docs/onboarding-decision.md` |
 | Recent audits | `docs/map-audit-2026-08-30.md`, `docs/home-program-audit-2026-08-30.md`, `docs/settings-mynight-audit-2026-08-30.md` |
 | Specs & plans | `docs/superpowers/` |
 | E2E selector traps | `.maestro/README.md` |

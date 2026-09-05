@@ -38,7 +38,7 @@ your choices between screens and between visits:
   - which Astronomy Passport stamps you have collected
   - which activities you have saved to your plan
   - your favourite places
-  - your language, theme, motion and text-size preferences
+  - your language, theme, motion and vibration preferences
   - whether you agreed to load Google Maps
 
 This information never leaves your device. It is not backed up to us, it is
@@ -107,9 +107,11 @@ allow location access for the app in your device settings. If you're not on
 campus yet, turn on "Preview from anywhere" in the Settings tab to see how the
 map will look on the night.
 
-The Astronomy Passport says it opens on event night.
-The stamp codes go live for the event. Before then, you can try the passport
-using "Preview the Astronomy Passport" in the Settings tab.
+How does the Astronomy Passport work?
+Each of the nine venues has a QR sign on the night. Open the passport from
+the Home tab, tap "Scan or enter a code", and scan the sign (or type the code
+printed on it) to collect that venue's stamp. Not on campus yet? You can
+practise with "Preview the Astronomy Passport" in the Settings tab.
 
 Do I need internet?
 No. The map, programme, venue information and 360° tours all work offline. Only

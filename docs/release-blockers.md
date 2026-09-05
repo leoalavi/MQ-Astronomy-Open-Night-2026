@@ -307,6 +307,16 @@ in-app privacy-policy surface) it is not store-release-ready:
 
 ## Change log
 
+- 2026-09-05 — Apple App Store release audit (`APPLE_RELEASE_AUDIT.md`). No
+  new blocker. Closed in code: the iOS privacy manifest now declares the two
+  required-reason APIs statically linked into Runner (SystemBootTime 35F9.1 via
+  `sensors_plus`, FileTimestamp C617.1 via `package_info_plus`) — an
+  ITMS-91053 upload risk; the App Review notes no longer claim the passport
+  codes "do not exist yet"; the launch screen matches the dark first frame.
+  The build-number bump to `1.0.0+2` is deliberately deferred to the commit
+  that is archived as TestFlight Build 2 (Build 1 was uploaded 2026-09-05). Onboarding evaluated and
+  deliberately **not** implemented (`docs/onboarding-decision.md`). B3, B4, B6,
+  B7 remain as recorded — all four are people/infra, not code.
 - 2026-09-01 — Register created with B1–B6 from the Home/Program and Map
   release-readiness audits. All items OPEN or UNVERIFIED; none CLOSED — VERIFIED.
 - 2026-09-01 — Added **B7** (store privacy/support publishing prerequisites) from

@@ -27,12 +27,11 @@ NO ACCOUNT IS REQUIRED
 There is no sign-in, no account and no server. Every feature is reachable on
 first launch with no credentials. Nothing needs a demo account.
 
-HOW TO REVIEW THE ASTRONOMY PASSPORT (please read — this is the one
-feature that is time-gated)
-The passport is a QR stamp trail. The nine physical venue signs are printed
-by the university closer to the event, so the final QR codes do not exist
-yet. Rather than ship the feature dormant, we included a user-visible
-preview so it is fully reviewable today:
+HOW TO REVIEW THE ASTRONOMY PASSPORT
+The passport is a QR stamp trail across nine campus venues. The station
+codes are final and fully enabled in this build. The physical QR signs are
+installed on campus for the event, so away from campus please use manual
+code entry — every step is reachable without a sign:
 
   1. Open the passport: either tap the "Astronomy Passport" card on the
      "Home" tab, or tap the "Astronomy Passport" button on the "Info" tab.
@@ -59,6 +58,11 @@ the Home tab, or the "Astronomy Passport" button on the Info tab.
 While preview is on, a "Preview stamps" badge is shown on the passport so a
 practice stamp is never mistaken for one earned at a venue. The switch is
 session-only and resets when the app is closed.
+
+FIRST LAUNCH
+There is no onboarding, sign-in or welcome flow. The app opens directly on
+the Home tab (event name, date, what's on, the passport card and the map
+shortcut). No permission dialog is shown at launch.
 
 LOCATION
 Location is optional. The app is fully usable without granting it. Location

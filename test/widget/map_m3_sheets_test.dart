@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/building.dart';
 import 'package:aon2026/models/search_entry.dart';
@@ -8,6 +10,7 @@ import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/building_providers.dart';
 import 'package:aon2026/services/favorites_providers.dart';
 import 'package:aon2026/services/favorites_store.dart';
+import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/services/search_providers.dart';
 import 'package:aon2026/widgets/building_sheet.dart';
 import 'package:aon2026/widgets/campus_search_sheet.dart';
@@ -32,6 +35,10 @@ Widget _host(Widget child, {List<Building> buildings = const [_eng]}) => Provide
     );
 
 void main() {
+  // Each test starts from an empty saved-activities store — SharedPreferences
+  // mock state is process-global and would otherwise leak between tests.
+  setUp(() => SharedPreferences.setMockInitialValues({}));
+
   testWidgets('search filters + ranks; typing shows matching building', (t) async {
     await t.pumpWidget(_host(const CampusSearchSheet()));
     await t.pumpAndSettle(); // buildings future resolves
@@ -141,5 +148,58 @@ void main() {
     await t.tap(find.text('fav'));
     await t.pumpAndSettle();
     expect(find.text(Bidi.isolate('Engineering')), findsOneWidget); // resolved row
+  });
+
+  testWidgets('favorites sheet: a saved activity shows with paired map actions',
+      (t) async {
+    // A saved night appears here too (single source of truth), and because its
+    // venue (the Observatory) is located, the card offers Show on Map +
+    // Directions keyed to the same `venue:<id>` its detail sheet uses.
+    SharedPreferences.setMockInitialValues({
+      SavedEventsStorage.keyFor(EventConfig.astronomyOpenNight.id): [
+        'telescope-park',
+      ],
+    });
+    await t.pumpWidget(_host(const FavoritesSheet()));
+    await t.pumpAndSettle();
+
+    expect(
+      find.byKey(const Key('favorite-event-telescope-park')),
+      findsOneWidget,
+    );
+    expect(find.text('Telescope Park'), findsOneWidget);
+    expect(
+      find.byKey(const Key('show-map-venue:astronomical-observatory')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const Key('directions-venue:astronomical-observatory')),
+      findsOneWidget,
+    );
+    // The empty state is gone once anything is saved.
+    expect(find.textContaining('No favourites'), findsNothing);
+  });
+
+  testWidgets('favorites sheet: tapping the heart removes a favourited place',
+      (t) async {
+    await t.pumpWidget(_host(Consumer(builder: (ctx, ref, _) {
+      return Column(children: [
+        TextButton(
+            onPressed: () =>
+                ref.read(favoritesProvider.notifier).toggle('building:E7B'),
+            child: const Text('fav')),
+        const Expanded(child: FavoritesSheet()),
+      ]);
+    })));
+    await t.pumpAndSettle();
+    await t.tap(find.text('fav'));
+    await t.pumpAndSettle();
+    expect(find.text(Bidi.isolate('Engineering')), findsOneWidget);
+
+    // The heart on the row toggles the place back off → the list is empty again.
+    await t.tap(find.byTooltip('Remove from favourites'));
+    await t.pumpAndSettle();
+    expect(find.text(Bidi.isolate('Engineering')), findsNothing);
+    expect(find.textContaining('No favourites'), findsOneWidget);
   });
 }

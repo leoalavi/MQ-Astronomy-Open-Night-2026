@@ -14,6 +14,17 @@ Branch `fix/ios-always-location-purpose-string` (off `main@46dc81e`, worked in a
 git worktree so a parallel session's staged Xcode changes were never touched).
 
 **Summary**
+- **The gate was already red on `main` before this branch existed, and is now
+  green.** `settings_screen_test.dart:163` demanded the Settings privacy card
+  read "no account and no sign-in" and "collects no analytics"; `46dc81e`
+  (Leo, "Update privacy disclosures…") rewrote `settingsPrivacyBody` to "No
+  account or advertising…" and added the Android ML Kit diagnostics
+  disclosure, and `git show --stat 46dc81e` does not list that test. Worse, its
+  "collects no analytics" assertion was in direct contradiction with
+  `privacy_copy_truth_test.dart`, which `46dc81e` *did* update to forbid that
+  exact phrase. The assertions now pin the substance of the shipped copy — no
+  account, local storage, ML Kit diagnostics, and that walking directions send
+  the origin and destination to Google — and the two tests no longer disagree.
 - App Store Connect returned **ITMS-90683** for TestFlight **Build 2**
   (1.0.0+2): "the Info.plist file for the Runner.app bundle should contain a
   `NSLocationAlwaysAndWhenInUseUsageDescription` key". Delivery succeeded — this
@@ -44,20 +55,14 @@ git worktree so a parallel session's staged Xcode changes were never touched).
   corrected on 2026-09-01. Rewritten to describe both keys as they now are.
 
 **Files changed:** `ios/Runner/Info.plist`,
-`test/unit/ios_location_purpose_test.dart`, `docs/release/app-review-notes.md`,
+`test/unit/ios_location_purpose_test.dart`, `test/widget/settings_screen_test.dart`,
+`docs/release/app-review-notes.md`,
 `ARCHITECTURE.md` (§10.2 permissions row, §10.3 rewritten, new risk **R14**).
 
 **Verification**
-- `./scripts/check.sh` → **CHECK FAILED, 6/7** — and the one failure is
-  **pre-existing on `main`, not from this change**. `settings_screen_test.dart:163`
-  expects the Settings privacy card to read "no account and no sign-in";
-  `46dc81e` (Leo, "Update privacy disclosures…") rewrote `settingsPrivacyBody`
-  to "No account or advertising…" without updating that test — `git show --stat
-  46dc81e` does not list it. This branch touches no Dart under `lib/` and not
-  that test, so it runs against `main`'s exact code. Left alone deliberately:
-  it is another session's in-flight copy, and the wording is a product call.
-  Everything else green — analyze, asset provenance, l10n EN+FA, coverage policy
-  (91.10%, floor 90.4%), reskin transforms; 1672 tests, 1 failed.
+- `./scripts/check.sh` → **CHECK PASSED, 7/7, exit 0**; 1672 tests, coverage
+  91.10% (floor 90.4%). The first run of this branch was **6/7**, and that
+  failure was pre-existing on `main` — see the second bullet of the Summary.
 - `test/unit/ios_location_purpose_test.dart` 4/4 pass (was 1 test, now 4: the
   When In Use string's truthfulness, the Always string's presence, its
   truthfulness, and that nothing in the bundle contradicts "only while open").

@@ -160,13 +160,23 @@ void main() {
       300,
       scrollable: find.byType(Scrollable).first,
     );
-    expect(find.textContaining('no account and no sign-in'), findsOneWidget);
-    expect(find.textContaining('collects no analytics'), findsOneWidget);
-    // Task 7: the card no longer promises 'Nothing leaves your phone', because
-    // location does reach Google once the visitor asks for directions.
-    expect(find.textContaining('Nothing leaves your phone'), findsNothing);
-    expect(find.textContaining('sent to Google only when you ask'),
+    // Pin the four things the card must *state* — not one phrasing of them.
+    // `46dc81e` rewrote this copy (Android ML Kit diagnostics, backup limits)
+    // and the assertions below were left behind, which is how they came to
+    // demand wording the app no longer ships.
+    expect(find.textContaining('No account or advertising'), findsOneWidget);
+    expect(find.textContaining('stored locally'), findsOneWidget);
+    expect(find.textContaining('ML Kit'), findsOneWidget);
+    expect(
+        find.textContaining('send the route origin and destination to Google'),
         findsOneWidget);
+    // Task 7: the card must never again promise that nothing leaves the phone —
+    // location does, once the visitor asks for walking directions. And it may
+    // not claim the app collects no analytics: ML Kit reports diagnostics on
+    // Android. `privacy_copy_truth_test.dart` asserts the same of the string
+    // itself; these two must never disagree.
+    expect(find.textContaining('Nothing leaves your phone'), findsNothing);
+    expect(find.textContaining('collects no analytics'), findsNothing);
   });
 
   testWidgets('credits the hero image and the real map sources', (tester) async {

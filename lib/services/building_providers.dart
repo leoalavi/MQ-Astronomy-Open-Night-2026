@@ -14,7 +14,9 @@ final buildingsProvider = FutureProvider<List<Building>>((ref) async {
   try {
     return await loadBuildings(ref.watch(buildingsBundleProvider));
   } catch (e, s) {
-    debugPrint('buildings.json load failed: $e\n$s');
+    // Debug-only: a release build must not write diagnostics to the device
+    // log (nothing sensitive here, but release logging is release noise).
+    if (kDebugMode) debugPrint('buildings.json load failed: $e\n$s');
     return const <Building>[];
   }
 });

@@ -16,7 +16,7 @@ import 'package:aon2026/widgets/liquid_tab_bar.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:go_router/go_router.dart';
 
-/// The tab shell wrapping the five top-level screens.
+/// The tab shell wrapping the six top-level screens.
 ///
 /// The bottom navigation is a floating Liquid Glass-inspired island (the
 /// signature nav), not a flat Material bar — see

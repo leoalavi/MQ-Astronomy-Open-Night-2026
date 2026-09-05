@@ -154,8 +154,11 @@ class EventConfig {
       panorama: true,
       wayfinding: true,
       myPlan: true,
-      // Off until Raouf defines the Astronomy QR payload → venue contract.
-      // See docs/backend-integration.md.
+      // NOT READ ANYWHERE. The Astronomy Passport (QR scan + stamps) shipped
+      // through its own gate — `PassportPolicy.isCollectionEnabled` in
+      // passport_providers.dart — and never consulted these two flags, so they
+      // do not hide anything. Kept false only so the Open Day shape below
+      // still compiles; flipping them changes nothing in this app.
       scan: false,
       stamps: false,
     ),
@@ -283,10 +286,11 @@ class EventFeatures {
   /// Saved-itinerary feature ("My Night").
   final bool myPlan;
 
-  /// QR scanning. Off for Astronomy pending the payload contract.
+  /// QR scanning. Reserved for the Open Day shape; the Astronomy Passport does
+  /// not read it (its gate is `PassportPolicy.isCollectionEnabled`).
   final bool scan;
 
-  /// Open Day stamp trail / gamification.
+  /// Open Day stamp trail / gamification. Reserved; not read by this app.
   final bool stamps;
 }
 

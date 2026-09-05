@@ -70,7 +70,7 @@ abstract final class Routes {
 
 /// The app's navigator.
 ///
-/// Uses a `StatefulShellRoute` so each of the five tabs keeps its own
+/// Uses a `StatefulShellRoute` so each of the six tabs keeps its own
 /// navigation stack and scroll position. That matters more here than in most
 /// apps: an attendee routinely bounces between the map and the programme, and
 /// losing your place in a 35-item programme every time you check the map would

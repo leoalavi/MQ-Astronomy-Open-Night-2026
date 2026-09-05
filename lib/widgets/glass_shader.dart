@@ -19,7 +19,9 @@ abstract final class GlassShaderCache {
       );
     } catch (error, stack) {
       _program = null;
-      debugPrint('GlassShaderCache: shader load failed: $error\n$stack');
+      if (kDebugMode) {
+        debugPrint('GlassShaderCache: shader load failed: $error\n$stack');
+      }
     }
   }
 

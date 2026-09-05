@@ -17,15 +17,57 @@
 	<key>NSPrivacyTrackingDomains</key>
 	<array/>
 
-	<!-- No required-reason API is called by this target's own code.
-	     AppDelegate.swift and SceneDelegate.swift touch none of the covered
-	     categories; the engine and plugins declare their own:
-	       Flutter.framework             FileTimestamp (0A2A.1, C617.1),
-	                                     SystemBootTime (35F9.1)
-	       shared_preferences_foundation UserDefaults (1C8F.1)
-	     Adding entries here for APIs this target does not call would be
-	     inaccurate, so the array stays empty. -->
+	<!-- Required-reason APIs present in the Runner EXECUTABLE.
+
+	     The hand-written Swift (AppDelegate.swift, SceneDelegate.swift) calls
+	     none. But Flutter 3.47 links the Swift Package Manager plugins as
+	     STATIC libraries, so their native code lands inside the Runner binary
+	     and App Store Connect attributes their API use to "Runner". Two of
+	     those plugins call a required-reason API and ship an EMPTY
+	     NSPrivacyAccessedAPITypes in their own manifest (verified in the pub
+	     cache, 2026-09-05), so the app manifest must carry the declaration:
+
+	       sensors_plus 7.1.0  FPPStreamHandlerPlus.swift:18
+	         ProcessInfo.processInfo.systemUptime — converts CoreMotion sample
+	         timestamps to wall-clock time for the compass heading stream.
+	         → SystemBootTime, reason 35F9.1 (measure elapsed time between
+	           events within the app). Nothing is sent anywhere.
+
+	       package_info_plus 10.2.1  FPPPackageInfoPlusPlugin.m:70
+	         -[NSDictionary fileModificationDate] on the app's own bundle
+	         path (its install/update date). The plugin is a transitive
+	         dependency (geolocator → geolocator_linux) registered on iOS by
+	         the Flutter tool; the app never calls it, but the symbol is
+	         linked into Runner and the static scan sees it.
+	         → FileTimestamp, reason C617.1 (timestamps of files inside the
+	           app container). Nothing is sent anywhere.
+
+	     Plugins that DO declare their own use are left to their manifests:
+	       shared_preferences_foundation 2.5.6   UserDefaults (1C8F.1)
+	       Flutter.framework                     FileTimestamp (0A2A.1,
+	                                             C617.1), SystemBootTime
+	                                             (35F9.1)
+	     No other category (DiskSpace, ActiveKeyboards) is referenced by any
+	     linked plugin — grep of every iOS plugin's native sources, 2026-09-05.
+	     Guarded by test/unit/ios_privacy_manifest_test.dart. -->
 	<key>NSPrivacyAccessedAPITypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategorySystemBootTime</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>35F9.1</string>
+			</array>
+		</dict>
+		<dict>
+			<key>NSPrivacyAccessedAPIType</key>
+			<string>NSPrivacyAccessedAPICategoryFileTimestamp</string>
+			<key>NSPrivacyAccessedAPITypeReasons</key>
+			<array>
+				<string>C617.1</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

@@ -56,14 +56,52 @@ void main() {
     for (final key in const [
       'NSPrivacyCollectedDataTypes',
       'NSPrivacyTrackingDomains',
-      'NSPrivacyAccessedAPITypes',
     ]) {
       expect(
         RegExp('<key>$key</key>\\s*<array/>').hasMatch(xml),
         isTrue,
         reason: '$key must stay an empty array while the app collects nothing '
-            'and this target calls no required-reason API. If that changes, '
-            'declare it here — do not delete this assertion.',
+            'and tracks nobody. If that changes, declare it here — do not '
+            'delete this assertion.',
+      );
+    }
+  });
+
+  test(
+      'it declares exactly the required-reason APIs statically linked into '
+      'Runner, each with one approved reason', () {
+    final xml = manifest.readAsStringSync();
+
+    // Evidence (pub cache, 2026-09-05): sensors_plus 7.1.0 calls
+    // ProcessInfo.systemUptime and package_info_plus 10.2.1 calls
+    // fileModificationDate, and BOTH ship an empty NSPrivacyAccessedAPITypes.
+    // Flutter links SwiftPM plugins statically, so App Store Connect attributes
+    // those calls to the Runner executable — the app manifest must carry them.
+    // Anything beyond these two would be an undocumented claim; anything less
+    // is an ITMS-91053 "missing API declaration" at upload.
+    final declared = RegExp(
+      r'<key>NSPrivacyAccessedAPIType</key>\s*<string>(\w+)</string>\s*'
+      r'<key>NSPrivacyAccessedAPITypeReasons</key>\s*<array>\s*'
+      r'<string>([\w.]+)</string>\s*</array>',
+    ).allMatches(xml).map((m) => (m.group(1)!, m.group(2)!)).toList();
+
+    expect(
+      declared,
+      unorderedEquals(const [
+        ('NSPrivacyAccessedAPICategorySystemBootTime', '35F9.1'),
+        ('NSPrivacyAccessedAPICategoryFileTimestamp', 'C617.1'),
+      ]),
+      reason: 'the declared required-reason APIs must match what is actually '
+          'linked into Runner (sensors_plus → systemUptime; package_info_plus → '
+          'fileModificationDate). Re-verify the plugin manifests before '
+          'changing this list.',
+    );
+    for (final cat in const ['DiskSpace', 'ActiveKeyboards', 'UserDefaults']) {
+      expect(
+        xml,
+        isNot(contains('NSPrivacyAccessedAPICategory$cat')),
+        reason: 'no linked code in the app target uses $cat '
+            '(shared_preferences_foundation declares UserDefaults itself)',
       );
     }
   });

@@ -16,6 +16,8 @@ class ParkingArea {
     required this.name,
     this.latitude,
     this.longitude,
+    this.artworkX,
+    this.artworkY,
     this.coordinateConfidence = DataConfidence.placeholder,
     this.isFree = true,
     this.accessibilityNotes,
@@ -29,6 +31,15 @@ class ParkingArea {
 
   final double? latitude;
   final double? longitude;
+
+  /// Pixel-exact placement on the official AON artwork (its 4680x3310 pixel
+  /// space — see [CampusProjection.aonPixel]), the same mechanism venues use.
+  /// Set only when a car park's real GPS sits off the printed map's western
+  /// crop (West 6), so its pin is drawn where the map itself labels it. When
+  /// present it wins for the in-app map pin; [latitude]/[longitude] still drive
+  /// real-world Google directions. Never geographic — never write GPS here.
+  final double? artworkX, artworkY;
+
   final DataConfidence coordinateConfidence;
 
   /// The official map marks event parking as free.
@@ -38,6 +49,9 @@ class ParkingArea {
   final String? notes;
 
   bool get hasCoordinates => latitude != null && longitude != null;
+
+  /// Whether this car park is pinned to the artwork rather than by GPS.
+  bool get hasArtworkPin => artworkX != null && artworkY != null;
 
   @override
   bool operator ==(Object other) =>

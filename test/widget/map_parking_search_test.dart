@@ -9,12 +9,11 @@ import 'package:aon2026/widgets/campus_search_sheet.dart';
 
 /// Parking discoverability from the campus-map search box.
 ///
-/// Carparks are not in the map's search index — they sit at the campus edges
-/// and West 6 has no confirmed coordinate, so a search result that pinned them
-/// on the illustrated map would be false. Instead, a parking-shaped query
-/// surfaces an **action card** that hands off to the Wayfinding planner (every
-/// car park + its walking route to the Central Courtyard). This test pins that
-/// a parent typing "parking" / "West 5" / "West 6" / "South 2" always finds it.
+/// Carparks are not in the map's search index — they sit at the campus edges,
+/// so a parking-shaped query surfaces an **action card** that hands off to the
+/// Wayfinding planner (every car park + its walking route to the Central
+/// Courtyard) rather than a lone map pin. This test pins that a parent typing
+/// "parking" / "West 5" / "West 6" / "South 2" always finds it.
 void main() {
   group('looksLikeParkingQuery', () {
     for (final q in const [
@@ -130,11 +129,11 @@ void main() {
     expect(find.byKey(const Key('search-parking-action')), findsNothing);
   });
 
-  testWidgets('West 6 (no coordinate) still surfaces the parking action', (
+  testWidgets('West 6 surfaces the parking action from search', (
     tester,
   ) async {
-    // The whole point: even the car park we cannot pin is reachable, because
-    // the action opens the list-based planner rather than the map.
+    // Every car park is reachable from search, because the action opens the
+    // list-based planner rather than a lone illustrated-map pin.
     await tapParkingCard(tester, 'West 6');
     expect(find.byKey(const Key('search-parking-action')), findsOneWidget);
   });

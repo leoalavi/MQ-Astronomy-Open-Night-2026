@@ -154,6 +154,10 @@
   "quickAccessFirstAid": "First aid",
   "quickAccessParking": "Parking",
   "quickAccessWalkingRoutes": "Walking routes",
+  "quickAccessToiletsAll": "All locations",
+  "@quickAccessToiletsAll": {
+    "description": "Subtitle on the Home 'Toilets' shortcut, which opens a chooser listing every toilet location."
+  },
   "programTonight": "Tonight",
   "@programTonight": {
     "description": "Segmented-control label for the time-sliced programme view"
@@ -1196,14 +1200,6 @@
   "venueCatMetro": "Metro station",
   "@venueCatMetro": {
     "description": "Venue category: the Sydney Metro station."
-  },
-  "venueCatShuttleStop": "Shuttle stop",
-  "@venueCatShuttleStop": {
-    "description": "Venue category: an event shuttle stop."
-  },
-  "venueCatBusStop": "Bus stop",
-  "@venueCatBusStop": {
-    "description": "Venue category: a public bus stop."
   },
   "venueCatOther": "Other",
   "@venueCatOther": {

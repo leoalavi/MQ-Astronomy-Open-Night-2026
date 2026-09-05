@@ -1,6 +1,7 @@
 import 'package:latlong2/latlong.dart';
 import 'package:aon2026/models/building.dart';
 import 'package:aon2026/models/campus_geometry.dart';
+import 'package:aon2026/models/parking_area.dart';
 import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/services/campus_projection.dart';
 
@@ -31,3 +32,17 @@ CampusMapPoint? placeVenue(Venue v, CampusProjection p) {
 
 CampusMapPoint? placeBuilding(Building b, CampusProjection p) =>
     b.hasCampusCoordinates ? p.projectPixel(b.campusX!, b.campusY!) : null;
+
+/// Where a car park's pin is drawn on the campus map, by the SAME priority as
+/// [placeVenue]: the official artwork's own printed marker wins (West 6, whose
+/// real GPS falls just off the map's western crop), else the verified
+/// GPS-affine position, else nothing. Real-world routing still uses the car
+/// park's [ParkingArea.latitude]/[ParkingArea.longitude], never this point.
+CampusMapPoint? placeParking(ParkingArea park, CampusProjection p) {
+  if (park.hasArtworkPin) {
+    return p.aonPixel(park.artworkX!, park.artworkY!);
+  }
+  return park.hasCoordinates
+      ? p.project(GpsPoint(LatLng(park.latitude!, park.longitude!)))
+      : null;
+}

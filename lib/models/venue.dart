@@ -155,8 +155,6 @@ enum VenueCategory {
   foodAndDrink('Food and drink'),
   parking('Parking'),
   metro('Metro station'),
-  shuttleStop('Shuttle stop'),
-  busStop('Bus stop'),
   other('Other');
 
   const VenueCategory(this.label);

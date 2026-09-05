@@ -74,7 +74,7 @@ void main() {
   });
 
   test('a venue with no artwork marker still places from GPS', () {
-    // Transport pins (metro/bus/shuttle) keep their surveyed GPS placement.
+    // The metro pin keeps its surveyed GPS placement (no artwork marker).
     final metro = byId('metro-station');
     expect(metro.artworkX, isNull);
     expect(placeVenue(metro, proj), isNotNull);

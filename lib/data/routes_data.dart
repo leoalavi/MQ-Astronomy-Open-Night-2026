@@ -37,6 +37,7 @@ abstract final class RoutesData {
   // Endpoint coordinates, kept as named constants so a corrected coordinate
   // only has to be edited once.
   static const LatLng _west5 = LatLng(-33.773501, 151.109232);
+  static const LatLng _west6 = LatLng(-33.773681, 151.107524);
   static const LatLng _south2 = LatLng(-33.776533, 151.114171);
   static const LatLng _centralCourtyard = LatLng(-33.7733531, 151.1133796);
   static const LatLng _observatory = LatLng(-33.7703261, 151.1111248);
@@ -136,10 +137,6 @@ abstract final class RoutesData {
 
     // ══════════════════════════════════════════════════════
     // From West 6
-    //
-    // West 6 has no confirmed coordinate (see ParkingData), so this route
-    // has NO polyline — text only. The map shows written directions and an
-    // explicit "location to be confirmed" notice rather than a guessed pin.
     // ══════════════════════════════════════════════════════
     WalkingRoute(
       id: 'west-6-to-central-courtyard',
@@ -147,24 +144,28 @@ abstract final class RoutesData {
       toId: 'central-courtyard',
       fromLabel: 'West 6 parking',
       toLabel: 'Central Courtyard',
+      walkingMinutes: 7,
+      distanceMetres: 480,
       pathConfidence: DataConfidence.placeholder,
+      points: [_west6, _centralCourtyard],
       lightingNotes: 'Lighting on this route not yet confirmed.',
       steps: [
         RouteStep(
           instruction:
-              'West 6’s exact position is still being confirmed with the '
-              'event organisers, so these directions are general.',
+              'Leave West 6 car park and head east, into the campus, away '
+              'from Link Road.',
+          landmark: 'Keep the sports fields on your left.',
         ),
         RouteStep(
           instruction:
-              'From the western car parks, head east into the campus, away '
-              'from Western Road, and follow the signs for the Central '
-              'Courtyard.',
+              'Follow the main pedestrian path east, past West 5, for about '
+              '450 metres.',
         ),
         RouteStep(
           instruction:
-              'If in doubt, ask a marshal or head for the lit food stalls — '
-              'the Central Courtyard is the busiest point on campus.',
+              'The Central Courtyard opens up ahead of you — look for the '
+              'food stalls and the registration point.',
+          landmark: 'Registration point 1 is in the courtyard.',
         ),
       ],
     ),

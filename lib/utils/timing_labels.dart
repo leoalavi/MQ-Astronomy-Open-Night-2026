@@ -92,8 +92,6 @@ extension VenueCategoryL10n on VenueCategory {
         VenueCategory.foodAndDrink => l.venueCatFoodAndDrink,
         VenueCategory.parking => l.venueCatParking,
         VenueCategory.metro => l.venueCatMetro,
-        VenueCategory.shuttleStop => l.venueCatShuttleStop,
-        VenueCategory.busStop => l.venueCatBusStop,
         VenueCategory.other => l.venueCatOther,
       };
 }

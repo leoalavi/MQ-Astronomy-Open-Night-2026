@@ -208,6 +208,9 @@ class AonL10nEn extends AonL10n {
   String get quickAccessWalkingRoutes => 'Walking routes';
 
   @override
+  String get quickAccessToiletsAll => 'All locations';
+
+  @override
   String get programTonight => 'Tonight';
 
   @override
@@ -1377,12 +1380,6 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get venueCatMetro => 'Metro station';
-
-  @override
-  String get venueCatShuttleStop => 'Shuttle stop';
-
-  @override
-  String get venueCatBusStop => 'Bus stop';
 
   @override
   String get venueCatOther => 'Other';

@@ -208,6 +208,9 @@ class AonL10nFa extends AonL10n {
   String get quickAccessWalkingRoutes => 'مسیرهای پیاده';
 
   @override
+  String get quickAccessToiletsAll => 'همهٔ مکان‌ها';
+
+  @override
   String get programTonight => 'امشب';
 
   @override
@@ -1384,12 +1387,6 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get venueCatMetro => 'ایستگاه مترو';
-
-  @override
-  String get venueCatShuttleStop => 'ایستگاه شاتل';
-
-  @override
-  String get venueCatBusStop => 'ایستگاه اتوبوس';
 
   @override
   String get venueCatOther => 'دیگر';

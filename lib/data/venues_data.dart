@@ -324,26 +324,6 @@ abstract final class VenuesData {
           'Sydney Metro. The station sits at the south-eastern corner of '
           'campus, next to Macquarie Centre.',
     ),
-    Venue(
-      id: 'shuttle-stop',
-      shortName: 'Shuttle bus',
-      name: 'Complimentary shuttle bus',
-      category: VenueCategory.shuttleStop,
-      // PLACEHOLDER: the map legend lists a complimentary shuttle bus, but no
-      // stop locations, route or timetable are given in the supplied material.
-      aliases: ['Shuttle', 'Free bus', 'شاتل', 'اتوبوس رایگان'],
-      // No note: stop locations/timetable are unconfirmed, so an unconfirmed
-      // placeholder line is omitted rather than shown.
-    ),
-    Venue(
-      id: 'bus-stop',
-      shortName: 'Bus stop',
-      name: 'Transport NSW bus stop',
-      category: VenueCategory.busStop,
-      // PLACEHOLDER: marked on the map legend without a listed location.
-      aliases: ['Bus', 'اتوبوس', 'ایستگاه اتوبوس'],
-      // No note: exact stop locations are unconfirmed, so no placeholder line.
-    ),
   ];
 
   /// Venues that appear in the programme as event locations.

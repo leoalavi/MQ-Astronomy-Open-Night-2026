@@ -148,11 +148,7 @@ class InfoScreen extends ConsumerWidget {
             icon: Icons.train_rounded,
             iconColor: context.aon.mapTransport,
           ),
-          for (final v in [
-            ...byCategory(VenueCategory.metro),
-            ...byCategory(VenueCategory.shuttleStop),
-            ...byCategory(VenueCategory.busStop),
-          ])
+          for (final v in byCategory(VenueCategory.metro))
             _InfoTile(venue: v),
 
           // ── Guidance ──

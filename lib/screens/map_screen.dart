@@ -250,9 +250,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
     final markers = <Marker>[
       for (final p in parking)
-        if (p.hasCoordinates && _visible.contains(VenueCategory.parking))
-          if (_proj.project(GpsPoint(LatLng(p.latitude!, p.longitude!)))
-              case final CampusMapPoint pt)
+        if (_visible.contains(VenueCategory.parking))
+          if (placeParking(p, _proj) case final CampusMapPoint pt)
             Marker(
               point: pt.value,
               width: 44,

@@ -36,23 +36,17 @@ void main() {
     expect(find.text('First aid'), findsNothing);
   });
 
-  testWidgets('parking cards expose actions only for routable destinations', (
+  testWidgets('every parking card exposes map + directions actions', (
     tester,
   ) async {
     await _openInfo(tester);
-    expect(find.byKey(const Key('parking-card-west-5')), findsOneWidget);
-    expect(find.byKey(const Key('parking-card-west-6')), findsOneWidget);
-    expect(find.byKey(const Key('parking-card-south-2')), findsOneWidget);
-    expect(find.byKey(const Key('show-map-parking:west-5')), findsOneWidget);
-    expect(find.byKey(const Key('directions-parking:west-5')), findsOneWidget);
-    expect(find.byKey(const Key('show-map-parking:west-6')), findsNothing);
-    expect(find.byKey(const Key('directions-parking:west-6')), findsNothing);
-    expect(
-      find.textContaining('confirmed position for this car park'),
-      findsNothing,
-    );
-    expect(find.byKey(const Key('show-map-parking:south-2')), findsOneWidget);
-    expect(find.byKey(const Key('directions-parking:south-2')), findsOneWidget);
+    // All three official car parks are now pinned (West 6 included), so each
+    // card carries both actions.
+    for (final id in ['west-5', 'west-6', 'south-2']) {
+      expect(find.byKey(Key('parking-card-$id')), findsOneWidget);
+      expect(find.byKey(Key('show-map-parking:$id')), findsOneWidget);
+      expect(find.byKey(Key('directions-parking:$id')), findsOneWidget);
+    }
   });
 
   testWidgets('Show on Map and Directions preserve the exact place key', (

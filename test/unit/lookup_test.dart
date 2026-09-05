@@ -5,6 +5,7 @@ import 'package:aon2026/data/events_data.dart';
 import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/routes_data.dart';
 import 'package:aon2026/data/venues_data.dart';
+import 'package:aon2026/models/walking_route.dart';
 import 'package:aon2026/services/providers.dart';
 
 /// Location and route lookup, including the missing-data paths.
@@ -114,8 +115,21 @@ void main() {
     });
 
     test('a route without geometry is not claimed to have a polyline', () {
+      // West 6 used to be the point-less example; now that it is pinned, every
+      // bundled route carries geometry. The model contract still stands: a
+      // route given no points reports hasPolyline == false, and one with two
+      // endpoints reports true.
+      const noGeometry = WalkingRoute(
+        id: 'x',
+        fromId: 'a',
+        toId: 'b',
+        fromLabel: 'A',
+        toLabel: 'B',
+        steps: [RouteStep(instruction: 'go')],
+      );
+      expect(noGeometry.hasPolyline, isFalse);
       final west6 = RoutesData.between('west-6', 'central-courtyard')!;
-      expect(west6.hasPolyline, isFalse);
+      expect(west6.hasPolyline, isTrue);
       expect(west6.steps, isNotEmpty);
     });
 

@@ -28,8 +28,6 @@ abstract final class VenueStyle {
         VenueCategory.foodAndDrink => context.aon.tertiary,
         VenueCategory.parking => context.aon.mapParking,
         VenueCategory.metro => context.aon.mapTransport,
-        VenueCategory.shuttleStop => context.aon.mapTransport,
-        VenueCategory.busStop => context.aon.mapTransport,
         VenueCategory.other => context.aon.contentTertiary,
       };
 
@@ -42,8 +40,6 @@ abstract final class VenueStyle {
         VenueCategory.foodAndDrink => Icons.local_cafe_rounded,
         VenueCategory.parking => Icons.local_parking_rounded,
         VenueCategory.metro => Icons.train_rounded,
-        VenueCategory.shuttleStop => Icons.directions_bus_rounded,
-        VenueCategory.busStop => Icons.directions_bus_filled_rounded,
         VenueCategory.other => Icons.place_rounded,
       };
 

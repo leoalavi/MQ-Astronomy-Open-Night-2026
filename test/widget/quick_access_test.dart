@@ -7,7 +7,6 @@ import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/data/event_info.dart';
-import 'package:aon2026/data/routes_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/screens/wayfinding_screen.dart';
@@ -15,6 +14,7 @@ import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
 import 'package:aon2026/widgets/parking_choices_sheet.dart';
+import 'package:aon2026/widgets/toilet_choices_sheet.dart';
 
 /// Quick Access must never dead-end.
 ///
@@ -91,22 +91,6 @@ void main() {
   });
 
   group('shortcuts WITHOUT a walking route', () {
-    testWidgets('Toilets opens the venue sheet, not an empty planner', (
-      tester,
-    ) async {
-      // Regression: this is one of the five tiles that used to dead-end.
-      expect(
-        RoutesData.all.any((r) => r.toId == 'toilets-1-central-courtyard'),
-        isFalse,
-        reason: 'if a route is later authored, this test needs rethinking',
-      );
-
-      await openQuickAccess(tester, 'Toilets');
-
-      expect(find.byType(VenueInfoSheet), findsOneWidget);
-      expect(find.byType(WayfindingScreen), findsNothing);
-    });
-
     testWidgets('the sheet offers Google directions for a located venue', (
       tester,
     ) async {
@@ -122,21 +106,48 @@ void main() {
         findsNothing,
       );
     });
+  });
 
-    testWidgets('the sheet still offers the map as a fallback', (tester) async {
+  group('toilets', () {
+    testWidgets('Toilets opens a chooser listing all three buildings', (
+      tester,
+    ) async {
       await openQuickAccess(tester, 'Toilets');
-      // The sheet opens compact (map stays visible) so the action sits below
-      // the fold — scroll to it, exactly as the sibling checks do for
-      // Directions. Reachable, not removed.
-      await scrollInSheet(tester, find.text('Show on map'));
-      expect(find.text('Show on map'), findsOneWidget);
+
+      // A chooser, not a single venue sheet and never an empty planner.
+      expect(find.byType(ToiletChoicesSheet), findsOneWidget);
+      expect(find.byType(VenueInfoSheet), findsNothing);
+      expect(find.byType(WayfindingScreen), findsNothing);
+
+      for (final building in [
+        'Macquarie Theatre',
+        '1 Central Courtyard',
+        'Mason Theatre',
+      ]) {
+        expect(find.textContaining(building), findsWidgets,
+            reason: '"$building" toilets should be listed');
+      }
     });
 
-    testWidgets('a facility with no programme says so rather than showing an '
-        'empty list', (tester) async {
+    testWidgets('every listed toilet offers directions and a map focus', (
+      tester,
+    ) async {
       await openQuickAccess(tester, 'Toilets');
-      await scrollInSheet(tester, find.text('Nothing scheduled here tonight.'));
-      expect(find.text('Nothing scheduled here tonight.'), findsOneWidget);
+      for (final id in [
+        'toilets-macquarie-theatre',
+        'toilets-1-central-courtyard',
+        'toilets-mason-theatre',
+      ]) {
+        expect(find.byKey(Key('directions-venue:$id')), findsOneWidget);
+        expect(find.byKey(Key('show-map-venue:$id')), findsOneWidget);
+      }
+      // Reachability: the last card's actions can be scrolled to and hit.
+      final lastDirections = find.byKey(
+        const Key('directions-venue:toilets-mason-theatre'),
+      );
+      await tester.ensureVisible(lastDirections);
+      await tester.pumpAndSettle();
+      expect(lastDirections.hitTestable(), findsOneWidget);
     });
   });
 
@@ -177,12 +188,13 @@ void main() {
         findsOneWidget,
       );
       expect(find.byKey(const Key('show-map-parking:south-2')), findsOneWidget);
-      expect(find.byKey(const Key('directions-parking:west-6')), findsNothing);
-      expect(find.byKey(const Key('show-map-parking:west-6')), findsNothing);
+      // West 6 is now pinned to its Link Road car park, so it carries the same
+      // two actions as West 5 and South 2 (it used to have none).
       expect(
-        find.textContaining('confirmed position for this car park'),
-        findsNothing,
+        find.byKey(const Key('directions-parking:west-6')),
+        findsOneWidget,
       );
+      expect(find.byKey(const Key('show-map-parking:west-6')), findsOneWidget);
     });
 
     testWidgets('parking actions can scroll fully above the floating tab bar', (

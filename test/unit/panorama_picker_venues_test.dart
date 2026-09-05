@@ -62,8 +62,6 @@ void main() {
       'first-aid',
       // Transport: off-site arrival, not an event location.
       'metro-station',
-      'shuttle-stop',
-      'bus-stop',
       // Unlettered on the sheet — see venues_data.dart for why. gymnasium-road
       // (the Solar system walk) DOES have a 360° tour, but it is a route, not a
       // lettered venue: the picker pins it as a top card of its own rather than

@@ -1,0 +1,51 @@
+# Regression flow for the 2026-09-05 info/map data changes
+#
+# Verifies, end to end:
+#   1. Info: the Complimentary shuttle bus and Transport NSW bus stop are GONE.
+#   2. Info: West 6 parking now carries the same actions as the other car parks.
+#   3. Home: the Toilets shortcut opens a chooser listing all three buildings.
+#   4. Map: a West 6 parking pin now renders.
+appId: au.edu.mq.astronomy.aon2026
+tags: [changes]
+---
+- launchApp:
+    clearState: true
+
+# ── 1 & 2. Info tab (bottom-nav slot 5 of 6) ────────────────────────────────
+- tapOn:
+    point: "73%,93%"
+- assertVisible: "Useful information"
+- scrollUntilVisible:
+    element:
+      text: "West 6"
+    direction: DOWN
+- assertVisible: "West 6"
+- assertVisible: "Show on map"
+- assertVisible: "Directions"
+# The removed transport rows must be gone entirely.
+- assertNotVisible: "Complimentary shuttle bus"
+- assertNotVisible: "Transport NSW bus stop"
+- takeScreenshot: .maestro/screenshots/changes-01-info-parking
+
+# ── 3. Home → Toilets chooser lists all three buildings ─────────────────────
+- tapOn:
+    point: "10%,93%"
+- assertVisible: "Astronomy Open Night"
+- scrollUntilVisible:
+    element:
+      text: "Toilets"
+    direction: DOWN
+- tapOn: "Toilets"
+- assertVisible: "(?s).*Macquarie Theatre.*"
+- assertVisible: "(?s).*1 Central Courtyard.*"
+- assertVisible: "(?s).*Mason Theatre.*"
+- assertVisible: "Directions"
+- takeScreenshot: .maestro/screenshots/changes-02-toilets-chooser
+- tapOn:
+    point: "50%,12%"
+
+# ── 4. Map shows the new West 6 parking pin ─────────────────────────────────
+- runFlow: flows/open-map.yaml
+- assertVisible: "West 5. Parking."
+- assertVisible: "West 6. Parking."
+- takeScreenshot: .maestro/screenshots/changes-03-map-west6-pin

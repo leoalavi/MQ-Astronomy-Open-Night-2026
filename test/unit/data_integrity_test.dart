@@ -158,17 +158,23 @@ void main() {
       }
     });
 
-    test('West 6 has no invented coordinate', () {
-      // Explicitly pinned: the event map labels West 6 in two places, so a
-      // guessed pin here would be actively harmful. If someone adds a
-      // coordinate, they must also change this test — and think about it.
+    test('West 6 is pinned to its verified Link Road car park', () {
+      // History: West 6 deliberately had NO coordinate, because the official
+      // event artwork prints the "West 6" label twice. It is now pinned to the
+      // public map record for the real "West 6 (Macquarie University)" car park
+      // on Link Road (~160 m west of West 5), so it behaves like West 5 and
+      // South 2 — a pin, directions and a map focus. If that decision is ever
+      // reversed, change this test too — and think about which "West 6" the
+      // organisers actually mean.
       final west6 = ParkingData.byId('west-6')!;
-      expect(west6.hasCoordinates, isFalse);
-      expect(west6.coordinateConfidence, DataConfidence.placeholder);
-      // The unconfirmed "exact location still to be confirmed" note was removed
-      // (Info tab must not show placeholder/unconfirmed values), so West 6 now
-      // carries no note rather than a to-be-confirmed one.
-      expect(west6.notes, isNull);
+      expect(west6.hasCoordinates, isTrue);
+      expect(west6.coordinateConfidence, DataConfidence.derived);
+      // Immediately west of West 5, at a similar latitude.
+      final west5 = ParkingData.byId('west-5')!;
+      expect(west6.longitude, lessThan(west5.longitude!),
+          reason: 'West 6 sits west of West 5');
+      expect((west6.latitude! - west5.latitude!).abs(), lessThan(0.001),
+          reason: 'West 6 is at roughly the same latitude as West 5');
     });
 
     test('coordinates that do exist are inside the campus bounding box', () {
@@ -209,7 +215,6 @@ void main() {
       'sport-and-aquatic-centre',
       'astronomical-observatory',
       'metro-station',
-      'shuttle-stop',
     ];
 
     for (final id in required) {
@@ -380,6 +385,35 @@ void main() {
       );
       expect(keynote.presenter, 'Professor Fred Watson AM');
       expect(keynote.venueId, 'macquarie-theatre');
+    });
+  });
+
+  group('shuttle bus and bus stop are removed', () {
+    // Removed at the organisers' request: the supplied material gave neither a
+    // stop location, route nor timetable, so both only ever showed as an
+    // "unknown location" row. Gone entirely — data and category alike — so no
+    // empty map filter chip or Info row is left behind.
+    test('the shuttle-stop and bus-stop venues no longer exist', () {
+      expect(VenuesData.byId('shuttle-stop'), isNull);
+      expect(VenuesData.byId('bus-stop'), isNull);
+    });
+
+    test('no venue uses a removed transport category', () {
+      final names = VenueCategory.values.map((c) => c.name).toSet();
+      expect(names, isNot(contains('shuttleStop')));
+      expect(names, isNot(contains('busStop')));
+    });
+  });
+
+  group('West 6 routing', () {
+    test('the West 6 → Central Courtyard route is now a real polyline', () {
+      final route = RoutesData.between('west-6', 'central-courtyard')!;
+      // Two endpoints = a "that way" direction indicator, same as West 5 and
+      // South 2. Before it was pinned, this route had no points at all.
+      expect(route.points, hasLength(2));
+      final west6 = ParkingData.byId('west-6')!;
+      expect(route.points.first.latitude, west6.latitude);
+      expect(route.points.first.longitude, west6.longitude);
     });
   });
 }

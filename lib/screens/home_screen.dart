@@ -32,6 +32,7 @@ import 'package:aon2026/widgets/section_header.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
 import 'package:aon2026/widgets/parking_choices_sheet.dart';
+import 'package:aon2026/widgets/toilet_choices_sheet.dart';
 
 /// Landing screen: branding, when and where, and the four things people
 /// actually open the app for.
@@ -822,8 +823,10 @@ class _QuickAccessTile extends ConsumerWidget {
         : ref.watch(venueByIdProvider(item.venueId!));
 
     // Parking has no single venue — Home asks the visitor which official area
-    // they mean instead of silently choosing one.
+    // they mean instead of silently choosing one. Toilets are similar: the
+    // programme names three buildings, so the shortcut opens a chooser too.
     final isParking = item.venueId == null;
+    final isToilets = item.id == 'toilets';
     final icon = isParking
         ? Icons.local_parking_rounded
         : VenueStyle.iconFor(venue?.category ?? VenueCategory.other);
@@ -838,6 +841,8 @@ class _QuickAccessTile extends ConsumerWidget {
     final venueLabel = venue?.chipLabel;
     final description = isParking
         ? l.quickAccessWalkingRoutes
+        : isToilets
+        ? l.quickAccessToiletsAll
         : (venueLabel == null || venueLabel == item.label(l)
               ? (venue?.building ?? l.infoLocationToBeConfirmed)
               : venueLabel);
@@ -850,6 +855,11 @@ class _QuickAccessTile extends ConsumerWidget {
       onTap: () {
         if (isParking) {
           ParkingChoicesSheet.show(context);
+        } else if (isToilets) {
+          // The three toilet buildings, each with directions and a map pin —
+          // the same chooser pattern as parking, so Home never picks one
+          // toilet for the visitor when the programme names three.
+          ToiletChoicesSheet.show(context);
         } else {
           // Everything else opens the venue sheet, which answers "where is
           // this and what's on here" and offers walking directions only when

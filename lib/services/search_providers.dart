@@ -1,10 +1,8 @@
 import 'package:flutter/foundation.dart' show immutable;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:latlong2/latlong.dart';
 import 'package:aon2026/data/parking_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/models/building.dart';
-import 'package:aon2026/models/campus_geometry.dart';
 import 'package:aon2026/models/search_entry.dart';
 import 'package:aon2026/services/building_providers.dart';
 import 'package:aon2026/services/building_search.dart';
@@ -185,20 +183,17 @@ final placeResolverProvider = Provider.family<AsyncValue<ResolvedPlace?>, String
   }
   if (key.startsWith('parking:')) {
     // Resolve a car park once for both campus-map focus and Google routing.
-    // A car park with no confirmed coordinate (West 6) resolves with neither a
-    // render point nor routing coordinates, so no destination is invented.
+    // The pin follows the shared placement rule (artwork marker for West 6,
+    // else the GPS-affine position); routing always uses the real GPS.
     final park = ParkingData.byId(key.substring('parking:'.length));
     if (park == null) return const AsyncData(null);
-    final renderPoint = park.hasCoordinates
-        ? _proj.project(GpsPoint(LatLng(park.latitude!, park.longitude!)))
-        : null;
     return AsyncData(
       ResolvedPlace(
         kind: PlaceKind.venue,
         placeKey: key,
         title: park.name,
         subtitle: null,
-        renderPoint: renderPoint,
+        renderPoint: placeParking(park, _proj),
         routingLat: park.latitude,
         routingLng: park.longitude,
       ),

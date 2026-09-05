@@ -409,6 +409,12 @@ abstract class AonL10n {
   /// **'Walking routes'**
   String get quickAccessWalkingRoutes;
 
+  /// Subtitle on the Home 'Toilets' shortcut, which opens a chooser listing every toilet location.
+  ///
+  /// In en, this message translates to:
+  /// **'All locations'**
+  String get quickAccessToiletsAll;
+
   /// Segmented-control label for the time-sliced programme view
   ///
   /// In en, this message translates to:
@@ -2340,18 +2346,6 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Metro station'**
   String get venueCatMetro;
-
-  /// Venue category: an event shuttle stop.
-  ///
-  /// In en, this message translates to:
-  /// **'Shuttle stop'**
-  String get venueCatShuttleStop;
-
-  /// Venue category: a public bus stop.
-  ///
-  /// In en, this message translates to:
-  /// **'Bus stop'**
-  String get venueCatBusStop;
 
   /// Venue category: anything uncategorised.
   ///

@@ -422,11 +422,11 @@ void main() {
     expect(svc.calls, 0);
   });
 
-  testWidgets('a destination with NO coordinates (e.g. West 6) is handled honestly, not faked', (t) async {
+  testWidgets('a destination with NO coordinates is handled honestly, not faked', (t) async {
     const noCoords = AsyncData<ResolvedPlace?>(ResolvedPlace(
       kind: PlaceKind.building,
       placeKey: _key,
-      title: 'West 6',
+      title: 'A place with no pin',
       subtitle: null,
       renderPoint: null,
       routingLat: null,

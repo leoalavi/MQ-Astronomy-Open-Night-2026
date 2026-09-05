@@ -480,7 +480,7 @@ consumer, or if an OSM endpoint reappears.
 
 | Permission | Why | When asked | If denied | What leaves the device |
 |---|---|---|---|---|
-| Location (`ACCESS_FINE`/`COARSE`, `NSLocationWhenInUse`) | Dot on campus map; compass; nav origin | **First entry to the Map tab**, once per session (`LocationController.ensureFirstMapEntryPrompt`, latched); a declined prompt is only re-raised by an explicit Locate tap or compass entry. Never at launch, never on any other tab | Map still works; honest empty states | **Nothing — except** the origin `latLng` POSTed to Google Routes *after* consent |
+| Location (`ACCESS_FINE`/`COARSE`, `NSLocationWhenInUse` + `NSLocationAlwaysAndWhenInUse`, declared but never requested — §10.3) | Dot on campus map; compass; nav origin | **First entry to the Map tab**, once per session (`LocationController.ensureFirstMapEntryPrompt`, latched); a declined prompt is only re-raised by an explicit Locate tap or compass entry. Never at launch, never on any other tab | Map still works; honest empty states | **Nothing — except** the origin `latLng` POSTed to Google Routes *after* consent |
 | Camera | QR passport stamps **only** | Entering the scanner | Passport unusable, rest fine | Nothing — decoded on device |
 | Motion (`NSMotionUsageDescription`) | Magnetometer heading | Compass mode | Cardinal-list fallback | Nothing |
 
@@ -512,17 +512,25 @@ pre-prompt and no gate. The evaluation and the reasons are in
 gate is ever added. The one comprehension gap it found (what the passport *is*)
 is answered on the passport screen itself, at zero stamps (`passportHowItWorks`).
 
-### 10.3 ⚠️ Confirmed discrepancy (see Risk R1)
+### 10.3 iOS location purpose strings
 
-`NSLocationWhenInUseUsageDescription` says *"Your location stays on your device
-and is never sent anywhere."* That is **false on the Google directions path**:
-`google_routes_service.dart:58` POSTs the live `latLng` as `origin`.
+Both are guarded by `ios_location_purpose_test.dart`.
 
-The in-app copy is correct (`settingsPrivacyBody`: *"It is sent to Google only
-when you ask for walking directions — and only after you agree"*), and the
-hosted policy draft explicitly avoids the claim
-(`docs/release/mq-hosted-pages.md:185`). **Only the iOS purpose string was left
-behind when Google nav landed.**
+`NSLocationWhenInUseUsageDescription` must disclose the Google directions path,
+because `google_routes_service.dart:58` POSTs the live `latLng` as `origin`. It
+once said *"Your location stays on your device and is never sent anywhere"* —
+false, and the last disclosure left behind when Google nav landed (Risk R1 /
+blocker B1). Corrected 2026-09-01; the test fails if the claim returns.
+
+`NSLocationAlwaysAndWhenInUseUsageDescription` exists **only to satisfy Apple's
+static scan** (ITMS-90683, raised against TestFlight Build 2). The app never
+requests Always: geolocator's `PermissionHandler.m` calls
+`requestWhenInUseAuthorization` whenever the When In Use string is present, and
+reaches `requestAlwaysAuthorization` only when it is absent. But that call is
+compiled into `geolocator_apple`, which Flutter links *statically* into Runner
+(the same mechanism as §10.2a), so Apple attributes the API to the app bundle
+and requires a string. It is written for the reviewer and must stay truthful:
+its "only while it is open" claim is what forbids a `location` background mode.
 
 ---
 
@@ -686,6 +694,7 @@ incident.
 | **R11** | Web runtime black-screens at bootstrap | Web unusable | Pre-existing; web *build* passes | Out of scope for the event |
 | **R12** | `lib/data/` content is English-only | Persian users see English event copy | Deliberate — translating is an organiser decision | Confirm with organisers |
 | **R13** | Room 106 keeps a 360 scene but has no activity | Minor tour noise | Kids' space moved to 109 | Decide whether to drop the scene |
+| **R14** | ~~TestFlight Build 2 returned **ITMS-90683**: no `NSLocationAlwaysAndWhenInUseUsageDescription`~~ **FIXED 2026-09-05** | Warning only — Build 2 was accepted and is installable; it recurs on every upload until the key ships | App Store Connect delivery mail, 2026-09-05; cause is `geolocator_apple`'s compiled `requestAlwaysAuthorization` (§10.3) | Key added and guarded by `ios_location_purpose_test.dart`. RESOLVED — AWAITING VERIFICATION: the warning must be absent from the **next** upload (Build 3) |
 
 **Unverified concerns:** whether Liz's "astrophotography display" is a second
 activity or (as implemented) the same as Capture the cosmos; the arrival order

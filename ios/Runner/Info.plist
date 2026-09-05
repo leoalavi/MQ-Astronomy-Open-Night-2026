@@ -6,6 +6,16 @@
 	<string>Used only to scan the QR code on a venue sign for your Astronomy Passport. Camera images are processed on your device and never stored or sent anywhere.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>Shows where you are on the campus map and points the compass toward venues at night. Your location is sent to Google only when you choose walking directions.</string>
+	<!-- ITMS-90683. The app NEVER requests Always authorisation: geolocator's
+	     PermissionHandler.m takes the requestWhenInUseAuthorization branch
+	     whenever NSLocationWhenInUseUsageDescription is present, and the
+	     requestAlwaysAuthorization branch above is unreachable while it is. But
+	     that call is compiled into the statically-linked plugin, so Apple's scan
+	     attributes it to Runner and requires this string. It is written for the
+	     reviewer, and must stay truthful: no background modes, no
+	     allowsBackgroundLocationUpdates, no Always prompt. -->
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Shows where you are on the campus map and points the compass toward venues at night. The app only uses your location while it is open — it never uses background location. Your location is sent to Google only when you choose walking directions.</string>
 	<key>NSMotionUsageDescription</key>
 	<string>Used to sense which way you're facing so the map can point you toward the venues. This never leaves your device.</string>
 	<!-- M4: Google Maps SDK key, substituted from the MAPS_API_KEY build setting

@@ -75,6 +75,14 @@ tab, and not repeatedly. If you decline, the Map still opens and works
 normally; the on-map "Locate Me" control is the deliberate path to try again
 or re-enable location later.
 
+The app only ever requests "When In Use". Info.plist also carries
+NSLocationAlwaysAndWhenInUseUsageDescription because the linked location
+plugin (geolocator) compiles a requestAlwaysAuthorization call that Apple's
+static scan attributes to the app bundle (ITMS-90683 on Build 2). That code
+path is unreachable here — the plugin requests Always only when the When In
+Use string is absent, and it is present. There is no location background
+mode, no allowsBackgroundLocationUpdates, and no Always prompt.
+
 If you are not physically on the Macquarie University campus, the map's
 position marker will naturally be off-screen. To review location-dependent
 screens from anywhere, turn ON the Settings tab → Preview → "Preview from anywhere".

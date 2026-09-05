@@ -7,6 +7,80 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-05 — ITMS-90683: add the iOS Always-location purpose string
+
+**Scope:** iOS Info.plist purpose strings, App Review notes, architecture doc.
+Branch `fix/ios-always-location-purpose-string` (off `main@46dc81e`, worked in a
+git worktree so a parallel session's staged Xcode changes were never touched).
+
+**Summary**
+- App Store Connect returned **ITMS-90683** for TestFlight **Build 2**
+  (1.0.0+2): "the Info.plist file for the Runner.app bundle should contain a
+  `NSLocationAlwaysAndWhenInUseUsageDescription` key". Delivery succeeded — this
+  is a warning, not a rejection, and Build 2 remains installable — but it recurs
+  on every upload until the key ships.
+- **Cause, verified against the shipped binary, not inferred.**
+  `strings build/ios/iphoneos/Runner.app/Runner` contains both
+  `requestAlwaysAuthorization` and the literal
+  `NSLocationAlwaysAndWhenInUseUsageDescription`, while that app's Info.plist
+  declared only `NSLocationWhenInUseUsageDescription`. The symbols come from
+  `geolocator_apple`'s `PermissionHandler.m`, which Flutter 3.47 links
+  *statically* into Runner (the same mechanism as the privacy-manifest work
+  above), so Apple's static scan attributes the API to the app bundle.
+- **The app still never requests Always.** `PermissionHandler.m` calls
+  `requestWhenInUseAuthorization` whenever `NSLocationWhenInUseUsageDescription`
+  is present and only falls through to `requestAlwaysAuthorization` when it is
+  absent — so the new key cannot change the prompt the user sees. There is no
+  location background mode and no `allowsBackgroundLocationUpdates`
+  (`location_service.dart` uses a plain `LocationSettings`).
+- The new string is written for App Review and stays truthful on both counts
+  that matter here: it discloses the Google walking-directions transmission
+  (blocker B1's rule, now enforced for *both* location keys) and states that the
+  app only uses location while it is open.
+- `docs/release/app-review-notes.md` now pre-empts the obvious reviewer
+  question — why an Always string exists for an app that only asks When In Use.
+- Fixed a stale claim while in the file: `ARCHITECTURE.md` §10.3 still described
+  the purpose string as saying location "is never sent anywhere", which was
+  corrected on 2026-09-01. Rewritten to describe both keys as they now are.
+
+**Files changed:** `ios/Runner/Info.plist`,
+`test/unit/ios_location_purpose_test.dart`, `docs/release/app-review-notes.md`,
+`ARCHITECTURE.md` (§10.2 permissions row, §10.3 rewritten, new risk **R14**).
+
+**Verification**
+- `./scripts/check.sh` → **CHECK FAILED, 6/7** — and the one failure is
+  **pre-existing on `main`, not from this change**. `settings_screen_test.dart:163`
+  expects the Settings privacy card to read "no account and no sign-in";
+  `46dc81e` (Leo, "Update privacy disclosures…") rewrote `settingsPrivacyBody`
+  to "No account or advertising…" without updating that test — `git show --stat
+  46dc81e` does not list it. This branch touches no Dart under `lib/` and not
+  that test, so it runs against `main`'s exact code. Left alone deliberately:
+  it is another session's in-flight copy, and the wording is a product call.
+  Everything else green — analyze, asset provenance, l10n EN+FA, coverage policy
+  (91.10%, floor 90.4%), reskin transforms; 1672 tests, 1 failed.
+- `test/unit/ios_location_purpose_test.dart` 4/4 pass (was 1 test, now 4: the
+  When In Use string's truthfulness, the Always string's presence, its
+  truthfulness, and that nothing in the bundle contradicts "only while open").
+- `plutil -lint ios/Runner/Info.plist` → OK.
+- `flutter build ios --release --no-codesign` ✓ (590.8s), and the *built*
+  bundle was inspected — `plutil -p build/ios/iphoneos/Runner.app/Info.plist`
+  now prints both location keys, and the bundle still declares no
+  `UIBackgroundModes`. The **previous** build of that same path printed only
+  `NSLocationWhenInUseUsageDescription`, which is precisely what Apple flagged.
+- Cause evidence: `strings build/ios/iphoneos/Runner.app/Runner` on the old
+  build matched both `requestAlwaysAuthorization` and
+  `NSLocationAlwaysAndWhenInUseUsageDescription` — the API really is compiled
+  into the app binary.
+
+**Follow-ups**
+- **Not yet verified end-to-end:** the warning can only be confirmed gone by the
+  next upload. Bump to `1.0.0+3`, run
+  `flutter build ios --config-only --release`, then archive **Build 3** from the
+  Xcode session signed into team `94273WB4G3` and check the delivery mail.
+- No l10n change: purpose strings are localised via `InfoPlist.strings`, which
+  this app does not ship. The Persian UI shows the English system prompt today —
+  a pre-existing gap, unchanged by this commit.
+
 ## Raouf: 2026-09-05 — Apple App Store release audit → TestFlight Build 2 candidate
 
 **Scope:** iOS release readiness, privacy manifest, first-launch UX / onboarding

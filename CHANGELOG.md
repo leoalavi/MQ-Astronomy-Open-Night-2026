@@ -7,6 +7,88 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-05 — final pre-submission pass; `1.0.0+3` is the Build 3 candidate
+
+**Scope:** the whole App Store submission surface — privacy answers, hosted-page
+decisions, Routes verification, screenshots, review notes, blocker register, and
+the version bump. Branch `fix/ios-always-location-purpose-string`.
+
+**Summary**
+- **Google Routes: the 401 is gone.** A real request with the shipped iOS key
+  and the app's own headers returned **HTTP 200** and a real walking route —
+  West 6 parking → Macquarie Theatre, 581 m / 476 s. B3's original cause is
+  closed.
+- **A worse finding in its place: the shipped Routes key has no application
+  restriction.** The same request succeeded with **no** bundle-id header and
+  again with a *wrong* bundle id. The key ships inside the binary and is
+  extractable — `routes_client_identity.dart` says so itself and calls the
+  identity headers "load-bearing", which they are only if the server enforces
+  them. Anyone can bill this GCP project. Not an App Review blocker; fix it in
+  the GCP console before the app is public. B3 stays OPEN on this.
+- **App Privacy cannot be answered "Data Not Collected".** Apple's definition of
+  *collect* covers transmission to a third-party partner, and the app POSTs the
+  visitor's live latLng to Google. `PrivacyInfo.xcprivacy` now declares
+  **PreciseLocation — App Functionality, not linked, not tracking**; the old
+  empty array contradicted the app's own privacy copy. The test that guarded the
+  empty array said "if that changes, declare it here" — so it was changed, not
+  deleted, and now pins exactly one collected type.
+- **Macquarie's own Privacy Policy cannot be the store URL** — checked, not
+  assumed. `policies.mq.edu.au/document/view.php?id=107` scopes itself to staff,
+  students and researchers, addresses no mobile app, and says nothing about the
+  Routes transmission or ML Kit. MQ *hosting the app's own policy* is the right
+  shape and is what `mq-hosted-pages.md` was written for.
+- **Support URL found and verified live:** `https://event.mq.edu.au/astronomy-open-night/`
+  — official, public, no login, event-specific, with `astronomyopennight@mq.edu.au`
+  on the page. It also confirms the date the app shows.
+- **Terms of Use: Apple's standard EULA is sufficient.** No custom EULA is
+  required. Page 3 of the hosted pages exists for the Google Maps flow-down, not
+  for Apple.
+- **Screenshots were stale and are now recaptured.** The 2026-08-23 set showed
+  *"Venues, toilets, first aid — and walking directions from the car parks"*,
+  copy the app no longer ships. 6 of 6 iPhone (1320×2868) and 1 of 4 iPad
+  (2064×2752) recaptured from this branch; the three remaining iPad shots were
+  removed rather than shipped stale — Maestro reports success against the iPad
+  UDID while the taps land elsewhere (three captures came back byte-identical).
+- **App Review notes corrected to match the binary.** They claimed directions sit
+  behind "an explicit in-app consent screen". Only the car-park wayfinding path
+  shows one; the venue Directions path takes opening Directions *as* the choice.
+  Both are now described, along with exactly what is sent to Google.
+- **B6 closed by owner decision** (ship the hero photo on its existing credit),
+  recorded as an accepted risk under a new register status rather than as
+  `CLOSED — VERIFIED`, because no permission exists.
+- **New:** `docs/release/app-store-connect-final-checklist.md` (23 rows, every
+  ASC field with its evidence or its blocker) and
+  `docs/release/device-qa-checklist.md` (the physical-device pass that closes B4).
+- `pubspec.yaml` → **`1.0.0+3`**. Build 2 is spent.
+
+**Files changed:** `ios/Runner/PrivacyInfo.xcprivacy`,
+`test/unit/ios_privacy_manifest_test.dart`, `pubspec.yaml`,
+`docs/release/app-store-connect-final-checklist.md` (new),
+`docs/release/device-qa-checklist.md` (new), `docs/release-blockers.md`,
+`docs/release/app-review-notes.md`, `docs/release/app-store-listing.md`,
+`docs/release/screenshots/**`, `ARCHITECTURE.md`.
+
+**Verification**
+- `./scripts/check.sh` → **CHECK PASSED, 7/7, exit 0**; coverage 91.10%.
+- `flutter build ios --release --no-codesign` ✓, then
+  `flutter build ios --config-only --release` → `FLUTTER_BUILD_NUMBER=3`.
+- Built bundle inspected: `CFBundleVersion 3`, `CFBundleShortVersionString
+  1.0.0`, bundle id `au.edu.mq.astronomy.aon2026`, **4** purpose strings, **0**
+  of the keys that must not appear (photo library, microphone, tracking,
+  contacts, background modes, ATS exceptions), privacy manifest carrying
+  PreciseLocation. `App.framework` contains exactly one network host —
+  `https://routes.googleapis.com`.
+- One `AIza…` string does appear in the `Runner` binary. It is **not ours**: the
+  same string is inside the vendored `GoogleMaps.framework` slice, and this
+  worktree has no `Secrets.xcconfig` and was built without
+  `--dart-define-from-file`. Recorded so it is not re-raised as a leak.
+
+**Follow-ups**
+- Restrict the GCP keys (B3), host the Privacy Policy (B7), fill the App Review
+  contact, answer App Privacy / age rating / DSA in ASC, capture the three
+  remaining iPad screenshots, and run `device-qa-checklist.md` on a real iPhone
+  (B4). Then archive Build 3 from the Xcode signed into team `94273WB4G3`.
+
 ## Raouf: 2026-09-05 — record the owner's answers on assets, the account and policy hosting
 
 **Scope:** release blockers B6 and B7, organiser requests, provenance. Docs only

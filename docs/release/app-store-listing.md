@@ -98,14 +98,22 @@ Macquarie University, Balaclava Road, Macquarie Park NSW 2109.
 ```
 astronomy,macquarie,campus,map,stargazing,telescope,observatory,event,sydney,planetarium,night,guide
 ```
-*(101 → trim `guide` if ASC rejects it; count it before saving.)*
+*(Exactly **100** characters — at Apple's limit, not over it. Counted 2026-09-05; the earlier "101" note was a miscount. Do not add anything without removing something.)*
 
 Do **not** repeat words already in the Name or Subtitle — Apple indexes those
 separately, so "Open Night" and "University" would be wasted characters.
 
 ## Support URL / Privacy Policy URL / Marketing URL
 
-See `docs/release/mq-hosted-pages.md`. Support and Privacy are **mandatory**.
+- **Support URL — decided:** `https://event.mq.edu.au/astronomy-open-night/`
+  (official MQ event site, public, HTTPS, no login, enquiries address on the
+  page). Verified live 2026-09-05.
+- **Privacy Policy URL — still needed.** Mandatory, and Macquarie's own
+  institutional policy cannot stand in for it: see
+  `docs/release/app-store-connect-final-checklist.md` §1. The app-specific copy
+  is ready in `docs/release/mq-hosted-pages.md` Page 1 and needs hosting.
+- **Marketing URL — optional**, and not needed: the Support URL is already the
+  event site.
 
 ## Category
 
@@ -166,8 +174,26 @@ Captured at exact device resolution and committed under
 
 | Size | Device | Required | Status |
 |---|---|---|---|
-| 1320 × 2868 | iPhone 17 Pro Max (6.9") | **Yes** | 6 captured |
-| 2064 × 2752 | iPad Pro 13-inch (M5) | **Yes** — the app runs on iPad | 4 captured |
+| 1320 × 2868 | iPhone 17 Pro Max (6.9") | **Yes** | **6 recaptured 2026-09-05** ✓ |
+| 2064 × 2752 | iPad Pro 13-inch (M5) | **Yes** — the app runs on iPad | **1 recaptured 2026-09-05** ✓ · 3 removed as stale — see below |
+
+**Why the 2026-08-23 set was replaced.** It showed copy the app no longer ships:
+`iphone-6.9/01-home.png` had the map card reading *"Venues, toilets, first aid —
+and walking directions from the car parks"*, while the shipped string is now
+*"Venues, toilets, parking and walking directions"*. The fortnight after that
+capture also brought the redesigned Program filters, the removed Compass mode,
+the West 6 parking pin, the Toilets chooser and the reordered 360° picker — all
+visible in the new set.
+
+**The iPad set is incomplete on purpose.** `01-home.png` was recaptured and is
+current. The other three could not be: Maestro reports success against the iPad
+simulator's UDID while the taps land somewhere else (the screen never changes —
+three consecutive captures came back byte-identical), which is the iPad session
+trap already recorded in `.maestro/README.md`. Rather than ship images of an
+older UI, they were removed. Apple requires **at least one** iPad screenshot for
+an iPad-capable app, so the single current Home shot satisfies the minimum;
+capture Map, a 360° tour and Settings by hand in Simulator (`xcrun simctl io
+<udid> screenshot`) if you want the full set.
 
 No alpha channel, no transparency — `simctl io screenshot` produces opaque PNGs.
 
@@ -175,21 +201,21 @@ No alpha channel, no transparency — `simctl io screenshot` produces opaque PNG
 
 | File | Screen |
 |---|---|
-| `01-home.png` | Hero and multi-column layout — the iPad gets a genuinely different grid, not a stretched phone |
-| `02-map.png` | The whole official AON sheet, legend included, at a size you can actually read |
-| `03-panorama.png` | A 360° tour, with the title-clearance fix visible |
-| `04-settings-preview.png` | Settings → Preview, showing the passport preview switch |
+| `01-home.png` | Hero and multi-column layout — the iPad gets a genuinely different grid, not a stretched phone: four "Up next" cards in a row and the eight-tile "Find your way to" grid |
+
+*(`02-map.png`, `03-panorama.png` and `04-settings-preview.png` were removed on
+2026-09-05 — see the note above.)*
 
 ### What the iPhone set shows
 
 | File | Screen |
 |---|---|
-| `01-home.png` | Hero, event date, passport progress, "Up next" |
-| `02-map.png` | Official AON basemap with A–I pins, category filters, Directions |
-| `03-settings-preview.png` | Settings → Preview, with the passport preview switch |
-| `04-passport.png` | The stamp grid with the "Preview stamps" badge and 1/9 collected |
-| `05-program.png` | The full programme |
-| `06-panorama.png` | A 360° tour of Macquarie Theatre |
+| `01-home.png` | Hero, event date, passport card, "Up next" |
+| `02-map.png` | Official AON basemap with the A–I pins, the P parking pins, category filters and the Directions CTA |
+| `03-settings-credits.png` | Settings → Credits: the hero credit, the MQ event-materials line, the map-data attribution and the two developers |
+| `04-passport.png` | The passport at zero stamps, with the "each of the nine venues has a QR sign" explainer that stands in for onboarding |
+| `05-program.png` | The programme: search, "Filter by time" / "Filter by activity", the Tonight / Sections toggle, 36 items |
+| `06-panorama.png` | The Observatory 360° tour — the dome, with the scene rail |
 
 Apple's rule (2.3.3) is that screenshots show the app in use. These are
 unretouched captures, so they comply by construction. If marketing wants text

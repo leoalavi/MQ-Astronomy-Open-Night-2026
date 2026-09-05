@@ -43,7 +43,7 @@ void main() {
     );
   });
 
-  test('it declares no tracking and no collected data', () {
+  test('it declares no tracking', () {
     final xml = manifest.readAsStringSync();
 
     expect(xml, contains('<key>NSPrivacyTracking</key>'));
@@ -52,17 +52,49 @@ void main() {
       isTrue,
       reason: 'the app does no tracking; NSPrivacyTracking must be <false/>',
     );
+    expect(
+      RegExp(r'<key>NSPrivacyTrackingDomains</key>\s*<array/>').hasMatch(xml),
+      isTrue,
+      reason: 'NSPrivacyTrackingDomains must stay an empty array while the app '
+          'tracks nobody. If that changes, declare it here — do not delete '
+          'this assertion.',
+    );
+  });
 
+  test('it declares precise location as collected, and nothing else', () {
+    // This assertion used to require NSPrivacyCollectedDataTypes to be an EMPTY
+    // array, with the note "if that changes, declare it here". It changed: the
+    // app transmits the visitor's live latLng to the Google Routes API as the
+    // route origin (`google_routes_service.dart:58`) once they ask for walking
+    // directions and have accepted the Google disclosure. Apple's definition of
+    // "collect" covers transmission to a third-party partner, so an empty array
+    // was a claim the app does not keep — the same defect class as blocker B1,
+    // one file over.
+    final xml = manifest.readAsStringSync();
+
+    expect(xml, contains('NSPrivacyCollectedDataTypePreciseLocation'),
+        reason: 'the Routes origin is precise location leaving the device');
+    expect(xml, contains('NSPrivacyCollectedDataTypePurposeAppFunctionality'),
+        reason: 'routing is app functionality — not analytics, not advertising');
+
+    // Exactly one collected type. Over-declaring is as wrong as under-declaring:
+    // the passport, favourites and saved plan never leave the device.
+    expect(
+      RegExp('<key>NSPrivacyCollectedDataType</key>').allMatches(xml).length,
+      1,
+      reason: 'only PreciseLocation is collected; nothing else leaves',
+    );
+
+    // Neither linked to an identity (there is no account and no identifier is
+    // sent) nor used for tracking.
     for (final key in const [
-      'NSPrivacyCollectedDataTypes',
-      'NSPrivacyTrackingDomains',
+      'NSPrivacyCollectedDataTypeLinked',
+      'NSPrivacyCollectedDataTypeTracking',
     ]) {
       expect(
-        RegExp('<key>$key</key>\\s*<array/>').hasMatch(xml),
+        RegExp('<key>$key</key>\\s*<false/>').hasMatch(xml),
         isTrue,
-        reason: '$key must stay an empty array while the app collects nothing '
-            'and tracks nobody. If that changes, declare it here — do not '
-            'delete this assertion.',
+        reason: '$key must be <false/> — no account, no cross-app combination',
       );
     }
   });

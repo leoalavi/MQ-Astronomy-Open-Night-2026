@@ -21,6 +21,7 @@ Use **only** these statuses:
 | `UNVERIFIED` | Behaviour cannot be confirmed in the current environment (e.g. needs a physical device). |
 | `RESOLVED — AWAITING VERIFICATION` | A change was made that should close it, but the closing evidence has not yet been captured. |
 | `CLOSED — VERIFIED` | The required evidence has been obtained and recorded below. |
+| `CLOSED — OWNER DECISION (accepted risk)` | No evidence was obtained; the project owner decided to proceed anyway, with the decision, the date and the residual risk recorded. Never a substitute for `CLOSED — VERIFIED`. |
 
 ### The evidence rule (non-negotiable)
 
@@ -48,11 +49,11 @@ clears the path to GO.
 |----|-----------------|----------|-------|--------|
 | B1 | iOS `NSLocationWhenInUseUsageDescription` says location is "never sent anywhere", but Google Routes can transmit the user's origin after Maps consent | Store disclosure / privacy | Product/legal | `CLOSED — VERIFIED` |
 | B2 | Maps Directions currently uses implicit auto-accept on first use rather than an explicit disclosure; wording referring to "after you agree" must be reconciled with the intended consent posture | Privacy / product decision | Product/legal | `CLOSED — VERIFIED` |
-| B3 | Live Google walking-route rendering still requires production GCP Routes API enablement, billing/key restrictions and successful end-to-end verification | Infrastructure | Infra | `OPEN` |
+| B3 | Live Google walking routes — **the Routes API now answers HTTP 200** (verified 2026-09-05). A NEW finding replaces it: the shipped iOS Routes key has **no application restriction** | Infrastructure / security | Infra | `OPEN` — cause changed, see B3 |
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
-| B6 | Redistribution permission — three University asset sets settled by the owner's attestation (2026-09-05); the **Home hero photograph** is a third party's and is only *credited*, not licensed | Asset rights | Organisers / photographer | `OPEN` — narrowed to one asset |
-| B7 | Production Privacy Policy / Support store URLs are not yet provisioned (the in-app policy surface was added 2026-09-05 by `46dc81e` and works offline) | Store publishing / privacy | Organisers / product | `OPEN` |
+| B6 | Redistribution permission — three University asset sets settled by the owner's attestation (2026-09-05); the **Home hero photograph** ships on its existing credit by the owner's explicit decision, with the residual 5.2 risk accepted | Asset rights | Owner (decided) | `CLOSED — OWNER DECISION (accepted risk)` |
+| B7 | **Support URL found** (`event.mq.edu.au/astronomy-open-night/`, verified live 2026-09-05); the in-app policy surface exists offline; the **Privacy Policy URL is still unhosted** — and MQ's own institutional policy cannot substitute | Store publishing / privacy | Organisers / product | `OPEN` — Privacy Policy URL only |
 
 ---
 
@@ -135,28 +136,44 @@ clears the path to GO.
   reconciled to the explicit model ("asks you before"; "sent to Google only … and
   only after you agree"). Full gate `CHECK PASSED`, exit 0, coverage 91.01%.
 
-## B3 — Live Google walking routes need production GCP configuration
+## B3 — Google Routes: 401 resolved; the shipped key is unrestricted
 
-- **Exact problem.** Walking-route requests are code-correct but do not render a
-  live route; the Google Routes API returns HTTP 401 in the current environment
-  because the API is not enabled / the key is not scoped for it. This is external
-  GCP configuration, not an app-code defect.
+- **The 401 is gone. Verified 2026-09-05, against the live API.** A real
+  `POST https://routes.googleapis.com/directions/v2:computeRoutes` with the
+  shipped `GOOGLE_MAPS_IOS_ROUTES_KEY`, the app's own headers and the app's
+  bundle identifier returned **HTTP 200** and a real walking route — West 6
+  parking (`-33.773681, 151.1075241`) → Macquarie Theatre
+  (`-33.7746334, 151.1122714`): `distanceMeters: 581`, `duration: "476s"`. The
+  API is enabled, billing is live and the key is scoped for Routes. No secret
+  was printed at any point.
+- **A different problem was found in the same check, and it is the one that now
+  matters.** The same request succeeded **with no `X-Ios-Bundle-Identifier`
+  header at all**, and again with a deliberately wrong bundle id
+  (`com.example.notours`). Both returned HTTP 200. The key therefore has **no
+  application restriction** in the GCP console.
+  - Why that is serious: the key ships inside the app binary and is trivially
+    extractable — `routes_client_identity.dart` says so itself, and calls the
+    identity headers "load-bearing". They are only load-bearing if the server
+    enforces them. Right now anyone who pulls the key out of the IPA can bill
+    this project's GCP account for Routes calls, from anywhere.
+  - This is **not** an App Review blocker; it is a billing and abuse exposure
+    that should be closed before the app is public, and certainly before the
+    event night.
 - **Why it matters for release.** Walking directions are a headline navigation
-  feature; without the configuration they never produce a route for users
-  (the app degrades honestly to "temporarily unavailable" / external hand-off,
-  so it is shippable, but the feature is inert until closed).
-- **Evidence / source.** `docs/map-audit-2026-08-30.md` §11 (GCP checklist);
-  `ARCHITECTURE.md` Risk R2; on-device 401 field logs.
-- **Owner.** Infra.
-- **Exact condition to close.** On the same GCP project as the key: Routes API
-  enabled, billing on, the key's API restrictions allow Routes API (+ Maps SDK
-  iOS/Android), region scoped, and all three Play App Signing fingerprints
-  registered for Android.
-- **Status.** `OPEN`.
-- **Verification evidence required.** A live walking route rendering
-  end-to-end on device after accepting consent (screenshot or passing
-  `map-wayfinding` accept-path E2E), with a real HTTP 200 from
-  `routes.googleapis.com`. No secrets pasted.
+  feature. They now work. What is unproven is that they work *on a real device
+  over real GPS* — that is B4, not this blocker.
+- **Evidence / source.** Live API check 2026-09-05 (above);
+  `docs/map-audit-2026-08-30.md` §11 (GCP checklist); `ARCHITECTURE.md` Risk R2.
+- **Owner.** Infra (GCP console).
+- **Status.** `OPEN` — the original 401 cause is closed; the key restriction is not.
+- **Exact condition to close.** In the GCP console, on the key the app ships:
+  set **Application restrictions → iOS apps** to `au.edu.mq.astronomy.aon2026`
+  (and the Android key to the package plus **all three** Play App Signing
+  fingerprints, not the upload key), and **API restrictions** to the Routes API
+  and the Maps SDKs only.
+- **Verification evidence required.** Re-run the same three requests: the one
+  carrying the correct bundle id returns 200, and the two without a valid
+  identity return 403. Then a live route on a physical device (B4).
 
 ## B4 — Physical-device validation outstanding
 
@@ -174,7 +191,10 @@ clears the path to GO.
 - **Exact condition to close.** A structured on-campus (or representative)
   physical-device pass covering: the location dot settling to a plausible real
   position, the compass rose orienting to a real heading, and a live walking
-  route rendering.
+  route rendering. **The checklist is written and ready to work through:
+  `docs/release/device-qa-checklist.md`** (2026-09-05) — location, directions,
+  passport/camera/torch, haptics, Dynamic Type, 360°, Persian RTL and a
+  night-conditions pass.
 - **Verification evidence required.** Dated device notes plus screenshots /
   recording from a real iPhone (and ideally Android) on campus, naming the
   device and OS.
@@ -241,14 +261,25 @@ clears the path to GO.
 - **Evidence / source.** `docs/release/organiser-requests.md` §1;
   `docs/panorama-image-provenance.md`; `README.md` (hero image licence note);
   `ARCHITECTURE.md` Risk R4.
-- **Owner.** The photographer (permission), or product (substitute the hero).
-- **Status.** `OPEN` — one asset.
-- **Exact condition to close.** Either written permission from Aleix Roig
-  covering (a) distribution inside a free public app on both stores and (b)
-  appearance in store screenshots; **or** the hero image is replaced with one
-  the project owns.
-- **Verification evidence required.** The written permission recorded here, or
-  the commit that substitutes the image.
+- **Owner's decision, 2026-09-05.** Asked to choose between obtaining the
+  photographer's written permission, substituting an owned image, or shipping on
+  the existing credit, Raouf chose **ship as-is on the credit**. Recorded here
+  as made, by whom, and on what basis — this is a decision to accept a risk, not
+  evidence that the risk is absent.
+- **What that does and does not change.** It closes this blocker for release
+  purposes. It does **not** create a licence. If App Review asks for
+  authorisation for the hero photograph (guideline 5.2), or if the photographer
+  objects, the answer will still have to be obtained then — so keep the
+  ready-to-send request in `docs/release/organiser-requests.md` §1 rather than
+  deleting it, and note that swapping the hero is a small, low-risk change if it
+  is ever needed: one asset, `heroCredit` in `event_config.dart`, the Credits
+  screen and the affected store screenshots.
+- **Owner.** Decided by the project owner.
+- **Status.** `CLOSED — OWNER DECISION (accepted risk)`. Deliberately **not**
+  `CLOSED — VERIFIED`: the register's evidence rule says a decision is not
+  evidence, and no written permission exists.
+- **Would reopen this.** A request from App Review, contact from the
+  photographer, or any use of the image beyond the app and its store listing.
 
 ## B7 — Store privacy/support publishing prerequisites
 
@@ -287,6 +318,24 @@ clears the path to GO.
   `docs/release/mq-hosted-pages.md` (ready, unhosted copy);
   Apple App Store Connect privacy/URL fields + App Review Guidelines; Google
   Play policy requirements.
+- **Support URL resolved 2026-09-05.** The official event site,
+  <https://event.mq.edu.au/astronomy-open-night/>, is public HTTPS, needs no
+  login, is Macquarie's own, is specific to this event, and carries the
+  enquiries address `astronomyopennight@mq.edu.au`. Fetched and read on
+  2026-09-05; it also states the event as Saturday 19 September 2026, 4pm–10pm,
+  matching `EventConfig`. That satisfies condition 4. *(It also says the event
+  is currently sold out and that no tickets are sold on the night — worth the
+  organisers deciding whether the app should say so; the app currently does
+  not, and that is a content question, not a store blocker.)*
+- **Why Macquarie's own Privacy Policy cannot be used, checked rather than
+  assumed.** `policies.mq.edu.au/document/view.php?id=107` scopes itself to
+  employees, students, researchers and people handling information on the
+  University's behalf, across its "learning and teaching, research, engagement,
+  and associated administrative activities". Members of the public at an event
+  are not in scope, and it addresses no mobile app, no location transmission to
+  Google, and no ML Kit diagnostics. Pointing App Review at it would be an
+  inaccurate disclosure — B1's defect, one layer out. Full reasoning:
+  `docs/release/app-store-connect-final-checklist.md` §1.
 - **Hosting decided 2026-09-05.** Asked whether the University's own privacy
   policy could be used: no — it does not describe this app's behaviour (Routes,
   Google Maps' own collection, ML Kit) and a policy that does not match the app

@@ -491,7 +491,10 @@ collected". `android_permissions_policy_test.dart` fails if that changes.
 ### 10.2a iOS privacy manifest — what it declares and why
 
 `ios/Runner/PrivacyInfo.xcprivacy` (in the Runner *Resources* phase; guarded by
-`ios_privacy_manifest_test.dart`) declares **no collected data, no tracking**,
+`ios_privacy_manifest_test.dart`) declares **no tracking**, **one collected data
+type — PreciseLocation, App Functionality, not linked, not tracking** (the route
+origin the app POSTs to Google Routes; an empty array here was a claim the app
+does not keep, corrected 2026-09-05),
 and exactly two required-reason APIs: **SystemBootTime 35F9.1** and
 **FileTimestamp C617.1**. Those are not "just in case": Flutter 3.47 links the
 SwiftPM plugins *statically* into the Runner executable, and two of them call a

@@ -92,18 +92,38 @@ This substitutes a clearly-labelled simulated on-campus position; a
 GOOGLE MAPS AND NETWORK USE
 The app is offline-first and makes NO network requests at launch. The single
 exception is walking directions, which use the Google Maps SDK and Google
-Routes API. This is behind an explicit in-app consent screen: the Google
-Maps SDK is not initialised, and no request is made, until the user accepts.
-Consent can be revoked in the Settings tab → Privacy. The campus map itself is a
-bundled image asset and needs no network at all.
+Routes API. The Google Maps SDK is not initialised, and no request is made,
+until directions are used: nothing about Google runs on the tabs, and the
+campus map itself is a bundled image asset that needs no network at all.
+
+Two directions paths, with two disclosure shapes:
+  - "Walking directions" from a venue or building opens directions inside the
+    app. Google Maps is the app's only directions provider, so opening
+    Directions is itself the choice to use it; there is no provider to pick
+    and no modal.
+  - The car-park wayfinding screen shows an explicit "Use Google Maps for
+    directions?" disclosure with Accept / Not now before anything loads.
+In both cases the visitor can turn directions data-sharing off at any time in
+the Settings tab → Privacy, which stops the SDK initialising and shows an
+in-app panel with a one-tap re-enable. The app never hands off to the external
+Google Maps app.
+
+WHAT IS SENT TO GOOGLE, AND WHEN
+Only when the visitor opens walking directions: their current coordinates as
+the route origin, and the destination coordinates. Nothing else — no name, no
+account (there is none), no device identifier added by the app. This is
+declared in the privacy manifest as Precise Location, collected for App
+Functionality, not linked to identity and not used for tracking.
 
 The 360° venue tours are rendered in a WKWebView from files bundled inside
 the app, served over http://localhost only. No remote content is loaded.
 
 PRIVACY
-No account, no analytics, no advertising, no tracking. Passport stamps,
-favourites and the saved plan are stored only on the device. The Settings
-tab → Privacy explains this in full and offers "Delete my data".
+No account, no analytics SDK, no advertising, no tracking. Passport stamps,
+favourites and the saved plan are stored only on the device and never leave
+it. The one thing that does leave is the pair of coordinates described above,
+and only when directions are opened. The Settings tab → Privacy explains this
+in full and offers "Delete my data".
 
 CAMERA
 The camera is used only to read a QR code for the passport, and only after
@@ -123,7 +143,7 @@ CONTACT
 
 | Placeholder | Where it comes from |
 |---|---|
-| `<NAME>` / `<EMAIL>` / `<PHONE>` | The App Review contact. Must be reachable during review. |
+| `<NAME>` / `<EMAIL>` / `<PHONE>` | The App Review contact. Must be reachable during review — a person who can answer within a day, not a shared inbox that is only read on weekdays. The event's own public enquiries address is `astronomyopennight@mq.edu.au` (from <https://event.mq.edu.au/astronomy-open-night/>); use it only if someone is actually monitoring it during the review window. **Not filled in here: inventing a reviewer contact is worse than leaving the placeholder.** |
 
 The codes above are the live ones as of 2026-09-04 and must stay in step with
 `lib/data/stamp_stations_data.dart`. If a code changes there, update this list,

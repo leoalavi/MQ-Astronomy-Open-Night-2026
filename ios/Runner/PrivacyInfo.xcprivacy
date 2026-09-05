@@ -3,10 +3,38 @@
 <plist version="1.0">
 <dict>
 	<!-- The app has no account, no analytics and no advertising SDK. Nothing it
-	     stores (passport stamps, favourites, saved plan, settings) ever leaves
-	     the device, so there is no collected data type to declare. -->
+	     STORES (passport stamps, favourites, saved plan, settings) ever leaves
+	     the device.
+
+	     One thing does leave, and it is declared here rather than argued away:
+	     when the visitor asks for walking directions and has accepted the
+	     Google disclosure, `google_routes_service.dart:58` POSTs their live
+	     latLng to routes.googleapis.com as the route origin. Apple's definition
+	     of "collect" covers transmission off the device to a third-party
+	     partner, so PreciseLocation is collected — for App Functionality only.
+
+	     Not linked to identity: the app has no account, no sign-in and no user
+	     identifier, and sends none alongside the coordinates. Not tracking: the
+	     data is not combined with data from other apps or sites, and no
+	     advertising or measurement network is involved.
+
+	     Nothing else is declared. The passport, favourites and plan never leave
+	     the device; the campus map is a bundled image with no tile requests. -->
 	<key>NSPrivacyCollectedDataTypes</key>
-	<array/>
+	<array>
+		<dict>
+			<key>NSPrivacyCollectedDataType</key>
+			<string>NSPrivacyCollectedDataTypePreciseLocation</string>
+			<key>NSPrivacyCollectedDataTypeLinked</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypeTracking</key>
+			<false/>
+			<key>NSPrivacyCollectedDataTypePurposes</key>
+			<array>
+				<string>NSPrivacyCollectedDataTypePurposeAppFunctionality</string>
+			</array>
+		</dict>
+	</array>
 
 	<!-- No tracking, and therefore no tracking domains. Declaring a domain here
 	     while the app makes no such request would be a false statement; the one

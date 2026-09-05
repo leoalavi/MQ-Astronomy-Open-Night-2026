@@ -3,7 +3,7 @@ description: >-
   Astronomy Open Night 2026 — event discovery and night-time campus wayfinding
   companion for Macquarie University's Astronomy Open Night (19 September 2026).
 publish_to: 'none'
-version: 1.0.0+2
+version: 1.0.0+3
 
 environment:
   sdk: ^3.11.0

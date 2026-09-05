@@ -1317,6 +1317,10 @@ class AonL10nFa extends AonL10n {
       'برای شروع، کد یکی از محل‌ها را اسکن یا وارد کنید';
 
   @override
+  String get passportHowItWorks =>
+      'هر یک از نُه محل یک تابلوی کد QR دارد. آن را اسکن کنید (یا کدش را وارد کنید) تا مهر آن را بگیرید و یک نکتهٔ نجومی باز شود.';
+
+  @override
   String get passportOneMoreToGo => 'فقط یکی دیگر مانده!';
 
   @override

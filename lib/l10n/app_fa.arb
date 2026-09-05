@@ -352,6 +352,7 @@
   "passportProgress": "{count} / {total} مهر",
   "passportOpensOnEventNight": "پاسپورت نجوم در شب رویداد باز می‌شود",
   "passportStartHint": "برای شروع، کد یکی از محل‌ها را اسکن یا وارد کنید",
+  "passportHowItWorks": "هر یک از نُه محل یک تابلوی کد QR دارد. آن را اسکن کنید (یا کدش را وارد کنید) تا مهر آن را بگیرید و یک نکتهٔ نجومی باز شود.",
   "passportOneMoreToGo": "فقط یکی دیگر مانده!",
   "passportSaveFailed": "ممکن است پیشرفت شما روی این دستگاه ذخیره نشود.",
   "passportViewReward": "جایزه‌تان را ببینید",

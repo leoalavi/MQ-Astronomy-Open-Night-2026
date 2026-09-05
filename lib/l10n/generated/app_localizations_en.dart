@@ -1309,6 +1309,10 @@ class AonL10nEn extends AonL10n {
   String get passportStartHint => 'Scan or enter a venue code to start';
 
   @override
+  String get passportHowItWorks =>
+      'Each of the nine venues has a QR sign. Scan it (or type its code) to collect the stamp and unlock an astronomy fact.';
+
+  @override
   String get passportOneMoreToGo => 'Just 1 more to go!';
 
   @override

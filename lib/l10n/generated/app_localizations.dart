@@ -2209,6 +2209,12 @@ abstract class AonL10n {
   /// **'Scan or enter a venue code to start'**
   String get passportStartHint;
 
+  /// One-sentence explanation under the progress line, shown only while no stamp has been collected. Replaces onboarding: the first-time visitor learns what the passport is at the moment they open it.
+  ///
+  /// In en, this message translates to:
+  /// **'Each of the nine venues has a QR sign. Scan it (or type its code) to collect the stamp and unlock an astronomy fact.'**
+  String get passportHowItWorks;
+
   /// Progress line with exactly one station left.
   ///
   /// In en, this message translates to:

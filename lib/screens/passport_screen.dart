@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
+import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/passport_providers.dart';
@@ -98,6 +99,20 @@ class PassportScreen extends ConsumerWidget {
             ),
             style: theme.textTheme.headlineSmall,
           ),
+          // The app has no onboarding (docs/onboarding-decision.md): the one
+          // feature a first-time visitor cannot infer from its name is
+          // explained here, at the moment they open it, and only until their
+          // first stamp — after that the grid itself tells the story.
+          if (enabled && state.count == 0) ...[
+            const SizedBox(height: AonSpacing.space2),
+            Text(
+              l.passportHowItWorks,
+              key: const Key('passport-how-it-works'),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
+            ),
+          ],
           const SizedBox(height: AonSpacing.space3),
           LinearProgressIndicator(
             value: state.count / PassportPolicy.stationCount,

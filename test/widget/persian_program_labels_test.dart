@@ -10,7 +10,6 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/screens/program_screen.dart';
 import 'package:aon2026/services/clock.dart';
-import 'package:aon2026/services/event_filter.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/timing_labels.dart';
@@ -72,27 +71,16 @@ void main() {
       }
     });
 
-    testWidgets('the English chips are still correct in English', (
+    testWidgets('the time filter shows the placeholder in English', (
       tester,
     ) async {
       await tester.pumpWidget(app(locale: const Locale('en')));
       await tester.pumpAndSettle();
-      expect(find.text('4–6pm'), findsOneWidget);
-      expect(find.text('6–8pm'), findsOneWidget);
-      expect(find.text('8–10pm'), findsOneWidget);
-    });
-
-    test('every band has a Persian label with no Latin letters', () {
-      // A Latin run is what allowed the reordering, so the Persian label must
-      // not reintroduce one.
-      final fa = lookupAonL10n(const Locale('fa'));
-      for (final band in TimeBand.values) {
-        final label = band.labelOf(fa);
-        expect(
-          RegExp(r'[A-Za-z]').hasMatch(label),
-          isFalse,
-          reason: '$band still contains Latin text: "$label"',
-        );
+      // The 2-hour range chips are gone; the time axis is a single dropdown, so
+      // the reversible "4–6pm" ranges can no longer appear in any locale.
+      expect(find.text('Filter by time'), findsOneWidget);
+      for (final english in ['4–6pm', '6–8pm', '8–10pm']) {
+        expect(find.text(english), findsNothing);
       }
     });
   });

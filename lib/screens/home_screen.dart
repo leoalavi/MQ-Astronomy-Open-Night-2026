@@ -154,11 +154,9 @@ class HomeScreen extends ConsumerWidget {
                   title: l.homeFactBookingTitle,
                   body: l.homeFactBookingBody,
                 ),
-                _FactRow(
-                  icon: Icons.local_parking_rounded,
-                  title: l.homeFactParkingTitle,
-                  body: l.homeFactParkingBody,
-                ),
+                // Parking is intentionally NOT repeated here: the Quick Access
+                // "Parking" tile already lists West 5/6/South 2 with directions,
+                // and Info holds the detail. A third copy is duplication (§7/§8).
                 _FactRow(
                   icon: Icons.train_rounded,
                   title: l.homeFactMetroTitle,

@@ -168,6 +168,10 @@
     "description": "Segmented-control label for the printed programme's own sections"
   },
   "programSearchHint": "Search talks, activities, presenters",
+  "programFilterByTime": "Filter by time",
+  "programFilterByActivity": "Filter by activity",
+  "programAllTimes": "All times",
+  "programAllActivities": "All activities",
   "programItemCount": "{count,plural, =1{1 item in the program} other{{count} items in the program}}",
   "@programItemCount": {
     "description": "Count of programme items when no filter is applied.",
@@ -788,9 +792,9 @@
   "compassUnlocatable": "Location unknown — see the printed map",
   "homeNothingRunningNow": "Nothing running this minute — check what’s next.",
   "homeFactColdTitle": "It gets cold and dark",
-  "homeFactColdBody": "Bring a jacket and a torch. Red-light mode is best near the telescopes — it protects everyone’s night vision.",
+  "homeFactColdBody": "Bring a jacket and a torch — use red-light mode near the telescopes.",
   "homeFactBookingTitle": "Some shows need pre-booking",
-  "homeFactBookingBody": "The magic shows and Destination Moon need seats booked at the time of ticket purchase.",
+  "homeFactBookingBody": "The magic shows and Destination Moon need seats pre-booked.",
   "homeFactParkingTitle": "Free parking",
   "homeFactParkingBody": "West 5, West 6 and South 2.",
   "homeFactMetroTitle": "Metro",

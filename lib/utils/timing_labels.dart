@@ -3,7 +3,6 @@ import 'package:aon2026/services/event_phase.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/models/search_entry.dart';
 import 'package:aon2026/models/venue.dart';
-import 'package:aon2026/services/event_filter.dart';
 import 'package:aon2026/services/whats_on_service.dart';
 
 /// Localised names for the time-status enums.
@@ -61,20 +60,6 @@ extension EventCategoryL10n on EventCategory {
       };
 }
 
-/// Localised names for the time-band filter chips.
-///
-/// The English labels are ranges — "4–6pm" — and a numeral/dash/numeral run
-/// followed by a Latin "pm" is precisely the shape the bidi algorithm reorders
-/// inside a right-to-left line: the chips rendered as "10pm–8", "8pm–6",
-/// "6pm–4", each reversed and each therefore wrong. The Persian strings spell
-/// the range out, so there is no mixed-direction run left to reorder.
-extension TimeBandL10n on TimeBand {
-  String labelOf(AonL10n l) => switch (this) {
-        TimeBand.earlyEvening => l.bandEarlyEvening,
-        TimeBand.evening => l.bandEvening,
-        TimeBand.lateEvening => l.bandLateEvening,
-      };
-}
 
 /// Localised names for the venue categories.
 ///

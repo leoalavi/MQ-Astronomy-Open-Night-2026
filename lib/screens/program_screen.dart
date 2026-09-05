@@ -15,6 +15,7 @@ import 'package:aon2026/services/event_filter.dart';
 import 'package:aon2026/services/event_phase.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/services/whats_on_service.dart';
+import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/empty_state.dart';
@@ -217,99 +218,239 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
   }
 }
 
-/// Horizontally scrolling filter chips.
+/// Two compact filter controls under the search field: one for START TIME, one
+/// for ACTIVITY. Each opens a bottom sheet of options with a checkmark on the
+/// selection; the button shows the chosen value (or the placeholder when All).
 ///
-/// Chips rather than a filter sheet: with only three filter dimensions and a
-/// handful of values each, a sheet would add a round-trip for no benefit, and
-/// chips keep the active filters permanently visible — important when someone
-/// puts the phone away mid-filter and comes back confused about why the
-/// programme looks short.
+/// This replaced a permanently-visible chip row for every band/category/venue —
+/// two dropdowns read more clearly on a phone and keep the screen uncluttered,
+/// and the time axis is now honest START-TIME buckets, not 2-hour overlaps.
 class _FilterBar extends ConsumerWidget {
   const _FilterBar();
+
+  /// "4pm" for hour 16 — localised (Persian digits/meridiem) via [TimeFormat].
+  /// Only the hour matters, so the date is arbitrary.
+  static String hourLabel(int hour) => TimeFormat.time(DateTime(2026, 1, 1, hour));
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l = AonL10n.of(context);
     final filter = ref.watch(eventFilterProvider);
     final notifier = ref.read(eventFilterProvider.notifier);
-    final venues = ref.watch(venuesWithEventsProvider);
+    final events = ref.watch(eventsProvider);
+    final hours = EventFilterService.availableStartHours(events);
+    final hasNight = EventFilterService.hasOnTheNight(events);
 
-    return SizedBox(
-      height: 52,
-      child: ListView(
-        // Keyed so widget tests can scroll this specific horizontal list —
-        // the screen has several Scrollables and `.first` is ambiguous.
-        key: const Key('program-filter-bar'),
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: AonSpacing.space4),
-        children: [
-          // Time bands
-          for (final band in TimeBand.values) ...[
-            FilterChip(
-              label: Text(band.labelOf(l)),
-              selected: filter.timeBands.contains(band),
-              onSelected: (_) => notifier.toggleTimeBand(band),
-              avatar: filter.timeBands.contains(band)
-                  ? null
-                  : const Icon(Icons.schedule_rounded, size: AonSpacing.iconSm),
+    final timeActive = filter.startHour != null || filter.onTheNight;
+    final timeLabel = filter.onTheNight
+        ? l.timingOnTheNight
+        : filter.startHour != null
+            ? hourLabel(filter.startHour!)
+            : l.programFilterByTime;
+
+    final activityActive = filter.categories.isNotEmpty;
+    final activityLabel =
+        activityActive ? filter.categories.first.labelOf(l) : l.programFilterByActivity;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(
+        AonSpacing.space4,
+        AonSpacing.space1,
+        AonSpacing.space4,
+        AonSpacing.space2,
+      ),
+      // IntrinsicHeight + stretch keeps both controls the same height even when
+      // one label wraps to a second line (e.g. "Filter by activity" at a narrow
+      // width or large text), so the pair stays visually balanced.
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: _FilterButton(
+                keyValue: 'program-time-filter',
+              icon: Icons.schedule_rounded,
+              label: timeLabel,
+              active: timeActive,
+              onTap: () => _showFilterSheet(
+                context,
+                title: l.programFilterByTime,
+                options: [
+                  _FilterOption(
+                    label: l.programAllTimes,
+                    selected: !timeActive,
+                    onSelect: notifier.setAllTimes,
+                  ),
+                  for (final h in hours)
+                    _FilterOption(
+                      label: hourLabel(h),
+                      selected: !filter.onTheNight && filter.startHour == h,
+                      onSelect: () => notifier.setStartHour(h),
+                    ),
+                  if (hasNight)
+                    _FilterOption(
+                      label: l.timingOnTheNight,
+                      selected: filter.onTheNight,
+                      onSelect: notifier.setOnTheNight,
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(width: AonSpacing.space2),
-          ],
-
-          const _ChipDivider(),
-
-          // Categories
-          for (final category in EventCategory.values) ...[
-            FilterChip(
-              label: Text(category.labelOf(l)),
-              selected: filter.categories.contains(category),
-              onSelected: (_) => notifier.toggleCategory(category),
-            ),
-            const SizedBox(width: AonSpacing.space2),
-          ],
-
-          const _ChipDivider(),
-
-          // Booking
-          FilterChip(
-            label: Text(l.programBookedOnly),
-            selected: filter.bookableOnly,
-            onSelected: notifier.setBookableOnly,
           ),
-          const SizedBox(width: AonSpacing.space2),
-
-          const _ChipDivider(),
-
-          // Locations
-          for (final venue in venues) ...[
-            FilterChip(
-              label: Text(venue.chipLabel),
-              selected: filter.venueIds.contains(venue.id),
-              onSelected: (_) => notifier.toggleVenue(venue.id),
-              avatar: filter.venueIds.contains(venue.id)
-                  ? null
-                  : const Icon(Icons.place_rounded, size: AonSpacing.iconSm),
+          const SizedBox(width: AonSpacing.space3),
+          Expanded(
+            child: _FilterButton(
+              keyValue: 'program-activity-filter',
+              icon: Icons.interests_rounded,
+              label: activityLabel,
+              active: activityActive,
+              onTap: () => _showFilterSheet(
+                context,
+                title: l.programFilterByActivity,
+                options: [
+                  _FilterOption(
+                    label: l.programAllActivities,
+                    selected: !activityActive,
+                    onSelect: () => notifier.setCategory(null),
+                  ),
+                  for (final c in EventCategory.values)
+                    _FilterOption(
+                      label: c.labelOf(l),
+                      selected: filter.categories.contains(c),
+                      onSelect: () => notifier.setCategory(c),
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(width: AonSpacing.space2),
-          ],
+          ),
         ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showFilterSheet(
+    BuildContext context, {
+    required String title,
+    required List<_FilterOption> options,
+  }) {
+    return showModalBottomSheet<void>(
+      context: context,
+      useRootNavigator: true,
+      showDragHandle: true,
+      builder: (sheetContext) => SafeArea(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            AonSpacing.space5,
+            0,
+            AonSpacing.space5,
+            AonNavMetrics.clearance(sheetContext),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: Theme.of(sheetContext).textTheme.headlineSmall),
+              const SizedBox(height: AonSpacing.space2),
+              for (final o in options)
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  title: Text(o.label),
+                  selected: o.selected,
+                  trailing: o.selected
+                      ? Icon(Icons.check_rounded, color: sheetContext.aon.accent)
+                      : null,
+                  onTap: () {
+                    Navigator.of(sheetContext).pop();
+                    o.onSelect();
+                  },
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _ChipDivider extends StatelessWidget {
-  const _ChipDivider();
+class _FilterOption {
+  const _FilterOption({
+    required this.label,
+    required this.selected,
+    required this.onSelect,
+  });
+  final String label;
+  final bool selected;
+  final VoidCallback onSelect;
+}
+
+/// A pill that shows a filter dimension and its current value. Filled-tonal when
+/// a value is chosen, outlined when it is "All".
+///
+/// The default labels ("Filter by time" / "Filter by activity") are long for a
+/// half-width control, so the button uses compact padding and a tight icon gap,
+/// and the label may WRAP to a second line rather than truncate — the full text
+/// is always shown. `IntrinsicHeight` on the parent Row keeps the two controls
+/// the same height when only one wraps. The Row flips for RTL.
+class _FilterButton extends StatelessWidget {
+  const _FilterButton({
+    required this.keyValue,
+    required this.icon,
+    required this.label,
+    required this.active,
+    required this.onTap,
+  });
+
+  final String keyValue;
+  final IconData icon;
+  final String label;
+  final bool active;
+  final VoidCallback onTap;
+
+  // Trim the button's generous default horizontal padding so the label wins the
+  // room it needs; the min tap target is preserved by the theme's visual density.
+  static const ButtonStyle _compact = ButtonStyle(
+    padding: WidgetStatePropertyAll(
+      EdgeInsets.symmetric(
+        horizontal: AonSpacing.space2,
+        vertical: AonSpacing.space2,
+      ),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AonSpacing.space2,
-        vertical: AonSpacing.space3,
-      ),
-      child: VerticalDivider(width: 1, color: context.aon.border),
+    final content = Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(icon, size: AonSpacing.iconSm),
+        const SizedBox(width: AonSpacing.space1),
+        Flexible(
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            // Two lines so the full default labels always fit; ellipsis is a
+            // last resort that these labels never reach.
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const Icon(Icons.arrow_drop_down_rounded),
+      ],
     );
+    return active
+        ? FilledButton.tonal(
+            key: Key(keyValue),
+            style: _compact,
+            onPressed: onTap,
+            child: content,
+          )
+        : OutlinedButton(
+            key: Key(keyValue),
+            style: _compact,
+            onPressed: onTap,
+            child: content,
+          );
   }
 }
 
@@ -390,6 +531,20 @@ class _TonightSliver extends ConsumerWidget {
       ),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
+          // "On the night" first: these have no published clock time, so a
+          // visitor cannot place them on the timeline themselves — surfacing
+          // them ahead of the scheduled sessions is the honest order (§4). A
+          // clock-band filter excludes them, so this only leads the no-filter
+          // and "On the night" views.
+          _Bucket(
+            title: l.programTimeNotPublishedHeading,
+            subtitle: l.programTimeNotPublishedBlurb,
+            items: unscheduled,
+            timing: EventTiming.unscheduled,
+            now: now,
+            icon: Icons.help_outline_rounded,
+            iconColor: context.aon.contentTertiary,
+          ),
           _Bucket(
             title: l.timingHappeningNow,
             items: happening,
@@ -418,17 +573,6 @@ class _TonightSliver extends ConsumerWidget {
             timing: EventTiming.upcoming,
             now: now,
             icon: Icons.more_time_rounded,
-            iconColor: context.aon.contentTertiary,
-          ),
-          // Before "Finished": these may well be running, so burying them under
-          // finished items would read as though they were over.
-          _Bucket(
-            title: l.programTimeNotPublishedHeading,
-            subtitle: l.programTimeNotPublishedBlurb,
-            items: unscheduled,
-            timing: EventTiming.unscheduled,
-            now: now,
-            icon: Icons.help_outline_rounded,
             iconColor: context.aon.contentTertiary,
           ),
           _Bucket(

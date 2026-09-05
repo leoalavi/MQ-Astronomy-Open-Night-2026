@@ -99,26 +99,30 @@ class EventFilterNotifier extends Notifier<EventFilter> {
 
   void setQuery(String query) => state = state.copyWith(query: query);
 
-  void toggleCategory(EventCategory category) {
-    final next = Set<EventCategory>.from(state.categories);
-    next.contains(category) ? next.remove(category) : next.add(category);
-    state = state.copyWith(categories: next);
-  }
+  /// Activity filter — single-select. Null clears it ("All activities").
+  void setCategory(EventCategory? category) => state = state.copyWith(
+        categories: category == null ? const {} : {category},
+      );
 
-  void toggleVenue(String venueId) {
-    final next = Set<String>.from(state.venueIds);
-    next.contains(venueId) ? next.remove(venueId) : next.add(venueId);
-    state = state.copyWith(venueIds: next);
-  }
+  /// Time filter — pick a start-hour bucket (16..20). Clears "On the night" so
+  /// the time control stays single-select. Null → "All times".
+  void setStartHour(int? hour) => state = state.copyWith(
+        startHour: hour,
+        onTheNight: false,
+      );
 
-  void toggleTimeBand(TimeBand band) {
-    final next = Set<TimeBand>.from(state.timeBands);
-    next.contains(band) ? next.remove(band) : next.add(band);
-    state = state.copyWith(timeBands: next);
-  }
+  /// Time filter — the "On the night" option (Open-all-night / no-time). Clears
+  /// any start-hour so the two are never combined.
+  void setOnTheNight() => state = state.copyWith(
+        startHour: null,
+        onTheNight: true,
+      );
 
-  void setBookableOnly(bool value) =>
-      state = state.copyWith(bookableOnly: value);
+  /// Time filter — clear the whole time dimension ("All times").
+  void setAllTimes() => state = state.copyWith(
+        startHour: null,
+        onTheNight: false,
+      );
 
   void clear() => state = const EventFilter();
 }

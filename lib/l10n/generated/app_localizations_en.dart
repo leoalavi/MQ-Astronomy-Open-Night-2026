@@ -223,6 +223,18 @@ class AonL10nEn extends AonL10n {
   String get programSearchHint => 'Search talks, activities, presenters';
 
   @override
+  String get programFilterByTime => 'Filter by time';
+
+  @override
+  String get programFilterByActivity => 'Filter by activity';
+
+  @override
+  String get programAllTimes => 'All times';
+
+  @override
+  String get programAllActivities => 'All activities';
+
+  @override
   String programItemCount(int count) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -979,14 +991,14 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get homeFactColdBody =>
-      'Bring a jacket and a torch. Red-light mode is best near the telescopes — it protects everyone’s night vision.';
+      'Bring a jacket and a torch — use red-light mode near the telescopes.';
 
   @override
   String get homeFactBookingTitle => 'Some shows need pre-booking';
 
   @override
   String get homeFactBookingBody =>
-      'The magic shows and Destination Moon need seats booked at the time of ticket purchase.';
+      'The magic shows and Destination Moon need seats pre-booked.';
 
   @override
   String get homeFactParkingTitle => 'Free parking';

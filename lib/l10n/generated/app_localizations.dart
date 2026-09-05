@@ -439,6 +439,30 @@ abstract class AonL10n {
   /// **'Search talks, activities, presenters'**
   String get programSearchHint;
 
+  /// No description provided for @programFilterByTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by time'**
+  String get programFilterByTime;
+
+  /// No description provided for @programFilterByActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Filter by activity'**
+  String get programFilterByActivity;
+
+  /// No description provided for @programAllTimes.
+  ///
+  /// In en, this message translates to:
+  /// **'All times'**
+  String get programAllTimes;
+
+  /// No description provided for @programAllActivities.
+  ///
+  /// In en, this message translates to:
+  /// **'All activities'**
+  String get programAllActivities;
+
   /// Count of programme items when no filter is applied.
   ///
   /// In en, this message translates to:
@@ -1660,7 +1684,7 @@ abstract class AonL10n {
   /// No description provided for @homeFactColdBody.
   ///
   /// In en, this message translates to:
-  /// **'Bring a jacket and a torch. Red-light mode is best near the telescopes — it protects everyone’s night vision.'**
+  /// **'Bring a jacket and a torch — use red-light mode near the telescopes.'**
   String get homeFactColdBody;
 
   /// No description provided for @homeFactBookingTitle.
@@ -1672,7 +1696,7 @@ abstract class AonL10n {
   /// No description provided for @homeFactBookingBody.
   ///
   /// In en, this message translates to:
-  /// **'The magic shows and Destination Moon need seats booked at the time of ticket purchase.'**
+  /// **'The magic shows and Destination Moon need seats pre-booked.'**
   String get homeFactBookingBody;
 
   /// No description provided for @homeFactParkingTitle.

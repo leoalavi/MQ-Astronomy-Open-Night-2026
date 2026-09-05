@@ -3,70 +3,16 @@ import 'package:flutter/foundation.dart';
 import 'package:aon2026/models/event.dart';
 import 'package:aon2026/data/venues_data.dart';
 
-/// A time band used by the programme's time filter.
+/// Sentinel for the programme's "On the night" time option — events with no
+/// honest published start (Open all night / no time at all). Kept distinct from
+/// a real start hour so the time filter never fabricates a clock time for them.
 ///
-/// Bands are coarse and named for how people actually talk about the evening
-/// ("we'll come after dinner"), rather than exposing an hour picker. The event
-/// only runs for six hours — four buckets is enough resolution, and a chip row
-/// is far easier to hit on a phone in the dark than a time slider.
-enum TimeBand {
-  earlyEvening('4–6pm', 16, 18),
-  evening('6–8pm', 18, 20),
-  lateEvening('8–10pm', 20, 22);
-
-  const TimeBand(this.label, this.startHour, this.endHour);
-
-  final String label;
-  final int startHour;
-  final int endHour;
-
-  /// Whether any session of [event] overlaps this band on the event date.
-  ///
-  /// Timing confidence gates the test, so the filter never claims an event is on
-  /// in a band the programme never published:
-  ///  * No time at all ([EventSession.isUnscheduled]) → matches no band.
-  ///  * Open all evening ([EventSession.isFullEvent]) → matches every band.
-  ///  * A published start AND finish → true interval overlap.
-  ///  * A published start but NO finish ([TimingConfidence.startOnly] /
-  ///    [TimingConfidence.repeating]) → only the band that contains the start.
-  ///    Its end is a 10pm stand-in, so a plain interval test used to show a
-  ///    "4.15pm start, finish not published" activity (e.g. Kids' space) under
-  ///    the 8–10pm band as if it were still running then.
-  bool overlaps(AonEvent event) {
-    for (final s in event.sessions) {
-      if (s.isUnscheduled) continue;
-      if (s.isFullEvent) return true;
-
-      final bandStart = DateTime(
-        s.start.year,
-        s.start.month,
-        s.start.day,
-        startHour,
-      );
-      final bandEnd = DateTime(
-        s.start.year,
-        s.start.month,
-        s.start.day,
-        endHour,
-      );
-
-      if (s.hasPublishedEnd) {
-        // Real start AND end. Strict `isBefore`/`isAfter` so an event finishing
-        // exactly at 6pm does not show under the 6–8pm band.
-        if (s.start.isBefore(bandEnd) && s.end.isAfter(bandStart)) {
-          return true;
-        }
-      } else {
-        // Published start, unknown finish: place it only in the band that holds
-        // its start, never in later bands off the stand-in end.
-        if (!s.start.isBefore(bandStart) && s.start.isBefore(bandEnd)) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-}
+/// The time filter is **start-time only**: an event belongs to an hour bucket
+/// purely by the clock hour a genuinely-timed session starts in (see
+/// [EventFilterService.startsInHour]). Finish times, durations and the 10pm
+/// stand-in end are never consulted — a 4.15pm→10pm activity is a 4pm item, not
+/// a 4/5/6/7/8pm one. Available-throughout and no-time activities are excluded
+/// from every hour bucket and reachable only via [EventFilter.onTheNight].
 
 /// The state of the programme screen's filters.
 @immutable
@@ -75,34 +21,42 @@ class EventFilter {
     this.query = '',
     this.categories = const {},
     this.venueIds = const {},
-    this.timeBands = const {},
+    this.startHour,
+    this.onTheNight = false,
     this.bookableOnly = false,
   });
 
   /// Free-text search over title, description, presenter, room and tags.
   final String query;
 
-  /// Selected categories. Empty means "no category filter", i.e. show all.
-  /// An empty set meaning "everything" rather than "nothing" is the
-  /// convention throughout this class — it makes the default state
-  /// (`const EventFilter()`) show the full programme, which is what a user
-  /// opening the screen expects.
+  /// Selected activity categories. Empty means "no activity filter" (show all).
+  /// The redesigned Program UI drives this single-select (0 or 1 entry), but the
+  /// set is kept so an empty set still reads as "everything".
   final Set<EventCategory> categories;
 
-  /// Selected venues. Empty means all.
+  /// Selected venues. Empty means all. Retained in the model (and its tests);
+  /// the redesigned Program UI no longer exposes a venue chip.
   final Set<String> venueIds;
 
-  /// Selected time bands. Empty means all.
-  final Set<TimeBand> timeBands;
+  /// The selected START-TIME bucket: the clock hour (16..20) a genuinely-timed
+  /// session must start in — 16 is the 4pm bucket (4:00–4:59). Null = all times.
+  /// Finish time is never involved. Mutually exclusive with [onTheNight].
+  final int? startHour;
 
-  /// Show only events that require pre-booking.
+  /// The "On the night" time option — Open-all-night / no-published-time items.
+  /// Never combined with [startHour] (the time control is single-select).
+  final bool onTheNight;
+
+  /// Show only events that require pre-booking. Retained in the model (and its
+  /// tests); the redesigned Program UI no longer exposes a booked chip.
   final bool bookableOnly;
 
   bool get isEmpty =>
       query.trim().isEmpty &&
       categories.isEmpty &&
       venueIds.isEmpty &&
-      timeBands.isEmpty &&
+      startHour == null &&
+      !onTheNight &&
       !bookableOnly;
 
   /// Number of active filter groups — drives the "N filters" badge.
@@ -110,21 +64,28 @@ class EventFilter {
       (query.trim().isEmpty ? 0 : 1) +
       (categories.isEmpty ? 0 : 1) +
       (venueIds.isEmpty ? 0 : 1) +
-      (timeBands.isEmpty ? 0 : 1) +
+      ((startHour == null && !onTheNight) ? 0 : 1) +
       (bookableOnly ? 1 : 0);
+
+  /// Sentinel so [copyWith] can tell "keep the current [startHour]" apart from
+  /// "set it to null" (the standard nullable-copyWith problem).
+  static const Object _keep = Object();
 
   EventFilter copyWith({
     String? query,
     Set<EventCategory>? categories,
     Set<String>? venueIds,
-    Set<TimeBand>? timeBands,
+    Object? startHour = _keep,
+    bool? onTheNight,
     bool? bookableOnly,
   }) {
     return EventFilter(
       query: query ?? this.query,
       categories: categories ?? this.categories,
       venueIds: venueIds ?? this.venueIds,
-      timeBands: timeBands ?? this.timeBands,
+      startHour:
+          identical(startHour, _keep) ? this.startHour : startHour as int?,
+      onTheNight: onTheNight ?? this.onTheNight,
       bookableOnly: bookableOnly ?? this.bookableOnly,
     );
   }
@@ -137,7 +98,8 @@ class EventFilter {
       other.query == query &&
       setEquals(other.categories, categories) &&
       setEquals(other.venueIds, venueIds) &&
-      setEquals(other.timeBands, timeBands) &&
+      other.startHour == startHour &&
+      other.onTheNight == onTheNight &&
       other.bookableOnly == bookableOnly;
 
   @override
@@ -145,7 +107,8 @@ class EventFilter {
         query,
         Object.hashAllUnordered(categories),
         Object.hashAllUnordered(venueIds),
-        Object.hashAllUnordered(timeBands),
+        startHour,
+        onTheNight,
         bookableOnly,
       );
 }
@@ -161,6 +124,37 @@ abstract final class EventFilterService {
     return events.where((e) => _matches(e, filter)).toList();
   }
 
+  /// Whether [event] belongs to the "On the night" group — it has a session
+  /// that is available-throughout ([EventSession.isFullEvent]) or has no
+  /// published time ([EventSession.isUnscheduled]). Start time is irrelevant.
+  static bool isOnTheNight(AonEvent event) =>
+      event.sessions.any((s) => s.isUnscheduled || s.isFullEvent);
+
+  /// Whether any GENUINELY-TIMED session of [event] STARTS in clock [hour]
+  /// (16 = 4pm bucket, 4:00–4:59). Uses only the session start — finish time,
+  /// duration and any stand-in end are never consulted, so a 4.15pm→10pm
+  /// activity is a 4pm item only. Full-event / no-time sessions are excluded
+  /// (they are reachable via "On the night", never an hour bucket).
+  static bool startsInHour(AonEvent event, int hour) => event.sessions.any(
+        (s) => !s.isUnscheduled && !s.isFullEvent && s.start.hour == hour,
+      );
+
+  /// The distinct start hours actually present in [events] (genuinely-timed
+  /// sessions only), ascending — so the time filter offers only real buckets,
+  /// never an empty hour.
+  static List<int> availableStartHours(List<AonEvent> events) {
+    final hours = <int>{};
+    for (final e in events) {
+      for (final s in e.sessions) {
+        if (!s.isUnscheduled && !s.isFullEvent) hours.add(s.start.hour);
+      }
+    }
+    return hours.toList()..sort();
+  }
+
+  /// Whether any event needs the "On the night" time option.
+  static bool hasOnTheNight(List<AonEvent> events) => events.any(isOnTheNight);
+
   static bool _matches(AonEvent event, EventFilter filter) {
     if (filter.categories.isNotEmpty &&
         !filter.categories.contains(event.category)) {
@@ -172,9 +166,12 @@ abstract final class EventFilterService {
       return false;
     }
 
-    if (filter.timeBands.isNotEmpty &&
-        !filter.timeBands.any((band) => band.overlaps(event))) {
-      return false;
+    // Time — START-TIME ONLY. "On the night" and an hour bucket are mutually
+    // exclusive (single-select UI); neither ever consults a finish time.
+    if (filter.onTheNight) {
+      if (!isOnTheNight(event)) return false;
+    } else if (filter.startHour != null) {
+      if (!startsInHour(event, filter.startHour!)) return false;
     }
 
     if (filter.bookableOnly && !event.bookingRequired) {

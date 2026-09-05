@@ -51,103 +51,115 @@ void main() {
     });
   });
 
-  group('time band filter', () {
-    test('an event fully inside a band matches it', () {
-      const filter = EventFilter(timeBands: {TimeBand.evening}); // 6-8pm
-      final result = EventFilterService.apply(all, filter);
-
-      expect(result.map((e) => e.id), contains('keynote-artemis'));
-    });
-
-    test('an event that only overlaps a band still matches', () {
-      // Telescope Park runs 4.15pm-9.30pm, so it spans all three bands.
-      for (final band in TimeBand.values) {
-        final result = EventFilterService.apply(
+  group('start-time filter (START HOUR ONLY)', () {
+    Set<String> inHour(int h) => EventFilterService.apply(
           all,
-          EventFilter(timeBands: {band}),
-        );
-        expect(
-          result.map((e) => e.id),
-          contains('telescope-park'),
-          reason: 'should overlap ${band.label}',
-        );
+          EventFilter(startHour: h),
+        ).map((e) => e.id).toSet();
+
+    test('a 4.15pm→10pm long-running event is ONLY a 4pm item', () {
+      // exhibition-hall runs 4.15pm to 10pm. Its 10pm FINISH is irrelevant to
+      // the start filter — it belongs to the 4pm bucket and no other.
+      expect(inHour(16), contains('exhibition-hall'));
+      for (final h in [17, 18, 19, 20]) {
+        expect(inHour(h), isNot(contains('exhibition-hall')),
+            reason: 'a 4.15pm start must never leak into the $h:00 bucket');
       }
     });
 
-    test('an event ending exactly at the band boundary does not match', () {
-      // Fun with Fizzics runs 5pm-8pm. It should NOT appear under 8-10pm.
-      final result = EventFilterService.apply(
-        all,
-        const EventFilter(timeBands: {TimeBand.lateEvening}),
-      );
-
-      expect(result.map((e) => e.id), isNot(contains('fun-with-fizzics')));
-    });
-
-    test('a multi-session event matches any band a session touches', () {
-      // Physics magic show: 5-5.45, 6.15-7, 8.45-9.30 — hits all three.
-      for (final band in TimeBand.values) {
-        final result = EventFilterService.apply(
-          all,
-          EventFilter(timeBands: {band}),
-        );
-        expect(result.map((e) => e.id), contains('physics-magic-show'));
-      }
-    });
-
-    test('a published-start / no-published-finish session is NOT inferred into later bands',
-        () {
-      // Kids' space publishes a 4.15pm start but NO finish (startOnly), so its
-      // `end` is a 10pm stand-in, not a fact. The old filter did a plain
-      // start/end overlap and so matched it against 6-8pm and 8-10pm as if it
-      // were proven to run that late — objectively wrong. It must match ONLY the
-      // band that contains its published start (4-6pm).
+    test('a start-only 4.15pm event (no finish) is ONLY a 4pm item', () {
+      // kids-space: real 4.15pm start, finish NOT published. No fabricated 10pm
+      // end is used, so it appears only under 4pm.
       final kids = EventsData.byId('kids-space')!.sessions.single;
       expect(kids.timing, TimingConfidence.startOnly);
       expect(kids.hasPublishedEnd, isFalse);
-
-      bool inBand(TimeBand b) => EventFilterService.apply(
-            all,
-            EventFilter(timeBands: {b}),
-          ).map((e) => e.id).contains('kids-space');
-
-      expect(inBand(TimeBand.earlyEvening), isTrue,
-          reason: '4.15pm start falls inside 4-6pm');
-      expect(inBand(TimeBand.evening), isFalse,
-          reason: 'finish unpublished — must not be inferred into 6-8pm');
-      expect(inBand(TimeBand.lateEvening), isFalse,
-          reason: 'finish unpublished — must not be inferred into 8-10pm');
+      expect(inHour(16), contains('kids-space'));
+      for (final h in [17, 18, 19, 20]) {
+        expect(inHour(h), isNot(contains('kids-space')));
+      }
     });
 
-    // Reproduces the 6–8pm screen from the bug report and pins exactly which
-    // "4pm" items may and may not appear, so the contract can't silently drift.
-    test('6–8pm shows only sessions genuinely on at 6–8pm', () {
-      final evening = EventFilterService.apply(
+    test('a 6.xx talk appears only under the 6pm bucket', () {
+      // t3-pal starts 6.00pm.
+      expect(inHour(18), contains('t3-pal'));
+      for (final h in [16, 17, 19, 20]) {
+        expect(inHour(h), isNot(contains('t3-pal')));
+      }
+    });
+
+    test('a multi-session show appears in EACH hour it genuinely starts in', () {
+      // physics-magic-show starts 5.00, 6.15 and 8.45 → 5pm, 6pm, 8pm only.
+      expect(inHour(17), contains('physics-magic-show'));
+      expect(inHour(18), contains('physics-magic-show'));
+      expect(inHour(20), contains('physics-magic-show'));
+      expect(inHour(16), isNot(contains('physics-magic-show')));
+      expect(inHour(19), isNot(contains('physics-magic-show')));
+    });
+
+    test('Open-all-night / no-time items never enter an hour bucket', () {
+      for (final h in [16, 17, 18, 19, 20]) {
+        expect(inHour(h), isNot(contains('capture-the-cosmos')),
+            reason: 'open-all-night has no honest start hour');
+        expect(inHour(h), isNot(contains('solar-system-walk')));
+      }
+    });
+
+    test('"On the night" holds exactly the full-event / no-time items', () {
+      final night = EventFilterService.apply(
         all,
-        const EventFilter(timeBands: {TimeBand.evening}),
+        const EventFilter(onTheNight: true),
       ).map((e) => e.id).toSet();
-
-      // MUST NOT appear: 4.15pm start with no published finish. Their start is
-      // in 4–6pm and nothing proves they run into 6–8pm.
-      for (final id in ['kids-space', 'stories-across-worlds',
-          'junior-science-academy', 'planetariums']) {
-        expect(evening, isNot(contains(id)),
-            reason: '$id is start-only (no published finish) — 4–6pm only');
+      expect(night, containsAll(['capture-the-cosmos', 'solar-system-walk']));
+      for (final id in ['exhibition-hall', 'kids-space', 'physics-magic-show',
+          't3-pal']) {
+        expect(night, isNot(contains(id)),
+            reason: '$id is genuinely timed — it belongs to an hour bucket');
       }
+    });
 
-      // MAY appear even though they "start at 4pm": these publish a real finish
-      // of 9–10pm, so they are genuinely open during 6–8pm (interval overlap).
-      for (final id in ['exhibition-hall', 'telescope-park', 'scientist-spotlight']) {
-        expect(evening, contains(id),
-            reason: '$id runs 4.15pm→9–10pm, so it IS on at 6–8pm');
+    test('the available start hours are exactly the real ones (4pm–8pm)', () {
+      // 4pm..8pm are real; there is NO 9pm start in the programme.
+      expect(EventFilterService.availableStartHours(all), [16, 17, 18, 19, 20]);
+      expect(EventFilterService.hasOnTheNight(all), isTrue);
+    });
+
+    test('every hour bucket and On the night are disjoint, per event', () {
+      for (final e in all) {
+        final inAnyHour =
+            [16, 17, 18, 19, 20].any((h) => EventFilterService.startsInHour(e, h));
+        final night = EventFilterService.isOnTheNight(e);
+        expect(inAnyHour && night, isFalse,
+            reason: '${e.id} must not be in both an hour bucket and On the night');
       }
+    });
+  });
 
-      // Open-all-night items appear in every band — the intended contract.
-      expect(evening, containsAll(['capture-the-cosmos', 'solar-system-walk']));
+  group('combined time + activity (AND)', () {
+    test('6pm + Talks → only short talks starting in the 6pm hour', () {
+      final result = EventFilterService.apply(
+        all,
+        const EventFilter(startHour: 18, categories: {EventCategory.shortTalk}),
+      );
+      final ids = result.map((e) => e.id).toSet();
+      // The 6.xx short talks.
+      expect(ids, containsAll(
+          ['t3-pal', 't3-gonzalez-bolivar', 't4-de-grijs', 't4-raidani']));
+      // Every result is a short talk…
+      for (final e in result) {
+        expect(e.category, EventCategory.shortTalk);
+      }
+      // …a 6.30pm Activity is excluded (wrong category)…
+      expect(ids, isNot(contains('laser-graffiti')));
+      // …and a 7.30pm talk is excluded (wrong hour).
+      expect(ids, isNot(contains('t3-salvador-campe')));
+    });
 
-      // A multi-session show is in 6–8pm because it has a real 6.15pm session,
-      // not because a 5pm one was stretched.
-      expect(evening, contains('physics-magic-show'));
+    test('All times + one activity returns every event in that activity', () {
+      final result = EventFilterService.apply(
+        all,
+        const EventFilter(categories: {EventCategory.keynote}),
+      );
+      expect(result.single.id, 'keynote-artemis');
     });
   });
 
@@ -233,7 +245,7 @@ void main() {
     test('a realistic combination narrows sensibly', () {
       const filter = EventFilter(
         categories: {EventCategory.shortTalk},
-        timeBands: {TimeBand.earlyEvening},
+        startHour: 16, // 4pm
       );
       final result = EventFilterService.apply(all, filter);
 

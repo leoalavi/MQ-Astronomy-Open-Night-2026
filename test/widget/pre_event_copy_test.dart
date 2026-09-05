@@ -104,11 +104,10 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.textContaining('Later tonight'), findsWidgets);
-      expect(
-        find.textContaining('On the night'),
-        findsNothing,
-        reason: 'on the day itself, "On the night" is needlessly vague',
-      );
+      // "On the night" is only a hidden option inside the time dropdown now, so
+      // it never appears on the screen itself — and crucially the upcoming
+      // bucket stays "Later tonight" on the day, not the vague "On the night".
+      expect(find.text('On the night'), findsNothing);
     });
 
     testWidgets('mid-event still shows live statuses', (tester) async {
@@ -117,7 +116,9 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.textContaining('Happening now'), findsWidgets);
-      expect(find.textContaining('On the night'), findsNothing);
+      // "On the night" lives only inside the closed time dropdown; no live
+      // bucket is named it mid-event.
+      expect(find.text('On the night'), findsNothing);
     });
   });
 }

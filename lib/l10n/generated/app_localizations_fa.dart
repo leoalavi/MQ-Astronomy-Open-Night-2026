@@ -223,6 +223,18 @@ class AonL10nFa extends AonL10n {
   String get programSearchHint => 'جست‌وجوی سخنرانی، فعالیت یا سخنران';
 
   @override
+  String get programFilterByTime => 'فیلتر زمان';
+
+  @override
+  String get programFilterByActivity => 'فیلتر فعالیت';
+
+  @override
+  String get programAllTimes => 'همهٔ زمان‌ها';
+
+  @override
+  String get programAllActivities => 'همهٔ فعالیت‌ها';
+
+  @override
   String programItemCount(int count) {
     final intl.NumberFormat countNumberFormat =
         intl.NumberFormat.decimalPattern(localeName);
@@ -984,14 +996,14 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get homeFactColdBody =>
-      'کاپشن و چراغ‌قوه همراه داشته باشید. نزدیک تلسکوپ‌ها حالت نور سرخ بهترین است — دید شبانهٔ همه را حفظ می‌کند.';
+      'کاپشن و چراغ‌قوه همراه داشته باشید؛ نزدیک تلسکوپ‌ها از حالت نور سرخ استفاده کنید.';
 
   @override
   String get homeFactBookingTitle => 'بعضی نمایش‌ها نیازمند رزرو پیشین‌اند';
 
   @override
   String get homeFactBookingBody =>
-      'برای نمایش‌های شعبده و «سفر به ماه» باید صندلی را هنگام خرید بلیت رزرو کنید.';
+      'برای نمایش‌های شعبده و «سفر به ماه» باید از قبل صندلی رزرو کنید.';
 
   @override
   String get homeFactParkingTitle => 'پارکینگ رایگان';

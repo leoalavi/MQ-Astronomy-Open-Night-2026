@@ -37,7 +37,7 @@ tags: [home]
 - assertVisible: "See the whole tonight"
 - scrollUntilVisible:
     element:
-      text: "(?s).*Open the campus map.*walking directions from the car parks.*"
+      text: "(?s).*Open the campus map.*walking directions.*"
     direction: DOWN
-- assertVisible: "(?s).*Open the campus map.*walking directions from the car parks.*"
+- assertVisible: "(?s).*Open the campus map.*walking directions.*"
 - takeScreenshot: .maestro/screenshots/home-02-map-cta

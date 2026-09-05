@@ -1,48 +1,36 @@
-# Privacy · Google consent — ACCEPT then PERSISTENCE (B2)
+# Privacy · Google directions — implicit consent + persistence (B2, §2b)
 #
-# The companion to map-wayfinding.yaml (which proves Decline). Here the visitor
-# ACCEPTS the first-use disclosure: consent becomes `accepted`, the disclosure is
-# dismissed, and the Google surface is built for the FIRST time — the SDK-ready
-# gate and the location/route reads are reached ONLY after accept (the §2b
-# boundary, proven from the positive side: a live Google map + a real fetched
-# walking route appear only once consent is `accepted`). The choice then
-# PERSISTS: relaunching and asking for directions again does NOT re-prompt.
-# (This local build has working Google keys, so the route renders; a build
-# without them would show the in-app "directions unavailable" panel instead —
-# still post-accept, still no re-disclosure.)
+# The first-use disclosure MODAL was retired: Google Maps is the sole walking-
+# directions provider, so opening Directions IS the consent — implicit accept,
+# no modal (google_nav_screen `_acceptConsentOnce`). This is the §2b positive
+# proof: tapping Directions goes STRAIGHT to the in-app Google nav screen (the
+# destination title in the AppBar, the campus-map chrome gone), with NO first-use
+# modal and without bouncing out to the external Google Maps app. The accepted
+# state then PERSISTS across a relaunch — Directions behaves identically.
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
-# An on-campus fix so Accept proceeds into the real Google flow rather than the
-# need-location panel.
+- launchApp:
+    clearState: true
 - setLocation:
     latitude: -33.7737
     longitude: 151.1134
-# Reset consent to `unknown` so the first-use disclosure is exercised.
-- launchApp:
-    clearState: true
 - runFlow: flows/open-map.yaml
 
 - tapOn: "Directions"
-- assertVisible: "Use Google Maps for directions?"
-
-# Accept — consent accepted; the disclosure is dismissed and, for the FIRST time,
-# the Google surface initialises: a live map + a real walking route appear. This
-# is the positive-side §2b proof — nothing Google-facing rendered until now.
-- tapOn: "Use Google Maps"
+# Implicit accept — NO first-use modal; we land on the in-app Google nav screen.
 - assertNotVisible: "Use Google Maps for directions?"
-- extendedWaitUntil:
-    visible: "Walking directions"
-    timeout: 25000
-- takeScreenshot: .maestro/screenshots/consent-01-accepted-live-map
+- assertVisible: "Central Courtyard"
+- assertNotVisible: "Zoom in"
+- takeScreenshot: .maestro/screenshots/consent-01-accepted
 - tapOn: "Back"
+- assertVisible: "Zoom in"
 
-# Persistence — relaunch WITHOUT clearing state; consent=accepted persists, so a
-# second Directions tap is NOT re-prompted and goes straight to the live map.
+# Persistence — relaunch WITHOUT clearing state; Directions still goes straight
+# through (accepted persists, still no modal).
 - runFlow: flows/open-map.yaml
 - tapOn: "Directions"
 - assertNotVisible: "Use Google Maps for directions?"
-- extendedWaitUntil:
-    visible: "Walking directions"
-    timeout: 25000
-- takeScreenshot: .maestro/screenshots/consent-02-persisted-no-redisclosure
+- assertVisible: "Central Courtyard"
+- assertNotVisible: "Zoom in"
+- takeScreenshot: .maestro/screenshots/consent-02-persisted

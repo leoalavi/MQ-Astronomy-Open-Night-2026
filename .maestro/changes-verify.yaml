@@ -4,22 +4,28 @@
 #   1. Info: the Complimentary shuttle bus and Transport NSW bus stop are GONE.
 #   2. Info: West 6 parking now carries the same actions as the other car parks.
 #   3. Home: the Toilets shortcut opens a chooser listing all three buildings.
-#   4. Map: a West 6 parking pin now renders.
+#   4. Map: a West 6 parking pin now renders (off the default west crop — pan to it).
 appId: au.edu.mq.astronomy.aon2026
 tags: [changes]
 ---
 - launchApp:
     clearState: true
+- swipe:
+    direction: DOWN
+    duration: 100
 
 # ── 1 & 2. Info tab (bottom-nav slot 5 of 6) ────────────────────────────────
 - tapOn:
-    point: "73%,93%"
+    point: "73%,91%"
 - assertVisible: "Useful information"
 - scrollUntilVisible:
     element:
-      text: "West 6"
+      text: "(?s).*West 6.*"
     direction: DOWN
-- assertVisible: "West 6"
+    centerElement: true
+    visibilityPercentage: 10
+    timeout: 25000
+- assertVisible: "(?s).*West 6.*"
 - assertVisible: "Show on map"
 - assertVisible: "Directions"
 # The removed transport rows must be gone entirely.
@@ -29,23 +35,34 @@ tags: [changes]
 
 # ── 3. Home → Toilets chooser lists all three buildings ─────────────────────
 - tapOn:
-    point: "10%,93%"
+    point: "11%,91%"
 - assertVisible: "Astronomy Open Night"
+# The Toilets quick-access tile merges its label + subtitle into one a11y node.
 - scrollUntilVisible:
     element:
-      text: "Toilets"
+      text: "(?s).*Toilets.*All locations.*"
     direction: DOWN
-- tapOn: "Toilets"
+    centerElement: true
+    visibilityPercentage: 10
+    timeout: 25000
+- tapOn:
+    text: "(?s).*Toilets.*All locations.*"
 - assertVisible: "(?s).*Macquarie Theatre.*"
 - assertVisible: "(?s).*1 Central Courtyard.*"
 - assertVisible: "(?s).*Mason Theatre.*"
 - assertVisible: "Directions"
 - takeScreenshot: .maestro/screenshots/changes-02-toilets-chooser
-- tapOn:
-    point: "50%,12%"
 
 # ── 4. Map shows the new West 6 parking pin ─────────────────────────────────
+# West 6 sits off the western edge at the default fit, so pan east→west to
+# bring the western car parks into view before asserting.
 - runFlow: flows/open-map.yaml
 - assertVisible: "West 5. Parking."
+- swipe:
+    start: "30%,55%"
+    end: "88%,52%"
+- swipe:
+    start: "30%,55%"
+    end: "88%,52%"
 - assertVisible: "West 6. Parking."
 - takeScreenshot: .maestro/screenshots/changes-03-map-west6-pin

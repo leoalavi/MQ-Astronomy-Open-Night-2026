@@ -3,7 +3,7 @@
 # The walk is pinned at the TOP of the 360° picker, above the D-I letter cards
 # (Raouf 2026-09-01: "add it at the top of the lists"). It is a route, not a
 # lettered venue, so it carries its own route subtitle and a walk glyph. Tapping
-# it opens the 13-scene route tour, whose title island reads the venue name,
+# it opens the 12-scene route tour, whose title island reads the venue name,
 # "Gymnasium Road". The scene rail navigates Central Courtyard -> Telescope Park.
 #
 # Selector note: picker rows are merged multi-line a11y strings; match the walk
@@ -28,12 +28,18 @@ tags: [map]
 - takeScreenshot: .maestro/screenshots/solar-walk-02-tour-open
 
 # The scene rail carries the route. Later scenes sit off-screen to the end of
-# the rail; scroll the rail to a distinctive late stop to prove navigation.
-- scrollUntilVisible:
-    element:
-      text: "Telescope Park"
-    direction: RIGHT
-    timeout: 8000
+# the rail. The rail is a thin strip over a full-screen panorama WebView, and
+# scrollUntilVisible tends to grab the pano (which pans) instead of the rail — so
+# scroll the rail with explicit horizontal swipes ALONG the rail row (y≈90%),
+# moving forward (finger right→left). Over-swiping past the last stop is safe.
+- repeat:
+    times: 10
+    commands:
+      - swipe:
+          start: "88%,90%"
+          end: "12%,90%"
+          duration: 350
+- assertVisible: "Telescope Park"
 - tapOn: "Telescope Park"
 - waitForAnimationToEnd:
     timeout: 8000

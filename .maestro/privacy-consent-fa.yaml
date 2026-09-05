@@ -1,12 +1,13 @@
-# Privacy · Persian first-use disclosure, RTL (B2 closure §11)
+# Privacy · Google directions render in real Persian, RTL (B2, §2b)
 #
-# Switch the app to Persian, then from a fresh (unknown) consent ask for
-# Directions and verify the first-use disclosure renders in real Persian with a
-# correct RTL layout: title, body, Accept and Decline all Persian and reachable.
-# (Runtime proof — not an ARB/l10n-test substitute.)
+# The first-use disclosure modal was retired (opening Directions is implicit
+# consent — see privacy-consent.yaml). This proves the resulting in-app Google
+# nav screen renders in real Persian with a correct RTL layout: the campus-map
+# chrome is left behind, NO retired first-use modal appears, and the live Google
+# surface + the "Walking directions" route heading come up in Persian.
 #
-# RTL note: the bottom nav mirrors under Persian, so the Map tab sits on the LEFT
-# (~42%) where it was on the right (~58%) in LTR. Directions FAB = "مسیریابی".
+# RTL note: the bottom nav mirrors under Persian — Settings on the LEFT (~12%),
+# Map at ~42% (it was ~58% in LTR). Directions FAB = "راهنمای مسیر".
 appId: au.edu.mq.astronomy.aon2026
 tags: [map, settings]
 ---
@@ -22,26 +23,21 @@ tags: [map, settings]
 # ── Switch to Persian in Settings (still LTR here → Settings on the right) ──
 - tapOn:
     point: "88%,91%"
-- scrollUntilVisible:
-    element:
-      text: "فارسی"
-    direction: DOWN
-    centerElement: true
-- tapOn: "فارسی"
-# UI is now Persian/RTL — assert an on-screen Persian label (Text size / Privacy).
-- assertVisible: "اندازهٔ متن"
-- assertVisible: "حریم خصوصی"
+- tapOn: "Persian"
+# UI is now Persian/RTL — assert the Persian Settings title.
+- assertVisible: "تنظیمات"
 
-# ── Map (RTL mirror → left side) → Directions ──
+# ── Map (RTL mirror → left of centre) → Directions ──
 - tapOn:
     point: "42%,91%"
-- assertVisible: "بزرگ‌نمایی"
-# The campus-map walk-route FAB in Persian.
-- tapOn: "راهنمای مسیر"
+- assertVisible: "بزرگ‌نمایی"        # Zoom in (Persian) — on the campus map
+- tapOn: "راهنمای مسیر"              # Directions (Persian FAB)
 
-# ── The first-use disclosure, in Persian ──
-- assertVisible: "برای مسیریابی از نقشهٔ گوگل استفاده شود؟"
-- assertVisible: "استفاده از نقشهٔ گوگل"
-- assertVisible: "الان نه"
-- assertVisible: "(?s).*به نقشهٔ گوگل ارسال می‌شود.*"
-- takeScreenshot: .maestro/screenshots/fa-01-disclosure-rtl
+# ── The in-app Google nav screen, in Persian — implicit accept, NO modal ──
+- assertNotVisible: "برای مسیریابی از نقشهٔ گوگل استفاده شود؟"  # the retired modal title
+- assertNotVisible: "بزرگ‌نمایی"      # we left the campus map
+# The nav screen rendered in Persian/RTL — its back control reads "برگشتن"
+# (Back), on the right under RTL. (The live route itself needs a location fix,
+# which a fresh install may not have granted, so it is not asserted here.)
+- assertVisible: "برگشتن"
+- takeScreenshot: .maestro/screenshots/fa-01-directions-rtl

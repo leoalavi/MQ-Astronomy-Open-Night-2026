@@ -19,9 +19,10 @@ tags: [settings]
 - assertVisible: "(?s).*Dark.*Recommended.*night vision.*"
 
 # Language is a real behaviour switch: Persian flips the whole app to RTL, and
-# English flips it back. Endonyms ("English"/"فارسی") are never translated, so
-# they remain tappable in either direction.
-- tapOn: "فارسی"
+# English flips it back. The Persian option is labelled in the CURRENT locale —
+# "Persian" in English, "فارسی" in Persian — so switch TO Persian by tapping
+# "Persian", and back by tapping "English" ("English" is "English" in both).
+- tapOn: "Persian"
 - assertVisible: "تنظیمات"
 - tapOn: "English"
 - assertVisible: "Settings"

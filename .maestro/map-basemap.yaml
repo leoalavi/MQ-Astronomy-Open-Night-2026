@@ -16,12 +16,13 @@ tags: [map, smoke]
 - assertVisible: "Favourites"
 - assertVisible: "Directions"
 - assertVisible: "Campus map: Macquarie University"
-- assertVisible: "Show my location"
+# The locate button's label depends on whether there is a fix yet
+# ("Show my location" with none, "Follow my location" once located) — match both.
+- assertVisible: "(Show|Follow) my location"
 
-# Mode toggle
+# Mode toggle — two modes only (the compass/AR mode was retired).
 - assertVisible: "Map"
 - assertVisible: "360°"
-- assertVisible: "Compass"
 
 # REGRESSION: M2 thematic variants are retired — one official basemap, so there
 # is nothing to switch between and the Layers button must not come back.

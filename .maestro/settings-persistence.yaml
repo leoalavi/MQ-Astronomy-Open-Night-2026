@@ -17,7 +17,7 @@ tags: [settings]
 - tapOn:
     point: "88%,91%"          # Settings (LTR: slot 6, right)
 - assertVisible: "Appearance"
-- tapOn: "فارسی"
+- tapOn: "Persian"            # the Persian option, labelled "Persian" in English
 - assertVisible: "تنظیمات"     # the whole app flips to Persian
 - launchApp                    # restart — the choice must survive
 - tapOn:

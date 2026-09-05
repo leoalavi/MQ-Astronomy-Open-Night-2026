@@ -1,44 +1,28 @@
-# Map · the three map modes
+# Map · the two map modes
 #
-# Tests: the Map / 360° / Compass toggle switches the body, each mode brings its
-# own finder, and the walk-route FAB is campus-map ONLY (spec §0.4/§0-N).
+# Tests: the Map / 360° toggle switches the body, and the walk-route FAB + zoom
+# controls are campus-map ONLY (they must not overlay the 360° picker).
+# The compass/AR mode was retired — the toggle now has just Map and 360°.
 appId: au.edu.mq.astronomy.aon2026
 tags: [map]
 ---
-# An on-campus fix so Compass mode can build its nearby cardinal LIST (without a
-# fix it honestly shows "Finding your location…", not the list + its filter).
-- setLocation:
-    latitude: -33.7737
-    longitude: 151.1134
 - runFlow: flows/open-map.yaml
 - assertVisible: "Directions"
+- assertVisible: "Zoom in"
 
 # ── 360° panorama picker ────────────────────────────────────────────────────
 - tapOn: "360°"
 - takeScreenshot: .maestro/screenshots/modes-01-panorama-picker
-# the walk-route FAB must NOT overlay a non-map finder
+# the campus-map chrome must NOT overlay the 360° picker
 - assertNotVisible: "Directions"
 - assertNotVisible: "Zoom in"
-
-# ── compass / point-me ──────────────────────────────────────────────────────
-- tapOn: "Compass"
-# Compass requests location on entry; grant it (persists across relaunch, so
-# optional after the first run on this device).
-- tapOn:
-    text: "Allow While Using App"
-    optional: true
-- takeScreenshot: .maestro/screenshots/modes-02-compass
-- assertNotVisible: "Directions"
-# The simulator has no magnetometer, so compass mode MUST degrade to the honest
-# cardinal-bearing LIST rather than draw a rose it cannot orient (M5 §0R). The
-# list — and its "Filter places" field — appears once there is a location fix.
-- assertVisible: "Filter places"
+# the picker itself is showing (the Solar walk is pinned at its top)
+- assertVisible: "(?s).*Solar system walk.*"
 
 # ── back to the campus map ──────────────────────────────────────────────────
 # "Map" is ambiguous — the AppBar title is ALSO exactly "Map" and comes first in
 # the hierarchy, so a bare `tapOn: "Map"` hits the title and nothing happens.
-# `leftOf:` does not disambiguate either (it ignores the row). index 1 is the
-# toggle segment; its bounds are stable across all three modes.
+# index 1 is the toggle segment; its bounds are stable across both modes.
 - tapOn:
     text: "Map"
     index: 1

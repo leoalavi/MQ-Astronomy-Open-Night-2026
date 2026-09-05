@@ -37,11 +37,11 @@ tags: [map]
 
 # ── tapping a venue opens its sheet ──────────────────────────────────────────
 - tapOn: "Macquarie University Astronomical Observatory. Event venue."
-# The venue sheet's directions action is labelled "Directions" (it pushes the
-# consent-gated Google nav). It was "Walking directions" when this suite was
-# first written; the string was shortened since.
+# The venue sheet offers "Directions" (the Google nav) and "Look inside in 360°"
+# (the panorama tour). The old "Point me there" compass action was retired with
+# the map's compass mode.
 - assertVisible: "Directions"
-- assertVisible: "Point me there"
+- assertVisible: "Look inside in 360°"
 - assertVisible: "Macquarie University Observatory"   # the venue subtitle
 - takeScreenshot: .maestro/screenshots/markers-01-venue-sheet
 # Dismiss by tapping the scrim ABOVE the sheet. A downward swipe does not work:
@@ -49,7 +49,7 @@ tags: [map]
 # rather than dismissing.
 - tapOn:
     point: "50%,25%"
-- assertNotVisible: "Point me there"
+- assertNotVisible: "Look inside in 360°"
 
 # ── tapping a parking pin opens the parking sheet ────────────────────────────
 - tapOn: "West 5. Parking."

@@ -1,8 +1,9 @@
 # App Store Connect — final pre-submission checklist
 
-**Date:** 2026-09-05 · **Branch:** `fix/ios-always-location-purpose-string`
-**Target upload:** `1.0.0` **Build 3** · Bundle `au.edu.mq.astronomy.aon2026`
-· Team `94273WB4G3`
+**Date:** 2026-09-05 (updated 2026-09-06) · **Branch:** `fix/ios-always-location-purpose-string`
+**Shipped build:** `1.0.0` **Build 3** — **uploaded and approved for external
+TestFlight** · Bundle `au.edu.mq.astronomy.aon2026` · Team `94273WB4G3`
+· Availability: **Australia only**
 
 The single page to work through in App Store Connect. Every row names its
 evidence or says exactly who has to act. Statuses are the register's vocabulary
@@ -32,7 +33,7 @@ plus the three ASC-specific ones this pass needed.
 | 7 | **Age rating questionnaire** | `READY TO ENTER` | Every answer *None* / *No*; table in `app-store-listing.md`. Re-checked against the shipped build 2026-09-05: no UGC, no messaging, no IAP, no ads, no unrestricted web (the WebView loads bundled files over `http://localhost`). |
 | 8 | **Content rights** | `LEGAL/ORG DECISION` — owner has decided | Three MQ asset sets are the project's own (owner attestation 2026-09-05). The Home hero is Aleix Roig's; the owner has chosen to ship on the existing credit. Residual 5.2 risk recorded in blocker B6. |
 | 9 | **Export compliance** | `VERIFIED` | `ITSAppUsesNonExemptEncryption` = `false` in Info.plist; audited per-dependency in `export-compliance.md` — every networked dependency uses OS TLS and bundles no cryptography. ASC will not re-ask while the key is present. |
-| 10 | **DSA trader status** | `LEGAL/ORG DECISION` | Only required if the app is distributed in the EU. Nothing in this repo states the intended territories — see §5. |
+| 10 | **DSA trader status** | `NOT APPLICABLE` | **Australia-only distribution** decided by the owner (2026-09-06). No EU territories, so App Store Connect does **not** require a DSA trader-status declaration. Revisit only if EU availability is ever added. See §5. |
 | 11 | **Screenshots — 6.9" iPhone** | `VERIFIED` — **recaptured 2026-09-05** | All 6 at 1320×2868 from a build of this branch. See §4. |
 | 12 | **Screenshots — 13" iPad** | `READY TO ENTER` (minimum met) / 3 outstanding | `01-home.png` recaptured at 2064×2752; the other three were removed as stale and need capturing by hand. Apple requires at least one. See §4. |
 | 13 | **App name** | `READY TO ENTER` | `Astronomy Open Night` (20 chars). |
@@ -41,11 +42,11 @@ plus the three ASC-specific ones this pass needed.
 | 16 | **Keywords** | `READY TO ENTER` | The committed string is **exactly 100 characters** — at Apple's limit, not over it. The doc's old "101 → trim guide" note was a miscount and has been corrected. |
 | 17 | **Categories** | `READY TO ENTER` | Primary **Education**, secondary **Navigation**. |
 | 18 | **Copyright** | `LEGAL/ORG DECISION` | `© 2026 Macquarie University` is the drafted line. Note the tension: `map_attribution_test.dart` deliberately forbids a `©` on the in-app campus-map credit until MQ sign-off. The owner's attestation resolves the substance; whether to assert `©` in ASC is still theirs to say. |
-| 19 | **Price / availability** | `READY TO ENTER` | Free, no in-app purchases. Territories: see row 10. |
+| 19 | **Price / availability** | `READY TO ENTER` | Free, no in-app purchases. Availability: **Australia only** (owner decision 2026-09-06) — deselect all other territories in ASC. |
 | 20 | **App Review notes** | `READY TO ENTER` | `app-review-notes.md`, corrected 2026-09-05 to match the binary (both directions paths, what is sent to Google). |
-| 21 | **App Review contact** | `BLOCKED` | Still `<NAME>/<EMAIL>/<PHONE>`. Deliberately not invented. |
-| 22 | **Build 3 uploaded** | `BLOCKED` on the archive | The repo side is ready; the archive must come from the Xcode signed into team `94273WB4G3`. |
-| 23 | **ITMS-90683 cleared** | `RESOLVED — AWAITING VERIFICATION` | Fixed and verified in the built bundle; only the Build 3 delivery mail can confirm Apple agrees. |
+| 21 | **App Review contact** | `READY TO ENTER` | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo.alavi.dev@gmail.com`, `+61451519624`. In `app-review-notes.md`. |
+| 22 | **Build 3 uploaded** | `VERIFIED` | **Build 3 (`1.0.0+3`) is uploaded to App Store Connect** and **approved for external TestFlight**; the external organiser testing group exists and the public TestFlight link is ready to share. Archive step is done — do not re-archive unless a repo-side change forces a new binary. |
+| 23 | **ITMS-90683 cleared** | `CLOSED — VERIFIED` | Fixed in the Build 3 binary (both location purpose strings present, no `UIBackgroundModes`) **and validated by Apple**: Build 3 was accepted for upload and passed external TestFlight beta review without the ITMS-90683 warning recurring. |
 
 ---
 
@@ -116,28 +117,47 @@ name, no account (there is none), no app-generated identifier travels with it.
 The request happens after the visitor opens directions, and not at all if
 directions sharing is off in Settings.
 
-| Data type | Collected | Purpose | Linked to identity | Used for tracking |
-|---|---|---|---|---|
-| **Precise Location** | **Yes** | App Functionality | **No** | **No** |
+### The authoritative App Privacy answer set (Build 3)
 
-Everything else stays *not collected*: no contact info, no identifiers, no
-purchases, no contacts, no user content, no search history, no browsing history,
-no health/fitness, no financial data. The passport, favourites, saved plan and
-settings never leave the device.
+This is the **single source of truth** for the App Store Connect App Privacy
+answers. Every row is "collected"; every row is **not linked to identity** and
+**not used for tracking** (the app has no account, no ATT, no advertising SDK and
+no cross-app tracking — consistent with `NSPrivacyTracking = false` in
+`PrivacyInfo.xcprivacy`). Purpose is **App Functionality** throughout: every item
+exists only to draw the map and return walking directions.
 
-**One question genuinely needs the owner, not this audit** — `LEGAL/POLICY
-REVIEW`: the embedded **Google Maps SDK 8.4.0** is statically linked into Runner
-and ships **no privacy manifest of its own** (verified: no
-`PrivacyInfo.xcprivacy` anywhere under `ios/Pods/GoogleMaps`, and 41 `GMS*`
-symbols in the Runner binary). Google's own published guidance for Maps SDK on
-iOS asks developers to declare the SDK's collection — typically Identifiers,
-Product Interaction, Crash and Performance Data — and this app's own privacy
-copy already tells users exactly that ("Google Maps also collects technical
-data, identifiers, crash diagnostics and map interactions"). Whether to add
-those rows to the ASC answers is a disclosure decision, not a code one. The
-safest answer is to declare them; the narrow answer is that they are the SDK's
-collection, not the app's. **The in-app copy has already taken the broad
-position, so the ASC answers should match it rather than contradict it.**
+| Data type | Collected? | Purpose | Linked to user? | Tracking? | Whose collection |
+|---|---|---|---|---|---|
+| **Precise Location** | **Yes** | App Functionality | No | No | The app — Routes origin/destination on the walking-directions path |
+| **Coarse Location** | **Yes** | App Functionality | No | No | Google Maps SDK |
+| **Identifiers** (device / Maps SDK id) | **Yes** | App Functionality | No | No | Google Maps SDK |
+| **Product Interaction** | **Yes** | App Functionality | No | No | Google Maps SDK (map interactions) |
+| **Other Usage Data** | **Yes** | App Functionality | No | No | Google Maps SDK |
+| **Crash Data** | **Yes** | App Functionality | No | No | Google Maps SDK diagnostics |
+| **Performance Data** | **Yes** | App Functionality | No | No | Google Maps SDK diagnostics |
+
+**Every other Apple category is *Data Not Collected*:** no contact info, no
+health/fitness, no financial info, no contacts, no user content, no search
+history, no browsing history, no purchases, no sensitive info. The passport,
+favourites, saved plan and settings never leave the device. The app itself
+collects only Precise Location (above); the remaining rows are the embedded
+Google Maps SDK's own collection, declared here because the SDK ships no privacy
+manifest of its own and the app's in-app copy already discloses exactly this.
+
+**Why the Google Maps SDK rows are declared (resolved, not open).** The embedded
+**Google Maps SDK 8.4.0** is statically linked into Runner and ships **no privacy
+manifest of its own** (verified: no `PrivacyInfo.xcprivacy` anywhere under
+`ios/Pods/GoogleMaps`, and 41 `GMS*` symbols in the Runner binary). Google's own
+published guidance for Maps SDK on iOS asks developers to declare the SDK's
+collection — Identifiers, Product Interaction, Crash and Performance Data (plus
+Coarse Location) — and this app's own privacy copy already tells users exactly
+that ("Google Maps also collects technical data, identifiers, crash diagnostics
+and map interactions"). Since the in-app copy and the hosted policy already take
+the broad position, the ASC answers **match it**: the SDK rows are declared, as
+in the matrix above. This closes the earlier open question — there is nothing
+left for the owner to decide here, and the register's B7 condition 10
+(location→Google classification) is answered by that matrix. All rows are App
+Functionality, not linked, not tracking.
 
 ## §4 — Screenshots: the old set was stale; 7 of 10 have been recaptured
 
@@ -172,14 +192,20 @@ iPad screenshot for an iPad-capable app, so submission is not blocked on them.
 
 ## §5 — DSA / territories
 
-`ORGANISATIONAL / LEGAL DECISION REQUIRED`, and partly `ASC ACCESS REQUIRED`.
-Nothing in this repository states the intended App Store territories. The app is
-a companion to a one-night event on one campus in Sydney, which argues for
-Australia-only availability — but that is the organisers' call, not this
-audit's, and it has a direct consequence: if EU territories are selected, App
-Store Connect requires a DSA trader-status declaration, and whether Macquarie
-University (or Leo Alavi as the publishing account) is a "trader" is a legal
-determination this pass must not make.
+**Decided: Australia-only distribution** (owner decision, 2026-09-06). The app is
+a companion to a one-night event on one campus in Sydney, and the owner has set
+availability to **Australia only** — in App Store Connect, deselect every other
+territory so that only Australia is checked.
 
-If distribution is Australia-only, no DSA declaration is required and this row
-closes with no action.
+The direct consequence is that **no DSA trader-status declaration is required**.
+Apple asks for that declaration only when an app is distributed in EU
+territories; with no EU territory selected, App Store Connect does not present or
+require it. The question of whether Macquarie University (or Leo Alavi as the
+publishing account) is a "trader" under the EU Digital Services Act is therefore
+not reached, and this audit makes no such legal determination.
+
+**Revisit only if EU availability is ever added.** If a later release selects any
+EU territory, the DSA trader-status declaration becomes mandatory again, and the
+"trader vs. non-trader" determination — a legal question, not a technical one —
+must be made before that release can ship. Until then there is nothing to do
+here, and row 10 is `NOT APPLICABLE`.

@@ -135,16 +135,23 @@ ACCESSIBILITY
 Supports Dynamic Type to 200%, VoiceOver, and Reduce Motion.
 
 CONTACT
-<NAME>, <EMAIL>, <PHONE>
+Leo Alavi, leo.alavi.dev@gmail.com, +61451519624
 ```
 
 ---
 
-## Fill these in before submitting
+## App Review contact — supplied
 
-| Placeholder | Where it comes from |
+| Field | Value |
 |---|---|
-| `<NAME>` / `<EMAIL>` / `<PHONE>` | The App Review contact. Must be reachable during review — a person who can answer within a day, not a shared inbox that is only read on weekdays. The event's own public enquiries address is `astronomyopennight@mq.edu.au` (from <https://event.mq.edu.au/astronomy-open-night/>); use it only if someone is actually monitoring it during the review window. **Not filled in here: inventing a reviewer contact is worse than leaving the placeholder.** |
+| First name | Leo |
+| Last name | Alavi |
+| Email | leo.alavi.dev@gmail.com |
+| Phone | +61451519624 |
+
+Supplied by Leo 2026-09-06 and pasted into the CONTACT line above. This is the
+reviewer contact for App Store Connect → *App Review Information*. It must stay
+reachable during the review window.
 
 The codes above are the live ones as of 2026-09-04 and must stay in step with
 `lib/data/stamp_stations_data.dart`. If a code changes there, update this list,

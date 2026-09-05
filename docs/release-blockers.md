@@ -362,10 +362,17 @@ clears the path to GO.
   10. The App Store **App Privacy** answers and Google Play **Data safety**
       declarations are completed — including how the location transmitted to
       Google Routes for walking directions is classified (app "conduit" vs
-      data "collection" under each store's definitions). **LEGAL/POLICY REVIEW
-      REQUIRED — do not self-answer this classification.** B1/B2 closure settles
-      the app's own disclosures (truthful purpose string + explicit consent); it
-      does **not** decide the store-form classification, which remains open.
+      data "collection" under each store's definitions). **App Store: DECIDED
+      2026-09-06.** The classification is "collection", declared as **Precise
+      Location — App Functionality, not linked, not tracking**, alongside the
+      embedded Google Maps SDK rows (Coarse Location, Identifiers, Product
+      Interaction, Other Usage Data, Crash Data, Performance Data — all App
+      Functionality, not linked, not tracking). This is the conservative answer
+      and matches the app's own in-app privacy copy and hosted policy. The single
+      authoritative answer set lives in
+      `docs/release/app-store-connect-final-checklist.md` §3. Google Play **Data
+      safety** mirrors the same set when the Android submission is prepared
+      (out of scope for the current Australia-only App Store pass).
 - **Required closure evidence.** Live production URLs; release-build
   screenshots / E2E proving the in-app privacy-policy entry works; App Store
   Connect metadata verification; Play Console metadata verification; a successful
@@ -392,6 +399,33 @@ in-app privacy-policy surface) it is not store-release-ready:
 
 ## Change log
 
+- 2026-09-06 — **Build 3 shipped to TestFlight; App Review contact + App Privacy
+  finalized.** Repo-side release prep completed against the actual state:
+  **Build 3 (`1.0.0+3`) is uploaded to App Store Connect and approved for
+  external TestFlight**; the external organiser testing group exists and the
+  public TestFlight link is ready to share. **ITMS-90683 → `CLOSED — VERIFIED`**:
+  the Build 3 binary carries both location purpose strings and no
+  `UIBackgroundModes`, and Apple accepted the binary for external beta review
+  without the warning recurring. **App Review contact supplied by Leo** (Leo
+  Alavi, `leo.alavi.dev@gmail.com`, `+61451519624`) and pasted into
+  `app-review-notes.md`. **App Privacy answer set finalized** as the single
+  source of truth in `app-store-connect-final-checklist.md` §3 (see B7
+  condition 10). No code changed; **no Build 4 required**. Stale text removed
+  from the ASC checklist (Build-3-uploaded and ITMS rows) and the submission
+  checklist. Remaining external items unchanged: Privacy Policy hosted URL,
+  asset-rights and copyright (Liz/Macquarie); B3 GCP key restriction and B4
+  device pass (Raouf); B5 signage install.
+- 2026-09-06 — **Australia-only distribution decided by the owner.** The release
+  ships to **Australia only**; all other App Store territories are deselected in
+  App Store Connect. Consequence recorded across the release docs: **no DSA
+  trader-status declaration is required** — Apple asks for it only for EU
+  territories, none of which are selected, so the "trader vs. non-trader" legal
+  determination is not reached. **This is not a blocker** and no DSA/EU blocker
+  is added to the register. DSA must be **revisited only if EU availability is
+  ever added** in a later release, at which point the trader-status declaration
+  becomes mandatory again. See `docs/release/app-store-connect-final-checklist.md`
+  §5 (row 10 `NOT APPLICABLE`) and the availability row (19). No code, config or
+  consent behaviour changed. B3, B4, B7 remain as recorded.
 - 2026-09-05 — Apple App Store release audit (`APPLE_RELEASE_AUDIT.md`). No
   new blocker. Closed in code: the iOS privacy manifest now declares the two
   required-reason APIs statically linked into Runner (SystemBootTime 35F9.1 via

@@ -1,5 +1,12 @@
 # App Store submission checklist — aon2026
 
+> **Authoritative pre-submission source: [`app-store-connect-final-checklist.md`](app-store-connect-final-checklist.md).**
+> That file holds the single, current answer set (App Privacy, Age Rating,
+> availability, contact). This document is the older 2026-08-23 requirements
+> audit; where the two ever differ, the final checklist wins. Rows below have
+> been reconciled to Build 3 (`1.0.0+3`, uploaded and approved for external
+> TestFlight, Australia-only).
+
 Audited against the Apple developer documentation current on **2026-08-23**.
 Sources are linked per section. Items are marked:
 
@@ -21,7 +28,7 @@ Sources are linked per section. Items are marked:
 | iOS release build succeeds | **DONE** | `flutter build ios --release --no-codesign` → exit 0 |
 | App icon incl. 1024×1024 marketing icon, no alpha | **DONE** | `AppIcon.appiconset`, 19 entries, all with filenames |
 | `ITSAppUsesNonExemptEncryption` declared | **DONE** | `Info.plist` → `false`; rationale in `export-compliance.md` |
-| Version/build bumped past the spent `1.0.0+2` | **YOU** — at release-candidate time | `1.0.0+1` is spent on BOTH stores (Play App Signing bootstrap AAB; TestFlight Build 1) and `1.0.0+2` is now spent too (TestFlight Build 2, 2026-09-05 — accepted, with the ITMS-90683 warning this branch fixes). Set `version: 1.0.0+3` on the commit that is archived, then run `flutter build ios --config-only --release` so `ios/Flutter/Generated.xcconfig` carries `FLUTTER_BUILD_NUMBER=3` — Xcode reads that file, not `pubspec.yaml`. |
+| Version/build set to `1.0.0+3` | **DONE** | `pubspec.yaml` → `version: 1.0.0+3`. **Build 3 is uploaded to App Store Connect and approved for external TestFlight.** `1.0.0+1` (TestFlight Build 1) and `1.0.0+2` (Build 2, ITMS-90683 warning) are spent; Build 3 fixes ITMS-90683 and was accepted without it recurring. Do not bump to Build 4 unless a repo-side change forces a new binary. |
 
 Source: <https://developer.apple.com/news/upcoming-requirements/>
 
@@ -36,7 +43,7 @@ Source: <https://developer.apple.com/news/upcoming-requirements/>
 | No third-party SDK on Apple's manifest-required list | **DONE** | Pods are Flutter, `flutter_inappwebview_ios`, `google_maps_flutter_ios`, `GoogleMaps`, `Google-Maps-iOS-Utils`, `OrderedSet` — none listed. |
 | Purpose strings for camera / location / motion | **DONE** (re-audited 2026-09-05) | **Four** keys, not three: camera, motion, `NSLocationWhenInUseUsageDescription` and `NSLocationAlwaysAndWhenInUseUsageDescription`. The last was added after App Store Connect returned **ITMS-90683** against Build 2 — `geolocator_apple`'s `requestAlwaysAuthorization` is statically linked into Runner, so Apple's scan demands the string even though the app only ever requests When In Use. Camera and motion say the data stays on device; **the two location strings must not** — the Routes call sends the origin to Google. Guarded by `test/unit/ios_location_purpose_test.dart` (4 tests). |
 | **Privacy Policy URL** in App Store Connect | **YOU** | 5.1.1(i) makes this mandatory metadata. MQ-hosted. **Blocking — nothing can be submitted without it.** |
-| App Privacy questionnaire ("Nutrition Label") | **YOU** | Answer in ASC. For this app the honest answer is *Data Not Collected* on every category. |
+| App Privacy questionnaire ("Nutrition Label") | **READY TO ENTER** | **Not** "Data Not Collected" — the app sends Precise Location to Google Routes and embeds the Google Maps SDK. The single authoritative answer set is in [`app-store-connect-final-checklist.md`](app-store-connect-final-checklist.md) §3: Precise Location + Coarse Location, Identifiers, Product Interaction, Other Usage Data, Crash Data, Performance Data — all App Functionality, not linked, not tracking. |
 
 Sources: <https://developer.apple.com/documentation/bundleresources/privacy-manifest-files> ·
 <https://developer.apple.com/support/third-party-SDK-requirements/>
@@ -54,7 +61,7 @@ Apple: *over 40% of unresolved issues are guideline 2.1*.
 | Demo account | **N/A** | No account, no sign-in, no server. Stated in the notes. |
 | Backend live during review | **N/A** | Offline-first; no backend. |
 | **Support URL** in App Store Connect | **YOU** | Required. MQ-hosted. **Blocking.** |
-| App Review contact name/email/phone | **YOU** | Placeholders `<NAME>/<EMAIL>/<PHONE>` in the notes. |
+| App Review contact name/email/phone | **DONE** | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo.alavi.dev@gmail.com`, `+61451519624`. In `app-review-notes.md`. |
 
 Source: <https://developer.apple.com/distribute/app-review/>
 

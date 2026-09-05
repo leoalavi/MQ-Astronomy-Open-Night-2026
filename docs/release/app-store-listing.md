@@ -50,7 +50,7 @@ THE OFFICIAL MAP, OFFLINE
 The same map that's printed in the event programme — the same A–I lettering, the
 same registration and information points, the same shuttle and pedestrian
 routes. Pins sit on the printed markers, so the app and the paper agree. Find
-telescopes, talks, planetariums, kids' activities, food, toilets and first aid.
+telescopes, talks, planetariums, kids' activities, food and toilets.
 
 THE WHOLE PROGRAMME
 Every talk, show and activity, with times and places. See what's on now, search

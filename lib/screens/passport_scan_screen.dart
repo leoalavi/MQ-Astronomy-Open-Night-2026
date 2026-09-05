@@ -14,11 +14,13 @@ import 'package:aon2026/utils/haptics.dart';
 import 'package:aon2026/widgets/passport_fact_sheet.dart';
 import 'package:aon2026/widgets/passport_scanner_view.dart';
 
-enum _Mode { choosing, manual, scanning }
+enum _Mode { manual, scanning }
 
-/// Capture: scanning and manual entry are equal peers (design §5). The camera
-/// is created only after the user taps "Scan" — opening this screen never
-/// starts a camera or prompts for permission.
+/// Capture: scanning and manual entry are equal peers (design §5). Scanning is
+/// the default: opening this screen brings the camera up immediately (which
+/// prompts for permission on first use) so a visitor at a venue sign can just
+/// point and scan — no second tap. On the web, where there is no camera, manual
+/// entry is the default instead.
 class PassportScanScreen extends ConsumerStatefulWidget {
   const PassportScanScreen({this.scannerBuilder, super.key});
 
@@ -31,7 +33,9 @@ class PassportScanScreen extends ConsumerStatefulWidget {
 
 class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
   final _controller = TextEditingController();
-  _Mode _mode = _Mode.choosing;
+  // Scan is the default mode so the camera starts on open (design update: no
+  // second tap). Web has no camera, so it starts on manual entry there.
+  _Mode _mode = kIsWeb ? _Mode.manual : _Mode.scanning;
   StampResult? _outcome;
 
   @override

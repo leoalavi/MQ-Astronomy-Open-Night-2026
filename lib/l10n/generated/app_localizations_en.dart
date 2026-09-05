@@ -166,7 +166,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get homeOpenMapBody =>
-      'Venues, toilets, parking — and walking directions';
+      'Venues, toilets, parking and walking directions';
 
   @override
   String get homeOpenMapBodyNoWayfinding => 'Venues, toilets and parking';

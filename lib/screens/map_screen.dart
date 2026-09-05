@@ -202,6 +202,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
       )) {
         ref.read(mapSelectionProvider.notifier).clear();
         _handledFocus = null; // let a later Show-on-map for the same venue work
+        // Sub-tab is transient exploration state too: leaving on 360° must not
+        // strand the visitor there on return. Reset to the campus Map so the
+        // section always reopens on Map. Switching Map↔360° while the branch
+        // stays visible never triggers this (the branch is still visible).
+        if (_mode != MapMode.campusMap) {
+          setState(() => _mode = MapMode.campusMap);
+        }
       }
     });
 

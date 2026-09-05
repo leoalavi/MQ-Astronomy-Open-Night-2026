@@ -48,7 +48,8 @@ void main() {
     expect(find.byType(ConfidenceNote), findsNothing);
   });
 
-  testWidgets('placeholder in RELEASE shows fallback, hides the draft', (
+  testWidgets('collected: shows a Stamp collected success + the real fact, '
+      'never a draft/awaiting-review note (even release + placeholder)', (
     t,
   ) async {
     await t.pumpWidget(
@@ -60,11 +61,16 @@ void main() {
         ),
       ),
     );
-    expect(find.textContaining('awaiting review'), findsOneWidget);
-    expect(find.textContaining('Light takes time'), findsNothing);
+    // Visitor-facing success, no internal wording.
+    expect(find.textContaining('Stamp collected'), findsOneWidget);
+    expect(find.textContaining('awaiting review'), findsNothing);
+    expect(find.byType(ConfidenceNote), findsNothing);
+    // The real fact is the reward — shown, not hidden behind a fallback.
+    expect(find.text('A telescope is also a time machine'), findsOneWidget);
+    expect(find.textContaining('Light takes time'), findsOneWidget);
   });
 
-  testWidgets('placeholder in DEBUG shows the draft + a ConfidenceNote', (
+  testWidgets('placeholder in DEBUG also shows the real body, no draft note', (
     t,
   ) async {
     await t.pumpWidget(
@@ -77,7 +83,8 @@ void main() {
       ),
     );
     expect(find.textContaining('Light takes time'), findsOneWidget);
-    expect(find.byType(ConfidenceNote), findsOneWidget);
+    expect(find.byType(ConfidenceNote), findsNothing);
+    expect(find.textContaining('awaiting review'), findsNothing);
   });
 
   testWidgets('direct: no overflow at 320x568 / 2.0 (self-scrolls)', (t) async {
@@ -141,8 +148,9 @@ void main() {
     expect(pos.pixels, greaterThan(0));
   });
 
-  // C3: placeholder + release + 320×568 + 2.0, all at once.
-  testWidgets('release + placeholder fallback: no overflow at 320x568 / 2.0', (
+  // C3: placeholder + release + 320×568 + 2.0, all at once — the real fact
+  // scrolls without overflow and shows no draft wording.
+  testWidgets('release + placeholder collect: no overflow at 320x568 / 2.0', (
     t,
   ) async {
     _bigViewport(t);
@@ -156,7 +164,7 @@ void main() {
       ),
     );
     await t.pumpAndSettle();
-    expect(find.textContaining('awaiting review'), findsOneWidget);
+    expect(find.textContaining('awaiting review'), findsNothing);
     expect(t.takeException(), isNull);
   });
 

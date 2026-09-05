@@ -92,7 +92,8 @@ void main() {
     router.go('/');
     await tester.pumpAndSettle();
     tester
-        .widget<OutlinedButton>(
+        // Directions is the filled brown primary button (consistent style).
+        .widget<FilledButton>(
           find.byKey(const Key('directions-parking:west-5')),
         )
         .onPressed!();

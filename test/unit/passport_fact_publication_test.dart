@@ -17,17 +17,16 @@ void main() {
     }
   });
 
-  test('placeholder in RELEASE shows the fallback, never the draft', () {
-    final p = resolveFactPresentation(
-        _fact(DataConfidence.placeholder), isRelease: true);
-    expect(p.body, FactBody.fallback);
-    expect(p.showDraftNote, isFalse);
-  });
-
-  test('placeholder in DEBUG shows the draft body + the review note', () {
-    final p = resolveFactPresentation(
-        _fact(DataConfidence.placeholder), isRelease: false);
-    expect(p.body, FactBody.body);
-    expect(p.showDraftNote, isTrue);
+  // New visitor-facing contract: a collected stamp always reveals its real fact
+  // and never any draft / awaiting-review wording — in every build, for every
+  // confidence. Internal review status must never reach a visitor.
+  test('placeholder shows the real body and NEVER a draft note (any build)',
+      () {
+    for (final release in [true, false]) {
+      final p = resolveFactPresentation(
+          _fact(DataConfidence.placeholder), isRelease: release);
+      expect(p.body, FactBody.body);
+      expect(p.showDraftNote, isFalse);
+    }
   });
 }

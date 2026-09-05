@@ -328,7 +328,7 @@ abstract class AonL10n {
   /// No description provided for @homeOpenMapBody.
   ///
   /// In en, this message translates to:
-  /// **'Venues, toilets, parking — and walking directions'**
+  /// **'Venues, toilets, parking and walking directions'**
   String get homeOpenMapBody;
 
   /// No description provided for @homeOpenMapBodyNoWayfinding.

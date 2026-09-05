@@ -10,7 +10,6 @@ import 'package:aon2026/data/passport_facts_data.dart';
 import 'package:aon2026/data/venues_data.dart';
 import 'package:aon2026/models/passport_fact.dart';
 import 'package:aon2026/services/passport_fact_publication.dart';
-import 'package:aon2026/widgets/confidence_note.dart';
 
 enum FactRevealReason { collected, revisit }
 
@@ -71,11 +70,23 @@ class PassportFactSheet extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Stamp pop — only on a fresh collect, motion-aware (design §12).
-            if (reason == FactRevealReason.collected)
-              _StampPop(reduceMotion: reduceMotion),
-            if (reason == FactRevealReason.collected)
-              const SizedBox(height: AonSpacing.space3),
+            // Stamp pop + an explicit visitor-facing success heading — only on
+            // a fresh collect, motion-aware (design §12). No draft/pending wording.
+            if (reason == FactRevealReason.collected) ...[
+              Row(
+                children: [
+                  _StampPop(reduceMotion: reduceMotion),
+                  const SizedBox(width: AonSpacing.space3),
+                  Expanded(
+                    child: Text(
+                      l.passportScanCollected,
+                      style: theme.textTheme.titleLarge,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AonSpacing.space4),
+            ],
             // Venue + activity context (venue name is the heading, design §8.1).
             Semantics(
               header: true,
@@ -94,15 +105,6 @@ class PassportFactSheet extends StatelessWidget {
             Text(title, style: theme.textTheme.headlineSmall),
             const SizedBox(height: AonSpacing.space3),
             Text(body, style: theme.textTheme.bodyLarge),
-            if (p.showDraftNote) ...[
-              const SizedBox(height: AonSpacing.space4),
-              // showDraftNote is only true for a placeholder fact, so
-              // ConfidenceNote (which renders only for placeholder) shows here.
-              ConfidenceNote(
-                confidence: fact.confidence,
-                message: l.passportFactDraftNote,
-              ),
-            ],
             const SizedBox(height: AonSpacing.space5),
             Align(
               alignment: Alignment.centerRight,

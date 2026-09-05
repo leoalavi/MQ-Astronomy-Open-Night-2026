@@ -34,22 +34,25 @@ class PlaceActionButtons extends StatelessWidget {
       }
     }
 
+    // Directions is the primary action, so it is the filled brown button
+    // everywhere (matching the single-venue sheet); Show on Map is the outlined
+    // secondary. Directions leads so the primary action sits first.
     return Wrap(
       spacing: AonSpacing.space2,
       runSpacing: AonSpacing.space2,
       children: [
-        OutlinedButton.icon(
-          key: Key('show-map-$placeKey'),
-          onPressed: () => navigate(Routes.mapFocus(placeKey), replace: true),
-          icon: const Icon(Icons.location_on_outlined),
-          label: Text(l.actionShowOnMap),
-        ),
-        OutlinedButton.icon(
+        FilledButton.icon(
           key: Key('directions-$placeKey'),
           onPressed: () =>
               navigate(Routes.googleNavTo(placeKey), replace: false),
           icon: const Icon(Icons.directions_walk_rounded),
           label: Text(l.mapDirections),
+        ),
+        OutlinedButton.icon(
+          key: Key('show-map-$placeKey'),
+          onPressed: () => navigate(Routes.mapFocus(placeKey), replace: true),
+          icon: const Icon(Icons.location_on_outlined),
+          label: Text(l.actionShowOnMap),
         ),
       ],
     );

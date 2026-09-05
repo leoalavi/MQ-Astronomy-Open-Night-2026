@@ -1,4 +1,3 @@
-import 'package:aon2026/models/data_confidence.dart';
 import 'package:aon2026/models/passport_fact.dart';
 
 /// Release-safe fallback copy shown when a fact is still an unreviewed draft
@@ -23,12 +22,10 @@ FactPresentation resolveFactPresentation(
   PassportFact fact, {
   required bool isRelease,
 }) {
-  // confirmed/derived: publishable body, no note.
-  if (fact.confidence.isReliable) {
-    return const FactPresentation(body: FactBody.body, showDraftNote: false);
-  }
-  // placeholder: release hides the draft (safe fallback); debug shows it + note.
-  return isRelease
-      ? const FactPresentation(body: FactBody.fallback, showDraftNote: false)
-      : const FactPresentation(body: FactBody.body, showDraftNote: true);
+  // Visitor-facing rule (stakeholder decision): a collected stamp always reveals
+  // its actual fact, and NEVER any "draft / pending review / awaiting review"
+  // or confidence wording — internal review status is not a visitor concern.
+  // `isRelease` is retained for the call-site/signature but no longer changes
+  // what a visitor sees; the fallback path is intentionally never taken.
+  return const FactPresentation(body: FactBody.body, showDraftNote: false);
 }

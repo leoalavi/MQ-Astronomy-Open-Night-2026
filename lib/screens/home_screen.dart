@@ -32,11 +32,8 @@ import 'package:aon2026/widgets/section_header.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
 import 'package:aon2026/widgets/parking_choices_sheet.dart';
-<<<<<<< Updated upstream
 import 'package:aon2026/widgets/toilet_choices_sheet.dart';
-=======
 import 'package:aon2026/widgets/information_points_sheet.dart';
->>>>>>> Stashed changes
 
 /// Landing screen: branding, when and where, and the four things people
 /// actually open the app for.
@@ -795,18 +792,43 @@ class _QuickAccessGrid extends ConsumerWidget {
       builder: (context, constraints) {
         const spacing = AonSpacing.space3;
         final columns = (constraints.maxWidth / 180).floor().clamp(2, 4);
-        final tileWidth =
-            (constraints.maxWidth - spacing * (columns - 1)) / columns;
 
-        return Wrap(
-          spacing: spacing,
-          runSpacing: spacing,
-          children: [
-            for (final item in items)
-              SizedBox(
-                width: tileWidth,
-                child: _QuickAccessTile(item: item),
+        // Equal-sized cards. Expanded gives every card the same width; wrapping
+        // each row in IntrinsicHeight + `CrossAxisAlignment.stretch` makes every
+        // card in that row as tall as the tallest one, so a two-line label or
+        // subtitle (e.g. "Information points", "Sport & Aquatic Centre", or any
+        // Persian/large-text wrap) never leaves its neighbour short. Rows grow
+        // with their content instead of being pinned to a fixed height, so the
+        // grid stays aligned without overflowing. A short final row keeps the
+        // same column widths via empty Expanded cells.
+        final rows = <Widget>[];
+        for (var i = 0; i < items.length; i += columns) {
+          final rowItems = items.skip(i).take(columns).toList();
+          rows.add(
+            IntrinsicHeight(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (var c = 0; c < columns; c++) ...[
+                    if (c > 0) const SizedBox(width: spacing),
+                    Expanded(
+                      child: c < rowItems.length
+                          ? _QuickAccessTile(item: rowItems[c])
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
+                ],
               ),
+            ),
+          );
+        }
+
+        return Column(
+          children: [
+            for (var r = 0; r < rows.length; r++) ...[
+              if (r > 0) const SizedBox(height: spacing),
+              rows[r],
+            ],
           ],
         );
       },
@@ -826,19 +848,13 @@ class _QuickAccessTile extends ConsumerWidget {
         ? null
         : ref.watch(venueByIdProvider(item.venueId!));
 
-<<<<<<< Updated upstream
-    // Parking has no single venue — Home asks the visitor which official area
-    // they mean instead of silently choosing one. Toilets are similar: the
-    // programme names three buildings, so the shortcut opens a chooser too.
-    final isParking = item.venueId == null;
-    final isToilets = item.id == 'toilets';
-=======
-    // Two shortcuts are groups, not a single venue: parking asks which official
-    // area, and information points lists registration + points 2/3. Both open a
-    // chooser rather than silently picking one destination.
+    // Three shortcuts are groups, not a single venue: parking asks which
+    // official area, toilets names three buildings, and information points
+    // lists registration + points 2/3. Each opens a chooser rather than
+    // silently picking one destination.
     final isParking = item.id == 'parking';
+    final isToilets = item.id == 'toilets';
     final isInfoPoints = item.id == 'information-points';
->>>>>>> Stashed changes
     final icon = isParking
         ? Icons.local_parking_rounded
         : isInfoPoints
@@ -857,13 +873,10 @@ class _QuickAccessTile extends ConsumerWidget {
     final venueLabel = venue?.chipLabel;
     final description = isParking
         ? l.quickAccessWalkingRoutes
-<<<<<<< Updated upstream
         : isToilets
         ? l.quickAccessToiletsAll
-=======
         : isInfoPoints
         ? l.infoRegistrationAndInfo
->>>>>>> Stashed changes
         : (venueLabel == null || venueLabel == item.label(l)
               ? (venue?.building ?? l.infoLocationToBeConfirmed)
               : venueLabel);
@@ -876,16 +889,13 @@ class _QuickAccessTile extends ConsumerWidget {
       onTap: () {
         if (isParking) {
           ParkingChoicesSheet.show(context);
-<<<<<<< Updated upstream
         } else if (isToilets) {
           // The three toilet buildings, each with directions and a map pin —
           // the same chooser pattern as parking, so Home never picks one
           // toilet for the visitor when the programme names three.
           ToiletChoicesSheet.show(context);
-=======
         } else if (isInfoPoints) {
           InformationPointsSheet.show(context);
->>>>>>> Stashed changes
         } else {
           // Everything else opens the venue sheet, which answers "where is
           // this and what's on here" and offers walking directions only when

@@ -14,11 +14,8 @@ import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
 import 'package:aon2026/widgets/parking_choices_sheet.dart';
-<<<<<<< Updated upstream
 import 'package:aon2026/widgets/toilet_choices_sheet.dart';
-=======
 import 'package:aon2026/widgets/information_points_sheet.dart';
->>>>>>> Stashed changes
 
 /// Quick Access must never dead-end.
 ///

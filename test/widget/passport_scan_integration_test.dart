@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/screens/passport_scan_screen.dart';
 import 'package:aon2026/services/passport_providers.dart';
+import 'package:aon2026/widgets/passport_fact_sheet.dart';
 
 void main() {
   testWidgets('a decoded namespaced QR collects a stamp via the shared path', (
@@ -32,7 +33,9 @@ void main() {
     await t.pumpAndSettle();
     await t.tap(find.byKey(const Key('fake-decode')));
     await t.pumpAndSettle();
-    expect(find.textContaining('collected'), findsOneWidget);
+    // "collected" now appears in the screen message AND the success fact sheet.
+    expect(find.textContaining('collected'), findsWidgets);
+    expect(find.byType(PassportFactSheet), findsOneWidget); // the success UI
     expect(find.text('Scan another'), findsOneWidget); // resume affordance
   });
 }

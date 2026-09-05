@@ -118,6 +118,37 @@ void main() {
       expect(inBand(TimeBand.lateEvening), isFalse,
           reason: 'finish unpublished — must not be inferred into 8-10pm');
     });
+
+    // Reproduces the 6–8pm screen from the bug report and pins exactly which
+    // "4pm" items may and may not appear, so the contract can't silently drift.
+    test('6–8pm shows only sessions genuinely on at 6–8pm', () {
+      final evening = EventFilterService.apply(
+        all,
+        const EventFilter(timeBands: {TimeBand.evening}),
+      ).map((e) => e.id).toSet();
+
+      // MUST NOT appear: 4.15pm start with no published finish. Their start is
+      // in 4–6pm and nothing proves they run into 6–8pm.
+      for (final id in ['kids-space', 'stories-across-worlds',
+          'junior-science-academy', 'planetariums']) {
+        expect(evening, isNot(contains(id)),
+            reason: '$id is start-only (no published finish) — 4–6pm only');
+      }
+
+      // MAY appear even though they "start at 4pm": these publish a real finish
+      // of 9–10pm, so they are genuinely open during 6–8pm (interval overlap).
+      for (final id in ['exhibition-hall', 'telescope-park', 'scientist-spotlight']) {
+        expect(evening, contains(id),
+            reason: '$id runs 4.15pm→9–10pm, so it IS on at 6–8pm');
+      }
+
+      // Open-all-night items appear in every band — the intended contract.
+      expect(evening, containsAll(['capture-the-cosmos', 'solar-system-walk']));
+
+      // A multi-session show is in 6–8pm because it has a real 6.15pm session,
+      // not because a 5pm one was stretched.
+      expect(evening, contains('physics-magic-show'));
+    });
   });
 
   group('search', () {

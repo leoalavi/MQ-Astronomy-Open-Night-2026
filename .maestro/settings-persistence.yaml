@@ -6,22 +6,42 @@
 #   2. "Delete my data" stays DELETED after a restart (a NO-GO condition — erased
 #      data must never return).
 #
-# Tab taps are by POINT, y=91% (tab-bar row centre). Slots (LTR): Home 8%,
-# Program 27%, Night 42%, Map 58%, Info 73%, Settings 88%. Persian mirrors them.
+# Tab taps after a CLEAN launch are by POINT, y=91% (tab-bar row centre). Slots
+# (LTR): Home 8%, Program 27%, Night 42%, Map 58%, Info 73%, Settings 88%; Persian
+# mirrors them. Tab taps after a bare RESTART are by label — see the note below.
 appId: au.edu.mq.astronomy.aon2026
 tags: [settings]
 ---
 # ── 1. A chosen language survives a restart ──
 - launchApp:
     clearState: true
+# Let the first frame land before a by-point tap (cold-boot guard, see
+# flows/open-map.yaml); a tap during boot hits nothing and the flow derails.
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 10000
+# Verified 2026-09-05: without this swipe the by-point tab tap right after a
+# launch lands on nothing (the same XCTest cold-boot guard flows/open-map.yaml uses).
+- swipe:
+    direction: DOWN
+    duration: 100
 - tapOn:
     point: "88%,91%"          # Settings (LTR: slot 6, right)
 - assertVisible: "Appearance"
 - tapOn: "Persian"            # the Persian option, labelled "Persian" in English
 - assertVisible: "تنظیمات"     # the whole app flips to Persian
 - launchApp                    # restart — the choice must survive
-- tapOn:
-    point: "12%,91%"          # Settings (Persian RTL: tab bar mirrored → LEFT)
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"   # hero title is EventInfo.name (English data even under Persian UI)
+    timeout: 10000
+- swipe:
+    direction: DOWN
+    duration: 100
+# By LABEL, not point: after a bare restart Maestro can still hold the
+# pre-restart tree, and a by-point tap fires before the new process is
+# interactive (verified 2026-09-05). The unselected tab's semantics label is
+# the plain tab name, unique on Home.
+- tapOn: "تنظیمات"            # Settings tab (Persian; mirrored to the LEFT under RTL)
 - assertVisible: "زبان"        # on the Persian Settings screen (Language)
 - tapOn: "English"            # endonym, never translated — restore English
 - assertVisible: "Settings"
@@ -35,8 +55,10 @@ tags: [settings]
 - inputText: "Cosmic"
 - tapOn: "(?s).*Save Cosmic arcade to My Night.*"
 - launchApp                    # clean, keyboard-free state; the saved plan persists
-- tapOn:
-    point: "88%,91%"          # Settings
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 10000
+- tapOn: "Settings"           # tab, by label (see note above)
 - assertVisible: "Appearance"
 - scrollUntilVisible:
     element:
@@ -46,6 +68,8 @@ tags: [settings]
 - assertVisible: "Delete data stored on this device?"
 - tapOn: "Delete"             # confirm — the dialog is modal, so this is the only "Delete"
 - launchApp                    # restart — deleted data must NOT return
-- tapOn:
-    point: "42%,91%"          # My Night
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 10000
+- tapOn: "Night"              # My Night tab, by label (see note above)
 - assertVisible: "Your night is empty"

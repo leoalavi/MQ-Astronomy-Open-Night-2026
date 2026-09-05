@@ -1,0 +1,38 @@
+# First launch (Apple release audit, 2026-09-05)
+#
+# Journey 6/8 of the release audit: a FRESH install opens straight into the app.
+# There is no onboarding by decision (docs/onboarding-decision.md), so this
+# asserts what that decision promises on a real device:
+#   * cold start lands on Home with the event identity and the passport card;
+#   * NO system permission alert appears on Home (location is asked on the Map
+#     tab, camera in the scanner) — the OS alert would carry "Allow" buttons;
+#   * every tab is one tap away and Settings has no "replay introduction" row
+#     to promise something that does not exist.
+appId: au.edu.mq.astronomy.aon2026
+tags: [first-launch, smoke]
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+# XCTest can crash on cold boot if the a11y tree is touched before first render.
+- swipe:
+    direction: DOWN
+    duration: 100
+- assertVisible: "Astronomy Open Night"
+- assertVisible: "(?s).*Saturday 19 September 2026.*4pm – 10pm.*"
+- assertNotVisible: "Allow While Using App"
+- assertNotVisible: "Allow Once"
+- assertNotVisible: "Don’t Allow"
+- assertVisible: "(?s).*Astronomy Passport.*0 of 9 stamps.*"
+- takeScreenshot: .maestro/screenshots/first-launch-01-home
+
+# Program is one tap away (slot 2 of 6).
+- tapOn:
+    point: "27%,91%"
+- assertVisible: "Search talks, activities, presenters"
+# Settings (slot 6 of 6): language, privacy, no intro-replay row.
+- tapOn:
+    point: "89%,91%"
+- assertVisible: "Settings"
+- assertNotVisible: "(?s).*introduction.*"
+- takeScreenshot: .maestro/screenshots/first-launch-02-settings

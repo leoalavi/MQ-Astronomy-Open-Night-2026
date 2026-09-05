@@ -28,8 +28,10 @@ tags: [program]
 - assertVisible: "(?s).*Solar system walk.*Open all night.*"
 - assertNotVisible: "(?s).*4pm.*Solar system walk.*"
 
-# A time-band chip narrows the list; Clear resets it.
-- tapOn: "6–8pm"
+# The time filter (redesigned 2026-09-05: a "Filter by time" button opening a
+# sheet of start hours) narrows the list; Clear resets it.
+- tapOn: "Filter by time"
+- tapOn: "6pm"
 - assertVisible: "(?s).*shown.*"
 - assertVisible: "Clear"
 - tapOn: "Clear"

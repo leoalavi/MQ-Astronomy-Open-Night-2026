@@ -25,6 +25,8 @@ maestro test --include-tags smoke .maestro/  # quick gate
 | `map-location.yaml` | locate → iOS permission → dot on the artwork → follow state; a far fix yields the honest distance banner, never a clamped dot |
 | `map-modes.yaml` | Map / 360° / Compass switching; walk-route FAB is campus-map only; compass degrades to the honest cardinal LIST (no magnetometer on the simulator) |
 | `map-wayfinding.yaml` | Directions FAB → Google consent disclosure (the §2b invariant) → decline returns to the campus map, no network. **Rewritten 2026-08-30**: the old offline origin/destination picker is gone; Directions is now always the consent-gated Google nav. |
+| `first-launch.yaml` | **release audit 2026-09-05**: a fresh install opens straight on Home — no onboarding, no permission alert, every tab one tap away, no "replay introduction" row in Settings (docs/onboarding-decision.md) |
+| `passport.yaml` | **release audit 2026-09-05**: Home → passport (zero-stamp explanation) → the CAMERA alert appears only on entering the scanner → deny → honest "Camera unavailable" → manual code → stamp collected |
 | `map-360-picker.yaml` | 360° picker: every D–I card tourable (G shipped 2026-08-31, so nothing reads "coming soon"), the LAST legend card reachable+tappable past the floating tab bar, and its tour opens |
 
 ## Selector gotchas in THIS app
@@ -94,3 +96,12 @@ alignment and still match the AppBar title.
   top/left, so the title rendered as "◄acquarie Theatre". Fixed via
   `PanoramaTourView.titleLeadingInset`, guarded by
   `test/widget/panorama_title_clearance_test.dart`.
+
+7. **A by-point tab tap right after a bare `launchApp` (restart, no
+   `clearState`) fires against the PRE-restart tree.** `extendedWaitUntil` on
+   the hero passes immediately (the old tree still has it), the tap lands on
+   nothing, and the flow derails one assertion later. Found 2026-09-05 in
+   `settings-persistence.yaml`. After a restart, tap tabs by their semantics
+   label (`tapOn: "Settings"`, `"Night"`, `"تنظیمات"`) — Maestro re-queries
+   until the element exists. After a `clearState` launch the cold-boot
+   `swipe: DOWN` guard is still required before a by-point tap.

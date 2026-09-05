@@ -1,0 +1,51 @@
+# Astronomy Passport (Apple release audit, 2026-09-05)
+#
+# Journey 5 + the camera half of Journey 8:
+#   Home → passport card → the zero-stamp explanation → "Scan or enter a code"
+#   → the CAMERA permission alert appears HERE and not before (contextual)
+#   → deny it → the scanner degrades to an honest "Camera unavailable" state
+#   with a one-tap path to manual entry → type a live station code → stamp
+#   recorded, fact sheet opens, progress reads 1 of 9.
+#
+# The permission alert is an iOS system alert; Maestro sees it through XCTest,
+# so its buttons are matched by their exact text.
+appId: au.edu.mq.astronomy.aon2026
+tags: [passport]
+---
+- launchApp:
+    clearState: true
+    clearKeychain: true
+    permissions:
+      all: unset
+- swipe:
+    direction: DOWN
+    duration: 100
+# Opening the passport never starts the camera.
+- tapOn: "(?s).*Astronomy Passport.*0 of 9 stamps.*"
+- assertVisible: "Scan or enter a venue code to start"
+- assertVisible: "(?s).*Each of the nine venues has a QR sign.*"
+- assertNotVisible: "Don’t Allow"
+- takeScreenshot: .maestro/screenshots/passport-01-zero-stamps
+
+# The scanner is what asks — and only now.
+- tapOn: "Scan or enter a code"
+- extendedWaitUntil:
+    visible: "Don’t Allow"
+    timeout: 8000
+- takeScreenshot: .maestro/screenshots/passport-02-camera-prompt-in-context
+- tapOn: "Don’t Allow"
+# Denied → honest recovery, no dead end, no crash.
+- extendedWaitUntil:
+    visible: "(?s).*Camera unavailable.*"
+    timeout: 8000
+- tapOn: "Enter a code"
+- assertVisible: "Enter the code from the venue sign"
+- tapOn: "Code"
+- inputText: "AON-A-FL3R"
+# No hideKeyboard: Flutter exposes no dismiss action Maestro can drive, and
+# "Add stamp" sits above the keyboard anyway.
+- tapOn: "Add stamp"
+- extendedWaitUntil:
+    visible: "(?s).*Stamp collected.*"
+    timeout: 8000
+- takeScreenshot: .maestro/screenshots/passport-03-stamp-collected

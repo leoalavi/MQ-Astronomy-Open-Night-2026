@@ -11,6 +11,16 @@ tags: [info]
 ---
 - launchApp:
     clearState: true
+# Let the first frame land before touching the a11y tree (same guard as
+# flows/open-map.yaml): a by-point tap fired during cold boot hits nothing.
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 10000
+# Verified 2026-09-05: without this swipe the by-point tab tap right after a
+# launch lands on nothing (the same XCTest cold-boot guard flows/open-map.yaml uses).
+- swipe:
+    direction: DOWN
+    duration: 100
 - tapOn:
     point: "73%,91%"
 - assertVisible: "Useful information"
@@ -21,5 +31,8 @@ tags: [info]
     element:
       text: "(?s).*Getting here.*"
     direction: DOWN
+    centerElement: true
+    visibilityPercentage: 10
+    timeout: 25000
 - assertVisible: "(?s).*Getting here.*"
 - takeScreenshot: .maestro/screenshots/info-01

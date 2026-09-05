@@ -145,13 +145,13 @@ void main() {
       expect(find.text('Central Courtyard to Telescope Park, in 360°'),
           findsOneWidget);
 
-      // Pinned ABOVE the lettered D card — "add it at the top" (Raouf).
+      // Pinned ABOVE the first lettered card — "add it at the top" (Raouf).
+      // The lettered list now leads with E (Solar-walk order), so compare
+      // against E rather than D.
       expect(
         tester.getTopLeft(walk).dy,
         lessThan(
-          tester
-              .getTopLeft(find.text('D · 14 Sir Christopher Ondaatje Avenue'))
-              .dy,
+          tester.getTopLeft(find.text('E · 1 Central Courtyard')).dy,
         ),
       );
 

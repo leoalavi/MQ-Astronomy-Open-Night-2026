@@ -14,22 +14,25 @@ void main() {
   setUp(() => container = ProviderContainer());
   tearDown(() => container.dispose());
 
-  test('lists exactly the planned D–I 360 venues, in letter order', () {
+  test('lists exactly the planned D–I 360 venues, in Solar-walk order', () {
+    // The list follows the order visitors reach the venues on the Solar system
+    // walk — E → F → G along Gymnasium Road — then the remaining lettered
+    // venues D, H, I (Raouf 2026-09-05). Solar walk is pinned above this list.
     final venues = container.read(panoramaPickerVenuesProvider);
 
     expect(venues.map((v) => v.mapReference).toList(), [
-      'D',
       'E',
       'F',
       'G',
+      'D',
       'H',
       'I',
     ]);
     expect(venues.map((v) => v.id).toList(), [
-      '14-sir-christopher-ondaatje-avenue',
       '1-central-courtyard',
       'sport-and-aquatic-centre',
       'astronomical-observatory',
+      '14-sir-christopher-ondaatje-avenue',
       '11-wallys-walk',
       '17-wallys-walk',
     ]);

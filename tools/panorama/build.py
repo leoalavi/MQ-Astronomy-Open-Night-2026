@@ -133,15 +133,17 @@ TOURS: dict[str, list[tuple[str, str, str, str]]] = {
     # Seven scenes carry a 5th tuple element: an explicit bundled asset path that
     # some other tour (E/F/G) already encodes. The encoder SKIPS those and the
     # manifest points at the shared file verbatim (see asset_relpath), so the
-    # walk reuses ~14 MB of imagery instead of duplicating it. The remaining six
-    # are new encodes unique to the walk.
+    # walk reuses imagery instead of duplicating it. The remaining five are new
+    # encodes unique to the walk. (The "Central Courtyard stairs" reuse scene was
+    # dropped as an extra stop on 2026-09-05.)
     "gymnasium-road": [
         ("courtyard-entrance", "Central Courtyard", ASTRONOMY,
          "1 CC entrance.JPG", "indoor/1-central-courtyard_entrance.jpg"),
         ("courtyard-approach-stairs", "Leaving the Central Courtyard", ASTRONOMY,
          "1 CC close to stairs.JPG"),
-        ("courtyard-stairs", "Central Courtyard stairs", ASTRONOMY,
-         "1 CC - Stairs.JPG", "indoor/1-central-courtyard_stairs.jpg"),
+        # The "Central Courtyard stairs" close-up (courtyard-stairs, reusing
+        # 1-central-courtyard_stairs.jpg) was dropped as an extra stop on
+        # 2026-09-05 — it still lives in the E tour, just not on the walk.
         # Already bundled as 1-central-courtyard_downstairs.jpg — it was held out
         # of E's rail "for the future road/route panorama", which is THIS walk.
         # Reuse that encode rather than duplicate it.

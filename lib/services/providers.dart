@@ -235,14 +235,18 @@ final venuesWithPanoramaProvider = Provider<Set<String>>(
   (ref) => ref.watch(panoramaToursProvider).keys.toSet(),
 );
 
-/// The venues intentionally offered in the top-level 360° catalogue.
+/// The venues intentionally offered in the top-level 360° catalogue, in the
+/// order they are presented — the order visitors reach them on the Solar system
+/// walk (E → F → G, along Gymnasium Road) followed by the remaining lettered
+/// venues (D talks, H laser, I astrophotography). The Solar system walk itself
+/// is pinned ABOVE this list by the picker widget.
 ///
 /// C (Food and drink) will not receive panorama photography, so it must not be
 /// advertised as "coming soon". A and B retain their valid direct tours but
 /// are outside the current D–I catalogue requested for the event experience.
-const Set<String> _panoramaPickerMapReferences = {'D', 'E', 'F', 'G', 'H', 'I'};
+const List<String> _panoramaPickerOrder = ['E', 'F', 'G', 'D', 'H', 'I'];
 
-/// The venues the 360° picker offers, in the order the paper map letters them.
+/// The venues the 360° picker offers, in [_panoramaPickerOrder].
 ///
 /// Derived from stable official map letters rather than display names. Shared
 /// venue data remains unchanged; this provider owns only 360° presentation.
@@ -250,11 +254,14 @@ final panoramaPickerVenuesProvider = Provider<List<Venue>>((ref) {
   final lettered = ref
       .watch(venuesProvider)
       .where(
-        (venue) =>
-            _panoramaPickerMapReferences.contains(venue.mapReference ?? ''),
+        (venue) => _panoramaPickerOrder.contains(venue.mapReference ?? ''),
       )
       .toList();
-  lettered.sort((a, b) => a.mapReference!.compareTo(b.mapReference!));
+  lettered.sort(
+    (a, b) => _panoramaPickerOrder
+        .indexOf(a.mapReference!)
+        .compareTo(_panoramaPickerOrder.indexOf(b.mapReference!)),
+  );
   return List.unmodifiable(lettered);
 });
 

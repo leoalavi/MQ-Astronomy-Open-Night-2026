@@ -143,7 +143,7 @@ void main() {
         'astronomical-observatory': 2,
         '11-wallys-walk': 3,
         '17-wallys-walk': 4,
-        'gymnasium-road': 13,
+        'gymnasium-road': 12,
       };
       for (final tour in PanoramaData.tours) {
         final m = IndoorManifest.fromJson(
@@ -206,12 +206,14 @@ void main() {
   );
 
   test(
-    'Solar system walk runs the numbered route 1->13, reusing E/F/G imagery',
+    'Solar system walk runs the numbered route 1->12, reusing E/F/G imagery',
     () async {
       // Order is the organiser's own numbering (Raouf 2026-09-01), Central
       // Courtyard -> Telescope Park — the direction visitors walk it. This is
       // the regression that pins the sequence; getting it reversed or reshuffled
-      // is the failure mode this test exists to catch.
+      // is the failure mode this test exists to catch. The "Central Courtyard
+      // stairs" close-up (courtyard-stairs) was removed as an extra stop
+      // (Raouf 2026-09-05).
       final tour = PanoramaData.tourFor('gymnasium-road')!;
       expect(tour.placeholder, isFalse);
       final m = IndoorManifest.fromJson(
@@ -221,7 +223,6 @@ void main() {
       expect(m.nodes.map((n) => n.id).toList(), [
         'courtyard-entrance',
         'courtyard-approach-stairs',
-        'courtyard-stairs',
         'courtyard-downstairs',
         'planetarium-approach',
         'planetarium-entrance',
@@ -239,12 +240,11 @@ void main() {
       // empty, exactly as every other tour.
       expect(m.nodes.every((n) => n.neighbours.isEmpty), isTrue);
 
-      // Eight of the thirteen scenes REUSE imagery E/F/G already bundle rather
+      // Seven of the twelve scenes REUSE imagery E/F/G already bundle rather
       // than duplicate it. If these stop pointing at the shared asset the bundle
       // silently regrows by ~14 MB — pin the exact reuse.
       final byId = {for (final n in m.nodes) n.id: n.image};
       expect(byId['courtyard-entrance'], 'indoor/1-central-courtyard_entrance.jpg');
-      expect(byId['courtyard-stairs'], 'indoor/1-central-courtyard_stairs.jpg');
       expect(byId['courtyard-downstairs'],
           'indoor/1-central-courtyard_downstairs.jpg');
       expect(byId['planetarium-approach'],

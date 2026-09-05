@@ -13,12 +13,6 @@
       "neighbours": []
     },
     {
-      "id": "courtyard-stairs",
-      "image": "indoor/1-central-courtyard_stairs.jpg",
-      "description": "Central Courtyard stairs",
-      "neighbours": []
-    },
-    {
       "id": "courtyard-downstairs",
       "image": "indoor/1-central-courtyard_downstairs.jpg",
       "description": "Down toward Gymnasium Road",

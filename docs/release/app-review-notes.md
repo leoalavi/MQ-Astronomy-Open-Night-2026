@@ -33,8 +33,9 @@ codes are final and fully enabled in this build. The physical QR signs are
 installed on campus for the event, so away from campus please use manual
 code entry — every step is reachable without a sign:
 
-  1. Open the passport: either tap the "Astronomy Passport" card on the
-     "Home" tab, or tap the "Astronomy Passport" button on the "Info" tab.
+  1. Open the passport: tap the "Astronomy Passport" card on the "Home" tab.
+     (The passport is reached only from Home — it is not a tab, and it is not
+     on the Info tab.)
   2. Tap "Scan or enter a code", then "Enter a code".
   3. Type any of these station codes and tap "Add stamp":
         AON-A-FL3R   AON-B-HFUM   AON-C-MU4T
@@ -53,7 +54,7 @@ code entry — every step is reachable without a sign:
 NAVIGATION NOTE
 The app has six tabs: Home, Program, Night, Map, Info, Settings. The
 passport is not a tab — it is reached from the "Astronomy Passport" card on
-the Home tab, or the "Astronomy Passport" button on the Info tab.
+the Home tab.
 
 While preview is on, a "Preview stamps" badge is shown on the passport so a
 practice stamp is never mistaken for one earned at a venue. The switch is

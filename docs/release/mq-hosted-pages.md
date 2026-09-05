@@ -37,9 +37,12 @@ Macquarie University publishes the Astronomy Open Night app to help visitors
 find their way around campus during the Astronomy Open Night event.
 
 WHAT WE COLLECT
-Nothing. The app has no account, no sign-in and no server of its own. We do
-not collect, transmit or store any personal information about you, and the app
-contains no analytics, advertising or tracking software of any kind.
+Macquarie University collects nothing. The app has no account, no sign-in and
+no server of its own, and it contains no analytics, advertising or tracking
+software of any kind. We do not receive or store any personal information about
+you. The one time information leaves your device is when you choose to load a
+Google map or ask for walking directions — that goes to Google, not to us, and
+is described under "Google Maps and walking directions" below.
 
 WHAT THE APP STORES ON YOUR DEVICE
 The app saves a small amount of information on your phone so it can remember
@@ -72,7 +75,11 @@ inside the app. There is one exception, and the app asks you before using it.
 If you choose to load a Google map, or ask for walking directions, Google
 receives the information it needs to answer that request. When you ask for
 walking directions, that includes the start and end points of the route you
-asked for. Google handles this information under its own privacy policy:
+asked for (the start point may be your precise or approximate location). To
+provide and improve its services, Google also receives the map or route
+request, your IP address, device and app information, a Google Maps
+SDK-specific identifier, crash diagnostics and map interactions. Google handles
+this information under its own privacy policy:
 https://policies.google.com/privacy
 
 Until you agree, no Google map is loaded and no request is sent. You can

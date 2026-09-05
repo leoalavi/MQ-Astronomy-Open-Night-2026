@@ -726,6 +726,7 @@ on real hardware (simulator-verified only); Android screenshots at ≤2:1.
 | Programme sources & open questions | `docs/data-sources.md`, `docs/mq-staff-questions.md` |
 | Release artefacts | `docs/release/` |
 | Apple App Store release audit (2026-09-05) | `APPLE_RELEASE_AUDIT.md` |
+| Human release log (`Raouf:` entries, newest first) | `CHANGELOG.md` |
 | Why there is no onboarding | `docs/onboarding-decision.md` |
 | Recent audits | `docs/map-audit-2026-08-30.md`, `docs/home-program-audit-2026-08-30.md`, `docs/settings-mynight-audit-2026-08-30.md` |
 | Specs & plans | `docs/superpowers/` |

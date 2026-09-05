@@ -18,7 +18,7 @@ University's *Astronomy Open Night*, **Saturday 19 September 2026, 4–10pm**.
 | | |
 |---|---|
 | Package | `aon2026`, bundle id `au.edu.mq.astronomy.aon2026` |
-| Version | `1.0.0+1` (`pubspec.yaml`) — **spent** on a Play bootstrap upload; bump before RC |
+| Version | `1.0.0+2` (`pubspec.yaml`, commit `58577e0`) — the TestFlight **Build 2** candidate; build 1 is spent on Play and TestFlight. Bump once per store upload, then `flutter build ios --config-only` before an Xcode archive |
 | Platforms built | **iOS**, **Android**, **web**, **macOS** (`android/ ios/ web/ macos/`) |
 | Languages | English + **Persian** (RTL) only |
 | Accounts / sign-in | **None** |
@@ -140,7 +140,7 @@ assets/          ~50 MB    maps/ (official basemap) · data/indoor (34 panoramas
                            data/buildings.json · web/ (pannellum viewer) · branding/
 tools/                     aon_map/ (georef) · panorama/ (encode) · reskin/ · coverage/
 scripts/check.sh           THE quality gate (§13)
-.maestro/                  11 E2E flows — NOT in the gate, needs a booted device
+.maestro/                  23 E2E flows — NOT in the gate, needs a booted device
 docs/                      specs, audits, release artefacts, provenance
 ```
 

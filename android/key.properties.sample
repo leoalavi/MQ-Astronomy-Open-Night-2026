@@ -5,9 +5,11 @@
 # key, because a debug-signed release uploads happily and then fails every Google
 # Maps key restriction for every real user.
 #
-# The keystore itself is held by Macquarie University, not in this repository and
-# not in a personal password manager. It cannot be regenerated: losing it means
-# losing the ability to update the app.
+# Android publisher: Leo Alavi (personal account, confirmed 2026-09-05).
+# Keep the upload keystore and credentials outside Git and back them up securely.
+# Play App Signing uses a separate app-signing key; an upload-key reset can be
+# requested through Play Console if an upload key is lost or compromised.
+# Never replace the app-signing identity of an existing application.
 #
 # Record the upload certificate's SHA-1 AND SHA-256 when you generate it —
 # Plan B step C3 needs them:

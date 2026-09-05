@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "2660"
+   LastUpgradeVersion = "1510"
    version = "1.7">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -10,7 +10,7 @@
             ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
             <ActionContent
                title = "Run Prepare Flutter Framework Script"
-               scriptText = "/bin/sh &quot;$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh&quot; prepare&#10;">
+               scriptText = "set -e&#10;if [ -z &quot;${FLUTTER_ROOT:-}&quot; ] &amp;&amp; [ -f &quot;$SRCROOT/Flutter/Generated.xcconfig&quot; ]; then&#10;  FLUTTER_ROOT=&quot;$(sed -n &apos;s/^FLUTTER_ROOT=//p&apos; &quot;$SRCROOT/Flutter/Generated.xcconfig&quot; | tail -1)&quot;&#10;fi&#10;if [ -z &quot;${FLUTTER_ROOT:-}&quot; ]; then&#10;  FLUTTER_BIN=&quot;$(command -v flutter 2&gt;/dev/null || true)&quot;&#10;  for candidate in /opt/homebrew/bin/flutter /usr/local/bin/flutter &quot;$HOME/flutter/bin/flutter&quot; &quot;$HOME/development/flutter/bin/flutter&quot;; do&#10;    if [ -z &quot;$FLUTTER_BIN&quot; ] &amp;&amp; [ -x &quot;$candidate&quot; ]; then&#10;      FLUTTER_BIN=&quot;$candidate&quot;&#10;    fi&#10;  done&#10;  if [ -n &quot;$FLUTTER_BIN&quot; ]; then&#10;    file=&quot;$FLUTTER_BIN&quot;&#10;    while [ -h &quot;$file&quot; ]; do&#10;      dir=&quot;$(cd -P &quot;$(dirname &quot;$file&quot;)&quot; &amp;&amp; pwd)&quot;&#10;      file=&quot;$(readlink &quot;$file&quot;)&quot;&#10;      case &quot;$file&quot; in&#10;        /*) ;;&#10;        *) file=&quot;$dir/$file&quot; ;;&#10;      esac&#10;    done&#10;    dir=&quot;$(cd -P &quot;$(dirname &quot;$file&quot;)&quot; &amp;&amp; pwd)&quot;&#10;    FLUTTER_ROOT=&quot;$(cd -P &quot;$dir/..&quot; &amp;&amp; pwd)&quot;&#10;  fi&#10;fi&#10;if [ -z &quot;${FLUTTER_ROOT:-}&quot; ] || [ ! -f &quot;$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh&quot; ]; then&#10;  echo &quot;error: Could not locate the Flutter SDK (FLUTTER_ROOT). Ensure flutter is on PATH, or run &apos;flutter pub get&apos; to regenerate ios/Flutter/Generated.xcconfig.&quot; &gt;&amp;2&#10;  exit 1&#10;fi&#10;export FLUTTER_ROOT&#10;/bin/sh &quot;$FLUTTER_ROOT/packages/flutter_tools/bin/xcode_backend.sh&quot; prepare&#10;">
                <EnvironmentBuildable>
                   <BuildableReference
                      BuildableIdentifier = "primary"

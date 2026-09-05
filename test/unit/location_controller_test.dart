@@ -112,16 +112,16 @@ void main() {
     expect(s.status, LocationStatus.serviceOff); // this reason we DO know
   });
 
-  group('first Map entry auto-prompt', () {
+  group('Map entry checks existing permission without prompting', () {
     test('grant -> active, dot shown, but NOT following (camera not hijacked)',
         () async {
       final svc = FakeLocationService();
       final c = _c(svc);
       await c
           .read(locationControllerProvider.notifier)
-          .ensureFirstMapEntryPrompt();
+          .restoreGrantedLocation();
       final s = c.read(locationControllerProvider);
-      expect(svc.requestCount, 1); // prompted on entry, without a Locate tap
+      expect(svc.requestCount, 0); // existing grant; no permission dialog
       expect(s.active, isTrue); // location live — the dot renders
       expect(s.following, isFalse); // opening campus-fit camera left alone
       svc.emit(_fix());
@@ -134,13 +134,13 @@ void main() {
       final svc = FakeLocationService(grant: LocationStatus.denied);
       final c = _c(svc);
       final n = c.read(locationControllerProvider.notifier);
-      await n.ensureFirstMapEntryPrompt();
-      expect(svc.requestCount, 1);
+      await n.restoreGrantedLocation();
+      expect(svc.requestCount, 0);
       expect(c.read(locationControllerProvider).active, isFalse); // still usable
       expect(c.read(locationControllerProvider).status, LocationStatus.denied);
       // Re-entering the Map tab (or any rebuild) must NOT prompt again.
-      await n.ensureFirstMapEntryPrompt();
-      expect(svc.requestCount, 1); // latched: still exactly one OS dialog
+      await n.restoreGrantedLocation();
+      expect(svc.requestCount, 0); // browsing never opens a permission dialog
     });
 
     test('deniedForever on first entry does NOT auto-open Settings', () async {
@@ -150,7 +150,7 @@ void main() {
       final c = _c(svc);
       await c
           .read(locationControllerProvider.notifier)
-          .ensureFirstMapEntryPrompt();
+          .restoreGrantedLocation();
       expect(svc.appSettingsOpened, 0);
       expect(c.read(locationControllerProvider).status,
           LocationStatus.deniedForever);
@@ -165,7 +165,7 @@ void main() {
       // Must complete without throwing.
       await c
           .read(locationControllerProvider.notifier)
-          .ensureFirstMapEntryPrompt();
+          .restoreGrantedLocation();
       final s = c.read(locationControllerProvider);
       expect(s.active, isFalse); // Map stays usable, location just inactive
       expect(s.status, LocationStatus.unknown); // neutral -> Locate offers retry
@@ -178,10 +178,22 @@ void main() {
       final n = c.read(locationControllerProvider.notifier);
       await n.onLocateTapped(); // grants + follows
       expect(svc.requestCount, 1);
-      await n.ensureFirstMapEntryPrompt();
+      await n.restoreGrantedLocation();
       expect(svc.requestCount, 1); // no second prompt
       expect(c.read(locationControllerProvider).following, isTrue); // untouched
     });
+  });
+
+  test('explicit location actions recover from platform failure', () async {
+    final c = ProviderContainer(overrides: [
+      locationServiceProvider.overrideWithValue(_ThrowingLocationService()),
+    ]);
+    addTearDown(c.dispose);
+    final n = c.read(locationControllerProvider.notifier);
+    await n.onLocateTapped();
+    await n.ensureLocationActive();
+    expect(c.read(locationControllerProvider).active, isFalse);
+    expect(c.read(locationControllerProvider).status, LocationStatus.unknown);
   });
 
   test('hidden map pauses the stream and drops follow', () async {

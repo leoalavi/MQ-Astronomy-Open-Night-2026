@@ -2,18 +2,8 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 
-/// The Android permission set is a **Play Data safety declaration in disguise**.
-///
-/// The Data safety form for this app answers "no user data collected", and that
-/// answer is only defensible because of what the manifest does NOT ask for. A
-/// single new plugin that drags in `AD_ID`, `READ_MEDIA_IMAGES` or
-/// `GET_ACCOUNTS` would silently make the published declaration false — and Play
-/// now runs automated checks against the binary before human review, so the
-/// mismatch gets caught by Google rather than by us.
-///
-/// This test is the tripwire. If it fails, the fix is usually NOT to add the
-/// permission to the allow-list: it is to work out which dependency added it and
-/// whether the Data safety form and privacy policy now need to change too.
+/// Source-manifest regression guard. SDK diagnostics can be collected without
+/// sensitive permissions; audit the merged release manifest and Data safety too.
 void main() {
   final manifest =
       File('android/app/src/main/AndroidManifest.xml').readAsStringSync();
@@ -22,6 +12,7 @@ void main() {
   /// the reason it exists. Manifest-merger additions from plugins are not in
   /// this file; see the `dangerous` check below for those.
   const allowed = <String, String>{
+    'android.permission.INTERNET': 'Google services and the loopback panorama viewer',
     'android.permission.CAMERA':
         'QR scanning for the Astronomy Passport, started only on tap',
     'android.permission.ACCESS_FINE_LOCATION':
@@ -58,9 +49,8 @@ void main() {
     );
   });
 
-  test('no permission that would force a Data safety disclosure', () {
-    // Each of these maps to a data type the app currently declares as NOT
-    // collected. Any of them appearing makes that declaration false.
+  test('no unused sensitive permissions', () {
+    // These capabilities are unnecessary for the implemented event features.
     const dangerous = <String, String>{
       'com.google.android.gms.permission.AD_ID': 'Device or other IDs',
       'android.permission.READ_EXTERNAL_STORAGE': 'Files and docs',

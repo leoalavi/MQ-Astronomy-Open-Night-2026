@@ -88,13 +88,13 @@ Future<void> _zoomIn(WidgetTester t, double zoom) async {
 }
 
 void main() {
-  testWidgets('entering the Map tab requests location (no Locate tap needed)',
+  testWidgets('entering the Map restores an existing grant without requesting',
       (t) async {
     final svc = FakeLocationService(); // grants
     final c = _container(svc);
     await t.pumpWidget(_app(c));
     await t.pump(); // let the post-frame entry prompt run + resolve
-    expect(svc.requestCount, 1); // prompted purely by entering the tab
+    expect(svc.requestCount, 0); // prompted purely by entering the tab
     final s = c.read(locationControllerProvider);
     expect(s.active, isTrue); // dot goes live
     expect(s.following, isFalse); // opening campus-fit camera not hijacked
@@ -113,15 +113,15 @@ void main() {
     expect(c.read(locationControllerProvider).active, isFalse);
     // The map's controls remain interactive — Locate button is still there as
     // the deliberate retry/re-enable path.
-    expect(svc.requestCount, 1);
+    expect(svc.requestCount, 0);
   });
 
-  testWidgets('entry prompt also fires under the Persian locale', (t) async {
+  testWidgets('Persian Map also avoids an entry permission prompt', (t) async {
     final svc = FakeLocationService();
     final c = _container(svc);
     await t.pumpWidget(_app(c, locale: const Locale('fa')));
     await t.pump();
-    expect(svc.requestCount, 1);
+    expect(svc.requestCount, 0);
     expect(t.takeException(), isNull);
   });
 

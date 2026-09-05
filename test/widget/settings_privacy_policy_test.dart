@@ -64,13 +64,18 @@ void main() {
     expect(opened, [Uri.parse(testUrl)]);
   });
 
-  testWidgets('no configured URL → no dead Privacy Policy row', (t) async {
-    await t.pumpWidget(harness(policyUrl: null));
+  testWidgets('no hosted URL still exposes a complete offline privacy policy', (t) async {
+    final opened = <Uri>[];
+    await t.pumpWidget(harness(policyUrl: null, opened: opened));
     await t.pumpAndSettle();
-    // Scroll the whole page; the row must never appear.
-    await scrollTo(t, find.text('Credits'));
-    expect(find.byKey(const Key('settings-privacy-policy')), findsNothing);
-    expect(find.text('Privacy Policy'), findsNothing);
+    final row = find.byKey(const Key('settings-privacy-policy'));
+    await scrollTo(t, row);
+    await t.tap(row);
+    await t.pumpAndSettle();
+    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.textContaining('Leo Alavi'), findsOneWidget);
+    expect(find.textContaining('ML Kit'), findsWidgets);
+    expect(opened, isEmpty);
   });
 
   testWidgets('a failed open is reported honestly, never a crash', (t) async {

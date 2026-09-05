@@ -1,4 +1,6 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+    <uses-permission android:name="android.permission.INTERNET" />
     <!-- Astronomy Passport QR scanning. Camera hardware is optional so devices
          without a camera still install and use manual code entry. -->
     <uses-permission android:name="android.permission.CAMERA" />
@@ -17,6 +19,13 @@
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:networkSecurityConfig="@xml/network_security_config">
+        <!-- Geolocator binds this service for foreground position streams; it
+             never promotes it to a foreground service in this app. -->
+        <service
+            android:name="com.baseflow.geolocator.GeolocatorLocationService"
+            tools:remove="android:foregroundServiceType" />
+        <!-- Internal routes are not public Android deep links. -->
+        <meta-data android:name="flutter_deeplinking_enabled" android:value="false" />
         <activity
             android:name=".MainActivity"
             android:exported="true"

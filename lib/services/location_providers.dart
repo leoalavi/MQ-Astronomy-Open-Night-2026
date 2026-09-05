@@ -144,11 +144,7 @@ class LocationController extends Notifier<LocationSnapshot> {
   StreamSubscription<UserLocationFix>? _sub;
   StreamSubscription<bool>? _serviceSub;
 
-  /// Latch for the first-Map-entry auto-prompt. The Map tab requests location
-  /// once, on entry, because the live dot is a core feature of that screen —
-  /// but only once: re-entering the tab (the branch stays mounted, so this
-  /// controller and its latch survive) must never re-fire the OS dialog.
-  bool _promptedOnMapEntry = false;
+  bool _requesting = false;
 
   LocationService get _svc => ref.read(effectiveLocationServiceProvider);
 
@@ -183,60 +179,49 @@ class LocationController extends Notifier<LocationSnapshot> {
   /// (that is [onLocateTapped]'s map behaviour, and its 2nd-call follow toggle
   /// would misfire on compass re-entry).
   Future<void> ensureLocationActive() async {
-    if (state.active) return;
-    final s = await _svc.request();
-    state = state.copyWith(status: s);
-    if (s == LocationStatus.granted) {
-      state = state.copyWith(active: true);
+    if (state.active || _requesting) return;
+    _requesting = true;
+    try {
+      final status = await _svc.request();
+      if (!ref.mounted) return;
+      state = state.copyWith(status: status, active: status == LocationStatus.granted);
       _sync();
+    } catch (_) {
+      if (ref.mounted) state = state.copyWith(active: false, status: LocationStatus.unknown);
+    } finally {
+      _requesting = false;
     }
   }
 
-  /// Requests location the first time the visitor opens the Map tab.
-  ///
-  /// Location is core to the Map (the live "you are here" dot), so we prompt on
-  /// entry rather than waiting for a "Locate Me" tap. Runs at most once per app
-  /// session (see [_promptedOnMapEntry]) so switching tabs never re-prompts, and
-  /// is invoked ONLY from `MapScreen` — no other tab requests location.
-  ///
-  /// Behaviour by outcome:
-  ///  - granted  → the dot goes live (`active`), but the camera is NOT put into
-  ///    follow: the opening campus-fit view is left alone. "Locate Me" then just
-  ///    recentres/follows.
-  ///  - denied / deniedForever / serviceOff → status is recorded and the Map
-  ///    stays fully usable; nothing is auto-opened. A later explicit "Locate Me"
-  ///    tap is the intentional path to a re-prompt or the Settings deep-link
-  ///    (see [onLocateTapped]).
-  ///
-  /// A no-op if location is already active (e.g. preview mode, or the visitor
-  /// tapped "Locate Me" before this ran), so it never disturbs existing follow.
-  Future<void> ensureFirstMapEntryPrompt() async {
-    if (_promptedOnMapEntry) return;
-    _promptedOnMapEntry = true;
+  /// Restore an existing grant without showing a permission dialog on Map entry.
+  Future<void> restoreGrantedLocation() async {
     if (state.active) return;
-    // This runs unprompted, the moment the Map opens — so unlike the
-    // tap-initiated [onLocateTapped], a throw here would crash the Map tab on
-    // entry. The Map must stay usable no matter what location does, so any
-    // failure just leaves location inactive with a neutral status; the visitor
-    // can still tap "Locate Me" to retry deliberately.
     try {
-      final s = await _svc.request();
-      state = state.copyWith(status: s);
-      if (s == LocationStatus.granted) {
+      final status = await _svc.status();
+      if (!ref.mounted) return;
+      state = state.copyWith(status: status);
+      if (status == LocationStatus.granted) {
         state = state.copyWith(active: true);
         _sync();
       }
     } catch (_) {
-      state = state.copyWith(status: LocationStatus.unknown);
+      if (ref.mounted) state = state.copyWith(status: LocationStatus.unknown);
     }
   }
 
   /// The locate button's single action.
   Future<void> onLocateTapped() async {
-    if (!state.active) {
-      final s = await _svc.request();
-      state = state.copyWith(status: s);
-      switch (s) {
+    if (_requesting) return;
+    if (state.active) {
+      state = state.copyWith(following: !state.following);
+      return;
+    }
+    _requesting = true;
+    try {
+      final status = await _svc.request();
+      if (!ref.mounted) return;
+      state = state.copyWith(status: status);
+      switch (status) {
         case LocationStatus.granted:
           state = state.copyWith(active: true, following: true);
           _sync();
@@ -246,11 +231,13 @@ class LocationController extends Notifier<LocationSnapshot> {
           await _svc.openLocationSettings();
         case LocationStatus.denied:
         case LocationStatus.unknown:
-          break; // stay inactive; tap again re-prompts
+          break;
       }
-      return;
+    } catch (_) {
+      if (ref.mounted) state = state.copyWith(active: false, status: LocationStatus.unknown);
+    } finally {
+      _requesting = false;
     }
-    state = state.copyWith(following: !state.following); // toggle follow only
   }
 
   /// A deliberate user map-pan exits follow but keeps the dot (§P1-2).
@@ -297,7 +284,13 @@ class LocationController extends Notifier<LocationSnapshot> {
   /// generic `unknown` (the button shows a neutral retry affordance) (§5.7).
   Future<void> _onStreamError() async {
     _cancel();
-    final status = kIsWeb ? LocationStatus.unknown : await _svc.status();
+    var status = LocationStatus.unknown;
+    try {
+      if (!kIsWeb) status = await _svc.status();
+    } catch (_) {
+      // A failed permission recheck must not become an unhandled stream error.
+    }
+    if (!ref.mounted) return;
     state = state.copyWith(
         active: false, following: false, clearFix: true, status: status);
   }

@@ -26,7 +26,7 @@
 
 Astronomy Open Night helps a visitor answer two questions on the night: **"what's on right now?"** across 36 official programme items in 9 venues over 6 hours, and **"how do I get there in the dark?"** — the organisers specifically asked for clearer guidance between the car parks and the venues, because attendees get disoriented at night.
 
-It is an independent student project, **not an official Macquarie University product** — see [Attribution](#-attribution--rights) for exactly what belongs to whom. Built on Flutter 3.44 and Riverpod 3, it ships as an iOS/Android/web app with **all event data compiled into the binary**: no server, no database, no accounts, and no analytics.
+It is an independent student project, **not an official Macquarie University product** — see [Attribution](#-attribution--rights) for exactly what belongs to whom. Built on Flutter 3.44 and Riverpod 3, it ships as an iOS/Android/web app with **all event data compiled into the binary**: no developer-operated server, database or accounts. Android Maps and scanner SDKs report technical/usage data; see the [privacy audit](GOOGLE_PLAY_RELEASE_AUDIT.md).
 
 **[🏗️ Architecture](./ARCHITECTURE.md)** &nbsp;·&nbsp; **[📖 Docs](#-documentation-map)** &nbsp;·&nbsp; **[🤝 Contributing](./CONTRIBUTING.md)** &nbsp;·&nbsp; **[🔐 Data Sources](./docs/data-sources.md)**
 
@@ -132,14 +132,14 @@ Public university events usually hand visitors a printed A3 map and hope for the
 | --- | --- |
 | Accounts / sign-in | **None** |
 | Backend / database | **None** |
-| Analytics / tracking | **None** |
+| Analytics / tracking | No developer-operated analytics; Google Maps/ML Kit SDK diagnostics must be disclosed |
 | Required API keys | **None** — the app runs fully "dark" |
 | Optional API keys | **1** (Google Maps, for walking directions only) |
 | Camera use | QR scanner only, requested only when the visitor taps "Scan" |
 | Location use | When-in-use only, for the map and compass — never background |
 | Data stored | Passport stamps, favourites, saved plan and settings — **on-device only**, via `shared_preferences` |
 
-There is nowhere for a visitor's data to go: everything they save lives on their own phone and is erasable from Settings. Camera permission is requested lazily — opening the Passport screen never starts the camera or prompts for permission until the visitor explicitly chooses "Scan".
+Saved plans and stamps are local and erasable from Settings. Android system backups may include local data. Google directions transmit location after consent, and Maps/ML Kit have their own diagnostic data flows. Camera permission is requested lazily — opening the Passport screen never starts the camera or prompts for permission until the visitor explicitly chooses "Scan".
 
 > **For Data Provenance:** [docs/data-sources.md](./docs/data-sources.md) — where every fact, coordinate and time came from, and what is still unconfirmed.
 

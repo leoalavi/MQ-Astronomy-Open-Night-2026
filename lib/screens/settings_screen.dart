@@ -141,14 +141,9 @@ class SettingsScreen extends ConsumerWidget {
           // honestly, with a revoke control once consent has been given.
           const _GoogleMapsPrivacyCard(),
 
-          // In-app Privacy Policy entry point (store requirement — the policy
-          // must be reachable from inside the app). Shown ONLY when a real
-          // hosted URL is configured (EventConfig.privacyPolicyUrl); null until
-          // Macquarie hosts the page, so no dead link ships (release blocker B7).
-          if (config.privacyPolicyUrl case final String policyUrl) ...[
-            _gap,
-            _PrivacyPolicyCard(url: policyUrl),
-          ],
+          // The full policy is available offline even before hosting is configured.
+          _gap,
+          _PrivacyPolicyCard(url: config.privacyPolicyUrl),
 
           // ── Your data ──
           SectionHeader(
@@ -594,7 +589,7 @@ class _GoogleMapsPrivacyCard extends ConsumerWidget {
 class _PrivacyPolicyCard extends ConsumerWidget {
   const _PrivacyPolicyCard({required this.url});
 
-  final String url;
+  final String? url;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -604,14 +599,30 @@ class _PrivacyPolicyCard extends ConsumerWidget {
         key: const Key('settings-privacy-policy'),
         leading: Icon(Icons.policy_outlined, color: context.aon.accent),
         title: Text(l.settingsPrivacyPolicy),
-        trailing: const Icon(Icons.open_in_new_rounded),
+        trailing: Icon(url == null ? Icons.chevron_right_rounded : Icons.open_in_new_rounded),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AonSpacing.space4,
           vertical: AonSpacing.space1,
         ),
         onTap: () async {
+          final policyUrl = url;
+          if (policyUrl == null) {
+            await showDialog<void>(
+              context: context,
+              builder: (dialogContext) => AlertDialog(
+                scrollable: true,
+                title: Text(l.settingsPrivacyPolicy),
+                content: Text(l.settingsPrivacyPolicyBody),
+                actions: [TextButton(
+                  onPressed: () => Navigator.of(dialogContext).pop(),
+                  child: Text(MaterialLocalizations.of(dialogContext).closeButtonLabel),
+                )],
+              ),
+            );
+            return;
+          }
           final opener = ref.read(urlOpenerProvider);
-          final ok = await opener(Uri.parse(url));
+          final ok = await opener(Uri.parse(policyUrl));
           if (!context.mounted || ok) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(l.settingsPrivacyPolicyUnavailable)),

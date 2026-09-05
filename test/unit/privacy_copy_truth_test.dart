@@ -18,6 +18,17 @@ void main() {
             'different obligation');
   });
 
+  test('Android SDK diagnostics and backup limits are disclosed', () async {
+    final en = await AonL10n.delegate.load(const Locale('en'));
+    expect(en.settingsPrivacyBody, contains('ML Kit'));
+    expect(en.settingsPrivacyBody, contains('installation identifiers'));
+    expect(en.settingsPrivacyBody, contains('system backups'));
+    expect(en.settingsPrivacyBody, isNot(contains('collects no analytics')));
+    final fa = await AonL10n.delegate.load(const Locale('fa'));
+    expect(fa.settingsPrivacyBody, contains('ML Kit'));
+    expect(fa.settingsPrivacyBody, contains('شناسه'));
+  });
+
   test('both locales define the privacy body and mention Google', () async {
     for (final locale in AonL10n.supportedLocales) {
       final l = await AonL10n.delegate.load(locale);

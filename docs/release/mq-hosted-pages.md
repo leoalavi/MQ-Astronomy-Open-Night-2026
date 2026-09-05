@@ -1,3 +1,12 @@
+> **Android release correction — 5 September 2026:** Leo Alavi confirmed that
+> Android will use his personal Play account. The historical MQ publisher draft
+> below is not approved for Android publication. Its “nothing collected” claims
+> omit Maps/ML Kit diagnostics, and its deletion/backup claims are too broad.
+> Do not publish that draft. Use [android-privacy-policy.html](android-privacy-policy.html)
+> and [Google Play audit](../../GOOGLE_PLAY_RELEASE_AUDIT.md) for Android.
+> The HTML is ready for owner review/hosting, not a verified live URL. No
+> university publisher identity, hosting obligation or legal terms are inferred.
+
 # The three MQ-hosted pages — ready-to-publish copy
 
 App Store Connect will not accept a submission without a **Privacy Policy URL**

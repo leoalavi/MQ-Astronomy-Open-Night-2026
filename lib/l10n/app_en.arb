@@ -368,7 +368,7 @@
   },
   "settingsPrivacy": "Privacy",
   "settingsPrivacyTitle": "What this app shares",
-  "settingsPrivacyBody": "There is no account and no sign-in. Your passport stamps, favourites and saved plan stay on this device. The app collects no analytics.\n\nThe camera is used only to read a QR code, and the image is never stored or sent anywhere.\n\nYour location is used on this device to show where you are on the campus map. It is sent to Google only when you ask for walking directions — and only after you agree.\n\nWayfinding draws its route on a Google map. Loading any Google map sends Google the map request plus the technical request and device information it needs to serve it — but not your location.",
+  "settingsPrivacyBody": "No account or advertising. Stamps, favourites, your plan and preferences are stored locally; Android system backups may include them.\n\nCamera images stay on your device. On Android, Google ML Kit reports technical/usage diagnostics and installation identifiers.\n\nLocation supports the campus map and compass. After you agree, walking directions send the route origin and destination to Google. Google Maps also collects technical data, identifiers, crash diagnostics and map interactions.\n\nRead the Privacy Policy below for details, retention, deletion and contact information.",
   "settingsCredits": "Credits",
   "settingsCreditsHeroImage": "Hero image",
   "settingsCreditsEventMaterials": "Event materials",
@@ -1360,5 +1360,8 @@
                 "type": "String"
           }
     }
-  }
+  },
+  "passportCameraSettings": "Open app settings",
+  "passportScannerPrivacy": "Camera images stay on your device. On Android, Google ML Kit reports technical and usage diagnostics. You can enter the printed code instead. See Privacy Policy in Settings.",
+  "settingsPrivacyPolicyBody": "Astronomy Open Night is published on Google Play by Leo Alavi, an independent developer. Privacy contact: leo@leoalavi.dev. Last updated: 5 September 2026.\n\nThere is no account, sign-in, advertising or developer-operated analytics service. Passport stamps, favourites, your saved plan and preferences are stored locally. Android may include local data in system backups or device transfers according to your device settings.\n\nLocation is optional. It is processed on your device for the campus map and compass. When you request walking directions and agree to Google Maps, the route origin (which may be your precise or approximate location) and destination are sent to Google over HTTPS.\n\nGoogle Maps also receives map requests, IP address, device and app information, an SDK-specific identifier, crash diagnostics and map interactions to provide and improve its services. No Google map is loaded until you agree; you can revoke that choice in Settings.\n\nOn Android, the QR scanner uses Google ML Kit. Camera images are processed on your device and are not saved or uploaded by the app. ML Kit reports device/app information, installation identifiers, performance and usage diagnostics to Google over HTTPS. You can enter the printed station code instead of using the camera.\n\nSaved stamps, favourites and plans remain until you delete them. Settings → Delete my data clears these items and Google Maps consent; language and appearance preferences are retained. This does not delete data already received by Google or copies held in system backups. Google controls retention and deletion of its service data under its privacy policy, available in the Google Maps privacy section below.\n\nWe do not operate a server holding your saved plan or stamps. Local storage uses Android's app sandbox; this does not promise absolute security. Contact the address above with privacy questions. This policy covers all visitors."
 }

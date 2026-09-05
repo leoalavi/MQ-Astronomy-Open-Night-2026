@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- geolocator_android 5.0.3 includes this unused notification branch.
+         StreamHandlerImpl only enters it with foregroundNotificationConfig;
+         LocationService uses plain LocationSettings and never supplies it.
+         Keep the bound service (the plugin needs it) and omit POST_NOTIFICATIONS.
+         Re-audit this exception if foreground location is ever introduced. -->
+    <issue id="NotificationPermission">
+        <ignore regexp=".*usage from com\.baseflow\.geolocator\.location\.BackgroundNotification.*" />
+    </issue>
+</lint>

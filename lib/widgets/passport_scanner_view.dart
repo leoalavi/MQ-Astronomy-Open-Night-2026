@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:geolocator/geolocator.dart';
 
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/services/scan_gate.dart';
@@ -124,7 +125,8 @@ class _PassportScannerViewState extends State<PassportScannerView>
               // switch to manual — that is exactly the "tap Scan twice" bug when
               // it fired on the transient permission-pending state. Show the
               // reason and offer a one-tap path to manual entry instead.
-              return Padding(
+              return SingleChildScrollView(
+                child: Padding(
                 padding: const EdgeInsets.all(AonSpacing.space4),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
@@ -134,6 +136,20 @@ class _PassportScannerViewState extends State<PassportScannerView>
                       style: Theme.of(context).textTheme.bodyMedium,
                       textAlign: TextAlign.center,
                     ),
+                    if (error.errorCode == MobileScannerErrorCode.permissionDenied) ...[
+                      const SizedBox(height: AonSpacing.space3),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          try {
+                            await Geolocator.openAppSettings();
+                          } catch (_) {
+                            // Manual entry remains available if Settings cannot open.
+                          }
+                        },
+                        icon: const Icon(Icons.settings_outlined),
+                        label: Text(l.passportCameraSettings),
+                      ),
+                    ],
                     if (widget.onError != null) ...[
                       const SizedBox(height: AonSpacing.space3),
                       OutlinedButton.icon(
@@ -143,6 +159,7 @@ class _PassportScannerViewState extends State<PassportScannerView>
                       ),
                     ],
                   ],
+                ),
                 ),
               );
             },

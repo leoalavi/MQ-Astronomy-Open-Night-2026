@@ -66,6 +66,33 @@ void main() {
     expect(find.textContaining('live yet'), findsOneWidget);
   });
 
+  testWidgets('unknown QR releases the scanner; Scan another mounts a fresh one', (t) async {
+    var mounts = 0;
+    await t.pumpWidget(ProviderScope(
+      child: MaterialApp(
+        localizationsDelegates: AonL10n.localizationsDelegates,
+        supportedLocales: AonL10n.supportedLocales,
+        home: PassportScanScreen(scannerBuilder: (decode) {
+          mounts++;
+          return TextButton(onPressed: () => decode('invalid-qr'), child: const Text('Decode'));
+        }),
+      ),
+    ));
+    await t.pumpAndSettle();
+    await t.tap(find.text('Decode'));
+    await t.pumpAndSettle();
+    expect(find.text('Decode'), findsNothing);
+    final before = mounts;
+    await t.ensureVisible(find.text('Scan another'));
+    await t.tap(find.text('Scan another'));
+    await t.pumpAndSettle();
+    expect(find.text('Decode'), findsOneWidget);
+    expect(mounts, greaterThan(before));
+    await t.tap(find.text('Decode'));
+    await t.pumpAndSettle();
+    expect(find.textContaining('not an Astronomy Open Night code'), findsOneWidget);
+  });
+
   testWidgets('no overflow at 320x568 / 2.0', (t) async {
     t.view.physicalSize = const Size(320, 568);
     t.view.devicePixelRatio = 1.0;

@@ -45,6 +45,7 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
   }
 
   void handleInput(StampInput input) {
+    if (!mounted || (input is ScanInput && _outcome != null)) return;
     final outcome = ref.read(passportProvider.notifier).collect(input);
     setState(() => _outcome = outcome.result);
 
@@ -86,7 +87,9 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
     };
     return Scaffold(
       appBar: AppBar(title: Text(l.passportScanTitle)),
-      body: ListView(
+      body: SafeArea(
+        top: false,
+        child: ListView(
         padding: const EdgeInsets.all(AonSpacing.space4),
         children: [
           // Two equal peers.
@@ -116,7 +119,11 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
           ),
           const SizedBox(height: AonSpacing.space4),
 
-          if (_mode == _Mode.scanning) _scanner(),
+          if (!kIsWeb) ...[
+            Text(l.passportScannerPrivacy, style: theme.textTheme.bodySmall),
+            const SizedBox(height: AonSpacing.space3),
+          ],
+          if (_mode == _Mode.scanning && _outcome == null) _scanner(),
 
           if (_mode == _Mode.manual) ...[
             Text(l.passportEnterCodeHint, style: theme.textTheme.titleMedium),
@@ -152,6 +159,7 @@ class PassportScanScreenState extends ConsumerState<PassportScanScreen> {
             ),
           ],
         ],
+        ),
       ),
     );
   }

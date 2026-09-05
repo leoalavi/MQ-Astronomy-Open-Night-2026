@@ -49,4 +49,33 @@ void main() {
 
     expect(fired, isEmpty);
   });
+
+  // The "Haptics" setting acts through `globalEnabled` (synced from
+  // `hapticsEnabledProvider` in the app root). Most call sites pass a literal
+  // `true` — the tab bar, save button and passport scan — so the master switch
+  // is the ONLY thing that can silence them. These pin exactly that seam.
+  group('master switch (the Haptics setting)', () {
+    tearDown(() => AonHaptics.globalEnabled = true); // never leak OFF state
+
+    test('OFF silences even a call site that asks for haptics', () async {
+      AonHaptics.globalEnabled = false;
+      await AonHaptics.selection(true);
+      await AonHaptics.light(true);
+      await AonHaptics.medium(true);
+      await AonHaptics.heavy(true);
+      expect(fired, isEmpty);
+    });
+
+    test('ON lets an asking call site through', () async {
+      AonHaptics.globalEnabled = true;
+      await AonHaptics.selection(true);
+      expect(fired, ['HapticFeedbackType.selectionClick']);
+    });
+
+    test('a per-call opt-out still wins while the switch is ON', () async {
+      AonHaptics.globalEnabled = true;
+      await AonHaptics.light(false);
+      expect(fired, isEmpty);
+    });
+  });
 }

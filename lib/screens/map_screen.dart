@@ -622,18 +622,17 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await _onPlaceSelected(key, zoom: MapConfig.mapFocusZoom);
   }
 
-  Future<void> _openFavorites() async {
-    final key = await showModalBottomSheet<String>(
+  void _openFavorites() {
+    // The sheet drives its own navigation via PlaceActionButtons (Show on Map
+    // does `go(mapFocus)`, Directions pushes the walking route), so it no longer
+    // hands a key back for the caller to focus.
+    showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
+      showDragHandle: true,
       builder: (_) => const FavoritesSheet(),
     );
-    // Zoom in on the chosen place (see [_openSearch] — avoids the MAP-006 crash
-    // and matches the "Show on map" focus behaviour).
-    if (key != null && mounted) {
-      await _onPlaceSelected(key, zoom: MapConfig.mapFocusZoom);
-    }
   }
 
   Future<void> _onPlaceSelected(String key, {double? zoom}) async {

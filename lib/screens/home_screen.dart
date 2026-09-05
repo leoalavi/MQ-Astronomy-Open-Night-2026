@@ -32,7 +32,11 @@ import 'package:aon2026/widgets/section_header.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
 import 'package:aon2026/widgets/parking_choices_sheet.dart';
+<<<<<<< Updated upstream
 import 'package:aon2026/widgets/toilet_choices_sheet.dart';
+=======
+import 'package:aon2026/widgets/information_points_sheet.dart';
+>>>>>>> Stashed changes
 
 /// Landing screen: branding, when and where, and the four things people
 /// actually open the app for.
@@ -822,16 +826,28 @@ class _QuickAccessTile extends ConsumerWidget {
         ? null
         : ref.watch(venueByIdProvider(item.venueId!));
 
+<<<<<<< Updated upstream
     // Parking has no single venue — Home asks the visitor which official area
     // they mean instead of silently choosing one. Toilets are similar: the
     // programme names three buildings, so the shortcut opens a chooser too.
     final isParking = item.venueId == null;
     final isToilets = item.id == 'toilets';
+=======
+    // Two shortcuts are groups, not a single venue: parking asks which official
+    // area, and information points lists registration + points 2/3. Both open a
+    // chooser rather than silently picking one destination.
+    final isParking = item.id == 'parking';
+    final isInfoPoints = item.id == 'information-points';
+>>>>>>> Stashed changes
     final icon = isParking
         ? Icons.local_parking_rounded
+        : isInfoPoints
+        ? VenueStyle.iconFor(VenueCategory.informationPoint)
         : VenueStyle.iconFor(venue?.category ?? VenueCategory.other);
     final accent = isParking
         ? context.aon.mapParking
+        : isInfoPoints
+        ? VenueStyle.colorFor(context, VenueCategory.informationPoint)
         : VenueStyle.colorFor(context, venue?.category ?? VenueCategory.other);
 
     // The venue's own name as the subtitle — so "Telescopes" is immediately
@@ -841,8 +857,13 @@ class _QuickAccessTile extends ConsumerWidget {
     final venueLabel = venue?.chipLabel;
     final description = isParking
         ? l.quickAccessWalkingRoutes
+<<<<<<< Updated upstream
         : isToilets
         ? l.quickAccessToiletsAll
+=======
+        : isInfoPoints
+        ? l.infoRegistrationAndInfo
+>>>>>>> Stashed changes
         : (venueLabel == null || venueLabel == item.label(l)
               ? (venue?.building ?? l.infoLocationToBeConfirmed)
               : venueLabel);
@@ -855,11 +876,16 @@ class _QuickAccessTile extends ConsumerWidget {
       onTap: () {
         if (isParking) {
           ParkingChoicesSheet.show(context);
+<<<<<<< Updated upstream
         } else if (isToilets) {
           // The three toilet buildings, each with directions and a map pin —
           // the same chooser pattern as parking, so Home never picks one
           // toilet for the visitor when the programme names three.
           ToiletChoicesSheet.show(context);
+=======
+        } else if (isInfoPoints) {
+          InformationPointsSheet.show(context);
+>>>>>>> Stashed changes
         } else {
           // Everything else opens the venue sheet, which answers "where is
           // this and what's on here" and offers walking directions only when

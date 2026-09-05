@@ -403,6 +403,12 @@ abstract class AonL10n {
   /// **'Parking'**
   String get quickAccessParking;
 
+  /// No description provided for @quickAccessInformationPoints.
+  ///
+  /// In en, this message translates to:
+  /// **'Information points'**
+  String get quickAccessInformationPoints;
+
   /// No description provided for @quickAccessWalkingRoutes.
   ///
   /// In en, this message translates to:
@@ -648,6 +654,12 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'No favourites yet'**
   String get mapFavoritesEmpty;
+
+  /// No description provided for @mapFavoritesEmptyHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Activities you save appear here.'**
+  String get mapFavoritesEmptyHint;
 
   /// No description provided for @mapFavoritesLoading.
   ///

@@ -29,8 +29,19 @@ class MapCategoryFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Chips the map deliberately does not offer. `other` is the uncategorised
+    // sentinel. First aid, the complimentary shuttle and the Transport NSW bus
+    // stop have no verified coordinate (docs/data-sources.md) — they render no
+    // marker, so a chip that filters nothing is dead UI. Metro stays: it has an
+    // approximated-but-real coordinate and is a useful destination.
+    const hidden = {
+      VenueCategory.other,
+      VenueCategory.firstAid,
+      VenueCategory.shuttleStop,
+      VenueCategory.busStop,
+    };
     final categories = VenueCategory.values
-        .where((c) => c != VenueCategory.other)
+        .where((c) => !hidden.contains(c))
         .toList(growable: false);
     return SizedBox(
       height: 60, // holds the >=56 chip target with breathing room

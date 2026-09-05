@@ -153,6 +153,7 @@
   "quickAccessToilets": "Toilets",
   "quickAccessFirstAid": "First aid",
   "quickAccessParking": "Parking",
+  "quickAccessInformationPoints": "Information points",
   "quickAccessWalkingRoutes": "Walking routes",
   "quickAccessToiletsAll": "All locations",
   "@quickAccessToiletsAll": {
@@ -273,6 +274,7 @@
   "mapFavoritesTitle": "Favourites",
   "mapFavoritesTooltip": "Favourites",
   "mapFavoritesEmpty": "No favourites yet",
+  "mapFavoritesEmptyHint": "Activities you save appear here.",
   "mapFavoritesLoading": "Loading…",
   "mapFavoriteUnavailable": "Unavailable",
   "mapFavoriteAdd": "Add to favourites",

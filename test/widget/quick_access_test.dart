@@ -14,7 +14,11 @@ import 'package:aon2026/services/clock.dart';
 import 'package:aon2026/services/saved_events.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
 import 'package:aon2026/widgets/parking_choices_sheet.dart';
+<<<<<<< Updated upstream
 import 'package:aon2026/widgets/toilet_choices_sheet.dart';
+=======
+import 'package:aon2026/widgets/information_points_sheet.dart';
+>>>>>>> Stashed changes
 
 /// Quick Access must never dead-end.
 ///
@@ -82,11 +86,11 @@ void main() {
       }
     });
 
-    test('the parking shortcut is the only one without a venue', () {
+    test('only the group shortcuts (parking, info points) have no venue', () {
       final noVenue = EventConfig.astronomyOpenNight.quickAccess
           .where((q) => q.venueId == null)
           .map((q) => q.id);
-      expect(noVenue, ['parking']);
+      expect(noVenue, ['parking', 'information-points']);
     });
   });
 
@@ -209,6 +213,27 @@ void main() {
 
       expect(southDirections.hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
+    });
+  });
+
+  group('information points', () {
+    testWidgets('Information points opens a chooser with all three points', (
+      tester,
+    ) async {
+      await openQuickAccess(tester, 'Information points');
+      expect(find.byType(InformationPointsSheet), findsOneWidget);
+      // Registration + points 2/3 all sit on the Central Courtyard coordinate
+      // the map pins, so each offers a real Show on map + Directions.
+      for (final id in const [
+        'registration-point',
+        'information-point-2',
+        'information-point-3',
+      ]) {
+        expect(find.byKey(Key('info-point-card-$id')), findsOneWidget);
+        expect(find.byKey(Key('show-map-venue:$id')), findsOneWidget);
+        expect(find.byKey(Key('directions-venue:$id')), findsOneWidget);
+      }
+      expect(find.byType(WayfindingScreen), findsNothing);
     });
   });
 }

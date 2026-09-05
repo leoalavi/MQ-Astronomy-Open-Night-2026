@@ -63,6 +63,14 @@ post_install do |installer|
       # This line overrides whatever flutter_additional_ios_build_settings set, so
       # leaving it at 14.0 would build the pods one OS below the app itself.
       config.build_settings['IPHONEOS_DEPLOYMENT_TARGET'] = '15.0'
+      # Xcode 16+ runs a standalone "module verifier" pass over each pod's Clang
+      # module. Google-Maps-iOS-Utils fails it: the umbrella's `@import GoogleMaps;`
+      # can't resolve the GoogleMaps module in that isolated pass, cascading to
+      # "could not build module 'GoogleMapsUtils'"/'Test' and the double-quote /
+      # enum-cast diagnostics. The pod compiles correctly in the real build (where
+      # CocoaPods puts GoogleMaps on the search path) — only the verification pass
+      # fails — so disable the verifier for the pods. Leaves it on for Runner.
+      config.build_settings['ENABLE_MODULE_VERIFIER'] = 'NO'
     end
   end
 end

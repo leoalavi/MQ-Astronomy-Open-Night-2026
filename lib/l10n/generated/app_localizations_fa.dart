@@ -205,6 +205,9 @@ class AonL10nFa extends AonL10n {
   String get quickAccessParking => 'پارکینگ';
 
   @override
+  String get quickAccessInformationPoints => 'نقاط اطلاعات';
+
+  @override
   String get quickAccessWalkingRoutes => 'مسیرهای پیاده';
 
   @override
@@ -358,6 +361,10 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get mapFavoritesEmpty => 'هنوز علاقه‌مندی‌ای ندارید';
+
+  @override
+  String get mapFavoritesEmptyHint =>
+      'فعالیت‌هایی که ذخیره می‌کنید اینجا نمایش داده می‌شوند.';
 
   @override
   String get mapFavoritesLoading => 'در حال بارگذاری…';

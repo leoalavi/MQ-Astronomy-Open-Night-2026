@@ -205,6 +205,9 @@ class AonL10nEn extends AonL10n {
   String get quickAccessParking => 'Parking';
 
   @override
+  String get quickAccessInformationPoints => 'Information points';
+
+  @override
   String get quickAccessWalkingRoutes => 'Walking routes';
 
   @override
@@ -358,6 +361,9 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get mapFavoritesEmpty => 'No favourites yet';
+
+  @override
+  String get mapFavoritesEmptyHint => 'Activities you save appear here.';
 
   @override
   String get mapFavoritesLoading => 'Loading…';

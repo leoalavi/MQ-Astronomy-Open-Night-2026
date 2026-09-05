@@ -146,6 +146,9 @@ class EventConfig {
       QuickAccessItem(id: 'food', venueId: 'food-and-drink'),
       QuickAccessItem(id: 'toilets', venueId: 'toilets-1-central-courtyard'),
       QuickAccessItem(id: 'parking', venueId: null),
+      // A group like parking (no single venue): opens a chooser listing the
+      // registration and information points, each with Show on Map + Directions.
+      QuickAccessItem(id: 'information-points', venueId: null),
     ],
     features: const EventFeatures(
       panorama: true,
@@ -252,6 +255,7 @@ class QuickAccessItem {
     'food' => l.quickAccessFood,
     'toilets' => l.quickAccessToilets,
     'parking' => l.quickAccessParking,
+    'information-points' => l.quickAccessInformationPoints,
     _ => id,
   };
 }

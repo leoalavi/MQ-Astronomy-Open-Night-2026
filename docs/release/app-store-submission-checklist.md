@@ -21,7 +21,7 @@ Sources are linked per section. Items are marked:
 | iOS release build succeeds | **DONE** | `flutter build ios --release --no-codesign` → exit 0 |
 | App icon incl. 1024×1024 marketing icon, no alpha | **DONE** | `AppIcon.appiconset`, 19 entries, all with filenames |
 | `ITSAppUsesNonExemptEncryption` declared | **DONE** | `Info.plist` → `false`; rationale in `export-compliance.md` |
-| Version/build bumped past the spent `1.0.0+1` | **YOU** — at release-candidate time | Build 1 is spent on BOTH stores (Play App Signing bootstrap AAB; TestFlight Build 1 uploaded 2026-09-05). Change `pubspec.yaml` to `version: 1.0.0+2` immediately before the Build 2 archive, on the same commit that is archived. |
+| Version/build bumped past the spent `1.0.0+2` | **YOU** — at release-candidate time | `1.0.0+1` is spent on BOTH stores (Play App Signing bootstrap AAB; TestFlight Build 1) and `1.0.0+2` is now spent too (TestFlight Build 2, 2026-09-05 — accepted, with the ITMS-90683 warning this branch fixes). Set `version: 1.0.0+3` on the commit that is archived, then run `flutter build ios --config-only --release` so `ios/Flutter/Generated.xcconfig` carries `FLUTTER_BUILD_NUMBER=3` — Xcode reads that file, not `pubspec.yaml`. |
 
 Source: <https://developer.apple.com/news/upcoming-requirements/>
 
@@ -34,7 +34,7 @@ Source: <https://developer.apple.com/news/upcoming-requirements/>
 | App-level `PrivacyInfo.xcprivacy` present and **bundled** | **DONE** | `ios/Runner/PrivacyInfo.xcprivacy`, wired into the Runner Resources phase; verified present in `build/ios/iphoneos/Runner.app/`. Guarded by `test/unit/ios_privacy_manifest_test.dart` (negative-verified: the test fails if the pbxproj wiring is removed). |
 | Required-reason APIs declared | **DONE** (re-audited 2026-09-05) | The app manifest declares **SystemBootTime 35F9.1** and **FileTimestamp C617.1**: `sensors_plus` (`systemUptime`) and `package_info_plus` (`fileModificationDate`) are statically linked into Runner via SwiftPM and ship *empty* manifests, so their use is attributed to the Runner executable. `shared_preferences_foundation` (UserDefaults 1C8F.1) and `Flutter.framework` declare their own. Guarded by `test/unit/ios_privacy_manifest_test.dart`. |
 | No third-party SDK on Apple's manifest-required list | **DONE** | Pods are Flutter, `flutter_inappwebview_ios`, `google_maps_flutter_ios`, `GoogleMaps`, `Google-Maps-iOS-Utils`, `OrderedSet` — none listed. |
-| Purpose strings for camera / location / motion | **DONE** | All three present in `Info.plist`, each stating use *and* that data stays on device. |
+| Purpose strings for camera / location / motion | **DONE** (re-audited 2026-09-05) | **Four** keys, not three: camera, motion, `NSLocationWhenInUseUsageDescription` and `NSLocationAlwaysAndWhenInUseUsageDescription`. The last was added after App Store Connect returned **ITMS-90683** against Build 2 — `geolocator_apple`'s `requestAlwaysAuthorization` is statically linked into Runner, so Apple's scan demands the string even though the app only ever requests When In Use. Camera and motion say the data stays on device; **the two location strings must not** — the Routes call sends the origin to Google. Guarded by `test/unit/ios_location_purpose_test.dart` (4 tests). |
 | **Privacy Policy URL** in App Store Connect | **YOU** | 5.1.1(i) makes this mandatory metadata. MQ-hosted. **Blocking — nothing can be submitted without it.** |
 | App Privacy questionnaire ("Nutrition Label") | **YOU** | Answer in ASC. For this app the honest answer is *Data Not Collected* on every category. |
 

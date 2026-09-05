@@ -52,7 +52,7 @@ clears the path to GO.
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
 | B6 | Redistribution permission remains unresolved for four panorama asset sets | Asset rights | Organisers | `OPEN` |
-| B7 | No accessible in-app Privacy Policy surface, and the production Privacy Policy / Support store URLs are not yet provisioned | Store publishing / privacy | Organisers / product | `OPEN` |
+| B7 | Production Privacy Policy / Support store URLs are not yet provisioned (the in-app policy surface was added 2026-09-05 by `46dc81e` and works offline) | Store publishing / privacy | Organisers / product | `OPEN` |
 
 ---
 
@@ -234,11 +234,21 @@ clears the path to GO.
 
 ## B7 — Store privacy/support publishing prerequisites
 
-- **Exact problem.** The app currently has **no accessible in-app Privacy Policy
-  link or text**, and the production Privacy Policy / Support store-metadata URLs
-  are not yet provisioned. (The app makes no external links at all — verified:
-  no `url_launcher` / `launchUrl` anywhere in `lib/`. The finished policy/support
-  copy exists in `docs/release/mq-hosted-pages.md` but is not hosted.)
+- **Exact problem.** The production Privacy Policy / Support store-metadata URLs
+  are not yet provisioned. The finished policy/support copy exists in
+  `docs/release/mq-hosted-pages.md` but is not hosted.
+- **Partly closed 2026-09-05 by `46dc81e`.** The *in-app* half is done: Settings
+  now carries a Privacy Policy card (`settings_screen.dart:146`,
+  `_PrivacyPolicyCard`) that opens `config.privacyPolicyUrl` when one is
+  configured and otherwise shows the full policy **offline, in a dialog**
+  (`settingsPrivacyPolicyBody`, EN + FA), so the requirement is met even before
+  hosting exists. `test/widget/settings_privacy_policy_test.dart` covers both
+  paths. Android ships `docs/release/android-privacy-policy.html` for the Play
+  field. The old evidence line below — "no `url_launcher` / `launchUrl` anywhere
+  in `lib/`" — is superseded: `lib/services/url_opener.dart` is now the single
+  seam that opens external links. **Conditions 2 and 6 are met; the blocker stays
+  `OPEN` on the hosted URLs and the store-metadata fields (1, 3, 4, 5, 7–10),
+  which only the organisers can provide.**
 - **Verified 2026 store requirements.**
   - Apple requires a **Privacy Policy URL for all apps**.
   - Apple's App Review Guidelines require the privacy policy to also be
@@ -254,9 +264,9 @@ clears the path to GO.
   require the privacy policy to be reachable from inside the app — which this
   build does not currently offer. This blocks store submission (it does not
   affect on-the-night in-app behaviour).
-- **Evidence / source.** No `url_launcher`/`launchUrl` in `lib/` (in-app link
-  absent); `lib/screens/info_screen.dart` / `lib/screens/settings_screen.dart`
-  (no policy link); `docs/release/mq-hosted-pages.md` (ready, unhosted copy);
+- **Evidence / source.** `lib/screens/settings_screen.dart:146` (policy card,
+  online + offline paths) and `lib/services/url_opener.dart`;
+  `docs/release/mq-hosted-pages.md` (ready, unhosted copy);
   Apple App Store Connect privacy/URL fields + App Review Guidelines; Google
   Play policy requirements.
 - **Owner.** Organisers (host the pages) + product (add the in-app entry point).

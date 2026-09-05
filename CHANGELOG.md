@@ -77,6 +77,19 @@ git worktree so a parallel session's staged Xcode changes were never touched).
   `NSLocationAlwaysAndWhenInUseUsageDescription` — the API really is compiled
   into the app binary.
 
+**Release-doc reconciliation (same branch)**
+- `docs/release/app-store-submission-checklist.md`: the purpose-strings row said
+  "all three present … each stating use *and* that data stays on device" — now
+  four keys, and the two location strings must **not** claim the data stays on
+  device. The version row still pointed at `1.0.0+2`; Build 2 is spent, so the
+  next archive is `1.0.0+3`.
+- `docs/release-blockers.md` **B7**: its "no accessible in-app Privacy Policy
+  link or text … no `url_launcher`/`launchUrl` anywhere in `lib/`" evidence was
+  overtaken by `46dc81e`, which added the Settings policy card (hosted URL when
+  configured, full text offline otherwise) and `lib/services/url_opener.dart`.
+  Conditions 2 and 6 are met; B7 stays `OPEN` on the hosted URLs and store
+  metadata, which only the organisers can provide.
+
 **Follow-ups**
 - **Not yet verified end-to-end:** the warning can only be confirmed gone by the
   next upload. Bump to `1.0.0+3`, run

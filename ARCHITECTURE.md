@@ -589,6 +589,17 @@ flowchart LR
 
 ---
 
+### 11.1 Glass shader — one orientation for every backend
+
+`shaders/glass_refraction.frag` samples the `ImageFilter.shader` backdrop with
+coordinates derived from `FlutterFragCoord()`, and **must not** apply any
+backend-specific Y flip. The engine already normalises `FlutterFragCoord()` per
+backend and hands the backdrop over in that orientation on Metal, Vulkan and
+OpenGLES alike. A former `#ifdef IMPELLER_TARGET_OPENGLES t.y = 1.0 - t.y`
+double-flipped the backdrop on Android's GLES path, so every glass surface was
+a vertical mirror of what lay behind it (fixed 2026-09-06). Verify glass on the
+Android emulator (Impeller/GLES) as well as on iOS after touching the shader.
+
 ## 12. Configuration
 
 | Configuration | Purpose | Required? | Source | Secret? |

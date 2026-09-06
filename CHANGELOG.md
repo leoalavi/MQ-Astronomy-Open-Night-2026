@@ -22,6 +22,11 @@ Alavi's personal Play account.
 - **Reverted** the iOS project/scheme downgrade that rode along in `46dc81e`
   (`objectVersion 60→54`, `LastUpgradeCheck 2660→1510`, custom prepare script)
   back to the Build 1 configuration.
+- **Liquid-glass surfaces were a vertical mirror on Android** (P1, reported by
+  Raouf 2026-09-06): the refraction shader un-flipped Y under
+  `IMPELLER_TARGET_OPENGLES`, double-flipping the backdrop that
+  `FlutterFragCoord()` already orients correctly. Flip removed; verified by
+  before/after captures on the API 36 emulator; iOS (Metal) unaffected.
 - **Camera denial re-prompted on Android** (P1): the OS dialog's own
   `inactive → resumed` restarted the scanner, and `MobileScannerController.start()`
   does not throw on refusal. The view now restarts only what it stopped for the

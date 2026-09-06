@@ -589,6 +589,16 @@ flowchart LR
 
 ---
 
+### 10.4 QA-only controls are per-run defines, never `kDebugMode`
+
+`lib/config/qa_mode.dart` holds the two QA relaxations
+(`AON_ALLOW_OFF_CAMPUS_TESTING`, `AON_PASSPORT_RESET_TOOL`). Both are
+`bool.fromEnvironment` constants — `false` unless the define is passed on that
+run — mirrored by a provider so tests can flip them. Nothing user-visible may
+hang off `kDebugMode`: the debug simulator build is what the store
+screenshots and the Maestro suite are captured from, and a `kDebugMode`
+"Reset passport" button reached an App Store screenshot on 2026-09-06.
+
 ### 11.1 Glass shader — one orientation for every backend
 
 `shaders/glass_refraction.frag` samples the `ImageFilter.shader` backdrop with

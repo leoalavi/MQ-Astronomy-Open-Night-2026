@@ -49,6 +49,13 @@ Alavi's personal Play account.
   the tap-initiated permission; cross-platform dialog regex in `passport`.
 - Docs reconciled to the contextual-location model (review notes,
   ARCHITECTURE, onboarding decision, Apple audit, CLAUDE.md).
+- The passport's "Reset passport" action is now behind an explicit per-run
+  define (`AON_PASSPORT_RESET_TOOL`, `qa_mode.dart`) instead of `kDebugMode`:
+  it had appeared in a store screenshot taken from a debug simulator build.
+  Release is unchanged (never shown); tests opt in via the provider.
+- Store screenshots recaptured (2026-09-06) from the current build: iPhone
+  6.9" ×6 (1320×2868), iPad 13" ×6 (2064×2752), Android phone ×6 (1080×2160,
+  exactly 2:1 for Play). Old sets deleted.
 
 **Verification:** see `GOOGLE_PLAY_RELEASE_AUDIT.md` (Build Results): AAB
 signed and verified; all 64-bit `.so` 16 KB-aligned + `zipalign -P 16`

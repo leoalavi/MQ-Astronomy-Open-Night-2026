@@ -169,53 +169,30 @@ players, so the gambling and contest questions are genuinely *None*.
 
 ## Screenshots
 
-Captured at exact device resolution and committed under
-`docs/release/screenshots/`.
+Recaptured **2026-09-06** from the current build (after the contextual-location
+change and the Android glass fix, which does not affect iOS) and committed under
+`docs/release/screenshots/`. Every file is an unretouched simulator capture,
+opaque PNG, exact device resolution.
 
 | Size | Device | Required | Status |
 |---|---|---|---|
-| 1320 × 2868 | iPhone 17 Pro Max (6.9") | **Yes** | **6 recaptured 2026-09-05** ✓ |
-| 2064 × 2752 | iPad Pro 13-inch (M5) | **Yes** — the app runs on iPad | **1 recaptured 2026-09-05** ✓ · 3 removed as stale — see below |
+| 1320 × 2868 | iPhone 17 Pro Max (6.9") | **Yes** | 6 captured |
+| 2064 × 2752 | iPad Pro 13-inch (M5) | **Yes** — the app runs on iPad | 6 captured |
 
-**Why the 2026-08-23 set was replaced.** It showed copy the app no longer ships:
-`iphone-6.9/01-home.png` had the map card reading *"Venues, toilets, first aid —
-and walking directions from the car parks"*, while the shipped string is now
-*"Venues, toilets, parking and walking directions"*. The fortnight after that
-capture also brought the redesigned Program filters, the removed Compass mode,
-the West 6 parking pin, the Toilets chooser and the reordered 360° picker — all
-visible in the new set.
-
-**The iPad set is incomplete on purpose.** `01-home.png` was recaptured and is
-current. The other three could not be: Maestro reports success against the iPad
-simulator's UDID while the taps land somewhere else (the screen never changes —
-three consecutive captures came back byte-identical), which is the iPad session
-trap already recorded in `.maestro/README.md`. Rather than ship images of an
-older UI, they were removed. Apple requires **at least one** iPad screenshot for
-an iPad-capable app, so the single current Home shot satisfies the minimum;
-capture Map, a 360° tour and Settings by hand in Simulator (`xcrun simctl io
-<udid> screenshot`) if you want the full set.
-
-No alpha channel, no transparency — `simctl io screenshot` produces opaque PNGs.
-
-### The iPad set
+Both sets show the same six screens, in the order Apple displays them:
 
 | File | Screen |
 |---|---|
-| `01-home.png` | Hero and multi-column layout — the iPad gets a genuinely different grid, not a stretched phone: four "Up next" cards in a row and the eight-tile "Find your way to" grid |
+| `01-home.png` | Hero, event date, the passport card, "Up next" |
+| `02-program.png` | The programme with the time / activity filters |
+| `03-my-night.png` | My Night with a saved activity |
+| `04-map.png` | Official AON basemap with A–I pins, category filters, Directions |
+| `05-panorama.png` | A 360° tour (iPhone: Solar system walk "Gymnasium Road"; iPad: 1 Central Courtyard) |
+| `06-passport.png` | The Astronomy Passport at zero stamps with its explanation line |
 
-*(`02-map.png`, `03-panorama.png` and `04-settings-preview.png` were removed on
-2026-09-05 — see the note above.)*
-
-### What the iPhone set shows
-
-| File | Screen |
-|---|---|
-| `01-home.png` | Hero, event date, passport card, "Up next" |
-| `02-map.png` | Official AON basemap with the A–I pins, the P parking pins, category filters and the Directions CTA |
-| `03-settings-credits.png` | Settings → Credits: the hero credit, the MQ event-materials line, the map-data attribution and the two developers |
-| `04-passport.png` | The passport at zero stamps, with the "each of the nine venues has a QR sign" explainer that stands in for onboarding |
-| `05-program.png` | The programme: search, "Filter by time" / "Filter by activity", the Tonight / Sections toggle, 36 items |
-| `06-panorama.png` | The Observatory 360° tour — the dome, with the scene rail |
+The old 2026-08-23 / 2026-09-05 captures were deleted; the previous
+`03-settings-credits.png` is not part of the set any more (a Settings screen
+sells nothing).
 
 Apple's rule (2.3.3) is that screenshots show the app in use. These are
 unretouched captures, so they comply by construction. If marketing wants text

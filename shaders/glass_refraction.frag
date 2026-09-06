@@ -20,12 +20,15 @@ float sdRoundedBox(vec2 p, vec2 b, float r) {
   return min(max(q.x, q.y), 0.0) + length(max(q, 0.0)) - r;
 }
 
+// NO backend-specific Y flip here. The uv passed in is derived from
+// FlutterFragCoord(), which the engine already normalises per backend, and the
+// backdrop sampler ImageFilter.shader supplies is in that same orientation on
+// Metal, Vulkan AND OpenGLES. A previous `#ifdef IMPELLER_TARGET_OPENGLES
+// t.y = 1.0 - t.y` "un-flip" double-flipped the backdrop on Android's GLES
+// path, so every glass surface rendered a vertically MIRRORED copy of what was
+// behind it (Android 16 emulator, 2026-09-06). iOS (Metal) never hit it.
 vec3 sampleBg(vec2 uv) {
-  vec2 t = uv;
-#ifdef IMPELLER_TARGET_OPENGLES
-  t.y = 1.0 - t.y;               // un-flip only on GLES
-#endif
-  t = clamp(t, vec2(0.0), vec2(1.0)); // never sample outside the backdrop
+  vec2 t = clamp(uv, vec2(0.0), vec2(1.0)); // never sample outside the backdrop
   return texture(uTexture, t).rgb;
 }
 

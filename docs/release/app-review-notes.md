@@ -70,11 +70,11 @@ Location is optional. The app is fully usable without granting it. Location
 is used on-device to draw your position on the campus map and to point the
 compass. It is not required to review any feature.
 
-The permission is requested the first time you open the "Map" tab, because a
-live position on the map is a core feature of that screen — not on any other
-tab, and not repeatedly. If you decline, the Map still opens and works
-normally; the on-map "Locate Me" control is the deliberate path to try again
-or re-enable location later.
+Opening the "Map" tab never shows a permission dialog. The permission is
+requested only when you tap the on-map "Show my location" control (or open
+the compass / ask for walking directions). If you decline, the Map still opens
+and works normally; tapping the control again is the deliberate path to try
+again or re-enable location later.
 
 The app only ever requests "When In Use". Info.plist also carries
 NSLocationAlwaysAndWhenInUseUsageDescription because the linked location

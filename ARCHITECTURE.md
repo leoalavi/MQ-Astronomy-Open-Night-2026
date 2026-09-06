@@ -480,13 +480,19 @@ consumer, or if an OSM endpoint reappears.
 
 | Permission | Why | When asked | If denied | What leaves the device |
 |---|---|---|---|---|
-| Location (`ACCESS_FINE`/`COARSE`, `NSLocationWhenInUse` + `NSLocationAlwaysAndWhenInUse`, declared but never requested — §10.3) | Dot on campus map; compass; nav origin | **First entry to the Map tab**, once per session (`LocationController.ensureFirstMapEntryPrompt`, latched); a declined prompt is only re-raised by an explicit Locate tap or compass entry. Never at launch, never on any other tab | Map still works; honest empty states | **Nothing — except** the origin `latLng` POSTed to Google Routes *after* consent |
-| Camera | QR passport stamps **only** | Entering the scanner | Passport unusable, rest fine | Nothing — decoded on device |
+| Location (`ACCESS_FINE`/`COARSE`, `NSLocationWhenInUse` + `NSLocationAlwaysAndWhenInUse`, declared but never requested — §10.3) | Dot on campus map; compass; nav origin | **Only on an explicit action**: the first "Show my location" tap, compass entry, or a directions request (`LocationController.onLocateTapped` / `ensureLocationActive`). Entering the Map tab merely restores an existing grant (`restoreGrantedLocation`, `status()` only — never `request()`). Never at launch, never on any other tab. Changed 2026-09-05 (commit `46dc81e`) for the Play/App Store audits | Map still works; honest empty states | **Nothing — except** the origin `latLng` POSTed to Google Routes *after* consent |
+| Camera | QR passport stamps **only** | Entering the scanner (one OS prompt; a refusal is NOT re-asked on the resume the dialog itself causes — `shouldRestartScannerOnResume`, fixed 2026-09-05 after the Android 16 emulator showed a double prompt) | Honest "Camera unavailable" state with "Open app settings" + manual code entry | Nothing from the app. **On Android the scanner is Google ML Kit (bundled), which reports device/app info, per-installation identifiers and usage/performance diagnostics to Google** — disclosed in-app (`settingsPrivacyBody`, `passportScannerPrivacy`) and in the Play Data safety answers (`GOOGLE_PLAY_RELEASE_AUDIT.md`) |
 | Motion (`NSMotionUsageDescription`) | Magnetometer heading | Compass mode | Cardinal-list fallback | Nothing |
 
-No `AD_ID`, no storage/media, no `GET_ACCOUNTS`, no background location —
-which is the only reason the Play Data-safety form can answer "no data
-collected". `android_permissions_policy_test.dart` fails if that changes.
+No `AD_ID`, no storage/media, no `GET_ACCOUNTS`, no background location, no
+`POST_NOTIFICATIONS`, no foreground-service permissions (merged release
+manifest verified 2026-09-05: `INTERNET`, `CAMERA`, `ACCESS_FINE/COARSE_LOCATION`,
+`ACCESS_NETWORK_STATE` from the Maps SDK, and the app's own signature-level
+`DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION`). **The Play Data safety form is
+NOT "no data collected"**: Google Maps SDK and ML Kit report diagnostics and
+identifiers, and the consented Routes request carries location — see
+`GOOGLE_PLAY_RELEASE_AUDIT.md` for the answers. `android_permissions_policy_test.dart`
+guards the source manifest; the merged one must be re-read after any plugin change.
 
 ### 10.2a iOS privacy manifest — what it declares and why
 
@@ -738,6 +744,7 @@ on real hardware (simulator-verified only); Android screenshots at ≤2:1.
 | Programme sources & open questions | `docs/data-sources.md`, `docs/mq-staff-questions.md` |
 | Release artefacts | `docs/release/` |
 | Apple App Store release audit (2026-09-05) | `APPLE_RELEASE_AUDIT.md` |
+| Google Play release audit (2026-09-05) | `GOOGLE_PLAY_RELEASE_AUDIT.md` |
 | Human release log (`Raouf:` entries, newest first) | `CHANGELOG.md` |
 | Why there is no onboarding | `docs/onboarding-decision.md` |
 | Recent audits | `docs/map-audit-2026-08-30.md`, `docs/home-program-audit-2026-08-30.md`, `docs/settings-mynight-audit-2026-08-30.md` |

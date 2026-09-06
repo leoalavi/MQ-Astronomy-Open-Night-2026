@@ -48,7 +48,7 @@ and removes it once the first stamp makes it redundant
 - **Apple does not want it.** Nothing in the App Review Guidelines asks for
   onboarding; 2.1/2.3.1 ask that features be *discoverable and documented in
   review notes*, which they are. Permission timing (5.1.1) is already
-  contextual: location on first Map entry, camera on entering the scanner,
+  contextual: location on the first Locate tap, camera on entering the scanner,
   never at launch.
 - **It adds state and a Settings row** ("View introduction") whose only job is
   to replay something the app didn't need.
@@ -57,7 +57,7 @@ and removes it once the first stamp makes it redundant
 
 | Permission | When it is asked | Never |
 |---|---|---|
-| Location (When In Use) | First entry to the **Map** tab, once per session; a declined prompt is only re-raised by an explicit *Locate Me* tap | at launch, on Home/Program/My Night/Info/Settings |
+| Location (When In Use) | The first *Show my location* tap on the Map, compass entry, or a directions request. Entering the Map tab only restores an existing grant — no dialog (changed 2026-09-05, `46dc81e`) | at launch, on Map entry, on Home/Program/My Night/Info/Settings |
 | Camera | On entering the **QR scanner** (after tapping *Scan or enter a code*) | at launch, on opening the passport screen |
 | Motion | Compass mode | at launch |
 | Notifications / Photos / ATT | not used | — |

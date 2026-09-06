@@ -49,9 +49,11 @@ carousel would restate the tab bar and cost every visitor a tap while walking
 across a dark campus. Guarded by `test/widget/first_launch_test.dart` (fails if
 any first-launch gate is ever added) and `.maestro/first-launch.yaml`.
 
-Permissions are unchanged and contextual: location on first Map-tab entry
-(latched once per session; never at launch, never on another tab), camera only
-on entering the QR scanner, motion only in compass mode. No notifications, photo
+Permissions are contextual: location only on the first "Show my location"
+tap, compass entry or a directions request — entering the Map tab restores an
+existing grant without a dialog (`46dc81e`, 2026-09-05, after this audit's
+first pass) — camera only on entering the QR scanner, motion only in compass
+mode. No notifications, photo
 library, or ATT are used. Verified on the simulator (`passport.yaml`: the camera
 alert appears only after "Scan or enter a code", denial degrades to "Camera
 unavailable — enter the code" with manual entry working).
@@ -163,7 +165,7 @@ rights, B7 hosted privacy/support URLs, publisher account.)
 | P3-3 | Stale "five tabs" comments in `app_router.dart` / `app_shell.dart` | **FIXED** |
 | P3-4 | `WayfindingScreen` (`Routes.wayfinding`, 600 lines) is registered but unreachable from any UI | Left as-is (dead route, not a hidden feature — it cannot be reached); candidate for removal after the event |
 | P3-5 | `package_info_plus` is linked into the iOS binary via `geolocator_linux` although the app never calls it | Left as-is (declared in the manifest); pruning would mean forking geolocator's dependency graph |
-| P3-6 | Location is requested on first entry to the Map tab rather than on the first "Locate me" tap | Left as-is — a documented product decision (the live dot is the Map's core feature; Apple Maps behaves the same); documented in ARCHITECTURE §10.2. One-line change if the organisers prefer tap-initiated |
+| P3-6 | Location was requested on first entry to the Map tab rather than on the first "Locate me" tap | **Changed 2026-09-05 (`46dc81e`)** — the Map tab now only restores an existing grant; the dialog appears on the first "Show my location" tap, compass entry or directions request |
 | P3-7 | `dart format` drift (251 files, 3.12 tall style) | Left as-is by repo policy (informational, never a gate) |
 
 ## Changes Made
@@ -360,7 +362,7 @@ Dynamic Type 200% / Reduce Motion support. Replace `<NAME>/<EMAIL>/<PHONE>`.
 - [x] No Location permission requested during onboarding / at launch (E2E `first-launch.yaml`)
 - [x] No Camera permission requested during onboarding / at launch (E2E `passport.yaml`)
 - [x] Camera requested contextually for QR scanning (E2E)
-- [x] Location requested contextually (first Map-tab entry, latched; E2E `map-location.yaml`)
+- [x] Location requested contextually (first "Show my location" tap / compass / directions; Map entry never prompts; E2E `map-location.yaml`)
 - [x] Program tested (E2E + widget)
 - [x] My Night tested (E2E + widget)
 - [x] Map tested (E2E, 7 flows)

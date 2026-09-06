@@ -100,84 +100,71 @@ notes:
 
 ### Contact details
 
-- Email: `[CONTACT EMAIL @mq.edu.au]` — **mandatory and shown publicly**
-- Website: the MQ event page
-- Privacy Policy: **mandatory** — see `mq-hosted-pages.md`
+- Email: `leo@leoalavi.dev` — **mandatory and shown publicly** (publisher: Leo Alavi, personal account, confirmed 2026-09-05)
+- Website: the MQ event page (optional)
+- Privacy Policy: **mandatory** — host `docs/release/android-privacy-policy.html` at a stable public HTTPS URL; the same text ships inside the app (Settings → Privacy Policy)
 
 ---
 
-## Data safety form — every answer
+## Data safety form — every answer *(rewritten 2026-09-05 after the SDK audit)*
 
-**Mandatory even for apps that collect nothing.** Play states explicitly that a
-developer whose app collects no data must still complete the form and supply a
-privacy policy URL.
+**Mandatory even for apps that collect nothing.** And this app does **not**
+collect nothing: two Google SDKs it ships report data to Google on their own,
+and Play's definition of *collected* ("transmitting data from your app off a
+user's device", including data sent by third-party libraries) covers them.
+Sources: [Google Play Data safety rules](https://support.google.com/googleplay/android-developer/answer/10787469),
+[Maps SDK for Android data disclosure](https://developers.google.com/maps/documentation/android-sdk/play-data-disclosure),
+[ML Kit Android data disclosure](https://developers.google.com/ml-kit/android-data-disclosure).
+
+### What actually leaves the device (traced 2026-09-05)
+
+| Source | When | What Google's own disclosure lists |
+|---|---|---|
+| **Google Routes API** (`google_routes_service.dart`, app code) | Only after the explicit in-app consent, when the visitor asks for walking directions | Route origin (the device's current fix — precise if the OS grants precise) and destination |
+| **Maps SDK for Android** (`google_maps_flutter`, consent-gated) | Only once the visitor has accepted the Google Maps disclosure and a Google map is drawn | Device metadata (OS, model, brand, form factor), SDK build/version, IP address, a Maps-SDK-specific pseudonymous identifier, crash stack traces, map interaction events (pan/zoom) |
+| **ML Kit barcode scanning** (`mobile_scanner`, bundled model) | Whenever the QR scanner is opened (camera permission granted) | Device info, package name/app version, a device identifier for diagnostics, per-installation identifiers, performance metrics, API configuration, event types, error codes |
+
+Nothing else: no account, no developer analytics, no advertising SDK, no crash
+reporter of our own. Passport stamps, favourites, the saved plan and settings
+stay in `SharedPreferences` on the device.
 
 ### Section 1 — Data collection and security
 
-| Question | Answer | Why |
-|---|---|---|
-| Does your app collect or share any of the required user data types? | **No** | Nothing is transmitted off the device. Passport stamps, favourites, the saved plan and settings are written to `SharedPreferences` and never leave. There is no account, no analytics SDK, no advertising SDK, no crash reporter. |
+| Question | Answer |
+|---|---|
+| Does your app collect or share any of the required user data types? | **Yes** |
+| Is all of the user data collected by your app encrypted in transit? | **Yes** — HTTPS to `routes.googleapis.com`; the Maps SDK and ML Kit use HTTPS (per their disclosures); the `http://localhost` panorama server never leaves the device |
+| Do you provide a way for users to request that their data is deleted? | **No** for the SDK diagnostics — the app cannot delete data Google already holds (say so honestly; "Delete my data" in Settings clears the on-device data only). If Play's form offers the "handled by a third party" option, choose that and link Google's policy. |
 
-That single answer closes the form. The sections below exist so the reasoning is
-recorded and can be defended if Play's automated binary scan queries it.
+### Data types to declare
 
-### Why "No" is correct, per data type
+| Data type | Collected | Shared | Ephemeral | Required / optional | Purpose | Why |
+|---|---|---|---|---|---|---|
+| **Location → Precise location** | Yes | Yes (Google) | Yes — used to answer the route request | Optional (needs consent + OS permission) | App functionality | Route origin sent to Google Routes; Maps SDK derives approximate location from IP |
+| **Location → Approximate location** | Yes | Yes (Google) | Yes | Optional | App functionality | Same flow when the OS grants approximate only; IP-derived by the Maps SDK |
+| **App info and performance → Crash logs** | Yes | No (Google as service provider) | No | Required (SDK-driven) | Analytics | Maps SDK crash stack traces |
+| **App info and performance → Diagnostics** | Yes | No | No | Required | Analytics | ML Kit performance metrics/latency; Maps SDK metrics |
+| **App activity → App interactions** | Yes | No | No | Optional (only once a Google map is loaded) | Analytics | Maps SDK map interaction events (pan/zoom) |
+| **Device or other IDs** | Yes | No | No | Required | Analytics | ML Kit per-installation and diagnostic device identifiers; Maps SDK pseudonymous SDK identifier |
+| Personal info, Financial, Health, Messages, Photos/videos, Audio, Files, Calendar, Contacts, Web browsing | **No** | — | — | — | — | Not declared, not used; camera frames are decoded in memory and never stored or uploaded by the app |
 
-Play's definition of *collected* is **data transmitted off the device** that you
-or a service provider can access for longer than needed to service the request
-in real time. Against that definition:
-
-| Data type | Collected? | Reasoning |
-|---|---|---|
-| **Location** | **No** | `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` are declared and location *is* read — but only on-device, to draw the position marker and orient the compass. It is never transmitted or stored. **See the caveat below.** |
-| Personal info | No | No account, no sign-in, no name/email/phone anywhere in the app. |
-| Financial info | No | No purchases, no payment SDK. |
-| Health and fitness | No | No `ACTIVITY_RECOGNITION` or `BODY_SENSORS`. |
-| Messages | No | No SMS permissions. |
-| Photos / videos | No | The camera is used only to decode a QR code in-memory. No image is written to storage or transmitted, and no media permissions are declared. |
-| Audio | No | No `RECORD_AUDIO`. |
-| Files and docs | No | No external-storage permissions. |
-| Calendar / Contacts | No | Not declared, not used. |
-| App activity | No | No analytics of any kind. |
-| Web browsing | No | The WebView loads only files bundled in the app over `http://localhost`; it cannot browse. |
-| App info and performance | No | No crash reporter, no diagnostics upload. |
-| Device or other IDs | No | No GAID, no `Settings.Secure.ANDROID_ID`, no instance IDs. *(Google's April 2025 update made Android ID explicitly declarable — this app reads neither.)* |
-
-### ⚠️ The one judgement call — settle it before submitting
-
-Walking directions send an **origin and destination to Google's Routes API**
-(`google_routes_service.dart`), after explicit in-app consent.
-
-Two defensible readings:
-
-1. **Not "collected"** — the coordinates are a route request, are not the user's
-   device location (the wayfinding screen reads no location at all; the pair is
-   chosen from a fixed list of car parks and venues), and are processed to
-   service the request.
-2. **"Location → Approximate location", shared with a third party, purpose
-   "App functionality"** — because coordinates do reach Google.
-
-**The safer answer is 2**, and Play's July 2026 announcement specifically says it
-is adding guidance on precise-vs-approximate location disclosure. Over-declaring
-is not penalised; under-declaring is. Recommendation:
-
-- Declare **Location → Approximate location**
-- Collected: **No** · Shared: **Yes** (with Google)
-- Purpose: **App functionality**
-- Processed ephemerally: **Yes**
-- Required or optional: **Optional** — the user must consent, and can decline
-
-This is consistent with the in-app consent copy and with the privacy policy
-in `mq-hosted-pages.md`, which already discloses it. **Consistency between the
-Data safety form and the privacy policy is itself a policy requirement**; the two
-must not disagree.
+"Shared" is answered **Yes** only for location, because that is data the app
+itself hands to Google for a purpose the user requested; the SDK telemetry is
+collected by Google acting as the SDK provider. If counsel prefers to treat all
+Google-bound data as shared, over-declaring is not penalised.
 
 ### Section 4 — Security practices
 
 | Question | Answer |
 |---|---|
-| Is all collected data encrypted in transit? | **Yes** — the only outbound request is HTTPS to `routes.googleapis.com`. The `http://localhost` panorama server never leaves the device and is confined to loopback by `network_security_config.xml`. |
-| Do you provide a way for users to request data deletion? | **Yes** — Settings → Privacy → "Delete my data" clears everything on the device. |
+| Is all collected data encrypted in transit? | **Yes** |
+| Do you provide a way for users to request data deletion? | On-device data: **Yes** (Settings → "Delete my data"). SDK-held data: **No / handled by Google** — the in-app policy says exactly this |
+
+**Consistency rule:** these answers, the in-app Privacy Policy text
+(`settingsPrivacyPolicyBody`, EN + FA), the hosted
+`docs/release/android-privacy-policy.html`, and the Settings summary
+(`settingsPrivacyBody`) now say the same thing. `test/unit/privacy_copy_truth_test.dart`
+fails if the in-app copy drops the ML Kit / identifier / backup disclosures.
 
 ### Account deletion requirement
 
@@ -208,7 +195,7 @@ Two Play-specific questions worth getting right:
 |---|---|
 | Ads | **No ads** |
 | App access | All functionality available without special access; no credentials needed |
-| Government apps | **No** — published by a university, not a government body |
+| Government apps | **No** — published by an individual developer, not a government body |
 | Financial features | **None** |
 | Health apps | **No** |
 | Data safety | See above |

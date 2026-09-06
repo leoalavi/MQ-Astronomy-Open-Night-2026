@@ -7,6 +7,54 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-05 — Google Play release audit → signed AAB, closed-test candidate
+
+**Scope:** Android release readiness on top of Leo's `46dc81e` (privacy
+disclosures, contextual location, scanner UX). Publisher confirmed as Leo
+Alavi's personal Play account.
+
+**Summary**
+- `GOOGLE_PLAY_RELEASE_AUDIT.md`: verdict CONDITIONALLY READY — code and
+  bundle pass every local check; production is gated on the hosted Privacy
+  Policy URL, the Data safety form, Play App Signing registration of the new
+  upload key, the 14-day/12-tester closed test (personal account created after
+  13 Nov 2023) and the asset rights.
+- **Reverted** the iOS project/scheme downgrade that rode along in `46dc81e`
+  (`objectVersion 60→54`, `LastUpgradeCheck 2660→1510`, custom prepare script)
+  back to the Build 1 configuration.
+- **Camera denial re-prompted on Android** (P1): the OS dialog's own
+  `inactive → resumed` restarted the scanner, and `MobileScannerController.start()`
+  does not throw on refusal. The view now restarts only what it stopped for the
+  background (or on return from app Settings); refusal is read from
+  `controller.value`. `shouldRestartScannerOnResume` + 5 unit tests.
+- Locate control read "Location unavailable" on a fresh install after the
+  contextual-location change: a passive `checkPermission` answer of `denied`
+  (which also means "never asked") was being stored on Map entry. Only
+  `granted`/`serviceOff` are adopted now; a refusal is learned from the tap.
+- Adaptive launcher icon (`mipmap-anydpi-v26`, dark background, no monochrome
+  layer); `app_icon_assets_test` extended.
+- Upload keystore generated outside the repo; `android/key.properties`
+  (ignored) wired; `flutter build appbundle --release` → signed AAB, final
+  artefact `1.0.0 (3)` (build 2 was inspected first; the tree merged to
+  `1.0.0+3` before commit).
+- Play listing doc: Data safety answers rewritten to the Maps SDK / ML Kit
+  disclosures; publisher/contact corrected.
+- Maestro: `android-back.yaml` (predictive back); cold-boot/restart guards in
+  `open-map`, `program`, `my-night`, `settings`; `map-location` rewritten for
+  the tap-initiated permission; cross-platform dialog regex in `passport`.
+- Docs reconciled to the contextual-location model (review notes,
+  ARCHITECTURE, onboarding decision, Apple audit, CLAUDE.md).
+
+**Verification:** see `GOOGLE_PLAY_RELEASE_AUDIT.md` (Build Results): AAB
+signed and verified; all 64-bit `.so` 16 KB-aligned + `zipalign -P 16`
+successful; merged manifest audited; `lintRelease` 0 errors; Android 16
+emulator flows; full gate before commit.
+
+**Follow-ups:** host the policy, enter Data safety verbatim, register the
+upload cert, restrict the Maps key, capture Android screenshots + feature
+graphic, start the closed test today.
+
+---
 ## Raouf: 2026-09-05 — final pre-submission pass; `1.0.0+3` is the Build 3 candidate
 
 **Scope:** the whole App Store submission surface — privacy answers, hosted-page

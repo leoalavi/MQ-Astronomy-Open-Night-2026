@@ -54,7 +54,7 @@ by the same asset-rights question the iOS audit carries. Code risk is LOW.
 | versionName / versionCode | **1.0.0 / 3** (`pubspec.yaml` `1.0.0+3`, bumped upstream in `02720db`; the first AAB inspected today was build 2 — the final one is rebuilt at 3) |
 | applicationId | `au.edu.mq.astronomy.aon2026` |
 | Emulator | AVD `aon_api36`, Pixel 8, `system-images;android-36.1;google_apis_playstore;arm64-v8a`, Android 16 (API 36); `getconf PAGE_SIZE` = 4096 |
-| Commit | `77d46eb` (main, after Leo's `46dc81e` and the iOS ITMS-90683 / Build 3 commits) + this audit's working tree |
+| Commit | `3a435f9` (main; re-verified 2026-09-06 19:30 after the mirrored-glass fix `65ebf45`, the QA-define change `c125067` and the screenshot recapture `e3faf49`) |
 
 ## Commands Actually Executed
 
@@ -80,7 +80,7 @@ WebFetch: Play target API page, personal-account testing page, Data safety page,
 | `flutter analyze` | No issues | run on the final tree |
 | `flutter test` / `./scripts/check.sh` | **CHECK PASSED 7/7, exit 0** on `46dc81e`, and again on the final tree before commit (see the commit series); targeted suites green after each fix | gate logs |
 | Android lint (`lintRelease`) | **0 errors, 6 warnings** (`IconLauncherShape` ×5 on the legacy PNGs, `MonochromeLauncherIcon` ×1 — deliberate, see P3) | `build/app/reports/lint-results-release.xml` |
-| Release AAB | **BUILT** — `app-release.aab`, **1.0.0 (3)**, 129.0 MB, signed with the upload key (CN "Astronomy Open Night upload key", SHA-256 `33:21:F0:14:16:A2:3B:53:6C:81:E7:8C:CA:81:8D:DE:0D:1B:65:D6:01:2B:B9:A7:41:EA:73:28:E9:7B:88:2A`); adaptive icon resources present; all arm64-v8a / x86_64 libraries re-checked at ≥ 0x4000 after the final rebuild | `jarsigner`, `keytool -printcert -jarfile`, `unzip -l`, `llvm-readelf` |
+| Release AAB | **BUILT** (rebuilt from `3a435f9`, 2026-09-06 19:30) — `app-release.aab`, **1.0.0 (3)**, 129.0 MB, signed with the upload key (CN "Astronomy Open Night upload key", SHA-256 `33:21:F0:14:16:A2:3B:53:6C:81:E7:8C:CA:81:8D:DE:0D:1B:65:D6:01:2B:B9:A7:41:EA:73:28:E9:7B:88:2A`); adaptive icon resources present; all arm64-v8a / x86_64 libraries re-checked at ≥ 0x4000 after the final rebuild | `jarsigner`, `keytool -printcert -jarfile`, `unzip -l`, `llvm-readelf` |
 | Release APK (install test) | Built, v2-signed with the same key, `debuggable=false`, installed and launched on the API 36 emulator | `apksigner`, `apkanalyzer`, `adb install` |
 | 16 KB page size | **PASS (static)**: every arm64-v8a and x86_64 library has LOAD alignment ≥ 0x4000 (Flutter/Dart libs 0x10000, ML Kit/CameraX/datastore 0x4000); `zipalign -c -P 16 -v 4` → "Verification successful". The only 0x1000 library is `armeabi-v7a/libbarhopper_v3.so` (32-bit, exempt). **Runtime on a 16 KB device: NOT VERIFIED** — the installed API 36.1 image runs 4 KB pages | `llvm-readelf -l`, `zipalign` |
 | Native ABIs | arm64-v8a, armeabi-v7a, x86_64 (7 `.so` each) — no accidental exclusion | `aapt2 dump badging` |
@@ -175,7 +175,7 @@ HUMAN ACTION REQUIRED.
 | P2-3 | Three Maestro flows (`my-night`, `settings`, `map-*` via `open-map`) tapped a tab by point right after a cold start/restart and missed on Android's slower boot. | **FIXED** — cold-boot wait + swipe, label taps after restarts |
 | P2-4 | Play listing doc named MQ as publisher and an `@mq.edu.au` contact. | **FIXED** — publisher Leo Alavi, contact `leo@leoalavi.dev`, policy pointer to the Android HTML |
 | P2-6 | After the switch to tap-initiated location (`46dc81e`), the Map's locate control read **"Location unavailable"** on a fresh install before any prompt: `restoreGrantedLocation` stored the passive `checkPermission` answer, and geolocator reports `denied` for a never-asked install (iOS maps not-determined to denied; Android has no not-determined). Seen on the Android 16 emulator with location unset. | **FIXED** — `location_providers.dart`: a passive check adopts only `granted` (activate) or `serviceOff` (a nameable reason); `denied`/`deniedForever` are learned from the explicit tap. Tests updated + one added (`location_controller_test.dart`) |
-| P2-5 | Android screenshots and the 1024×500 feature graphic do not exist (iPhone captures are 2.17:1 and exceed Play's 2:1 cap). | **HUMAN** — capture on the `aon_api36` AVD (`adb exec-out screencap -p`); do not build the feature graphic from the hero photo (rights) |
+| P2-5 | Android screenshots and the 1024×500 feature graphic did not exist. | **Screenshots DONE** (`e3faf49`: six 1080×2160 captures, release APK, Android 16). **Feature graphic still HUMAN** — do not build it from the hero photo (rights) |
 
 ## P3 Findings
 

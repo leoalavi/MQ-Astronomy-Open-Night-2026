@@ -31,10 +31,63 @@ class PassportScannerView extends StatefulWidget {
   State<PassportScannerView> createState() => _PassportScannerViewState();
 }
 
+/// Whether a `resumed` lifecycle event should restart the camera.
+///
+/// Pure, so the rule is unit-testable without a camera. The trap it closes
+/// (Android 16 emulator, 2026-09-05): declining the OS camera dialog fires
+/// `inactive → resumed`, and an unconditional restart on resume re-requested
+/// the permission — a second dialog straight after the first "Don't allow",
+/// which on Android 11+ also burns the "ask again" allowance. After a denial
+/// the only resume that should retry is the one coming back from the app's
+/// Settings page (the visitor may have granted it there); everything else
+/// stays on the honest "Camera unavailable — enter the code" state.
+///
+/// The second trap (same emulator): the OS dialog itself takes the app
+/// through `inactive → resumed` BEFORE the pending `start()` has learned the
+/// answer, so a restart on that resume issues a second request while the
+/// first is still in flight. A resume during an in-flight start never
+/// restarts — the pending call will resolve on its own.
+///
+/// The third finding (adb-injected denial, permission flags `USER_SET`, and
+/// the dialog came straight back): `MobileScannerController.start()` does NOT
+/// throw on a refusal — it records the error in `controller.value` and
+/// completes normally — so "was it denied?" cannot be inferred from an
+/// exception. The rule is therefore inverted: a resume restarts the camera
+/// ONLY when this view itself stopped it for the background
+/// ([stoppedForBackground]) or the visitor is returning from app Settings.
+/// The OS dialog's own `inactive → resumed` round-trip stops nothing, so it
+/// restarts nothing.
+bool shouldRestartScannerOnResume({
+  required bool permissionDenied,
+  required bool returningFromSettings,
+  bool startInFlight = false,
+  bool stoppedForBackground = false,
+}) {
+  if (startInFlight) return false;
+  if (returningFromSettings) return true;
+  if (permissionDenied) return false;
+  return stoppedForBackground;
+}
+
 class _PassportScannerViewState extends State<PassportScannerView>
     with WidgetsBindingObserver {
   MobileScannerController? _controller;
   final ScanGate _gate = ScanGate();
+
+  /// Set when the last start attempt was refused for lack of permission.
+  bool _permissionDenied = false;
+
+  /// True while a `start()` (and possibly its OS permission dialog) is
+  /// pending; a resume during that window must not start a second one.
+  bool _starting = false;
+
+  /// True after THIS view stopped the camera for paused/hidden/detached, so
+  /// the matching resume knows there is something to restart.
+  bool _stoppedForBackground = false;
+
+  /// Set when the visitor taps "Open app settings", so the resume that
+  /// follows is allowed to retry once.
+  bool _returningFromSettings = false;
 
   @override
   void initState() {
@@ -50,13 +103,25 @@ class _PassportScannerViewState extends State<PassportScannerView>
 
   Future<void> _start() async {
     final c = _controller;
-    if (c == null) return;
+    if (c == null || _starting) return;
+    _starting = true;
     try {
       await c.start(); // requests camera permission on first use, then streams
+      // start() completes normally on a refusal and parks the error in
+      // `value`; read it back rather than trusting the absence of a throw.
+      _permissionDenied =
+          c.value.error?.errorCode == MobileScannerErrorCode.permissionDenied;
+    } on MobileScannerException catch (e) {
+      // Remember a permission refusal so the next `resumed` (the dialog
+      // closing) does not immediately ask again. Other failures (already
+      // started, no camera) surface through MobileScanner.errorBuilder.
+      if (e.errorCode == MobileScannerErrorCode.permissionDenied) {
+        _permissionDenied = true;
+      }
     } catch (_) {
-      // Already-started, or a hard failure (denied / no camera). A real failure
-      // surfaces through MobileScanner.errorBuilder; nothing to do here beyond
-      // not leaking an unhandled rejection.
+      // Nothing to do beyond not leaking an unhandled rejection.
+    } finally {
+      _starting = false;
     }
   }
 
@@ -67,12 +132,29 @@ class _PassportScannerViewState extends State<PassportScannerView>
     switch (state) {
       case AppLifecycleState.resumed:
         // Back from the permission dialog or Settings — a just-granted
-        // permission now takes effect with no extra tap.
-        unawaited(_start());
+        // permission takes effect with no extra tap. After a refusal, only
+        // the return from Settings retries (see shouldRestartScannerOnResume).
+        final retry = shouldRestartScannerOnResume(
+          permissionDenied: _permissionDenied,
+          returningFromSettings: _returningFromSettings,
+          startInFlight: _starting,
+          stoppedForBackground: _stoppedForBackground,
+        );
+        _returningFromSettings = false;
+        _stoppedForBackground = false;
+        if (retry) unawaited(_start());
       case AppLifecycleState.inactive:
+        // Deliberately NOT stopped. `inactive` is what the OS permission
+        // dialog (and a pulled-down shade) puts us in; stopping here aborted
+        // the pending `start()` with a non-permission error, so the resume
+        // that followed restarted it and the visitor got a SECOND camera
+        // prompt right after "Don't allow" (Android 16 emulator, 2026-09-05).
+        // The camera is released on paused/hidden/detached below.
+        break;
       case AppLifecycleState.paused:
       case AppLifecycleState.hidden:
       case AppLifecycleState.detached:
+        _stoppedForBackground = true;
         unawaited(c.stop().catchError((_) {})); // release camera + torch offstage
     }
   }
@@ -140,9 +222,13 @@ class _PassportScannerViewState extends State<PassportScannerView>
                       const SizedBox(height: AonSpacing.space3),
                       OutlinedButton.icon(
                         onPressed: () async {
+                          // The resume after Settings is the one retry a
+                          // refusal allows (the visitor may have granted it).
+                          _returningFromSettings = true;
                           try {
                             await Geolocator.openAppSettings();
                           } catch (_) {
+                            _returningFromSettings = false;
                             // Manual entry remains available if Settings cannot open.
                           }
                         },

@@ -62,9 +62,14 @@ signed and verified; all 64-bit `.so` 16 KB-aligned + `zipalign -P 16`
 successful; merged manifest audited; `lintRelease` 0 errors; Android 16
 emulator flows; full gate before commit.
 
+- Branch hygiene (2026-09-06): all 18 side branches, the
+  `aon2026-wt-ios-location` worktree and the remote
+  `fix/ios-always-location-purpose-string` were verified as strict ancestors
+  of `main` (0 commits ahead) and deleted; `origin` now has `main` only.
+
 **Follow-ups:** host the policy, enter Data safety verbatim, register the
-upload cert, restrict the Maps key, capture Android screenshots + feature
-graphic, start the closed test today.
+upload cert, restrict the Maps key, make the feature graphic (screenshots are
+done), start the closed test today.
 
 ---
 ## Raouf: 2026-09-05 — final pre-submission pass; `1.0.0+3` is the Build 3 candidate

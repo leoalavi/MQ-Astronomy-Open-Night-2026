@@ -137,7 +137,10 @@ void main() {
       await n.restoreGrantedLocation();
       expect(svc.requestCount, 0);
       expect(c.read(locationControllerProvider).active, isFalse); // still usable
-      expect(c.read(locationControllerProvider).status, LocationStatus.denied);
+      // A passive "denied" is NOT adopted: checkPermission says denied for a
+      // never-asked fresh install too, and the button must still invite the
+      // first tap ("Show my location"), not read "Location unavailable".
+      expect(c.read(locationControllerProvider).status, LocationStatus.unknown);
       // Re-entering the Map tab (or any rebuild) must NOT prompt again.
       await n.restoreGrantedLocation();
       expect(svc.requestCount, 0); // browsing never opens a permission dialog
@@ -152,8 +155,16 @@ void main() {
           .read(locationControllerProvider.notifier)
           .restoreGrantedLocation();
       expect(svc.appSettingsOpened, 0);
-      expect(c.read(locationControllerProvider).status,
-          LocationStatus.deniedForever);
+      // Not adopted from a passive check either; the explicit tap learns it.
+      expect(c.read(locationControllerProvider).status, LocationStatus.unknown);
+    });
+
+    test('serviceOff on entry IS adopted — a reason the button can name', () async {
+      final svc = FakeLocationService(grant: LocationStatus.serviceOff);
+      final c = _c(svc);
+      await c.read(locationControllerProvider.notifier).restoreGrantedLocation();
+      expect(c.read(locationControllerProvider).status, LocationStatus.serviceOff);
+      expect(c.read(locationControllerProvider).active, isFalse);
     });
 
     test('a throwing location service on entry never crashes the Map', () async {

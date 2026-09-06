@@ -194,15 +194,32 @@ class LocationController extends Notifier<LocationSnapshot> {
   }
 
   /// Restore an existing grant without showing a permission dialog on Map entry.
+  ///
+  /// Only two answers from a PASSIVE check are worth keeping: `granted`
+  /// (activate the dot) and `serviceOff` (a reason we know, so the button can
+  /// say "Turn on Location Services"). A `denied` / `deniedForever` answer is
+  /// deliberately NOT adopted: `checkPermission` reports `denied` for a fresh
+  /// install that has never been asked (iOS maps not-determined to denied,
+  /// Android has no not-determined at all), and storing it made the locate
+  /// control read "Location unavailable" before the visitor had ever seen a
+  /// prompt (Android 16 emulator, 2026-09-05). Leaving `unknown` keeps the
+  /// inviting "Show my location" label; the explicit tap then requests, and a
+  /// real refusal is learned from that request's answer.
   Future<void> restoreGrantedLocation() async {
     if (state.active) return;
     try {
       final status = await _svc.status();
       if (!ref.mounted) return;
-      state = state.copyWith(status: status);
-      if (status == LocationStatus.granted) {
-        state = state.copyWith(active: true);
-        _sync();
+      switch (status) {
+        case LocationStatus.granted:
+          state = state.copyWith(status: status, active: true);
+          _sync();
+        case LocationStatus.serviceOff:
+          state = state.copyWith(status: status);
+        case LocationStatus.denied:
+        case LocationStatus.deniedForever:
+        case LocationStatus.unknown:
+          break; // not adopted — see above
       }
     } catch (_) {
       if (ref.mounted) state = state.copyWith(status: LocationStatus.unknown);

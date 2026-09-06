@@ -66,6 +66,15 @@ void main() {
       'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png': 96,
       'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png': 144,
       'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png': 192,
+      // Adaptive-icon foreground layers (108dp canvas per density). Added for
+      // the Google Play audit 2026-09-05: without mipmap-anydpi-v26, Android
+      // 8+ launchers masked the square legacy PNG onto a white plate.
+      'android/app/src/main/res/mipmap-mdpi/ic_launcher_foreground.png': 108,
+      'android/app/src/main/res/mipmap-hdpi/ic_launcher_foreground.png': 162,
+      'android/app/src/main/res/mipmap-xhdpi/ic_launcher_foreground.png': 216,
+      'android/app/src/main/res/mipmap-xxhdpi/ic_launcher_foreground.png': 324,
+      'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.png':
+          432,
       'web/favicon.png': 32,
       'web/icons/Icon-192.png': 192,
       'web/icons/Icon-512.png': 512,
@@ -109,5 +118,22 @@ void main() {
       File('macos/Runner/Info.plist').readAsStringSync(),
       contains('<string>Astronomy Open Night</string>'),
     );
+  });
+
+  test('Android adaptive icon is declared with a dark background and no '
+      'monochrome layer', () {
+    final xml = File('android/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml')
+        .readAsStringSync();
+    expect(xml, contains('<adaptive-icon'));
+    expect(xml, contains('@color/ic_launcher_background'));
+    expect(xml, contains('@mipmap/ic_launcher_foreground'));
+    // The artwork is a full-bleed square; a monochrome layer built from it
+    // renders as a solid tile under themed icons. Add one only with a
+    // purpose-drawn silhouette.
+    expect(xml, isNot(contains('<monochrome')));
+    final colour =
+        File('android/app/src/main/res/values/ic_launcher_background.xml')
+            .readAsStringSync();
+    expect(colour, contains('#05070F'));
   });
 }

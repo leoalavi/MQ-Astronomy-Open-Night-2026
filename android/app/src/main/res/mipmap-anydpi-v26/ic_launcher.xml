@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Adaptive launcher icon (Android 8+). Foreground = the approved 1024px
+     artwork (same file as the iOS marketing icon, see
+     test/unit/app_icon_assets_test.dart) scaled to the 108dp canvas; the
+     launcher mask crops the starfield edges and keeps the centred observatory.
+     Background = AonPalette.dark.surfaceBase so any mask shape reads as night
+     sky, never a white plate. No monochrome layer: the artwork is a full-bleed
+     photo-style square, which themed icons would render as a solid tile —
+     add one only with a purpose-drawn silhouette. Legacy
+     mipmap-*/ic_launcher.png stays for API 24-25. -->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@color/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

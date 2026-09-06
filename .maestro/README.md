@@ -27,6 +27,7 @@ maestro test --include-tags smoke .maestro/  # quick gate
 | `map-wayfinding.yaml` | Directions FAB → Google consent disclosure (the §2b invariant) → decline returns to the campus map, no network. **Rewritten 2026-08-30**: the old offline origin/destination picker is gone; Directions is now always the consent-gated Google nav. |
 | `first-launch.yaml` | **release audit 2026-09-05**: a fresh install opens straight on Home — no onboarding, no permission alert, every tab one tap away, no "replay introduction" row in Settings (docs/onboarding-decision.md) |
 | `passport.yaml` | **release audit 2026-09-05**: Home → passport (zero-stamp explanation) → the CAMERA alert appears only on entering the scanner → deny → honest "Camera unavailable" → manual code → stamp collected |
+| `android-back.yaml` | **Android, Google Play audit 2026-09-05**: predictive back (API 36) at three depths — pushed detail route pops to Program, pushed passport pops to Home, back on a modal dialog dismisses only the dialog |
 | `map-360-picker.yaml` | 360° picker: every D–I card tourable (G shipped 2026-08-31, so nothing reads "coming soon"), the LAST legend card reachable+tappable past the floating tab bar, and its tour opens |
 
 ## Selector gotchas in THIS app
@@ -105,3 +106,20 @@ alignment and still match the AppBar title.
    label (`tapOn: "Settings"`, `"Night"`, `"تنظیمات"`) — Maestro re-queries
    until the element exists. After a `clearState` launch the cold-boot
    `swipe: DOWN` guard is still required before a by-point tap.
+
+8. **Android (Pixel 8 AVD `aon_api36`, Android 16).** Drive it with the Maestro
+   **CLI** (`~/.maestro/bin/maestro --device emulator-5554 test <flow>`); the
+   MCP's driver session goes stale after an emulator reboot and reports
+   "Unable to launch app" while adb launches fine. Permission dialog text
+   differs from iOS ("While using the app", "Only this time", "Don’t allow") —
+   the flows use the regex `Don.t allow`. Tap tabs by LABEL from Home
+   (`"Map"`, `"Night"`, `"Settings"` are unique there) — the by-point tap
+   missed on Android's slower cold start. After a `scrollUntilVisible`, add
+   `waitForAnimationToEnd` before tapping a button: the Android a11y tree lags
+   the scroll and a stale-bounds tap hit the card instead of "Delete". Hide
+   the keyboard on Android before tapping a button below a text field
+   (`runFlow: when: platform: Android`). Put the emulator in high-accuracy
+   location mode (`adb shell settings put secure location_mode 3`) or Google
+   Play services raises its own "turn on device location" resolution dialog
+   over the Map once a grant is restored.
+

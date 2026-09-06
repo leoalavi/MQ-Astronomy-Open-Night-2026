@@ -24,16 +24,17 @@ tags: [passport]
 - tapOn: "(?s).*Astronomy Passport.*0 of 9 stamps.*"
 - assertVisible: "Scan or enter a venue code to start"
 - assertVisible: "(?s).*Each of the nine venues has a QR sign.*"
-- assertNotVisible: "Don’t Allow"
+# iOS: "Don’t Allow" · Android 16: "Don't allow" — one regex covers both.
+- assertNotVisible: "Don.t allow"
 - takeScreenshot: .maestro/screenshots/passport-01-zero-stamps
 
 # The scanner is what asks — and only now.
 - tapOn: "Scan or enter a code"
 - extendedWaitUntil:
-    visible: "Don’t Allow"
+    visible: "Don.t allow"
     timeout: 8000
 - takeScreenshot: .maestro/screenshots/passport-02-camera-prompt-in-context
-- tapOn: "Don’t Allow"
+- tapOn: "Don.t allow"
 # Denied → honest recovery, no dead end, no crash.
 - extendedWaitUntil:
     visible: "(?s).*Camera unavailable.*"
@@ -42,8 +43,14 @@ tags: [passport]
 - assertVisible: "Enter the code from the venue sign"
 - tapOn: "Code"
 - inputText: "AON-A-FL3R"
-# No hideKeyboard: Flutter exposes no dismiss action Maestro can drive, and
-# "Add stamp" sits above the keyboard anyway.
+# iOS: no hideKeyboard (Flutter exposes no dismiss action Maestro can drive,
+# and "Add stamp" sits above the keyboard). Android: hide it, or the button is
+# not reliably in the reported tree.
+- runFlow:
+    when:
+      platform: Android
+    commands:
+      - hideKeyboard
 - tapOn: "Add stamp"
 - extendedWaitUntil:
     visible: "(?s).*Stamp collected.*"

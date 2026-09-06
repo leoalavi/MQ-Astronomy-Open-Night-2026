@@ -12,6 +12,14 @@ tags: [program]
 # of what a prior flow left behind.
 - launchApp:
     clearState: true
+# Cold-boot guard (see flows/open-map.yaml, README §7): let Home render and
+# wake the a11y tree before the first by-point tab tap, or the tap hits nothing.
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 15000
+- swipe:
+    direction: DOWN
+    duration: 100
 - tapOn:
     point: "27%,92%"
 - assertVisible: "Search talks, activities, presenters"

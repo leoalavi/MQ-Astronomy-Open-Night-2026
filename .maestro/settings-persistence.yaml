@@ -64,6 +64,7 @@ tags: [settings]
     element:
       text: "(?s).*Delete my data.*"
     direction: DOWN
+    centerElement: true   # else the Delete button lands under the floating tab bar (Android, 2026-09-05)
 - tapOn: "Delete"             # opens the confirm dialog
 - assertVisible: "Delete data stored on this device?"
 - tapOn: "Delete"             # confirm — the dialog is modal, so this is the only "Delete"

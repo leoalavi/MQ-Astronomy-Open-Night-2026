@@ -12,6 +12,14 @@ tags: [settings]
 ---
 - launchApp:
     clearState: true
+# Cold-boot guard (see flows/open-map.yaml, README §7): let Home render and
+# wake the a11y tree before the first by-point tab tap, or the tap hits nothing.
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 15000
+- swipe:
+    direction: DOWN
+    duration: 100
 - tapOn:
     point: "88%,91%"
 - assertVisible: "Settings"
@@ -34,18 +42,37 @@ tags: [settings]
     element:
       text: "(?s).*Delete my data.*"
     direction: DOWN
+    centerElement: true   # else the Delete button lands under the floating tab bar (Android, 2026-09-05)
+# Android: the a11y tree can lag a scroll; tapping "Delete" on stale bounds
+# hit the card instead of the button (2026-09-05).
+- waitForAnimationToEnd:
+    timeout: 3000
 - tapOn: "Delete"
 - assertVisible: "Delete data stored on this device?"
 - tapOn: "Cancel"
 
-# The last actionable row must clear the floating tab bar, and it opens the
-# bundled Google Maps open-source licences (static text — no network).
+# The last section must clear the floating tab bar. On iOS its last actionable
+# row opens the bundled Google Maps open-source licences (static text — no
+# network); on Android that row does not exist by design (MainActivity.kt:
+# Play services surfaces its licences in system Settings), so only the
+# Credits card is asserted there.
 - scrollUntilVisible:
     element:
-      text: "Google Maps licences"
+      text: "(?s).*Developed by.*"
     direction: DOWN
-- tapOn: "Google Maps licences"
-- assertVisible: "(?s).*Google Maps licences.*"
-- takeScreenshot: .maestro/screenshots/settings-01-licences
-- tapOn: "Back"
-- assertVisible: "Credits"
+    centerElement: true
+    visibilityPercentage: 10
+    timeout: 25000
+- runFlow:
+    when:
+      platform: iOS
+    commands:
+      - scrollUntilVisible:
+          element:
+            text: "Google Maps licences"
+          direction: DOWN
+      - tapOn: "Google Maps licences"
+      - assertVisible: "(?s).*Google Maps licences.*"
+      - takeScreenshot: .maestro/screenshots/settings-01-licences
+      - tapOn: "Back"
+- assertVisible: "(?s).*Developed by.*"

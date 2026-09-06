@@ -1,0 +1,58 @@
+# Android · predictive back (API 36) and edge-to-edge (Google Play audit, 2026-09-05)
+#
+# Apps targeting Android 16 get predictive-back system animations by default,
+# `onBackPressed` is no longer called and KEYCODE_BACK is not dispatched, so
+# back must arrive through the OnBackInvoked path Flutter registers. This flow
+# proves the gesture is honoured at every depth: a pushed detail route pops to
+# the Program list, a pushed passport route pops to Home, and a modal dialog
+# is dismissed by back without popping the screen under it. Nothing gets
+# stuck and the app never exits from a nested screen.
+#
+# Tab taps are by LABEL — unique on the screens they are tapped from — because a
+# by-point tap right after a launch missed on Android 16 (README §7/§8).
+appId: au.edu.mq.astronomy.aon2026
+tags: [android, back]
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 15000
+- swipe:
+    direction: DOWN
+    duration: 100
+
+# Pushed route → back pops it, the tab shell is still there.
+- tapOn: "Program"            # tab, by label (unique on Home)
+- assertVisible: "Search talks, activities, presenters"
+- tapOn: "(?s).*Capture the cosmos.*"
+- assertVisible: "(?s).*TIME.*"
+- back
+- assertVisible: "Search talks, activities, presenters"
+
+# Passport is pushed above the shell; back returns to Home, not out of the app.
+- tapOn: "Home"               # tab, by label (unique on Program)
+- tapOn: "(?s).*Astronomy Passport.*0 of 9 stamps.*"
+- assertVisible: "Scan or enter a venue code to start"
+- back
+- assertVisible: "Astronomy Open Night"
+
+# A modal dialog: back dismisses the dialog only. Settings → Delete → confirm dialog.
+- tapOn: "Settings"           # tab, by label (unique on Home)
+- assertVisible: "Appearance"
+- scrollUntilVisible:
+    element:
+      text: "(?s).*Delete my data.*"
+    direction: DOWN
+    centerElement: true   # else the Delete button lands under the floating tab bar (Android, 2026-09-05)
+    timeout: 25000
+# Android: the a11y tree can lag a scroll; tapping "Delete" on stale bounds
+# hit the card instead of the button (2026-09-05).
+- waitForAnimationToEnd:
+    timeout: 3000
+- tapOn: "Delete"
+- assertVisible: "Delete data stored on this device?"
+- back
+- assertNotVisible: "Delete data stored on this device?"
+- assertVisible: "(?s).*Delete my data.*"
+- takeScreenshot: .maestro/screenshots/android-back-01-settings-after-dialog

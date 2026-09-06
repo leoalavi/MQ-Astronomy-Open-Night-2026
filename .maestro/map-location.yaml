@@ -1,10 +1,11 @@
 # Map · location, permission and the honest off-campus / off-footprint notes
 #
-# Tests: entering the Map requests location permission (it is a core feature of
-# the screen — not deferred to a "Locate Me" tap), an on-campus fix draws the
-# dot, the control then follows, and a far-away fix produces the off-campus
-# banner rather than a clamped dot at the map edge (spec §5.4/§5.5 — the
-# projector NEVER clamps).
+# Tests: entering the Map does NOT prompt for location (contextual permission —
+# changed 2026-09-05 for the Play/App Store audits: the OS dialog appears only
+# on the first "Show my location" tap), an on-campus fix then draws the dot and
+# the control follows, and a far-away fix produces the off-campus banner rather
+# than a clamped dot at the map edge (spec §5.4/§5.5 — the projector NEVER
+# clamps).
 appId: au.edu.mq.astronomy.aon2026
 tags: [map, location]
 ---
@@ -12,25 +13,37 @@ tags: [map, location]
 - setLocation:
     latitude: -33.7737
     longitude: 151.1134
-- runFlow: flows/open-map.yaml
+- launchApp:
+    clearState: true
+    permissions:
+      location: unset   # Maestro grants everything by default; the flow needs the PRE-grant state
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 20000
+- swipe:
+    direction: DOWN
+    duration: 100
+- tapOn: "Map"
+- assertVisible: "Zoom in"
 
-# Permission is requested on ENTERING the Map tab, before any tap. iOS shows the
-# sheet here on the very first run after install (the grant persists across
-# relaunches, so both taps are optional).
+# No permission sheet on entry: the control reads "Show my location" (inactive)
+# until the visitor asks. The first tap is what raises the OS dialog (iOS:
+# "Allow While Using App"; the grant persists across relaunches, so the
+# dialog taps are optional). A granted Locate tap goes straight to FOLLOW.
+- assertNotVisible: "Allow While Using App"
+- assertNotVisible: "While using the app"
+- assertVisible: "Show my location"
+- tapOn: "Show my location"
 - tapOn:
     text: "Allow While Using App"
     optional: true
 - tapOn:
-    text: "Allow Once"
+    text: "While using the app"
     optional: true
-- takeScreenshot: .maestro/screenshots/location-01-on-campus
-
-# Granted on entry → the dot is already live and the control now offers to
-# FOLLOW (not the first-run "Show my location"). "Locate Me" simply recenters
-# and starts follow when permission is already held.
-- assertVisible: "Follow my location"
-- tapOn: "Follow my location"
 - assertVisible: "Stop following my location"
+- takeScreenshot: .maestro/screenshots/location-01-on-campus
+- tapOn: "Stop following my location"
+- assertVisible: "Follow my location"
 
 # ── a FIRST fix far from campus must produce the honest banner, not a fake dot ──
 # A relaunch (fresh LocationController) is deliberate: the fix-settling policy
@@ -43,13 +56,27 @@ tags: [map, location]
     longitude: 151.2093
 - launchApp:
     clearState: true
-- runFlow: flows/open-map.yaml
-# Fresh state → the entry-time permission sheet appears again; grant it.
+    permissions:
+      location: unset   # Maestro grants everything by default; the flow needs the PRE-grant state
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 20000
+- swipe:
+    direction: DOWN
+    duration: 100
+- tapOn: "Map"
+- assertVisible: "Zoom in"
+# Fresh state → nothing is asked on entry; ask for the position explicitly.
+- assertVisible: "Show my location"
+- tapOn: "Show my location"
 - tapOn:
     text: "Allow While Using App"
     optional: true
-# Granted on entry with an off-campus fix: project() returns null off the
-# illustrated footprint, so the app shows the honest distance banner with no
-# Locate tap needed — never a dot clamped to the edge of the artwork.
+- tapOn:
+    text: "While using the app"
+    optional: true
+# With an off-campus fix, project() returns null off the illustrated footprint,
+# so the app shows the honest distance banner — never a dot clamped to the edge
+# of the artwork.
 - assertVisible: ".*km from campus"
 - takeScreenshot: .maestro/screenshots/location-02-off-campus

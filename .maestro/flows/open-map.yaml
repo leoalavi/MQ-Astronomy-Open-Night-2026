@@ -18,10 +18,18 @@ appId: au.edu.mq.astronomy.aon2026
 # If a tab is ever added or removed again, recompute this.
 - stopApp
 - launchApp
-# XCTest can crash on cold boot if the a11y tree is touched before first render.
+# Let Home render before touching the tree (XCTest can crash on a cold-boot
+# touch; on Android 16 the restart is slow enough that an immediate by-point
+# tap lands on nothing — 2026-09-05).
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 20000
 - swipe:
     direction: DOWN
     duration: 100
-- tapOn:
-    point: "58%,91%"
+# From HOME the unselected Map tab's semantics label "Map" is unique (the
+# AppBar title / mode-toggle "Map" ambiguity only exists once the Map screen is
+# open), and a label tap re-queries the tree — which is what makes it survive
+# Android 16's slower restart where the by-point tap missed (2026-09-05).
+- tapOn: "Map"
 - assertVisible: "Zoom in"

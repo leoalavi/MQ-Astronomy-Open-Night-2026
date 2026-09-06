@@ -22,8 +22,15 @@ tags: [my-night]
 ---
 - launchApp:
     clearState: true
-- tapOn:
-    point: "42%,91%"
+# Cold-boot guard (see flows/open-map.yaml, README §7): let Home render and
+# wake the a11y tree before the first by-point tab tap, or the tap hits nothing.
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 15000
+- swipe:
+    direction: DOWN
+    duration: 100
+- tapOn: "Night"               # tab, by label (unique on Home; survives a slow boot)
 - assertVisible: "Your night is empty"
 
 # The empty-state CTA routes to the programme.
@@ -44,8 +51,12 @@ tags: [my-night]
 # Relaunch (saved plan persists) — clean state + persistence proof — then open
 # My Night: both on the timeline, and the clash is flagged both ways + a banner.
 - launchApp
-- tapOn:
-    point: "42%,91%"
+# After a bare restart tap the tab by LABEL (README §7): a by-point tap can
+# fire against the pre-restart tree and silently miss.
+- extendedWaitUntil:
+    visible: "Astronomy Open Night"
+    timeout: 20000
+- tapOn: "Night"
 - assertVisible: "(?s).*Cosmic arcade.*Overlaps Kids. space.*"
 - assertVisible: "(?s).*Kids. space.*Overlaps Cosmic arcade.*"
 - assertVisible: "(?s).*run at the same time.*"

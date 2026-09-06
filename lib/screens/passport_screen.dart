@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +5,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/config/qa_mode.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/stamp_service.dart';
@@ -72,8 +72,10 @@ class PassportScreen extends ConsumerWidget {
       appBar: AppBar(
         title: Text(l.passportTitle),
         actions: [
-          // Reset is a demo/QA control, compiled out of release builds.
-          if (kDebugMode)
+          // Reset is a QA control behind an explicit per-run define (see
+          // qa_mode.dart) — never in release, and no longer in plain debug
+          // builds either, so screenshots and E2E see the shipped app bar.
+          if (ref.watch(passportResetToolProvider))
             IconButton(
               tooltip: 'Reset passport (debug)',
               icon: const Icon(Icons.restart_alt_rounded),

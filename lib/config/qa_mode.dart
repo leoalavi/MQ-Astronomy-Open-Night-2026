@@ -34,3 +34,21 @@ const bool kAllowOffCampusTesting =
 /// without a rebuild. Production reads the compile-time constant.
 final allowOffCampusTestingProvider =
     Provider<bool>((ref) => kAllowOffCampusTesting);
+
+/// Shows the passport's "Reset passport" app-bar action.
+///
+/// It used to be `kDebugMode`, which meant every debug simulator build — the
+/// ones the store screenshots and the Maestro suite are captured from — showed
+/// a control that does not exist in release (2026-09-06: it appeared in the
+/// App Store passport screenshot). Like [kAllowOffCampusTesting] it is now an
+/// explicit per-run define, `false` in every build that does not pass it:
+///
+/// ```
+/// flutter run --dart-define=AON_PASSPORT_RESET_TOOL=true
+/// ```
+const bool kPassportResetTool = bool.fromEnvironment('AON_PASSPORT_RESET_TOOL');
+
+/// Riverpod view of [kPassportResetTool]; widget tests override it to exercise
+/// the reset dialog without a rebuild.
+final passportResetToolProvider = Provider<bool>((ref) => kPassportResetTool);
+

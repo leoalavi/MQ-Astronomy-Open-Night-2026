@@ -7,9 +7,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/screens/passport_screen.dart';
 import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/data/stamp_stations_data.dart';
+import 'package:aon2026/config/qa_mode.dart';
 
-Widget _host(Set<String> snapshot) => ProviderScope(
-  overrides: [passportSnapshotProvider.overrideWithValue(snapshot)],
+Widget _host(Set<String> snapshot, {bool resetTool = true}) => ProviderScope(
+  overrides: [
+    passportSnapshotProvider.overrideWithValue(snapshot),
+    // The reset action is a per-run QA define (qa_mode.dart); these tests
+    // opt in explicitly. The default-off case has its own test below.
+    passportResetToolProvider.overrideWithValue(resetTool),
+  ],
   child: const MaterialApp(
     localizationsDelegates: AonL10n.localizationsDelegates,
     supportedLocales: AonL10n.supportedLocales,
@@ -117,5 +123,14 @@ void main() {
       // Back to the zero state, which is the "start" copy, not "0 / 9".
       expect(find.text('Scan or enter a venue code to start'), findsOneWidget);
     });
+  });
+
+  testWidgets('the reset action is ABSENT unless the QA define is passed '
+      '(it showed up in a store screenshot from a debug build, 2026-09-06)',
+      (t) async {
+    await t.pumpWidget(_host({'macquarie-theatre'}, resetTool: false));
+    expect(find.byTooltip('Reset passport (debug)'), findsNothing);
+    expect(kPassportResetTool, isFalse,
+        reason: 'compile-time default must be off in every build');
   });
 }

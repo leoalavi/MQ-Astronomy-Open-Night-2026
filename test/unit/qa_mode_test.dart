@@ -74,6 +74,14 @@ void main() {
       addTearDown(c.dispose);
       expect(c.read(allowOffCampusTestingProvider), kAllowOffCampusTesting);
     });
+
+    test('the passport reset tool is off by default too', () {
+      expect(kPassportResetTool, isFalse,
+          reason: 'a debug build must show the shipped app bar');
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      expect(c.read(passportResetToolProvider), isFalse);
+    });
   });
 
   group('PRODUCTION mode still enforces campus scope', () {

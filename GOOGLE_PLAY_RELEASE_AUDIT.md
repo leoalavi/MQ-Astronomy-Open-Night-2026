@@ -175,7 +175,7 @@ HUMAN ACTION REQUIRED.
 | P2-3 | Three Maestro flows (`my-night`, `settings`, `map-*` via `open-map`) tapped a tab by point right after a cold start/restart and missed on Android's slower boot. | **FIXED** — cold-boot wait + swipe, label taps after restarts |
 | P2-4 | Play listing doc named MQ as publisher and an `@mq.edu.au` contact. | **FIXED** — publisher Leo Alavi, contact `leo@leoalavi.dev`, policy pointer to the Android HTML |
 | P2-6 | After the switch to tap-initiated location (`46dc81e`), the Map's locate control read **"Location unavailable"** on a fresh install before any prompt: `restoreGrantedLocation` stored the passive `checkPermission` answer, and geolocator reports `denied` for a never-asked install (iOS maps not-determined to denied; Android has no not-determined). Seen on the Android 16 emulator with location unset. | **FIXED** — `location_providers.dart`: a passive check adopts only `granted` (activate) or `serviceOff` (a nameable reason); `denied`/`deniedForever` are learned from the explicit tap. Tests updated + one added (`location_controller_test.dart`) |
-| P2-5 | Android screenshots and the 1024×500 feature graphic did not exist. | **Screenshots DONE** (`e3faf49`: six 1080×2160 captures, release APK, Android 16). **Feature graphic still HUMAN** — do not build it from the hero photo (rights) |
+| P2-5 | Android screenshots and the 1024×500 feature graphic did not exist. | **DONE 2026-09-07.** Screenshots: six 1080×2160 captures from the release APK (recaptured `4fe4c13` after the branding removal — the `e3faf49` set showed the university eyebrow and the crested basemap). Feature graphic: `docs/release/play-graphics/feature-graphic-1024x500.png`, built by `tools/marketing/build_feature_graphic.py`. The 512 px icon was also found to be the **stock Flutter logo** and regenerated. | P2 |
 
 ## P3 Findings
 
@@ -305,10 +305,12 @@ in-app copy.
 ## Google Play Store Listing
 
 - **Name:** Astronomy Open Night
-- **Short description (80):** "The official guide to Macquarie University's
-  Astronomy Open Night. Works offline" — **check with the organisers whether
-  "official" is acceptable from a personal account**; safer: "Your guide to
-  Macquarie University's Astronomy Open Night. Works offline."
+- **Short description (80):** **SUPERSEDED 2026-09-07.** Both wordings drafted
+  here named the university, and the first also called the app "official" -
+  either would re-introduce exactly the branding the 2026-09-07 audit removed.
+  The live value is in `docs/release/play-store-listing.md`: "Your offline
+  guide to Astronomy Open Night: map, programme, tours, directions." (78/80
+  chars). Do not restore the wording that was here.
 - **Full description:** reuse `docs/release/app-store-listing.md` verbatim;
   replace the PRIVACY paragraph's "No analytics… No tracking" with: "No
   account, no sign-in, no advertising. Your stamps, favourites and plan stay on
@@ -316,9 +318,13 @@ in-app copy.
   Maps and the QR scanner report technical diagnostics to Google — see the
   Privacy Policy."
 - **Category:** Applications → Education (tags: education, maps & navigation, events)
-- **Graphics:** 512 px icon exists (`docs/release/play-graphics/icon-512.png`);
-  feature graphic **TODO**; phone screenshots **TODO** — capture Program, My
-  Night, Map, a 360° tour, Passport on the AVD (ratio ≤ 2:1).
+- **Graphics: COMPLETE 2026-09-07.** 512 px icon
+  (`docs/release/play-graphics/icon-512.png` - regenerated; it had been the
+  stock Flutter logo); feature graphic
+  (`docs/release/play-graphics/feature-graphic-1024x500.png`, built by
+  `tools/marketing/build_feature_graphic.py` with a procedural starfield, so no
+  third-party photograph is used); six phone screenshots at exactly 2:1 in
+  `docs/release/screenshots/android-phone/`, captured from the release APK.
 
 ## App Content Answers
 

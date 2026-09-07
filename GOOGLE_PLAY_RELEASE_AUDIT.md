@@ -2,7 +2,7 @@
 
 **Date:** 2026-09-05 · **Publisher (confirmed by Leo Alavi):** Leo Alavi, personal
 Google Play developer account · **Application ID:** `au.edu.mq.astronomy.aon2026`
-(unchanged; it is the ID the Play App Signing bootstrap AAB was uploaded under)
+(unchanged. **Correction 2026-09-07:** this line used to say a Play App Signing bootstrap AAB had been uploaded under it — Play Console shows *no app* in Leo's account and the package as *available*, so no upload ever happened)
 · **Artefact audited:** `build/app/outputs/bundle/release/app-release.aab`,
 `1.0.0 (3)` (the merged tree also carries Build 3 for iOS), built from the working tree described in *Changes Made*.
 
@@ -122,7 +122,7 @@ HUMAN ACTION REQUIRED.
 |---|---|---|---|---|---|
 | Target API level — new apps/updates must target Android 16 (API 36) from 31 Aug 2026 | Yes | **PASS** | badging `targetSdkVersion:'36'` | — | — |
 | Android App Bundle required for new apps | Yes | **PASS** | `app-release.aab` built and signed | — | Upload the AAB, never the APK |
-| Play App Signing | Yes | **HUMAN** | Upload key generated here; Play holds the app-signing key. The bootstrap AAB uploaded earlier used a different key — see Signing | P1 | Register this upload certificate (or reset the upload key) in Play Console before uploading |
+| Play App Signing | Yes | **HUMAN** | Upload key generated here. **No Play App Signing cert exists yet (checked 2026-09-07): the app has never been created in Play Console.** Create the app, upload the signed AAB to Internal testing, then register the SHA-1 Play shows on the Android Maps key. | P1 | Register this upload certificate (or reset the upload key) in Play Console before uploading |
 | 16 KB page-size support (apps targeting 15+; hard cut-off for updates 1 Feb 2027) | Yes | **PASS (static)** | ELF + zipalign checks above | — | Optionally verify on a 16 KB device |
 | Data safety — accurate, includes SDK data, form mandatory | Yes | **HUMAN** (answers prepared; **were wrong before today**) | Maps SDK + ML Kit disclosures; answers in *Data Safety* | P0 if wrong | Enter the answers below verbatim |
 | Privacy policy — in Console **and** in-app, publicly accessible | Yes | **HUMAN** for the URL; **PASS** in-app | In-app: Settings → Privacy Policy opens the full text offline (`settingsPrivacyPolicyBody`); hosted copy `docs/release/android-privacy-policy.html` is ready but **not hosted** | P0 until hosted | Host the HTML at a stable HTTPS URL, paste it in Console, set `EventConfig.privacyPolicyUrl` |

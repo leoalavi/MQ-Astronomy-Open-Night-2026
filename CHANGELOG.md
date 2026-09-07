@@ -7,6 +7,36 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-07 — Play Console has no app; the "bootstrap AAB" never existed
+
+**Scope:** Attempting the last B3 step (register the Play App Signing SHA-1 on
+`aon2026-android`) in Play Console via Claude in Chrome, from Raouf's session.
+
+**Finding**
+- The only developer account visible is **Leo Alavi (personal,
+  7729261909793792976)** and it reads **"Create your first app"**.
+- On the Create-app form, `au.edu.mq.astronomy.aon2026` → **"Package name
+  available"** — definitive: the package has never been registered on Play under
+  any account. `GOOGLE_PLAY_RELEASE_AUDIT.md`, `play-store-listing.md` and
+  `CLAUDE.md` all asserted a "Play App Signing bootstrap AAB" and that `1.0.0+1`
+  was spent on Play. **All three were false** and are now corrected.
+- Consequence: **no Play App Signing certificate exists**, so the Android key is
+  (correctly) restricted to the upload SHA-1 only. That is right for every
+  sideloaded/internal build and will 403 for Play installs until the cert
+  exists and is added.
+
+**State left in the browser:** the Create-app form is filled with the name and
+package (availability confirmed); the permission classifier stopped automation
+at the language dropdown. Remaining by hand: language en-AU → App → Free →
+declarations → *Create app*; upload the signed AAB to *Internal testing*; copy
+the SHA-1 from *Setup → App signing*; then add it to `aon2026-android` in GCP
+and re-run the check script.
+
+**Files:** `docs/release-blockers.md` (B3), `GOOGLE_PLAY_RELEASE_AUDIT.md`,
+`docs/release/play-store-listing.md`, `CLAUDE.md` (git-ignored).
+
+---
+
 ## Raouf: 2026-09-07 — B3: per-platform restricted keys live, and a latent Android 403 fixed
 
 **Scope:** Closing the unrestricted-key blocker. Two keys created in the GCP

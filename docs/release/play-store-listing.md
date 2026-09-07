@@ -212,7 +212,10 @@ Both are already handled in the repo; both are easy to get wrong:
   restricted to the upload certificate works on every build you test and fails
   for every real Play user. This is documented in the release program and is the
   single most expensive mistake available here.
-- **`1.0.0+1` is spent** on the Play App Signing bootstrap AAB. Bump before the
+- ~~**`1.0.0+1` is spent** on the Play App Signing bootstrap AAB.~~ **False —
+  corrected 2026-09-07.** Play Console shows no app in Leo's account and the
+  package as *available*; nothing was ever uploaded. No build number is spent on
+  Play. Bump before the
   release candidate.
 - Android release signing **fails closed** — the check lives in
   `gradle.taskGraph.whenReady`, not in `buildTypes { release { } }`, because the

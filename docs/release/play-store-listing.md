@@ -86,7 +86,7 @@ notes:
 |---|---|---|
 | App icon | 512 × 512 PNG, 32-bit, **no transparency** | **DONE** — `docs/release/play-graphics/icon-512.png`, verified 512×512, `hasAlpha: no` |
 | Feature graphic | 1024 × 500 JPG/PNG, no transparency | **TODO** — required for every listing. **Do not build it from the Home hero image**: rights to that photograph remain with Aleix Roig, not MQ. See `organiser-requests.md`. |
-| Phone screenshots | 2–8, min 320 px, max 3840 px, ratio ≤ 2:1 | **DONE** — six 1080 × 2160 (exactly 2:1) captures in `docs/release/screenshots/android-phone/` from the release APK on the Android 16 emulator (Pixel 8, display forced to 2:1): home, program, my-night, map, 360° picker, passport. Opaque PNG |
+| Phone screenshots | 2–8, min 320 px, max 3840 px, ratio ≤ 2:1 | **DONE** — six 1080 × 2160 (exactly 2:1) captures in `docs/release/screenshots/android-phone/`, recaptured **2026-09-07** from the post-branding-removal release APK on the Android 16 emulator (Pixel 8, display forced to 2:1, reset afterwards): home, program, my-night, map, 360° picker, passport. Opaque PNG |
 | Tablet screenshots | Optional but strongly recommended | Not captured (no tablet AVD); the iPad captures are 3:4 and can be used if Play accepts them for the 7"/10" slots |
 
 

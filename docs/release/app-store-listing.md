@@ -185,15 +185,21 @@ players, so the gambling and contest questions are genuinely *None*.
 
 ## Screenshots
 
-Recaptured **2026-09-06** from the current build (after the contextual-location
-change and the Android glass fix, which does not affect iOS) and committed under
-`docs/release/screenshots/`. Every file is an unretouched simulator capture,
-opaque PNG, exact device resolution.
+Recaptured **2026-09-07** from the post-branding-removal build, and committed
+under `docs/release/screenshots/`. The 2026-09-06 set is superseded: it showed
+the "MACQUARIE UNIVERSITY" Home eyebrow and the crested basemap. Every file is
+an unretouched simulator capture, opaque PNG, exact device resolution.
 
 | Size | Device | Required | Status |
 |---|---|---|---|
-| 1320 × 2868 | iPhone 17 Pro Max (6.9") | **Yes** | 6 captured |
-| 2064 × 2752 | iPad Pro 13-inch (M5) | **Yes** — the app runs on iPad | 6 captured |
+| 1290 × 2796 | iPhone 6.9" (iOS 26.5 sim) | **Yes** | 6 captured 2026-09-07 |
+| 2064 × 2752 | iPad Pro 13-inch | **Yes** — the app runs on iPad | 6 captured 2026-09-07 |
+
+**Note on the iPhone size.** This table previously claimed 1320 × 2868 while the
+committed files were actually **1284 × 2778** — which is Apple's **6.5"** size,
+not 6.9", so the old set was documented against a slot it did not fit. The new
+set is **1290 × 2796**, which *is* an accepted 6.9" size (Apple takes either
+1320 × 2868 or 1290 × 2796 there). Table and files now agree.
 
 Both sets show the same six screens, in the order Apple displays them:
 

@@ -1,0 +1,71 @@
+# Store screenshots — the six shipped App Store / Play listing images.
+#
+# Run this per device, one booted simulator at a time (two stall the driver):
+#   maestro --device <udid> test .maestro/store-screenshots.yaml
+# then move .maestro/screenshots/store-*.png into
+# docs/release/screenshots/{iphone-6.9,ipad-13,android-phone}/.
+#
+# Traps this flow already accounts for (.maestro/README.md + CLAUDE.md):
+#  - cold-boot needs a `swipe: DOWN` after a clearState launch;
+#  - tap tabs by LABEL, never by point — a by-point tap after a restart fires
+#    against the pre-restart tree and silently misses;
+#  - the 360° picker's tree lags on the Pro Max and iPad, so wait for the TOUR
+#    TITLE ("Gymnasium Road"), not the picker row that opened it.
+appId: au.edu.mq.astronomy.aon2026
+tags: [store]
+---
+- launchApp:
+    clearState: true
+- swipe:
+    start: 50%, 40%
+    end: 50%, 60%
+- assertVisible: "Astronomy Open Night"
+
+# 01 — Home. The hero must NOT carry a university eyebrow above the title.
+- assertVisible: "(?s).*Astronomy Passport.*of 9 stamps.*"
+- takeScreenshot: .maestro/screenshots/store-01-home
+
+# Give My Night something to show.
+- tapOn: "(?s).*Save Capture the cosmos to My Night.*"
+
+# 02 — Program.
+- tapOn: "Program"
+- assertVisible: "(?s).*Capture the cosmos.*"
+- takeScreenshot: .maestro/screenshots/store-02-program
+
+# 03 — My Night.
+- tapOn: "Night"
+- assertVisible: "(?s).*Capture the cosmos.*"
+- takeScreenshot: .maestro/screenshots/store-03-my-night
+
+# 04 — Map. The basemap must show no university crest or wordmark, and the
+# attribution must credit the source programme, not an institution.
+- tapOn: "Map"
+- assertVisible: "Campus map: Astronomy Open Night programme"
+- takeScreenshot: .maestro/screenshots/store-04-map
+
+# 05 — a 360° tour, opened from the picker.
+- tapOn:
+    text: "360°"
+- assertVisible: "(?s).*Solar system walk.*"
+# The Android listing uses the picker itself as its fifth image
+# (05-360-picker); iOS uses an open tour (05-panorama). Capture both so one
+# flow serves every device.
+- takeScreenshot: .maestro/screenshots/store-05-360-picker
+- tapOn: "(?s).*Solar system walk.*"
+- assertVisible: "Gymnasium Road"
+- takeScreenshot: .maestro/screenshots/store-05-panorama
+
+# 06 — Astronomy Passport.
+# The tour is a full-screen route pushed above the tab shell, so there is no
+# tab bar to tap until we come back down to it. `back` is Android-only, so
+# dismiss the tour with its own back control (an icon button, whose tooltip is
+# its accessible name).
+# (This lands back on the 360 picker, not the map, so do not assert the map
+# attribution here - the tab bar is what we need and it is present.)
+- tapOn:
+    point: "9%,10%"
+- tapOn: "Home"
+- tapOn: "(?s).*Astronomy Passport.*of 9 stamps.*"
+- assertVisible: "(?s).*stamp.*"
+- takeScreenshot: .maestro/screenshots/store-06-passport

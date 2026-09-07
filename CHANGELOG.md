@@ -7,6 +7,53 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-07 — B3 re-verified: BOTH Google keys are unrestricted, not just iOS
+
+**Scope:** Re-checking release blocker B3 against the live API. No GCP console
+change was made — that is an infra action — but the blocker is now measured
+rather than assumed, and it is **wider than recorded**.
+
+**Finding**
+- The 2026-09-05 check tested only the **iOS** Routes key. Both keys were
+  re-probed on 2026-09-07 and **all six probes returned HTTP 200**:
+
+  | Key | correct identity | no identity header | wrong identity |
+  |---|---|---|---|
+  | iOS Routes | 200 | **200** | **200** |
+  | **Android Routes** | 200 | **200** | **200** |
+
+  The **Android Routes key is unrestricted too** — never previously tested.
+  Neither key enforces the identity headers the client goes to real trouble to
+  send (`routes_client_identity.dart`, and `MainActivity.signingCertSha1()`
+  reading the live signing cert at runtime).
+- **The Maps SDK key ships in plaintext.** Confirmed with
+  `aapt2 dump xmltree --file AndroidManifest.xml` on the release APK:
+  `com.google.android.geo.API_KEY` carries the literal key. This is normal and
+  unavoidable in a mobile client — **an API key in a shipped app is not a
+  secret.** Google's protection model is application + API restriction, not
+  secrecy. That is precisely why B3 matters: today anyone who pulls a key out of
+  the APK or IPA can bill this project's GCP account from anywhere.
+
+**The trap that would have broken production, documented in the close condition**
+`MainActivity.signingCertSha1()` reports the **live** `apkContentsSigners`, so a
+Play-installed build sends the **Play App Signing** certificate while a locally
+built release APK sends the **upload** certificate. Restricting the Android key
+to the upload key alone therefore **works on every build you test and fails for
+every real user**. The close condition now lists all the SHA-1s that must be
+registered, and records the upload key's:
+`A4:26:BD:18:EF:21:BC:FD:05:FA:95:A2:D5:EF:C3:03:A5:CD:92:6D` (its SHA-256
+matches the fingerprint already recorded for the keystore).
+
+**Added** `tools/security/check_routes_key_restrictions.sh` — runs all six
+probes and prints **status codes only**, never a key. It is the verification
+evidence B3 asks for, so closing the blocker is now a one-command check.
+
+**Status:** B3 remains `OPEN`. It is not an App Review blocker; it is a billing
+and abuse exposure that should be closed before the app is public, and
+certainly before event night. Owner: infra (GCP console).
+
+---
+
 ## Raouf: 2026-09-07 — the last Play Console graphic: 1024 × 500 feature graphic
 
 **Scope:** The only Play listing asset still missing. Play requires a feature

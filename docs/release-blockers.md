@@ -49,7 +49,7 @@ clears the path to GO.
 |----|-----------------|----------|-------|--------|
 | B1 | iOS `NSLocationWhenInUseUsageDescription` says location is "never sent anywhere", but Google Routes can transmit the user's origin after Maps consent | Store disclosure / privacy | Product/legal | `CLOSED — VERIFIED` |
 | B2 | Maps Directions currently uses implicit auto-accept on first use rather than an explicit disclosure; wording referring to "after you agree" must be reconciled with the intended consent posture | Privacy / product decision | Product/legal | `CLOSED — VERIFIED` |
-| B3 | Live Google walking routes — **the Routes API now answers HTTP 200** (verified 2026-09-05). A NEW finding replaces it: the shipped iOS Routes key has **no application restriction** | Infrastructure / security | Infra | `OPEN` — cause changed, see B3 |
+| B3 | Live Google walking routes answer HTTP 200. **Re-verified 2026-09-07: BOTH the iOS and the Android Routes keys are unrestricted** — six live probes all returned 200, including with no identity header and with a deliberately wrong app id. The Android key had never been tested before | Infrastructure / security | Infra | `OPEN` — billing/abuse exposure |
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
 | B6 | Redistribution permission — three University asset sets settled by the owner's attestation (2026-09-05); the **Home hero photograph** ships on its existing credit by the owner's explicit decision, with the residual 5.2 risk accepted | Asset rights | Owner (decided) | `CLOSED — OWNER DECISION (accepted risk)` |
@@ -166,14 +166,52 @@ clears the path to GO.
   `docs/map-audit-2026-08-30.md` §11 (GCP checklist); `ARCHITECTURE.md` Risk R2.
 - **Owner.** Infra (GCP console).
 - **Status.** `OPEN` — the original 401 cause is closed; the key restriction is not.
-- **Exact condition to close.** In the GCP console, on the key the app ships:
-  set **Application restrictions → iOS apps** to `au.edu.mq.astronomy.aon2026`
-  (and the Android key to the package plus **all three** Play App Signing
-  fingerprints, not the upload key), and **API restrictions** to the Routes API
-  and the Maps SDKs only.
-- **Verification evidence required.** Re-run the same three requests: the one
-  carrying the correct bundle id returns 200, and the two without a valid
-  identity return 403. Then a live route on a physical device (B4).
+- **RE-VERIFIED 2026-09-07 — still open, and WIDER than recorded.** The
+  2026-09-05 check tested only the iOS key. Both keys were re-tested against the
+  live API; **all six probes returned HTTP 200**:
+
+  | Key | correct identity | no identity header | wrong identity |
+  |---|---|---|---|
+  | iOS Routes | 200 | **200** | **200** (`com.example.notours`) |
+  | **Android Routes** | 200 | **200** | **200** (wrong package) |
+
+  So the **Android Routes key is unrestricted too** — that was never previously
+  tested. Neither key enforces the identity headers the client carefully sends.
+
+- **The Maps SDK key is embedded in plaintext and is trivially extractable.**
+  Confirmed by `aapt2 dump xmltree --file AndroidManifest.xml` on the release
+  APK: `com.google.android.geo.API_KEY` carries the literal key string. This is
+  normal and unavoidable for a mobile client — **an API key in a shipped app is
+  not a secret.** Google's protection model is application + API restriction,
+  not secrecy, which is exactly why this blocker matters.
+
+- **Exact condition to close.** In the GCP console, for **both** Routes keys and
+  the Maps SDK key:
+  1. **iOS key → Application restrictions → iOS apps**: bundle id
+     `au.edu.mq.astronomy.aon2026`.
+  2. **Android key → Application restrictions → Android apps**: package
+     `au.edu.mq.astronomy.aon2026` plus **every SHA-1 that can sign an install**:
+     - the **Play App Signing** SHA-1 (Play Console → Setup → App signing) —
+       this is the one real users hit, because Play re-signs the AAB;
+     - the **upload key** SHA-1
+       `A4:26:BD:18:EF:21:BC:FD:05:FA:95:A2:D5:EF:C3:03:A5:CD:92:6D`
+       — needed for locally built release APKs and internal testing;
+     - the **debug** keystore SHA-1, only if debug builds are ever pointed at
+       the live key.
+
+     **Why all of them:** `MainActivity.signingCertSha1()` reads the *live*
+     `apkContentsSigners` at runtime, so the header is the Play App Signing cert
+     on a Play install and the upload cert on a local build. Registering only
+     the upload key works on every build you test and fails for every real user.
+  3. **API restrictions** on each key: Routes API for the Routes keys; Maps SDK
+     for Android / Maps SDK for iOS on the Maps key. Nothing else.
+
+- **Verification evidence required.** Re-run `b3_check.sh` (see below): the
+  probes carrying a correct identity return **200**, and the four without a
+  valid identity return **403**. Then a live route on a physical device (B4).
+
+- **Repeatable check.** `tools/security/check_routes_key_restrictions.sh` runs
+  all six probes and prints status codes only — it never echoes a key.
 
 ## B4 — Physical-device validation outstanding
 

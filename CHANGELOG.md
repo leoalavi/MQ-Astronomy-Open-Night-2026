@@ -7,7 +7,106 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
-## Raouf: 2026-09-07 — remove Macquarie University branding; the app stands as an independent project
+## Raouf: 2026-09-07 — second independent compliance sweep (`93812e3`)
+
+**Scope:** Re-audit of the branding removal, run as if the first pass were
+untrusted: the repository was re-inventoried from scratch and pass 1's search
+results, file list, conclusions and `PASS` status were all treated as unverified.
+
+**Two real defects pass 1 missed — both fixed**
+- **BLOCKER — the Play Store icon was the stock Flutter logo.**
+  `docs/release/play-graphics/icon-512.png` was Flutter's own mark (81.9 % of
+  the image was pure white), while `play-store-listing.md` recorded it as
+  *"DONE — verified 512 × 512, `hasAlpha: no`"*. **Both of those checks passed.
+  Neither looked at the content.** Regenerated from the approved artwork
+  (`assets/branding/app_icon_source.png`), alpha flattened onto `#05070F`,
+  LANCZOS to 512 × 512, 32-bit PNG, no transparency.
+- **MEDIUM — Persian said "university" where English says "campus."**
+  Four *shipped* `app_fa.arb` strings, including the privacy copy twice as
+  *"the university map"* — which reads closer to an ownership claim in Persian
+  than the English does. The file's own established word for campus was already
+  used in eight other keys, so this was internal inconsistency as well as
+  drift. **An English-only sweep cannot find this class of defect.**
+
+**Two claims pass 1 made without checking, now corrected**
+- Not "17 venue pins": **16** venues are pinned from `artworkX/Y` (the exact set
+  is asserted by `venue_artwork_placement_test.dart`); the Metro station is the
+  17th and is placed by **GPS projection** with `artworkX == null`.
+- Pass 1's sweep deltas used `git grep -c`, which counts matching **lines**, not
+  occurrences. True figures are **450 → 410**, not "434 → 283".
+
+**No over-correction.** Verified byte-identical to the pre-audit baseline:
+`venues_data.dart`, `buildings.json` (SHA-256, 170 entries), all 39 panoramas
+and 9 manifests, and `campus_projection.dart` / `map_placement.dart` /
+`map_config.dart` / `panorama_data.dart`. ARB keys 410 → 410, EN/FA parity exact.
+
+**Verified in the packaged binary, not just the source.** The release APK
+contains exactly three files matching "macquarie" — `AssetManifest.bin`,
+`buildings.json` and the theatre panorama manifest — and **zero** matching
+`CRICOS|00002J|MQPhysAstro|MQAstroOpen`. The compiled Dart snapshot
+(`libapp.so`) holds **14** Macquarie strings, every one a venue name, place
+name, id or asset path; all 14 are classified individually in the report.
+(`meta:Macquarie` in `libflutter.so` is Flutter's own CLDR timezone id for
+Macquarie *Island*.)
+
+**Verification:** `./scripts/check.sh` → `CHECK PASSED`, exit 0, 7/7, coverage
+90.86 %. `flutter analyze` clean. APK 137.8 MB, AAB 128.9 MB, iOS-simulator and
+web builds green. **iOS release archive: NOT VERIFIED** — `flutter build ipa`
+cannot run in this shell for the pre-existing signing-team reason.
+
+**Files:** `docs/release/play-graphics/icon-512.png`, `lib/l10n/app_fa.arb`
+(+ generated), `BRANDING_AUDIT.md`, `BRANDING_AUDIT_PASS2.md` (new).
+
+**Follow-ups:** unchanged — the copyright field, the Support/Privacy hosting
+domain and the bundle identifier all need a person. Note the shipped Android
+privacy copy already states *"published on Google Play by Leo Alavi, an
+independent developer"*, which may settle the publisher question for both stores.
+
+---
+
+## Raouf: 2026-09-07 — recapture all 18 store screenshots (`4fe4c13`)
+
+**Scope:** Every listing image was taken before the branding removal, so all 18
+showed the `MACQUARIE UNIVERSITY` Home eyebrow and/or the crested basemap — they
+would have put the branding straight back into the store listings.
+
+**Summary**
+- Added **`.maestro/store-screenshots.yaml`**, which drives all six listing
+  screens, so this is reproducible instead of ad hoc. It encodes the traps: the
+  cold-boot `swipe: DOWN` after a `clearState` launch, tabs tapped **by label**
+  never by point, waiting on the tour **title** rather than the picker row, and
+  dismissing the full-screen tour with its own back control — Maestro's `back`
+  is **Android-only** and silently does nothing on iOS.
+- **iPhone 6.9": 1290 × 2796**, Maestro CLI on an iOS 26.5 simulator. The
+  listing table claimed `1320 × 2868` while the committed files were actually
+  **1284 × 2778** — Apple's **6.5"** size, so the old set was documented against
+  a slot it did not fit. 1290 × 2796 *is* an accepted 6.9" size; table and files
+  now agree.
+- **iPad 13": 2064 × 2752.** **Maestro crashes outright on iPad** (the
+  unreliability `CLAUDE.md` already warned about, now confirmed as a hard
+  crash), so these were driven with the iOS-Simulator control tool and captured
+  with `xcrun simctl io … screenshot`.
+- **Android phone: 1080 × 2160**, exactly 2:1, from the **signed release APK**
+  with `adb shell wm size 1080x2160` (reset afterwards).
+
+**Two host problems worth recording**
+- The emulator ANR'd repeatedly (`systemui`, then the launcher) because a
+  **stuck `qemu-system` process survived `adb emu kill` while holding 5.6 GB** —
+  the host was down to 1.6 GB free. `kill -9` on that PID plus a cold boot
+  (`-no-snapshot-load`) fixed it.
+- No iOS simulators existed at all; both devices had to be created with
+  `xcrun simctl create`.
+
+**Verified in every shot:** no university eyebrow on Home, no crest or wordmark
+on the basemap, the map credits *"Campus map: Astronomy Open Night programme"*,
+and the Passport screens carry **no QA-only reset control** — so the
+`kDebugMode` leak fixed on 2026-09-06 stays fixed in a release build.
+
+**Verification:** `./scripts/check.sh` → `CHECK PASSED`, exit 0, 7/7, 90.86 %.
+
+---
+
+## Raouf: 2026-09-07 — remove Macquarie University branding; the app stands as an independent project (`91d5f14`)
 
 **Scope:** Repository-wide branding audit acting on the supervisor's
 instruction (Charanya Ramakrishnan, 2026-09-07): *"do not use 'Macquarie' for

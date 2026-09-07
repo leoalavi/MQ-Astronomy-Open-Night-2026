@@ -718,6 +718,10 @@ incident.
     (pure white, 2048 × 1448). Changing that image at all needs the SHA in
     `docs/fixtures/aon_basemap_provenance.json` re-pinned, and any change to
     its *dimensions* would move every venue pin.
+    **The ban holds in every locale.** Persian had drifted to "university"
+    (دانشگاه) in four shipped strings while the English said "campus" — key
+    parity was perfect throughout, so the l10n parity gate was blind to it. Use
+    پردیس for campus. The tripwire scans both ARBs' values, not just English.
 
 ---
 

@@ -213,6 +213,29 @@ clears the path to GO.
 - **Repeatable check.** `tools/security/check_routes_key_restrictions.sh` runs
   all six probes and prints status codes only — it never echoes a key.
 
+- **Console work done 2026-09-07 (Claude in Chrome, Raouf's session).** The
+  keys live in GCP project **`gen-lang-client-0843778974` ("GitSwitch")** — a
+  shared Gemini/gen-lang project, not an AON-specific one. It now holds three:
+
+  | Key | Application restriction | API restriction | Status |
+  |---|---|---|---|
+  | `aon2026-android` | Android apps: `au.edu.mq.astronomy.aon2026` + upload SHA-1 `A4:26:…:92:6D` | Maps SDK for Android + Routes API (2) | **NEW** — Play App Signing SHA-1 still to add |
+  | `aon2026-ios` | iOS apps: `au.edu.mq.astronomy.aon2026` | Maps SDK for iOS + Routes API (2) | **NEW** — complete |
+  | `Astronomy` (Apr 22) | **none** | **35 APIs** — the whole Maps Platform catalogue | the old shared key; **retire after cut-over** |
+
+  Neither new key was created service-account-bound (the org policy
+  `iam.managed.disableServiceAccountApiKeyCreation` only governs those; plain
+  Maps keys are unaffected). The old key's `35 APIs` is a wider blast radius than
+  this blocker had recorded: Places, Roads, Solar, Aerial View, Street View and
+  Navigation SDK are all callable with it today.
+
+- **Remaining, in order.** (1) Copy the two new values into `.env`,
+  `android/secrets.properties` (create it) and `ios/Flutter/Secrets.xcconfig` per
+  `docs/google-maps-setup.md`; (2) add the **Play App Signing** SHA-1 to
+  `aon2026-android`; (3) run the check script — want 200/403/403 on both;
+  (4) rebuild with `--dart-define-from-file=.env` and confirm directions on a
+  device; (5) **delete `Astronomy`** — while it exists the hole stays open.
+
 ## B4 — Physical-device validation outstanding
 
 - **Exact problem.** GPS field accuracy, magnetometer/compass heading (the

@@ -215,7 +215,14 @@ required for the web build.
 ## Recommended restrictions
 
 > **Do not ship one unrestricted key.** The single shared key in `.env` is fine
-> for development and QA only. Application restrictions are **mutually
+> for development and QA only.
+>
+> **Current state, measured 2026-09-07:** `.env` holds **one** key serving all
+> three variables, and it is **unrestricted** — six live probes returned HTTP
+> 200, including with no identity header and with a deliberately wrong app id,
+> on both the iOS and the Android path. That is release blocker **B3**. Verify
+> any change with `./tools/security/check_routes_key_restrictions.sh`, which
+> prints status codes only and never echoes a key. Application restrictions are **mutually
 > exclusive** — a key can be restricted to Android apps *or* iOS bundle IDs *or*
 > HTTP referrers, never several — so a locked-down production setup needs **one
 > key per platform**: an Android key, an iOS key, and a web key. Give each the
@@ -229,6 +236,23 @@ required for the web build.
   signing SHA-1. The app sends its **live** signing cert as `X-Android-Cert`
   (see `MainActivity.signingCertSha1`), so the restricted key works for both
   debug and release once each SHA-1 is listed.
+
+  **List EVERY SHA-1 that can sign an install — this is the one that bites.**
+  `signingCertSha1()` reads `apkContentsSigners` at runtime, and **Play re-signs
+  your AAB**, so:
+
+  | Install route | Cert the app actually sends |
+  |---|---|
+  | Installed from Play (every real user) | the **Play App Signing** SHA-1 |
+  | Locally built release APK / internal sideload | the **upload key** SHA-1 |
+  | `flutter run` debug build | the **debug keystore** SHA-1 |
+
+  Registering only the upload key **works on every build you test and fails for
+  every real user** — the failure appears exactly once the app is live. Get the
+  Play App Signing SHA-1 from Play Console → *Test and release* → *Setup* →
+  *App signing*. The upload key's is
+  `A4:26:BD:18:EF:21:BC:FD:05:FA:95:A2:D5:EF:C3:03:A5:CD:92:6D`
+  (or re-read it with `keytool -list -v -keystore ~/Keys/aon2026/aon2026-upload.jks`).
 - iOS key → *iOS apps*: bundle id `au.edu.mq.astronomy.aon2026` (sent as
   `X-Ios-Bundle-Identifier`).
 - Web key → *HTTP referrers*: the served origin(s). Supply it as

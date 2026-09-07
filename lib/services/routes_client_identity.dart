@@ -32,6 +32,14 @@ final androidCertSha1Provider = FutureProvider<String>((ref) async {
   }
 });
 
+/// Google rejects a colon-separated SHA-1 in `X-Android-Cert` even though
+/// keytool and the Cloud console display it that way. Verified live on
+/// 2026-09-07 against an Android-restricted key: `A4:26:...` -> 403, `A426...`
+/// -> 200. Normalising here means the header is correct regardless of what the
+/// native seam emits.
+String normaliseAndroidCert(String cert) =>
+    cert.replaceAll(':', '').trim().toUpperCase();
+
 /// Assembles the per-platform identity headers: iOS sends the one bundle-id
 /// header; Android sends BOTH package + cert.
 ///
@@ -48,7 +56,7 @@ final routesClientIdentityProvider = FutureProvider<RoutesClientIdentity>((ref) 
       final cert = await ref.watch(androidCertSha1Provider.future);
       return RoutesClientIdentity({
         'X-Android-Package': _appId,
-        'X-Android-Cert': cert,
+        'X-Android-Cert': normaliseAndroidCert(cert),
       });
     case MapsNavPlatform.web:
     case MapsNavPlatform.unsupported:

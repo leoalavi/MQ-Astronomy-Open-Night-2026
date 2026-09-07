@@ -165,7 +165,19 @@ clears the path to GO.
 - **Evidence / source.** Live API check 2026-09-05 (above);
   `docs/map-audit-2026-08-30.md` §11 (GCP checklist); `ARCHITECTURE.md` Risk R2.
 - **Owner.** Infra (GCP console).
-- **Status.** `OPEN` — the original 401 cause is closed; the key restriction is not.
+- **Status (2026-09-07 12:40).** `VERIFIED AT THE API — two manual steps left`.
+  Both new keys probe **200 / 403 / 403**: correct identity accepted, missing and
+  wrong identity rejected. Values are in `.env`, `android/secrets.properties`
+  and `ios/Flutter/Secrets.xcconfig` (never printed; copied clipboard→file). A
+  keyed release APK builds and its manifest carries the Android key.
+  **Found and fixed on the way:** `MainActivity.signingCertSha1()` emitted the
+  SHA-1 *with colons*; Google 403s that form (`"Requests from this Android
+  client application … are blocked"`) and accepts plain hex. Against the old
+  unrestricted key it never mattered; against the new one **every Android
+  directions request would have failed on cut-over.** Native now emits plain
+  hex and Dart normalises defensively (`normaliseAndroidCert`, unit-tested).
+  **Still to do by hand:** add the Play App Signing SHA-1 to `aon2026-android`,
+  and delete the old `Astronomy` key.
 - **RE-VERIFIED 2026-09-07 — still open, and WIDER than recorded.** The
   2026-09-05 check tested only the iOS key. Both keys were re-tested against the
   live API; **all six probes returned HTTP 200**:

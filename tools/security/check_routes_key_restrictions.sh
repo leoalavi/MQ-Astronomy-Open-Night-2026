@@ -33,7 +33,9 @@ ANDKEY=$(readkey GOOGLE_MAPS_ANDROID_ROUTES_KEY)
 APPID="au.edu.mq.astronomy.aon2026"
 # The upload key's SHA-1. A Play-installed build sends the PLAY APP SIGNING
 # cert instead — both must be registered on the key. See B3.
-CERT="${AON_CERT_SHA1:-A4:26:BD:18:EF:21:BC:FD:05:FA:95:A2:D5:EF:C3:03:A5:CD:92:6D}"
+# Sent WITHOUT colons: Google 403s the colon-separated display form
+# (verified live 2026-09-07). Colons in AON_CERT_SHA1 are stripped.
+CERT=$(echo "${AON_CERT_SHA1:-A4:26:BD:18:EF:21:BC:FD:05:FA:95:A2:D5:EF:C3:03:A5:CD:92:6D}" | tr -d ':')
 URL="https://routes.googleapis.com/directions/v2:computeRoutes"
 # West 6 parking -> Macquarie Theatre, the same pair used in the 2026-09-05 check.
 BODY='{"origin":{"location":{"latLng":{"latitude":-33.773681,"longitude":151.1075241}}},"destination":{"location":{"latLng":{"latitude":-33.7746334,"longitude":151.1122714}}},"travelMode":"WALK"}'

@@ -7,6 +7,50 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-07 — B3: per-platform restricted keys live, and a latent Android 403 fixed
+
+**Scope:** Closing the unrestricted-key blocker. Two keys created in the GCP
+console via Claude in Chrome (Raouf's session), values moved clipboard→file
+without ever being printed, and the restriction verified against the live API.
+
+**Summary**
+- `aon2026-android` (Android apps: package + upload SHA-1; Maps SDK for
+  Android + Routes API) and `aon2026-ios` (iOS apps: bundle id; Maps SDK for
+  iOS + Routes API). Neither service-account-bound. The old `Astronomy` key —
+  unrestricted, **35 APIs**, the whole Maps Platform catalogue — stays until
+  cut-over is confirmed, then gets deleted.
+- Keys placed so each platform resolves the right one: `.env` holds the two
+  Routes keys plus `MAPS_API_KEY`=iOS (iOS prefers the Dart define);
+  `android/secrets.properties` (new) pins the Android manifest key and beats
+  `.env` in `build.gradle.kts`; `Secrets.xcconfig`=iOS. Confirmed with `aapt2`
+  on a keyed release build: the manifest carries the Android key.
+- **Verification:** `tools/security/check_routes_key_restrictions.sh` →
+  **iOS 200/403/403, Android 200/403/403.**
+
+**The bug this surfaced — would have broken Android on cut-over**
+The Android "correct identity" probe first returned **403**. Google requires
+`X-Android-Cert` **without colons**; `MainActivity.signingCertSha1()` sent the
+colon-separated display form, and its comment claimed the format had been
+"confirmed at T10 against a live accept/reject verification" — it had not.
+Against an unrestricted key the header is ignored, so the defect was invisible
+for the project's whole life. Fixed in both layers: native emits plain
+uppercase hex; Dart adds `normaliseAndroidCert()` so a stale native build
+cannot reintroduce it. `routes_client_identity_test` now asserts the plain form.
+
+**Files:** `android/.../MainActivity.kt`, `lib/services/routes_client_identity.dart`,
+`test/unit/routes_client_identity_test.dart`, `tools/security/check_routes_key_restrictions.sh`,
+`docs/google-maps-setup.md`, `docs/release-blockers.md`.
+
+**Verification:** `./scripts/check.sh` → `CHECK PASSED`, exit 0; 18/18 in the
+two Routes test files; keyed `flutter build apk --release
+--dart-define-from-file=.env` → 137.8 MB.
+
+**Follow-ups (hand, GCP/Play consoles):** add the **Play App Signing SHA-1** to
+`aon2026-android` (without it real Play installs get 403); delete `Astronomy`;
+confirm a live route on a device (B4).
+
+---
+
 ## Raouf: 2026-09-07 — B3 re-verified: BOTH Google keys are unrestricted, not just iOS
 
 **Scope:** Re-checking release blocker B3 against the live API. No GCP console

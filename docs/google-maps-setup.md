@@ -259,6 +259,14 @@ required for the web build.
   `GOOGLE_MAPS_WEB_ROUTES_KEY` (Routes) and `MAPS_API_KEY` (Maps JS); with only
   `MAPS_API_KEY` set, web uses it for both.
 
+  **Header format trap (found 2026-09-07):** the Cloud console and `keytool`
+  *display* the SHA-1 as `A4:26:BD:...`, but the `X-Android-Cert` **header must
+  carry it without colons** (`A426BD...`). Verified live against the restricted
+  key: colon form -> 403 PERMISSION_DENIED "Requests from this Android client
+  application ... are blocked"; plain form -> 200. `MainActivity` now emits
+  plain hex and `routes_client_identity.dart` normalises defensively. Paste the
+  colon form into the **console** (it expects that); never into the header.
+
 **API restrictions** (what the key may call): restrict each key to only the APIs
 it needs — Android key → Maps SDK for Android + Routes API; iOS key → Maps SDK
 for iOS + Routes API; web key → Maps JavaScript API.

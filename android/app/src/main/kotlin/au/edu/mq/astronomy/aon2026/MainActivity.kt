@@ -78,10 +78,14 @@ class MainActivity : FlutterActivity() {
             }
             val sig = signatures?.firstOrNull() ?: return null
             val digest = MessageDigest.getInstance("SHA-1").digest(sig.toByteArray())
-            // Colon-separated uppercase hex, matching keytool / Cloud console
-            // display. Exact format is confirmed at T10 against a live
-            // accept-correct / reject-wrong verification.
-            digest.joinToString(":") { "%02X".format(it) }
+            // PLAIN uppercase hex, NO colons. keytool and the Cloud console
+            // DISPLAY the SHA-1 colon-separated, but the X-Android-Cert header
+            // must carry it without colons - verified live 2026-09-07 against
+            // an Android-restricted key: colon form -> 403 "Requests from this
+            // Android client application ... are blocked"; plain form -> 200.
+            // The Dart side normalises too (routes_client_identity.dart), so a
+            // stale native build cannot reintroduce the 403.
+            digest.joinToString("") { "%02X".format(it) }
         } catch (e: Exception) {
             null
         }

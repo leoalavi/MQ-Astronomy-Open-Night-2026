@@ -178,6 +178,19 @@ clears the path to GO.
   hex and Dart normalises defensively (`normaliseAndroidCert`, unit-tested).
   **Still to do by hand:** add the Play App Signing SHA-1 to `aon2026-android`,
   and delete the old `Astronomy` key.
+  **BLOCKED ON A FACT, 2026-09-07 12:45.** Opened Play Console in Raouf's own
+  Chrome session: the only developer account visible is **Leo Alavi (personal,
+  ID 7729261909793792976)** and it shows **"Create your first app" — no apps at
+  all.** So there is **no Play App Signing certificate yet**; Play only mints one
+  when an app is created and its first AAB is uploaded. This contradicts the
+  repo's records (`GOOGLE_PLAY_RELEASE_AUDIT.md` §"bootstrap AAB",
+  `play-store-listing.md` "1.0.0+1 is spent"). Either that upload went to a
+  different account, or it never happened. **Until the app exists in Play
+  Console, the Android key can only be restricted to the upload SHA-1 — which
+  is what it has now, and which is correct for every sideloaded/internal build
+  but will 403 for Play-installed ones.** Resolve by (a) confirming with Leo
+  which account holds the app, or (b) creating it in this account, uploading the
+  signed AAB, and then adding the SHA-1 Play shows under *Setup → App signing*.
 - **RE-VERIFIED 2026-09-07 — still open, and WIDER than recorded.** The
   2026-09-05 check tested only the iOS key. Both keys were re-tested against the
   live API; **all six probes returned HTTP 200**:

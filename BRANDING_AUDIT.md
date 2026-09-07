@@ -5,6 +5,13 @@
 anything, please? We don't have the university's approval for any of these.
 These are your projects."*
 
+> **A second, independent sweep was run on 2026-09-07 after this report.** It
+> re-inventoried the repository from scratch and treated everything below as
+> unverified. It found two real defects this pass missed (a Play Store icon that
+> was the stock Flutter logo, and Persian copy saying "university" where the
+> English says "campus"), and corrected two unverified claims made here. See
+> **[BRANDING_AUDIT_PASS2.md](BRANDING_AUDIT_PASS2.md)**.
+
 **Operating rule applied** (per Raouf's clarification the same morning):
 
 > Remove Macquarie **branding, marks and ownership/affiliation claims**.

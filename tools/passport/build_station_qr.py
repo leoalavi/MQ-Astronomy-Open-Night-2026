@@ -96,7 +96,10 @@ INK_SOFT = HexColor("#5A6472")
 ALERT = HexColor("#FF8A8A")
 
 EVENT_TITLE = "ASTRONOMY OPEN NIGHT 2026"
-EVENT_META = "MACQUARIE UNIVERSITY  ·  SATURDAY 19 SEPTEMBER  ·  4 – 10 PM"
+# No university name here: these posters are physically displayed at the
+# event, and the app/its printed material must not imply a university
+# endorsement (ARCHITECTURE.md §14 invariant 18).
+EVENT_META = "SATURDAY 19 SEPTEMBER 2026  ·  4 – 10 PM"
 
 # --- fonts: optional, first match wins, graceful fallback --------------------
 HOME = Path(os.path.expanduser("~"))

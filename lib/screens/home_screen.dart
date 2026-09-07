@@ -260,14 +260,6 @@ class _Hero extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        EventInfo.host.toUpperCase(),
-                        style: theme.textTheme.labelSmall?.copyWith(
-                          color: context.aon.contentSecondary,
-                          letterSpacing: 1.6,
-                        ),
-                      ),
-                      const SizedBox(height: AonSpacing.space2),
-                      Text(
                         EventInfo.name,
                         style: theme.textTheme.displayMedium,
                       ),

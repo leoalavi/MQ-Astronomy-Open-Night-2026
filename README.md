@@ -22,11 +22,11 @@
 
 # Astronomy Open Night 2026
 
-> **A full-stack Flutter event guide and night-time campus wayfinding app, built for Macquarie University's Astronomy Open Night — programme browsing, a campus map, 360° venue previews, and a QR passport rally, with zero backend and zero accounts.**
+> **A full-stack Flutter event guide and night-time campus wayfinding app, built for Astronomy Open Night — programme browsing, a campus map, 360° venue previews, and a QR passport rally, with zero backend and zero accounts.**
 
 Astronomy Open Night helps a visitor answer two questions on the night: **"what's on right now?"** across 36 official programme items in 9 venues over 6 hours, and **"how do I get there in the dark?"** — the organisers specifically asked for clearer guidance between the car parks and the venues, because attendees get disoriented at night.
 
-It is an independent student project, **not an official Macquarie University product** — see [Attribution](#-attribution--rights) for exactly what belongs to whom. Built on Flutter 3.44 and Riverpod 3, it ships as an iOS/Android/web app with **all event data compiled into the binary**: no developer-operated server, database or accounts. Android Maps and scanner SDKs report technical/usage data; see the [privacy audit](GOOGLE_PLAY_RELEASE_AUDIT.md).
+It is an independent student project, **not an official university product and not endorsed by any university** — see [Attribution](#-attribution--rights) for exactly what belongs to whom. Built on Flutter 3.44 and Riverpod 3, it ships as an iOS/Android/web app with **all event data compiled into the binary**: no developer-operated server, database or accounts. Android Maps and scanner SDKs report technical/usage data; see the [privacy audit](GOOGLE_PLAY_RELEASE_AUDIT.md).
 
 **[🏗️ Architecture](./ARCHITECTURE.md)** &nbsp;·&nbsp; **[📖 Docs](#-documentation-map)** &nbsp;·&nbsp; **[🤝 Contributing](./CONTRIBUTING.md)** &nbsp;·&nbsp; **[🔐 Data Sources](./docs/data-sources.md)**
 
@@ -292,11 +292,11 @@ Full setup notes, key restrictions and rotation guidance: [docs/google-maps-setu
 
 **Hero image:** *"A Deep Triangulum Galaxy" — Aleix Roig, 2026.* Supplied by the event organisers for this project. **Not covered by any licence applied to this repository's source code** — rights remain with the photographer.
 
-**Event materials:** Programme content, activity names, descriptions, times, venue names, the campus event map and legend are © **Macquarie University**, Faculty of Science and Engineering (CRICOS Provider 00002J). Macquarie University names, logos and branding remain the property of Macquarie University.
+**Event materials:** Programme content, activity names, descriptions, times, venue names, the campus event map and legend originate with the event organisers at Macquarie University and are used with their permission. Rights remain with them; this project claims none. The app ships **no** university crest, wordmark, logo or other university branding, and no university copyright, provider code or endorsement is asserted anywhere in it.
 
 **Map data:** The interactive walking map uses Google Maps under Google's own terms. The illustrated campus basemap is derived from the official event map supplied by the organisers.
 
-**Campus coordinates:** Building coordinates were sourced from a separate internal Macquarie campus dataset (MQ Journey), inspected read-only with no runtime dependency retained.
+**Campus coordinates:** Building coordinates were sourced from a separate internal campus dataset (MQ Journey), inspected read-only with no runtime dependency retained.
 
 **Third-party packages:** Flutter, Riverpod, go_router, flutter_map, google_maps_flutter, mobile_scanner and others remain under their own licences — run `flutter pub deps` for the full tree.
 
@@ -310,7 +310,7 @@ No claim is made beyond what is stated above. Before publishing this repository 
 
 ## Acknowledgements
 
-- [Macquarie University, Faculty of Science and Engineering](https://www.mq.edu.au/) — event content, programme data and the official campus map.
+- **The Astronomy Open Night event organisers** — event content, programme data and the event campus map, used with permission.
 - [Flutter](https://flutter.dev/) & [Riverpod](https://riverpod.dev/) — the app framework and state management this is built on.
 - [Google Maps Platform](https://mapsplatform.google.com/) — walking directions, scoped to campus and walking mode only.
 
@@ -322,7 +322,7 @@ No claim is made beyond what is stated above. Before publishing this repository 
 
 ```text
 > Authors    : Leo Alavi — Lead Developer | Mohammad Raouf Abedini — Co-Developer
-> University : Macquarie University, Sydney, NSW
+> Location   : Sydney, NSW
 > Status     : [●] PRE-EVENT — Astronomy Open Night, 19 September 2026
 ```
 
@@ -332,6 +332,6 @@ No claim is made beyond what is stated above. Before publishing this repository 
 
 <br/>
 
-_Astronomy Open Night 2026 is an independent student project and is not officially affiliated with, or an official product of, Macquarie University._
+_Astronomy Open Night 2026 is an independent student project. It is not affiliated with, endorsed, sponsored or approved by any university, and is not an official product of one._
 
 </div>

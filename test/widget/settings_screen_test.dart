@@ -195,8 +195,8 @@ void main() {
     // Task 5: the app makes no OSM tile requests, so it no longer credits OSM.
     expect(find.textContaining('OpenStreetMap'), findsNothing);
     expect(
-      find.text('Campus map: Macquarie University. Walking directions and the '
-          'map they appear on are provided by Google.'),
+      find.text('Campus map: Astronomy Open Night 2026 programme. Walking '
+          'directions and the map they appear on are provided by Google.'),
       findsOneWidget,
     );
   });

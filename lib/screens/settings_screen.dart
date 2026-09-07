@@ -652,8 +652,7 @@ class _AboutCard extends StatelessWidget {
             const SizedBox(height: AonSpacing.space2),
             Text(
               '${TimeFormat.longDate(config.startsAt)}\n'
-              '${TimeFormat.range(config.startsAt, config.endsAt)}\n'
-              '${config.host}',
+              '${TimeFormat.range(config.startsAt, config.endsAt)}',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: context.aon.contentSecondary,
               ),
@@ -693,14 +692,7 @@ class _CreditsCard extends StatelessWidget {
               style: theme.textTheme.titleSmall,
             ),
             const SizedBox(height: 2),
-            Text(
-              l.creditsEventMaterialsBody(
-                config.host,
-                config.faculty,
-                EventInfo.cricosProvider,
-              ),
-              style: body,
-            ),
+            Text(l.creditsEventMaterialsBody, style: body),
             const SizedBox(height: AonSpacing.space4),
             Text(l.settingsCreditsMapData, style: theme.textTheme.titleSmall),
             const SizedBox(height: 2),
@@ -716,9 +708,10 @@ class _CreditsCard extends StatelessWidget {
               ),
               style: body,
             ),
-            // Acknowledgement (Charanya-approved): frames the app as an
-            // appreciation by two MQ student developers — NOT an official
-            // University product. No University logo accompanies it.
+            // Acknowledgement: an appreciation from the app's two student
+            // developers. It names no university and carries no university
+            // mark - this is an independent project and must never present
+            // itself as an official University product.
             const SizedBox(height: AonSpacing.space2),
             Text(l.creditsAcknowledgement, style: body),
             // Google Maps SDK open-source licences — a legal requirement of

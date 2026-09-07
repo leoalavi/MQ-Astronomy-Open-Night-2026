@@ -91,13 +91,17 @@ These are not code. They are the critical path.
 1. **Three MQ-hosted URLs, requested in one round**: Privacy Policy, Support,
    Terms of Use (the last carries the Google Maps flow-down). Privacy and
    Support are hard ASC requirements.
-2. **Apple Developer Program membership.** The bundle ID is
-   `au.edu.mq.astronomy.aon2026` — an `au.edu.mq` namespace. Publishing under
-   it needs Macquarie University's Apple Developer account, or written
-   authority to publish on their behalf. Apple applies guideline **5.1.1.1 /
-   4.1** to apps that represent an institution: an app branded as a university
-   event, submitted by an unaffiliated individual, is a rejection risk on
-   impersonation grounds independent of everything else in this document.
+2. **Apple Developer Program membership — REOPENED 2026-09-07.** The bundle
+   ID is `au.edu.mq.astronomy.aon2026`, an `au.edu.mq` namespace. This entry
+   used to say publication needed the University's Apple Developer account or
+   written authority to publish on their behalf. **That is now withdrawn:** the
+   supervisor has confirmed the University has not approved this project, so it
+   must NOT be published under a University account or presented as theirs.
+   Apple's guideline **5.1.1.1 / 4.1** still applies, but the risk has flipped
+   direction — the exposure is now an app *sitting in a university's reverse-DNS
+   namespace* while disclaiming any affiliation with it. All university branding
+   has been removed from the binary (2026-09-07); the identifier itself is a
+   separate, unresolved decision — see `organiser-requests.md`.
 3. **Redistribution permission** for the vendored assets: the official AON
    programme map artwork (`assets/maps/aon_event_map.png` + the source PDF),
    `buildings.json`, and the 360° photographs. The repo being private is why

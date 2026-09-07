@@ -26,12 +26,20 @@ void main() {
     }
   });
 
-  test('the campus attribution names Macquarie University', () async {
+  // Superseded 2026-09-07. The attribution used to be REQUIRED to name the
+  // university as the map's source. The project supervisor has since
+  // instructed that the app must not use the university's name for anything,
+  // because the app is an independent student project with no university
+  // approval. The credit now names the SOURCE DOCUMENT instead. The '(c)' ban
+  // below still stands: we assert ownership on nobody's behalf.
+  test('the campus attribution credits a source, not a university', () async {
     final en = await AonL10n.delegate.load(const Locale('en'));
-    expect(en.mapAttributionCampus, contains('Macquarie University'));
-    expect(en.mapAttributionCampus, isNot(contains('©')),
-        reason: "MQ's ownership of the cartographic master is unconfirmed "
-            'under spec §8.6 — we do not assert copyright on their behalf');
+    expect(en.mapAttributionCampus, contains('Astronomy Open Night'));
+    expect(en.mapAttributionCampus.toLowerCase(),
+        isNot(contains('macquarie')),
+        reason: 'no app surface may name the university');
+    expect(en.mapAttributionCampus, isNot(contains('\u00a9')),
+        reason: 'the campus map credit asserts copyright for nobody');
   });
 
   // The © ban has to hold across EVERY shipped string, not just the one on the

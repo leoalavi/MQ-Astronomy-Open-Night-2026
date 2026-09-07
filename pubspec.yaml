@@ -1,7 +1,8 @@
 name: aon2026
 description: >-
   Astronomy Open Night 2026 — event discovery and night-time campus wayfinding
-  companion for Macquarie University's Astronomy Open Night (19 September 2026).
+  companion for Astronomy Open Night (19 September 2026). An independent
+  project; not affiliated with, endorsed or sponsored by any university.
 publish_to: 'none'
 version: 1.0.0+3
 

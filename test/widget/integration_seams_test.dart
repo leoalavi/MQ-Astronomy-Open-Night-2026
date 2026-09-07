@@ -258,8 +258,6 @@ void main() {
       final c = EventConfig.astronomyOpenNight;
       expect(c.startsAt, DateTime(2026, 9, 19, 16));
       expect(c.endsAt, DateTime(2026, 9, 19, 22));
-      expect(EventInfo.host, 'Macquarie University');
-      expect(EventInfo.faculty, 'Faculty of Science and Engineering');
     });
 
     test('official venue names are preserved verbatim', () {

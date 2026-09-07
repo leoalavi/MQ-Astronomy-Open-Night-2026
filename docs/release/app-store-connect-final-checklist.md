@@ -24,7 +24,7 @@ plus the three ASC-specific ones this pass needed.
 
 | # | Item | Status | Value / evidence |
 |---|---|---|---|
-| 1 | **Privacy Policy URL** | `BLOCKED` | Macquarie's own policy does **not** cover this app — see §1 below. The app-specific copy is written (`mq-hosted-pages.md` Page 1) and needs hosting at any stable HTTPS URL. |
+| 1 | **Privacy Policy URL** | `BLOCKED` | Macquarie's own policy does **not** cover this app — see §1 below. The app-specific copy is written (`hosted-pages.md` Page 1) and needs hosting at any stable HTTPS URL. |
 | 2 | **Support URL** | `READY TO ENTER` | `https://event.mq.edu.au/astronomy-open-night/` — official MQ event site, public, HTTPS, no login, lists `astronomyopennight@mq.edu.au` for enquiries. Fetched and read 2026-09-05. |
 | 3 | **Marketing URL** | `NOT APPLICABLE` | Optional per Apple. The Support URL already is the event site. |
 | 4 | **Terms of Use / EULA** | `VERIFIED` — **Apple standard EULA sufficient** | See §2 below. No custom EULA needed for Apple; the Google Maps flow-down is carried in-app. |
@@ -41,7 +41,7 @@ plus the three ASC-specific ones this pass needed.
 | 15 | **Description** | `READY TO ENTER` | `app-store-listing.md`, within 4000 chars. |
 | 16 | **Keywords** | `READY TO ENTER` | The committed string is **exactly 100 characters** — at Apple's limit, not over it. The doc's old "101 → trim guide" note was a miscount and has been corrected. |
 | 17 | **Categories** | `READY TO ENTER` | Primary **Education**, secondary **Navigation**. |
-| 18 | **Copyright** | `LEGAL/ORG DECISION` | `© 2026 Macquarie University` is the drafted line. Note the tension: `map_attribution_test.dart` deliberately forbids a `©` on the in-app campus-map credit until MQ sign-off. The owner's attestation resolves the substance; whether to assert `©` in ASC is still theirs to say. |
+| 18 | **Copyright** | `BLOCKED — DECISION REQUIRED` | `© 2026 Macquarie University` was the drafted line and is **withdrawn** (2026-09-07): the app is an independent project and must assert no university ownership. `© 2026 Astronomy Night - FSE Outreach Team` is not a safe substitute either — that is a university faculty unit. Whoever actually owns the app must name themselves. Do not submit a guessed value. |
 | 19 | **Price / availability** | `READY TO ENTER` | Free, no in-app purchases. Availability: **Australia only** (owner decision 2026-09-06) — deselect all other territories in ASC. |
 | 20 | **App Review notes** | `READY TO ENTER` | `app-review-notes.md`, corrected 2026-09-05 to match the binary (both directions paths, what is sent to Google). |
 | 21 | **App Review contact** | `READY TO ENTER` | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo.alavi.dev@gmail.com`, `+61451519624`. In `app-review-notes.md`. |
@@ -76,7 +76,7 @@ would also be the *University's* document answering for an app published from
 an individual's team.
 
 **What is right, and is what the repo already prepared:** MQ hosts *this app's*
-policy. `mq-hosted-pages.md` Page 1 is finished copy, written against the code
+policy. `hosted-pages.md` Page 1 is finished copy, written against the code
 and cross-checked against `settingsPrivacyBody`. Published at an `mq.edu.au`
 URL it gives both the University association and an accurate document. If MQ
 hosting is slow, any stable public HTTPS URL satisfies both stores — Android
@@ -100,7 +100,7 @@ app must bind its users to terms consistent with Google's Maps/Earth Additional
 Terms of Service. This app discloses the Google surface in-app before and around
 its use (the wayfinding disclosure, the Settings privacy card and its revoke
 control), which is where a no-account event app can honestly carry it. Page 3 of
-`mq-hosted-pages.md` remains the written version if MQ prefers a hosted page —
+`hosted-pages.md` remains the written version if MQ prefers a hosted page —
 useful, not store-blocking.
 
 ## §3 — App Privacy: the recommended answers

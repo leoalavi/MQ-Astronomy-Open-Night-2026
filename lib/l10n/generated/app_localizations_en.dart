@@ -340,7 +340,8 @@ class AonL10nEn extends AonL10n {
   String get mapOnHereTonight => 'On here tonight';
 
   @override
-  String get mapAttributionCampus => 'Campus map: Macquarie University';
+  String get mapAttributionCampus =>
+      'Campus map: Astronomy Open Night programme';
 
   @override
   String get mapRecentre => 'Recentre';
@@ -1058,7 +1059,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get settingsMapDataAttribution =>
-      'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.';
+      'Campus map: Astronomy Open Night 2026 programme. Walking directions and the map they appear on are provided by Google.';
 
   @override
   String get infoFirstAid => 'First aid';
@@ -1165,9 +1166,8 @@ class AonL10nEn extends AonL10n {
       'We don’t have a confirmed position for this car park yet — follow on-site signage.';
 
   @override
-  String creditsEventMaterialsBody(String host, String faculty, String cricos) {
-    return 'Event materials and branding © $host, $faculty. $cricos.';
-  }
+  String get creditsEventMaterialsBody =>
+      'Programme content follows the published Astronomy Open Night 2026 event materials.';
 
   @override
   String creditsHeroImageBody(String credit) {
@@ -1206,7 +1206,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get creditsMapDataBody =>
-      'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.';
+      'Campus map: Astronomy Open Night 2026 programme. Walking directions and the map they appear on are provided by Google.';
 
   @override
   String eventSourceNote(String note) {
@@ -1262,7 +1262,7 @@ class AonL10nEn extends AonL10n {
 
   @override
   String get creditsAcknowledgement =>
-      'Two Macquarie University student app developers, in appreciation of the Astronomy Open Night team.';
+      'Two student app developers, in appreciation of the Astronomy Open Night team.';
 
   @override
   String get settingsYourData => 'Your data';

@@ -30,7 +30,7 @@ is git-ignored — the script and `flyer_links.json` are the source of truth.
 | Name, subtitle, promotional line | `docs/release/app-store-listing.md` — the fenced blocks under `## Name`, `## Subtitle`, `## Promotional text` |
 | The six feature headings + first sentence | The ALL-CAPS sections inside that document's `## Description` block (stops before BUILT TO BE HONEST / PRIVACY / ACCESSIBILITY) |
 | Persian name | `eventName` in `lib/l10n/app_fa.arb` |
-| "Two Macquarie University student app developers…" | `creditsAcknowledgement` in `app_en.arb` — the Charanya-approved framing that this is **not** an official University product. No MQ logo appears, for the same reason. |
+| "Two student app developers…" | `creditsAcknowledgement` in `app_en.arb`. Names no university (changed 2026-09-07): this is **not** a university product and must not imply endorsement. No university logo or crest appears anywhere, for the same reason. |
 | Event title / date line | `EVENT_TITLE` / `EVENT_META` shared with the station signs |
 | Palette, starfield, fonts | `tools/passport/build_station_qr.py` — one design system, imported |
 

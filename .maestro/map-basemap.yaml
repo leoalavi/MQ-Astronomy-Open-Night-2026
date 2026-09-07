@@ -15,7 +15,7 @@ tags: [map, smoke]
 - assertVisible: "Search"
 - assertVisible: "Favourites"
 - assertVisible: "Directions"
-- assertVisible: "Campus map: Macquarie University"
+- assertVisible: "Campus map: Astronomy Open Night programme"
 # The locate button's label depends on whether there is a fix yet
 # ("Show my location" with none, "Follow my location" once located) — match both.
 - assertVisible: "(Show|Follow) my location"

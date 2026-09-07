@@ -704,6 +704,20 @@ incident.
     the *wrong* answer here. `huntsman_exclusion_test.dart`.
 16. **Android cleartext stays loopback-only.**
 17. **Android release signing fails closed.**
+18. **No app surface may name a university, carry its marks, or imply its
+    endorsement.** The app is an independent project with no university
+    approval (supervisor instruction, 2026-09-07). This bans branding and
+    identity, *not* content: the basemap, `buildings.json`, the 39 panoramas
+    and the 17 venue pins are authorised and ship unaltered, and real venue,
+    street, suburb and Metro-station names are wayfinding facts that stay.
+    What is banned is the crest/wordmark, an institution named as host,
+    publisher, owner or warranty party, its CRICOS provider code, its faculty,
+    and its social handles. The crest lived in the *basemap image*, where no
+    text search could reach it — `no_university_branding_test.dart` therefore
+    asserts both the shipped strings and the basemap's top-right pixels
+    (pure white, 2048 × 1448). Changing that image at all needs the SHA in
+    `docs/fixtures/aon_basemap_provenance.json` re-pinned, and any change to
+    its *dimensions* would move every venue pin.
 
 ---
 

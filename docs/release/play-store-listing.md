@@ -63,9 +63,11 @@ Astronomy Open Night
 ### Short description — 80 characters
 
 ```
-The official guide to Macquarie University's Astronomy Open Night. Works offline.
+Your offline guide to Astronomy Open Night: map, programme, tours, directions.
 ```
-*(80 characters — exactly at the limit; do not add a full stop.)*
+*(78 characters, inside the 80 limit. The previous line called this "the
+official guide to Macquarie University's Astronomy Open Night" — withdrawn
+2026-09-07: the app is independent and claims no university affiliation.)*
 
 ### Full description — 4000 characters
 
@@ -230,8 +232,11 @@ Same three as the App Store, plus one:
 2. **Redistribution permission** for the map artwork, `buildings.json` and the
    photographs.
 3. **Real stamp codes.**
-4. **A Google Play developer account under Macquarie University**, for the same
-   reason as the Apple one — the package is `au.edu.mq.astronomy.aon2026`.
+4. **A publisher decision for the `au.edu.mq.astronomy.aon2026` package.** The
+   package sits in the university's reverse-DNS namespace while the app is an
+   independent project — see the bundle-identifier entry in
+   `docs/release/organiser-requests.md`. It must NOT be published under a
+   university account.
 
 Plus two Play-only production tasks: the **512 × 512 icon**, the
 **1024 × 500 feature graphic**, and **Android screenshots at ≤ 2:1**.

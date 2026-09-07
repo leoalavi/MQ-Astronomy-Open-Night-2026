@@ -163,8 +163,11 @@ See `docs/navigation-strategy.md`.
 5. Positions of the **registration point** and **information points** 2 and 3.
 6. Sign-off on the **walking route directions**, ideally after a dusk walk-through.
 7. Lighting and step-free status for each route.
-8. Whether the **Macquarie University campus map raster** may be used in this
-   app (it would give a much better basemap than OSM — see README limitations).
+8. ~~Whether the **campus map raster** may be used in this app.~~
+   **Resolved:** permission granted (owner attestation 2026-09-05, reaffirmed
+   2026-09-07). The raster ships as the basemap. Separately, on 2026-09-07
+   the university crest and wordmark were painted out of it — the artwork is
+   authorised, the branding is not. See `docs/release/organiser-requests.md` §5.
 9. The **9 Astronomy Passport station codes** (Phase 6). These are the tokens
    printed on each venue sign that an attendee scans or types to collect a
    stamp. They are **low-friction event tokens, not secrets or proof of

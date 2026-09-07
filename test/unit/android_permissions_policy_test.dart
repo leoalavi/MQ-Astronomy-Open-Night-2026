@@ -33,7 +33,7 @@ void main() {
       isEmpty,
       reason: 'New permission(s) $unexpected appeared in the manifest. Before '
           'allow-listing them, check whether Play\'s Data safety form and the '
-          'privacy policy in docs/release/mq-hosted-pages.md are still true.',
+          'privacy policy in docs/release/hosted-pages.md are still true.',
     );
   });
 

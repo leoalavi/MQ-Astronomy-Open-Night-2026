@@ -53,7 +53,8 @@ void main() {
       expect(all, isNot(contains('Credits')));
       expect(all, isNot(contains('Aleix Roig')), reason: 'hero credit leaked');
       expect(all, isNot(contains('Leo Alavi')), reason: 'developer credit leaked');
-      expect(all, isNot(contains('CRICOS')), reason: 'materials credit leaked');
+      expect(all, isNot(contains('event materials')),
+          reason: 'materials credit leaked');
       expect(all.toLowerCase(), isNot(contains('provided by google')),
           reason: 'map credit leaked into Info');
     });
@@ -74,7 +75,7 @@ void main() {
 
       final all = texts(tester).join(' | ');
       expect(all, contains('Aleix Roig'));
-      expect(all, contains('CRICOS'));
+      expect(all, contains('event materials'));
       expect(all.toLowerCase(), contains('provided by google'));
       expect(all, contains('Leo Alavi'));
       expect(all, contains('Mohammad Raouf Abedini'));

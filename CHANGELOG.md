@@ -7,6 +7,113 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-07 — remove Macquarie University branding; the app stands as an independent project
+
+**Scope:** Repository-wide branding audit acting on the supervisor's
+instruction (Charanya Ramakrishnan, 2026-09-07): *"do not use 'Macquarie' for
+anything… We don't have the university's approval for any of these. These are
+your projects."* Branding, institutional identifiers and ownership/affiliation
+claims out; **authorised artwork, factual geography and every feature stay in.**
+
+**Summary**
+- **The crest was in the basemap, not the strings.** `assets/maps/aon_event_map.png`
+  carried the University crest + wordmark in its top-right corner — the most
+  visible branding in the app, on the Map tab, and invisible to every text
+  search this repo has ever run. Painted out in place: rect x1750–1976,
+  y50–265 filled with the surrounding `#FFFFFF` panel colour. **16 780 pixels
+  changed, zero outside that rect.** Still 2048 × 1448 RGBA, no crop/resize/
+  rotate — the fitted-similarity georeference and all 17 venue pins are
+  untouched. The event title block ("ASTRONOMY OPEN NIGHT / 19 SEPTEMBER 2026")
+  is deliberately kept.
+- **Identifiers a grep for "Macquarie" cannot find.** `EventInfo.cricosProvider`
+  = `CRICOS Provider 00002J` is the University's *government registration
+  number* and it was rendering in Settings → Credits inside
+  *"Event materials and branding © {host}, {faculty}. {cricos}."* Deleted,
+  along with `faculty`, `socialHandle` `@MQPhysAstro`, `hashtag` `#MQAstroOpen`
+  and `materialReference` `FSE26193` (the last three were declared but never
+  rendered).
+- **Three render sites for `EventInfo.host`, not one:** the Home hero eyebrow
+  (uppercase `MACQUARIE UNIVERSITY`, the first thing the app showed), the Info
+  screen event block, and Settings → About. The constant is gone and all three
+  sites removed; `EventConfig.host`/`.faculty` dropped with it.
+- **Two shipped event descriptions spoke in the University's first person** —
+  *"The Faculty of Science and Engineering presents…"* and *"…built by
+  Australian Astronomical Optics here at Macquarie University"* — rewritten.
+- **Attribution now credits the source document, not an institution:**
+  *"Campus map: Astronomy Open Night programme"* (EN + FA, map overlay,
+  Settings credits, Info credits). Still asserts `©` for nobody.
+- **Store + legal copy:** subtitle *"Macquarie University event"*, Play's
+  *"official guide to Macquarie University's…"*, the `macquarie` keyword and
+  `© 2026 Macquarie University` are withdrawn. `mq-hosted-pages.md` →
+  `hosted-pages.md`: the Privacy Policy, Support and Terms pages were drafted
+  in the University's voice (publisher, data controller, warranty disclaimer)
+  and are now `[PUBLISHER]`, with hosting on an `mq.edu.au` domain explicitly
+  ruled out.
+- **New tripwire** `test/unit/no_university_branding_test.dart` (4 tests): no
+  shipped ARB string names the University (one allowlisted entry — the Metro
+  station — with its reason), no shipped string or non-comment Dart line
+  carries an institutional identifier, and the basemap's top-right corner
+  decodes to pure white at 2048 × 1448. That last one catches the realistic
+  regression: someone restoring the original PNG.
+
+**Deliberately NOT changed**
+- **All authorised artwork ships unaltered otherwise** — basemap, `buildings.json`
+  (170 buildings), the 39 panoramas, the 17 venue pins. Permission is on record
+  (`organiser-requests.md`); the audit removed marks, not content. All 39
+  panorama nadirs and raw bytes were checked: no watermarks, no logo caps, no
+  embedded XMP/EXIF branding.
+- **Real place names** — `Macquarie Theatre`, `Macquarie University Metro
+  Station`, `Macquarie Park`, `Macquarie Walk`. Physical signage and Transport
+  for NSW facts visitors navigate by at night; the next Metro stop is
+  "Macquarie Park", so genericising would misdirect people.
+- **Engineering provenance comments** — the audit trail proving what is
+  authorised.
+- **The bundle identifier `au.edu.mq.astronomy.aon2026`** — spent on TestFlight
+  Builds 1–3 and the Play bootstrap AAB. Changing it forfeits both store
+  identities. Written up as an open decision in `organiser-requests.md` §6.
+
+**Files changed:** 38. `lib/data/event_info.dart`, `lib/config/event_config.dart`,
+`lib/screens/{home,info,settings}_screen.dart`, `lib/data/events_data.dart`,
+`lib/l10n/app_{en,fa}.arb` (+ generated), `assets/maps/aon_event_map.png`,
+`docs/fixtures/aon_basemap_provenance.json`, `pubspec.yaml`, `web/*`,
+`.env.example`, `.maestro/map-{basemap,modes}.yaml`, `README.md`,
+`docs/release/*` (listings, review notes, checklists, `hosted-pages.md`,
+`organiser-requests.md`), 5 test files + 1 new.
+
+**Verification**
+- `./scripts/check.sh` → **`CHECK PASSED`, exit 0**, 7/7, coverage **90.86 %**
+  (6620/7286, floor 90.4 %). The provenance step *failed first* on the basemap
+  SHA drift — the guard working — and passed after the pin and the
+  `modifications` field were updated with the reason.
+- `flutter analyze` → **No issues found.**
+- `flutter build appbundle --release` → **128.9 MB signed AAB**;
+  `flutter build apk --release` → **137.8 MB**; `flutter build web --release`
+  → OK.
+- **Packaged binary checked, not just the tree:** the map extracted from
+  `app-release.apk` is 2048 × 1448 RGBA with the logo region pure white. Only
+  three APK entries contain "Macquarie" — `AssetManifest.bin`,
+  `buildings.json` and the theatre panorama manifest, all authorised venue
+  data. (`meta:Macquarie` in `libflutter.so` is Flutter's own CLDR timezone id
+  for Macquarie *Island*.)
+- **Rendered proof** (release web build, 375 × 812): Home opens straight into
+  "Astronomy Open Night 2026" with no eyebrow; the Map shows every pin in place
+  and reads "Campus map: Astronomy Open Night programme".
+
+**Follow-ups (all need a person, not code)**
+1. **App Store copyright field — blocker.** `© 2026 Macquarie University` is
+   withdrawn; `© 2026 Astronomy Night - FSE Outreach Team` is *not* a safe
+   substitute (FSE is a University faculty unit). Whoever owns the app must
+   name themselves.
+2. **Support URL reopened.** It was `https://event.mq.edu.au/astronomy-open-night/`.
+   A support URL on a university domain presents the University as publisher.
+3. **Privacy Policy / Terms hosting** must move off any `mq.edu.au` domain, and
+   `[PUBLISHER]` must be filled in.
+4. **Bundle identifier** — keep or migrate, before first public release.
+5. **Store screenshots must be recaptured**: all 18 in
+   `docs/release/screenshots/` show the old Home eyebrow and the crested map.
+
+---
+
 ## Raouf: 2026-09-05 — Google Play release audit → signed AAB, closed-test candidate
 
 **Scope:** Android release readiness on top of Leo's `46dc81e` (privacy
@@ -101,7 +208,7 @@ the version bump. Branch `fix/ios-always-location-purpose-string`.
   assumed. `policies.mq.edu.au/document/view.php?id=107` scopes itself to staff,
   students and researchers, addresses no mobile app, and says nothing about the
   Routes transmission or ML Kit. MQ *hosting the app's own policy* is the right
-  shape and is what `mq-hosted-pages.md` was written for.
+  shape and is what `hosted-pages.md` was written for.
 - **Support URL found and verified live:** `https://event.mq.edu.au/astronomy-open-night/`
   — official, public, no login, event-specific, with `astronomyopennight@mq.edu.au`
   on the page. It also confirms the date the app shows.
@@ -181,7 +288,7 @@ the version bump. Branch `fix/ios-always-location-purpose-string`.
   institutional policy describes the University's services, not this app: it
   says nothing about the Routes origin, Google Maps' own collection, or ML Kit
   diagnostics. A policy that does not describe the app is a 5.1.1 defect of the
-  same kind as B1. The right shape — and what `mq-hosted-pages.md` was always
+  same kind as B1. The right shape — and what `hosted-pages.md` was always
   for — is MQ **hosting the app's own policy** at an `mq.edu.au` URL. Any stable
   HTTPS URL works if that is slow; Android already does this with
   `android-privacy-policy.html` on Leo's Play account.
@@ -193,7 +300,7 @@ the version bump. Branch `fix/ios-always-location-purpose-string`.
   venues" under `assets/panorama/**`.
 
 **Files changed:** `docs/release-blockers.md` (B6 rewritten and narrowed, B7
-hosting decision), `docs/release/organiser-requests.md`, `docs/release/mq-hosted-pages.md`,
+hosting decision), `docs/release/organiser-requests.md`, `docs/release/hosted-pages.md`,
 `docs/panorama-image-provenance.md`, `ARCHITECTURE.md` (R4).
 
 **Verification:** `./scripts/check.sh` → CHECK PASSED, 7/7, exit 0.
@@ -335,7 +442,7 @@ decision, E2E suite, release docs. Commits `12111f4..58577e0` on `main`.
 `lib/config/event_config.dart`, `lib/app/router/app_router.dart`,
 `lib/widgets/app_shell.dart`, `.maestro/{first-launch,passport,info,program,settings-persistence}.yaml`,
 `.maestro/README.md`, `APPLE_RELEASE_AUDIT.md` (new), `docs/release/app-review-notes.md`,
-`docs/release/mq-hosted-pages.md`, `docs/release/app-store-submission-checklist.md`,
+`docs/release/hosted-pages.md`, `docs/release/app-store-submission-checklist.md`,
 `docs/release-blockers.md`, `ARCHITECTURE.md`, `pubspec.yaml`.
 
 **Verification**

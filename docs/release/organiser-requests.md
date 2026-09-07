@@ -4,6 +4,16 @@ Everything in the codebase that can be fixed has been. What is left needs a
 decision, a permission, or an account. Each item below is written as a message
 you can send as-is.
 
+> **Updated 2026-09-07 (Raouf) — branding restriction.** The project
+> supervisor (Charanya Ramakrishnan) has instructed that the University's name
+> must not be used for anything, because the University has not approved the
+> project: *"These are your projects."* This does **not** withdraw the asset
+> permission recorded below — the basemap, `buildings.json` and the 39
+> panoramas remain authorised for use and all of them still ship. What it
+> withdraws is **university branding and any implication of endorsement**. The
+> app has been stripped accordingly (see §5). One consequence is new and
+> unresolved: the **bundle identifier**, §6.
+>
 > **Updated 2026-09-05 (Raouf).** Two of the four are now answered by the
 > project owner: the Apple Developer account is in hand (item 4), and the
 > University material is the project's own (item 1). **One asset is not
@@ -172,8 +182,59 @@ were uploaded from team `94273WB4G3` ("Leo Alavi"), so this is no longer a
 blocker.
 
 One thing to keep in view rather than act on: the bundle identifier is
-`au.edu.mq.astronomy.aon2026` and the app is University-branded. If the
-publishing account is an individual's rather than Macquarie's, App Review can
-ask for written authority to publish on the University's behalf (guidelines 4.1
-and 5.1.1.1). If MQ have authorised the app in writing anywhere — an email is
-enough — keep it with the review notes so it can be produced on request.
+`au.edu.mq.astronomy.aon2026`. The app is no longer University-branded (§5),
+which removes the impersonation reading, but the identifier itself is still in
+the University's namespace — see §6.
+
+---
+
+## 5. University branding removed from the app — *done 2026-09-07*
+
+Acting on the supervisor's instruction. The **artwork was not touched** beyond
+the branding itself: the basemap, `buildings.json`, the 39 panoramas and all 17
+venue pins are authorised and all still ship.
+
+| What | Where it was | Action |
+|---|---|---|
+| University crest + wordmark | `assets/maps/aon_event_map.png`, top-right | Painted out in place. Image stays **2048 × 1448**, RGBA; **zero** pixels changed outside the lockup box, so the georeference and every venue pin are byte-for-byte unaffected. Guarded by `test/unit/no_university_branding_test.dart`. |
+| `EventInfo.host` (`"Macquarie University"`) | Home hero eyebrow (uppercase), Info screen, Settings → About | Constant deleted; all three render sites removed. |
+| `EventInfo.faculty` + `cricosProvider` (`CRICOS Provider 00002J`) | Settings → Credits, as *"Event materials and branding © {host}, {faculty}. {cricos}"* | Constants deleted. The credit now reads *"Programme content follows the published Astronomy Open Night 2026 event materials."* — no ©, no institution, no provider code. |
+| `socialHandle` `@MQPhysAstro`, `hashtag` `#MQAstroOpen`, `materialReference` `FSE26193` | Declared in `EventInfo`, never rendered | Deleted. |
+| *"The Faculty of Science and Engineering presents…"* / *"…here at Macquarie University"* | Two shipped event descriptions | Rewritten out of the University's first person. |
+| *"Campus map: Macquarie University"* | Map overlay, Settings credits, Info credits (EN + FA) | Now credits the **source document**: *"Campus map: Astronomy Open Night programme"*. |
+| *"Two Macquarie University student app developers…"* | Settings → Credits acknowledgement (EN + FA) | Now *"Two student app developers…"*. |
+| Store copy: *"official guide to Macquarie University's…"*, subtitle *"Macquarie University event"*, keyword `macquarie`, `© 2026 Macquarie University` | App Store + Play listings | Rewritten; the copyright field is now a **blocker**, not a guess. |
+| Privacy Policy / Support / Terms written in the University's voice | `hosted-pages.md` | Rewritten to `[PUBLISHER]`; must not be hosted on an `mq.edu.au` domain. |
+
+**Not changed, deliberately:** real venue, street, suburb and Metro-station
+names (`Macquarie Theatre`, `Macquarie University Metro Station`, `Macquarie
+Park`) — these are physical signage and Transport for NSW facts visitors
+navigate by at night, not branding. Incidental real-world signage inside the
+360° photographs is likewise untouched. Engineering provenance comments are
+kept: they are the audit trail proving what is authorised.
+
+---
+
+## 6. The bundle identifier — *OPEN, needs a decision*
+
+`au.edu.mq.astronomy.aon2026` sits in the University's reverse-DNS namespace
+(`au.edu.mq` ⇄ `mq.edu.au`) while the app now disclaims any affiliation. The two
+facts sit awkwardly together.
+
+**It has not been changed, on purpose.** The identifier is spent on both stores
+— TestFlight Builds 1–3 and the Play bootstrap AAB. Changing it creates a new
+app identity: a new App Store Connect record, a new Play listing, loss of
+TestFlight history, and re-registration of the upload key and all three Play
+App Signing fingerprints. That is a release-level decision, not an audit fix.
+
+**The two options, honestly:**
+
+1. **Keep it.** The identifier is not visible to visitors — it appears in
+   Settings → Apps and in store URLs. Cheapest, and nothing in the supervisor's
+   instruction is obviously about internal identifiers. Risk: a reviewer or the
+   University notices an `au.edu.mq` package published by an individual.
+2. **Change it** to a neutral namespace before first public release, and burn
+   the existing store records. Only worth doing *now* — after public launch it
+   is not reversible at all.
+
+Ask the supervisor which they want, and record the answer here.

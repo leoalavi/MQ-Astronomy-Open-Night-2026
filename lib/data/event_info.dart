@@ -8,13 +8,6 @@ abstract final class EventInfo {
   static const String year = '2026';
   static const String fullName = 'Astronomy Open Night 2026';
 
-  static const String host = 'Macquarie University';
-  static const String faculty = 'Faculty of Science and Engineering';
-
-  /// Social handles printed on the programme.
-  static const String socialHandle = '@MQPhysAstro';
-  static const String hashtag = '#MQAstroOpen';
-
   /// The event date. Saturday 19 September 2026.
   static const int eventYear = 2026;
   static const int eventMonth = 9;
@@ -38,9 +31,6 @@ abstract final class EventInfo {
   /// A representative instant used to preview the app before event night.
   /// 7:00pm — busy enough that several things are running at once.
   static DateTime get previewInstant => at(19, 0);
-
-  static const String cricosProvider = 'CRICOS Provider 00002J';
-  static const String materialReference = 'FSE26193';
 
   // ── Attribution ──
   //

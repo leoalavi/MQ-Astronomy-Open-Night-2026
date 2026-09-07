@@ -613,10 +613,10 @@ abstract class AonL10n {
   /// **'On here tonight'**
   String get mapOnHereTonight;
 
-  /// Attribution overlaid on the AON campus basemap. Names the SOURCE, not a copyright holder: MQ ownership of the cartographic master is unconfirmed under spec §8.6, so asserting © on their behalf is a claim we cannot back.
+  /// Attribution overlaid on the AON campus basemap. Names the SOURCE DOCUMENT (page 1 of the published AON 2026 Program and Map), never a university, an owner or a copyright holder. The app is an independent project: no app surface may name a university or imply its endorsement.
   ///
   /// In en, this message translates to:
-  /// **'Campus map: Macquarie University'**
+  /// **'Campus map: Astronomy Open Night programme'**
   String get mapAttributionCampus;
 
   /// No description provided for @mapRecentre.
@@ -1801,10 +1801,10 @@ abstract class AonL10n {
   /// **'What this app shares'**
   String get settingsPrivacyCardTitle;
 
-  /// Settings credits: where the map data actually comes from now that walking directions use Google.
+  /// Settings credits: where the map data comes from. Credits the source programme document and Google; names no university.
   ///
   /// In en, this message translates to:
-  /// **'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.'**
+  /// **'Campus map: Astronomy Open Night 2026 programme. Walking directions and the map they appear on are provided by Google.'**
   String get settingsMapDataAttribution;
 
   /// No description provided for @infoFirstAid.
@@ -1993,11 +1993,11 @@ abstract class AonL10n {
   /// **'We don’t have a confirmed position for this car park yet — follow on-site signage.'**
   String get parkingNoConfirmedPosition;
 
-  /// No description provided for @creditsEventMaterialsBody.
+  /// Credits: provenance of the programme content. Deliberately carries NO copyright symbol, no university name, no faculty and no institutional provider registration code — the app is not a university product and must not assert ownership on anyone’s behalf.
   ///
   /// In en, this message translates to:
-  /// **'Event materials and branding © {host}, {faculty}. {cricos}.'**
-  String creditsEventMaterialsBody(String host, String faculty, String cricos);
+  /// **'Programme content follows the published Astronomy Open Night 2026 event materials.'**
+  String get creditsEventMaterialsBody;
 
   /// No description provided for @creditsHeroImageBody.
   ///
@@ -2059,10 +2059,10 @@ abstract class AonL10n {
   /// **'Persian'**
   String get settingsLanguagePersian;
 
-  /// Map/navigation attribution: the illustrated campus map is Macquarie University; walking directions and their basemap come from Google.
+  /// Map/navigation attribution: the illustrated campus map comes from the published AON 2026 programme; walking directions and their basemap come from Google.
   ///
   /// In en, this message translates to:
-  /// **'Campus map: Macquarie University. Walking directions and the map they appear on are provided by Google.'**
+  /// **'Campus map: Astronomy Open Night 2026 programme. Walking directions and the map they appear on are provided by Google.'**
   String get creditsMapDataBody;
 
   /// Provenance line under an activity — which published document this entry came from.
@@ -2155,10 +2155,10 @@ abstract class AonL10n {
   /// **'Developed by'**
   String get settingsCreditsDevelopers;
 
-  /// Credits caption acknowledging the app was built by two MQ student developers for the AON team. An appreciation, NOT a claim of official University ownership.
+  /// Credits caption acknowledging the two student developers who built the app for the AON team. Names no university — an appreciation, NOT a claim of institutional ownership, endorsement or affiliation.
   ///
   /// In en, this message translates to:
-  /// **'Two Macquarie University student app developers, in appreciation of the Astronomy Open Night team.'**
+  /// **'Two student app developers, in appreciation of the Astronomy Open Night team.'**
   String get creditsAcknowledgement;
 
   /// Settings section header for the delete-my-data control.

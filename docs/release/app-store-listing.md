@@ -23,22 +23,26 @@ the store name agree — a mismatch is a common 2.3.1 flag.
 ## Subtitle — 30 characters max
 
 ```
-Macquarie University event
+Public astronomy night guide
 ```
-*(26 characters.)*
+*(28 characters. Names no university:
+the app is an independent project with no university approval.)*
 
 ## Promotional text — 170 characters max, editable without a new build
 
 ```
-Everything you need for the night: the official campus map offline, the full programme, 360° venue tours, and walking directions from the car parks.
+Everything you need for the night: the event campus map offline, the full programme, 360° venue tours, and walking directions from the car parks.
 ```
 *(147 characters.)*
 
 ## Description — 4000 characters max
 
 ```
-Astronomy Open Night is the free visitor companion for Macquarie University's
-public astronomy night in Sydney.
+Astronomy Open Night is the free visitor companion for the public astronomy
+night in Sydney.
+
+An independent app. Not affiliated with, endorsed or sponsored by any
+university.
 
 Saturday 19 September 2026, 4pm – 10pm.
 
@@ -46,8 +50,8 @@ Built to work when the network doesn't. The campus map, the programme, venue
 details and the 360° tours are all stored in the app, so they load in a crowded
 field after dark with no signal.
 
-THE OFFICIAL MAP, OFFLINE
-The same map that's printed in the event programme — the same A–I lettering, the
+THE EVENT MAP, OFFLINE
+The same map printed in the event programme — the same A–I lettering, the
 same registration and information points, the same shuttle and pedestrian
 routes. Pins sit on the printed markers, so the app and the paper agree. Find
 telescopes, talks, planetariums, kids' activities, food and toilets.
@@ -89,29 +93,34 @@ app asks you first, every time, and lets you take it back.
 ACCESSIBILITY
 VoiceOver, larger text up to 200%, and Reduce Motion.
 
-Macquarie University, Balaclava Road, Macquarie Park NSW 2109.
+Balaclava Road, Macquarie Park NSW 2109.
 ```
 *(~2,300 characters.)*
 
 ## Keywords — 100 characters max, comma-separated, no spaces after commas
 
 ```
-astronomy,macquarie,campus,map,stargazing,telescope,observatory,event,sydney,planetarium,night,guide
+astronomy,offline,campus,map,stargazing,telescope,observatory,event,sydney,planetarium,night,guide
 ```
-*(Exactly **100** characters — at Apple's limit, not over it. Counted 2026-09-05; the earlier "101" note was a miscount. Do not add anything without removing something.)*
+*(**98** characters, inside Apple's 100 limit. `macquarie` was removed on
+2026-09-07 — the app must not trade on the university's name — and replaced with
+`offline`. Do not add anything without removing something.)*
 
 Do **not** repeat words already in the Name or Subtitle — Apple indexes those
 separately, so "Open Night" and "University" would be wasted characters.
 
 ## Support URL / Privacy Policy URL / Marketing URL
 
-- **Support URL — decided:** `https://event.mq.edu.au/astronomy-open-night/`
-  (official MQ event site, public, HTTPS, no login, enquiries address on the
-  page). Verified live 2026-09-05.
-- **Privacy Policy URL — still needed.** Mandatory, and Macquarie's own
-  institutional policy cannot stand in for it: see
+- **Support URL — REOPENED 2026-09-07, BLOCKED.** It was
+  `https://event.mq.edu.au/astronomy-open-night/`. A support URL on a
+  university domain presents the university as the app's publisher and support
+  channel, which is exactly the affiliation we have been told not to imply.
+  Needs a non-university HTTPS page owned by the developers.
+- **Privacy Policy URL — still needed, and must NOT be on a university
+  domain.** Mandatory, and the university's institutional policy cannot stand
+  in for it: see
   `docs/release/app-store-connect-final-checklist.md` §1. The app-specific copy
-  is ready in `docs/release/mq-hosted-pages.md` Page 1 and needs hosting.
+  is ready in `docs/release/hosted-pages.md` Page 1 and needs hosting.
 - **Marketing URL — optional**, and not needed: the Support URL is already the
   event site.
 
@@ -120,14 +129,21 @@ separately, so "Open Night" and "University" would be wasted characters.
 - Primary: **Education**
 - Secondary: **Navigation**
 
-Education fits the event's purpose and the university publisher. Navigation is
-the honest second, given the map, compass and wayfinding.
+Education fits the event's purpose. Navigation is the honest second, given the
+map, compass and wayfinding.
 
 ## Copyright
 
 ```
-© 2026 Macquarie University
+DECISION REQUIRED — do not submit a guessed value.
 ```
+
+`© 2026 Macquarie University` was the drafted line and is now **withdrawn**:
+the app is an independent project and must not assert university ownership.
+`© 2026 Astronomy Night - FSE Outreach Team` is **not** a safe substitute
+either — "FSE Outreach Team" is a university faculty unit, so it re-asserts the
+same affiliation. Whoever actually owns the app must name themselves here.
+Until that is settled in writing, this field is a submission blocker.
 
 ## Price
 
@@ -186,7 +202,7 @@ Both sets show the same six screens, in the order Apple displays them:
 | `01-home.png` | Hero, event date, the passport card, "Up next" |
 | `02-program.png` | The programme with the time / activity filters |
 | `03-my-night.png` | My Night with a saved activity |
-| `04-map.png` | Official AON basemap with A–I pins, category filters, Directions |
+| `04-map.png` | AON event basemap with A–I pins, category filters, Directions |
 | `05-panorama.png` | A 360° tour (iPhone: Solar system walk "Gymnasium Road"; iPad: 1 Central Courtyard) |
 | `06-passport.png` | The Astronomy Passport at zero stamps with its explanation line |
 

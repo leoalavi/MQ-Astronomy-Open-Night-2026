@@ -19,8 +19,9 @@ Sources (fetched 2026-08-23):
 ```text
 ABOUT THIS APP
 Astronomy Open Night is the free visitor companion for a public astronomy
-event held by Macquarie University in Sydney on Saturday 19 September 2026,
-4–10pm. It is offline-first: campus map, event programme, wayfinding, 360°
+event held on a university campus in Sydney on Saturday 19 September 2026,
+4–10pm. This app is an independent project, not published by, affiliated with
+or endorsed by that university. It is offline-first: campus map, event programme, wayfinding, 360°
 venue tours, and a QR "Astronomy Passport" stamp trail. English and Persian.
 
 NO ACCOUNT IS REQUIRED
@@ -84,7 +85,7 @@ path is unreachable here — the plugin requests Always only when the When In
 Use string is absent, and it is present. There is no location background
 mode, no allowsBackgroundLocationUpdates, and no Always prompt.
 
-If you are not physically on the Macquarie University campus, the map's
+If you are not physically on the event campus, the map's
 position marker will naturally be off-screen. To review location-dependent
 screens from anywhere, turn ON the Settings tab → Preview → "Preview from anywhere".
 This substitutes a clearly-labelled simulated on-campus position; a

@@ -38,8 +38,6 @@ class EventConfig {
     required this.name,
     required this.shortName,
     required this.tagline,
-    required this.host,
-    required this.faculty,
     required this.startsAt,
     required this.endsAt,
     required this.heroAsset,
@@ -64,9 +62,6 @@ class EventConfig {
   /// One line the visitor reads first. Must come from official material.
   final String tagline;
 
-  final String host;
-  final String faculty;
-
   final DateTime startsAt;
   final DateTime endsAt;
 
@@ -89,9 +84,10 @@ class EventConfig {
 
   /// The production, publicly-reachable HTTPS Privacy Policy URL (App Store /
   /// Play require the policy to be accessible from inside the app). **Null until
-  /// Macquarie hosts the page** — do NOT guess an `mq.edu.au` path (release
-  /// blocker B7). When null, the Settings Privacy Policy row is hidden rather
-  /// than offering a dead link; setting this one value activates it.
+  /// the page is hosted** — do NOT guess a university path (release blocker B7),
+  /// and do not host it on a university domain: the app is not a university
+  /// product. When null, the Settings Privacy Policy row is hidden rather than
+  /// offering a dead link; setting this one value activates it.
   final String? privacyPolicyUrl;
 
   Duration get duration => endsAt.difference(startsAt);
@@ -101,8 +97,6 @@ class EventConfig {
         name: name,
         shortName: shortName,
         tagline: tagline,
-        host: host,
-        faculty: faculty,
         startsAt: startsAt,
         endsAt: endsAt,
         heroAsset: heroAsset,
@@ -124,8 +118,6 @@ class EventConfig {
     // Source: official programme, page 2 short-talks blurb — "designed for
     // the general public and amateur astronomers".
     tagline: 'A night of telescopes, talks and science for everyone.',
-    host: EventInfo.host,
-    faculty: EventInfo.faculty,
     startsAt: EventInfo.startsAt,
     endsAt: EventInfo.endsAt,
     heroAsset: 'assets/images/hero_deep_triangulum_galaxy.jpg',

@@ -121,7 +121,7 @@ were confirmed through secondary sources and the official code list.
 | 4.1 Copycats / impersonation | Yes | **RISK — external** | App is MQ-branded with an `au.edu.mq` bundle id; must ship from MQ's account or with written authority | Medium | Organisers (`docs/release/organiser-requests.md` §4) |
 | 4.2 Minimum functionality (not a web wrapper) | Yes | PASS | Offline programme, illustrated map, 360° tours, compass, passport; the only WebView loads bundled files over `localhost` | Low | — |
 | 4.8 Sign in with Apple | No | N/A | No third-party login, no accounts | — | — |
-| 5.1.1(i) Privacy policy in ASC **and in-app** | Yes | **BLOCKED — external (B7)** | In-app row exists (`_PrivacyPolicyCard`) and activates when `EventConfig.privacyPolicyUrl` is set; hosted copy ready in `docs/release/mq-hosted-pages.md` | High until hosted | MQ hosts the page; set the URL; run `settings_privacy_policy_test.dart` |
+| 5.1.1(i) Privacy policy in ASC **and in-app** | Yes | **BLOCKED — external (B7)** | In-app row exists (`_PrivacyPolicyCard`) and activates when `EventConfig.privacyPolicyUrl` is set; hosted copy ready in `docs/release/hosted-pages.md` | High until hosted | MQ hosts the page; set the URL; run `settings_privacy_policy_test.dart` |
 | 5.1.1(ii) Consent for data collection; withdrawable | Yes | PASS | Explicit `MapsNavDisclosure` before any Google surface; Settings revoke; verified E2E (privacy-consent, privacy-revoke-retry) | Low | — |
 | 5.1.1(iii) Data minimisation | Yes | PASS | Only camera/location/motion; no photos, contacts, mic, ATT | Low | — |
 | 5.1.1(iv) Respect denial, offer alternatives | Yes | PASS | Location denied → map still works; camera denied → manual code entry (E2E `passport.yaml`) | Low | — |
@@ -152,7 +152,7 @@ rights, B7 hosted privacy/support URLs, publisher account.)
 |---|---|---|
 | P2-1 | Launch screen was Flutter's white default while the app opens dark by default → white flash on every cold start at a night event | **FIXED** — `LaunchScreen.storyboard` background = `AonPalette.dark.surfaceBase` (#05070F); Android `launch_background.xml` matched; observed on the iPad simulator |
 | P2-2 | Build number `1.0.0+1` consumed by a Play upload **and** by TestFlight Build 1 | **DEFERRED by decision** — `pubspec.yaml` stays `1.0.0+1` in this working tree; set `1.0.0+2` on the commit that is archived as Build 2 (the release build inspected below was produced with +2 to prove the plumbing: `CFBundleVersion 2`) |
-| P2-3 | Hosted privacy-policy draft listed "text-size preferences" (not stored) and omitted the haptics preference; support page still said the passport "opens on event night" | **FIXED** in `docs/release/mq-hosted-pages.md` |
+| P2-3 | Hosted privacy-policy draft listed "text-size preferences" (not stored) and omitted the haptics preference; support page still said the passport "opens on event night" | **FIXED** in `docs/release/hosted-pages.md` |
 | P2-4 | Passport screen gave no explanation of what a stamp is or where codes come from (the only first-launch comprehension gap found) | **FIXED** — `passportHowItWorks` (EN + real FA), shown at zero stamps |
 | P2-5 | Two pre-existing Maestro flows (`info`, `settings-persistence`) failed on by-point tab taps after a bare restart (stale pre-restart tree); `program.yaml` still tapped the old "6–8pm" chip removed by Leo's filter redesign | **FIXED** — flows hardened (label taps after restart, cold-boot swipe, scroll timeout); documented in `.maestro/README.md` §7 |
 
@@ -186,7 +186,7 @@ rights, B7 hosted privacy/support URLs, publisher account.)
 | `.maestro/info.yaml`, `.maestro/settings-persistence.yaml`, `.maestro/program.yaml`, `.maestro/README.md` | Hardened flows; restart trap documented |
 | `docs/onboarding-decision.md` | NEW — the decision and its evidence table |
 | `docs/release/app-review-notes.md` | Contradiction removed; FIRST LAUNCH paragraph |
-| `docs/release/mq-hosted-pages.md` | Stored-data list corrected; passport FAQ updated |
+| `docs/release/hosted-pages.md` | Stored-data list corrected; passport FAQ updated |
 | `docs/release/app-store-submission-checklist.md` | Manifest row re-audited; version row DONE |
 | `docs/release-blockers.md` | 2026-09-05 change-log entry |
 | `ARCHITECTURE.md` | §10.2 permission timing corrected, §10.2a manifest, §10.2b no-onboarding, §11 logging, R10 resolved, §17 pointers |
@@ -272,7 +272,7 @@ Pre-archive check: in Xcode → Runner → Signing & Capabilities, Team must rea
 - [x] No background modes, no ATT, no push
 - [x] Portrait-only on iPhone; all orientations on iPad; iPad screenshots exist
 - [x] Review notes drafted (`docs/release/app-review-notes.md`) — **fill in the contact name/email/phone**
-- [ ] **Privacy Policy URL** (B7) — host `docs/release/mq-hosted-pages.md` page 1, then set `EventConfig.privacyPolicyUrl`
+- [ ] **Privacy Policy URL** (B7) — host `docs/release/hosted-pages.md` page 1, then set `EventConfig.privacyPolicyUrl`
 - [ ] **Support URL** (B7) — page 2
 - [ ] App Privacy questionnaire — answers below
 - [ ] Age rating questionnaire — answers below

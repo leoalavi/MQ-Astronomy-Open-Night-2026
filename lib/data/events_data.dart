@@ -47,9 +47,9 @@ import 'package:aon2026/models/event.dart';
 abstract final class EventsData {
   /// Shared blurb printed above the short-talks timetable.
   static const String _shortTalksBlurb =
-      'The Faculty of Science and Engineering presents a series of short talks '
-      'by our academics and students. These talks are designed for the general '
-      'public and amateur astronomers, showcasing a diverse range of topics in '
+      'A series of short talks by academics and students. These talks are '
+      'designed for the general public and amateur astronomers, showcasing '
+      'a diverse range of topics in '
       'astronomy and physics.';
 
   static const String _bookingNote =
@@ -512,10 +512,10 @@ abstract final class EventsData {
       id: 'featured-engineering-astronomy',
       title: 'The engineering behind modern astronomy',
       description:
-          'Learn how our engineers make big science possible on the global '
+          'Learn how engineers make big science possible on the global '
           'stage and gain insight into some of the cutting-edge technology '
-          'being designed and built by Australian Astronomical Optics here at '
-          'Macquarie University.',
+          'being designed and built by Australian Astronomical Optics here '
+          'on campus.',
       category: EventCategory.featuredPresentation,
       venueId: '17-wallys-walk',
       room: 'G25 Theatre',

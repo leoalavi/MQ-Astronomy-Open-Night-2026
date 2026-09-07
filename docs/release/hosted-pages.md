@@ -7,15 +7,30 @@
 > The HTML is ready for owner review/hosting, not a verified live URL. No
 > university publisher identity, hosting obligation or legal terms are inferred.
 
-# The three MQ-hosted pages — ready-to-publish copy
+# The three hosted pages — ready-to-publish copy
+
+> **Publisher identity reopened — 7 September 2026.** This copy was originally
+> drafted in Macquarie University's voice: it named the University as the app's
+> publisher, as the party that "collects nothing", and as the party disclaiming
+> warranty. The project supervisor has since confirmed the University has not
+> approved this project and its name must not be used. Every such reference is
+> now `[PUBLISHER]`.
+>
+> **Two things must be settled before any of this can be hosted:**
+> 1. **Who the publisher actually is.** Do not guess, and do not substitute a
+>    faculty or outreach-team name — those are university units and re-assert
+>    the same affiliation.
+> 2. **Where it is hosted.** It must NOT be an `mq.edu.au` address. A policy
+>    served from a university domain presents the University as the publisher
+>    regardless of what the text says.
 
 App Store Connect will not accept a submission without a **Privacy Policy URL**
 and a **Support URL**. Google Play requires the same. Both must be live,
 publicly reachable, and stable — App Review follows them.
 
 This file contains the finished copy. Nothing here needs writing; it needs
-**hosting**, on a `mq.edu.au` address, plus the URLs pasted into App Store
-Connect.
+**hosting**, on a stable public HTTPS address that is **not** a university
+domain, plus the URLs pasted into App Store Connect.
 
 > **Every factual claim below was checked against the code**, not assumed. Where
 > a claim would have been convenient but false, it has been left out — the app's
@@ -27,17 +42,19 @@ Connect.
 
 ## Page 1 — Privacy Policy *(mandatory)*
 
-Suggested URL: `https://www.mq.edu.au/astronomy-open-night/app-privacy`
+Suggested URL: `https://[HOSTED-DOMAIN]/astronomy-open-night/app-privacy`
 
 ```text
 Astronomy Open Night app — Privacy Policy
 Last updated: [DATE]
 
-Macquarie University publishes the Astronomy Open Night app to help visitors
-find their way around campus during the Astronomy Open Night event.
+[PUBLISHER] publishes the Astronomy Open Night app to help visitors find their
+way around campus during the Astronomy Open Night event. This app is an
+independent project and is not affiliated with, endorsed or sponsored by any
+university.
 
 WHAT WE COLLECT
-Macquarie University collects nothing. The app has no account, no sign-in and
+[PUBLISHER] collects nothing. The app has no account, no sign-in and
 no server of its own, and it contains no analytics, advertising or tracking
 software of any kind. We do not receive or store any personal information about
 you. The one time information leaves your device is when you choose to load a
@@ -95,15 +112,15 @@ If this policy changes, we will update this page and the date above.
 
 CONTACT
 [CONTACT NAME OR TEAM]
-[CONTACT EMAIL @mq.edu.au]
-Macquarie University, Balaclava Road, Macquarie Park NSW 2109, Australia
+[CONTACT EMAIL — must not be a university address]
+Balaclava Road, Macquarie Park NSW 2109, Australia
 ```
 
 ---
 
 ## Page 2 — Support *(mandatory)*
 
-Suggested URL: `https://www.mq.edu.au/astronomy-open-night/app-support`
+Suggested URL: `https://[HOSTED-DOMAIN]/astronomy-open-night/app-support`
 
 App Review checks that this page is live and that the contact details work.
 A page that only says "email us" is acceptable; a dead link is a rejection.
@@ -111,7 +128,7 @@ A page that only says "email us" is acceptable; a dead link is a rejection.
 ```text
 Astronomy Open Night app — Support
 
-Need help with the app? Email [CONTACT EMAIL @mq.edu.au] and we'll get back to
+Need help with the app? Email [CONTACT EMAIL — must not be a university address] and we'll get back to
 you. On the night itself, the fastest help is at any information point in the
 Central Courtyard — look for the staff in event shirts.
 
@@ -143,14 +160,14 @@ fix it.
 
 EVENT DETAILS
 Astronomy Open Night, Saturday 19 September 2026, 4pm – 10pm
-Macquarie University, Balaclava Road, Macquarie Park NSW 2109
+Balaclava Road, Macquarie Park NSW 2109
 ```
 
 ---
 
 ## Page 3 — Terms of Use *(needed for the Google Maps flow-down)*
 
-Suggested URL: `https://www.mq.edu.au/astronomy-open-night/app-terms`
+Suggested URL: `https://[HOSTED-DOMAIN]/astronomy-open-night/app-terms`
 
 Not an App Store Connect field, but the Google Maps Platform terms require you
 to pass certain terms through to end users when you embed Google Maps.
@@ -159,7 +176,7 @@ to pass certain terms through to end users when you embed Google Maps.
 Astronomy Open Night app — Terms of Use
 Last updated: [DATE]
 
-The Astronomy Open Night app is provided free by Macquarie University to help
+The Astronomy Open Night app is provided free by [PUBLISHER] to help
 visitors navigate the Astronomy Open Night event.
 
 EVENT INFORMATION MAY CHANGE
@@ -179,22 +196,23 @@ Maps/Google Earth Additional Terms of Service
 Policy (https://policies.google.com/privacy).
 
 NO WARRANTY
-The app is provided "as is". Macquarie University does not warrant that it will
+The app is provided "as is". [PUBLISHER] does not warrant that it will
 be uninterrupted or error-free, and is not liable for any loss arising from
 reliance on the information it contains, to the extent permitted by law.
 
 CONTACT
-[CONTACT EMAIL @mq.edu.au]
+[CONTACT EMAIL — must not be a university address]
 ```
 
 ---
 
-## "Can we just point at Macquarie's existing Privacy Policy?" — no, but MQ can host these *(asked 2026-09-05)*
+## "Can we just point at the University's existing Privacy Policy?" — no, and it can no longer host these either *(asked 2026-09-05; reopened 2026-09-07)*
 
 Two different things get confused here, so separate them:
 
 - **Whose policy it is.** The store field must point at a policy that describes
-  *this app's* data handling. Macquarie's institutional privacy policy describes
+  *this app's* data handling. The University's institutional privacy policy
+  describes
   how the University handles personal information across its own services. It
   says nothing about this app sending a route origin to the Google Routes API,
   nothing about Google Maps' own collection once directions are opened, and
@@ -203,16 +221,18 @@ Two different things get confused here, so separate them:
   same class of defect as blocker B1, one layer out. Cooperation with the
   University does not make its general policy an accurate description of this
   software.
-- **Who hosts it.** This is where the MQ association belongs and is entirely
-  fine. Page 1 below *is* the app's policy, already written and already checked
-  against the code; MQ publishing it at an `mq.edu.au` URL gives both the
-  University association and an accurate document. That is what this file is
-  for.
+- **Who hosts it.** *Reopened 2026-09-07 — the earlier answer here is
+  withdrawn.* This section used to say university hosting was "entirely fine"
+  and desirable, because it lent the app the University association. That is
+  now precisely the wrong outcome: the University has not approved this project
+  and the app must not imply its endorsement. **Do not host these pages on an
+  `mq.edu.au` URL.** A store-listed policy served from a university domain
+  presents the University as the publisher whatever the text says.
 
-If MQ hosting is slow, any stable public HTTPS URL satisfies both stores — the
-requirement is that the page is live, reachable and stays put, not that it sits
-on a particular domain. Android already takes this route: Leo's Play account
-uses `android-privacy-policy.html` (see the correction note at the top).
+Any stable public HTTPS URL that is not a university domain satisfies both
+stores — the requirement is that the page is live, reachable and stays put.
+Android already takes this route: Leo's Play account uses
+`android-privacy-policy.html` (see the correction note at the top).
 
 **Terms of Use is a narrower question.** Apple does *not* require a Terms of Use
 or EULA URL — apps without one are covered by Apple's standard licence
@@ -223,8 +243,8 @@ demands it.
 
 ## What to do with these
 
-1. Fill in `[DATE]`, `[CONTACT NAME OR TEAM]` and `[CONTACT EMAIL @mq.edu.au]`.
-2. Have MQ publish all three at stable `mq.edu.au` URLs.
+1. Fill in `[DATE]`, `[CONTACT NAME OR TEAM]` and `[CONTACT EMAIL — must not be a university address]`.
+2. Publish all three at stable public HTTPS URLs on a non-university domain.
 3. Paste the Privacy Policy URL and Support URL into App Store Connect
    (*App Information* and the version's *App Review Information*).
 4. Request all three in **one** approval round — that is the longest-lead item

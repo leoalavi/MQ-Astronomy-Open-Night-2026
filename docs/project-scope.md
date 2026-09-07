@@ -5,7 +5,8 @@
 | | |
 |---|---|
 | Event | Astronomy Open Night 2026 |
-| Host | Macquarie University, Faculty of Science and Engineering |
+| Event host | Macquarie University, Faculty of Science and Engineering |
+| App publisher | **Not** the event host. This app is an independent student project, not affiliated with or endorsed by the university, and ships no university branding — see `docs/release/organiser-requests.md` §5. |
 | Date | Saturday 19 September 2026 |
 | Time | 4:00 PM – 10:00 PM |
 | Audience | General public, families, students, astronomy enthusiasts |

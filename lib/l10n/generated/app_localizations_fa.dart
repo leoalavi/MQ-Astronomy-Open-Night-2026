@@ -340,7 +340,7 @@ class AonL10nFa extends AonL10n {
   String get mapOnHereTonight => 'امشب در این مکان';
 
   @override
-  String get mapAttributionCampus => 'نقشهٔ پردیس: دانشگاه مکواری';
+  String get mapAttributionCampus => 'نقشهٔ پردیس: برنامهٔ شب باز نجوم';
 
   @override
   String get mapRecentre => 'بازگشت به مرکز';
@@ -1064,7 +1064,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get settingsMapDataAttribution =>
-      'نقشهٔ پردیس: دانشگاه مکواری. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.';
+      'نقشهٔ پردیس: برنامهٔ شب باز نجوم ۲۰۲۶. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.';
 
   @override
   String get infoFirstAid => 'کمک‌های اولیه';
@@ -1171,9 +1171,8 @@ class AonL10nFa extends AonL10n {
       'هنوز موقعیت تأییدشده‌ای برای این پارکینگ نداریم — تابلوهای محل را دنبال کنید.';
 
   @override
-  String creditsEventMaterialsBody(String host, String faculty, String cricos) {
-    return 'مواد رویداد و نشان‌ها © $host، $faculty. $cricos.';
-  }
+  String get creditsEventMaterialsBody =>
+      'محتوای برنامه بر پایهٔ مواد منتشرشدهٔ رویداد شب باز نجوم ۲۰۲۶ است.';
 
   @override
   String creditsHeroImageBody(String credit) {
@@ -1212,7 +1211,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get creditsMapDataBody =>
-      'نقشهٔ پردیس: دانشگاه مکواری. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.';
+      'نقشهٔ پردیس: برنامهٔ شب باز نجوم ۲۰۲۶. مسیریابی پیاده و نقشه‌ای که روی آن نمایش داده می‌شود توسط گوگل ارائه می‌گردد.';
 
   @override
   String eventSourceNote(String note) {
@@ -1268,7 +1267,7 @@ class AonL10nFa extends AonL10n {
 
   @override
   String get creditsAcknowledgement =>
-      'دو دانشجوی برنامه‌نویس دانشگاه مکواری، با قدردانی از تیم شب باز نجوم.';
+      'دو برنامه‌نویس دانشجو، با قدردانی از تیم شب باز نجوم.';
 
   @override
   String get settingsYourData => 'داده‌های شما';

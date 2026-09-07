@@ -54,8 +54,7 @@ class InfoScreen extends ConsumerWidget {
                 const SizedBox(height: AonSpacing.space2),
                 Text(
                   '${TimeFormat.longDate(EventInfo.startsAt)}\n'
-                  '${TimeFormat.range(EventInfo.startsAt, EventInfo.endsAt)}\n'
-                  '${EventInfo.host}',
+                  '${TimeFormat.range(EventInfo.startsAt, EventInfo.endsAt)}',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: context.aon.contentSecondary,
                   ),

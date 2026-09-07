@@ -273,7 +273,7 @@ in-app copy.
   row opens the hosted page instead.
 - **Hosted:** `docs/release/android-privacy-policy.html` — same text, ready to
   host. **Not yet at a public URL (HUMAN).**
-- The older MQ-publisher draft in `docs/release/mq-hosted-pages.md` is marked
+- The older MQ-publisher draft in `docs/release/hosted-pages.md` is marked
   *not approved for Android* (its "nothing collected" claim is false for this build).
 
 ## Account Deletion

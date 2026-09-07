@@ -90,7 +90,7 @@ clears the path to GO.
   claim is absent and the Google / walking-directions transmission is stated
   truthfully. Guarded by `test/unit/ios_location_purpose_test.dart`; consistent
   with `settingsPrivacyBody` (EN + FA) and the hosted policy
-  (`docs/release/mq-hosted-pages.md`). Full gate `CHECK PASSED`, exit 0, coverage
+  (`docs/release/hosted-pages.md`). Full gate `CHECK PASSED`, exit 0, coverage
   91.01%. (Recommend a final spot-check of the submission archive's Info.plist at
   store-submission time; the string is build-invariant.)
 
@@ -132,7 +132,7 @@ clears the path to GO.
   explicit re-enable `privacy-revoke-retry.yaml` 25/25 (the retry is NOT silently
   re-accepted — it lands on the honest sharing-off panel); Persian RTL first-use
   disclosure `privacy-consent-fa.yaml` 17/17. 58 targeted privacy tests green. The
-  hosted policy (`docs/release/mq-hosted-pages.md`) and the EN/FA in-app copy are
+  hosted policy (`docs/release/hosted-pages.md`) and the EN/FA in-app copy are
   reconciled to the explicit model ("asks you before"; "sent to Google only … and
   only after you agree"). Full gate `CHECK PASSED`, exit 0, coverage 91.01%.
 
@@ -285,7 +285,7 @@ clears the path to GO.
 
 - **Exact problem.** The production Privacy Policy / Support store-metadata URLs
   are not yet provisioned. The finished policy/support copy exists in
-  `docs/release/mq-hosted-pages.md` but is not hosted.
+  `docs/release/hosted-pages.md` but is not hosted.
 - **Partly closed 2026-09-05 by `46dc81e`.** The *in-app* half is done: Settings
   now carries a Privacy Policy card (`settings_screen.dart:146`,
   `_PrivacyPolicyCard`) that opens `config.privacyPolicyUrl` when one is
@@ -315,7 +315,7 @@ clears the path to GO.
   affect on-the-night in-app behaviour).
 - **Evidence / source.** `lib/screens/settings_screen.dart:146` (policy card,
   online + offline paths) and `lib/services/url_opener.dart`;
-  `docs/release/mq-hosted-pages.md` (ready, unhosted copy);
+  `docs/release/hosted-pages.md` (ready, unhosted copy);
   Apple App Store Connect privacy/URL fields + App Review Guidelines; Google
   Play policy requirements.
 - **Support URL resolved 2026-09-05.** The official event site,
@@ -341,9 +341,9 @@ clears the path to GO.
   Google Maps' own collection, ML Kit) and a policy that does not match the app
   is itself a 5.1.1 defect. What *is* right, and is what this blocker always
   wanted, is **MQ hosting the app's own policy** — the finished copy in
-  `mq-hosted-pages.md` — at an `mq.edu.au` URL. Any stable public HTTPS URL
+  `hosted-pages.md` — at an `mq.edu.au` URL. Any stable public HTTPS URL
   satisfies both stores if MQ hosting is slow. Reasoning recorded in
-  `docs/release/mq-hosted-pages.md`.
+  `docs/release/hosted-pages.md`.
 - **Owner.** Organisers (host the pages) + product (add the in-app entry point).
 - **Status.** `OPEN`.
 - **Exact conditions to close.**

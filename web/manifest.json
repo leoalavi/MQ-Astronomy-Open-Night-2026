@@ -5,7 +5,7 @@
     "display": "standalone",
     "background_color": "#05070F",
     "theme_color": "#05070F",
-    "description": "Event discovery and night-time campus wayfinding for Macquarie University Astronomy Open Night 2026.",
+    "description": "Event discovery and night-time campus wayfinding for Astronomy Open Night 2026.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -26,6 +26,7 @@ Future<void> showPassportFactSheet(
   final reduceMotion = MediaQuery.disableAnimationsOf(context);
   return showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     sheetAnimationStyle: reduceMotion ? AnimationStyle.noAnimation : null,

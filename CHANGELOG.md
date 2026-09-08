@@ -31,11 +31,14 @@ words per item, in `docs/reviews/2026-09-08-pouya-bug-batch.md`.
   above the rail header using the other one. `EventPhase.running` now
   contributes no hero pill; every other phase still does, because each says
   something the rail cannot. The orphaned ARB key is gone from both locales.
-- **Sheet actions sat under the floating tab bar.** Four sheets ended in a flat
-  `AonSpacing.space6` while the shell runs `extendBody: true`, so "Directions"
-  and "Show on map" were painted over by the glass island and could not be
-  tapped (West 6; 1 Central Courtyard). All four now reserve
-  `AonNavMetrics.clearance`.
+- **Sheet actions sat under the floating tab bar.** Not a padding bug: the
+  sheets were pushed on the *branch* navigator, inside the shell's `Scaffold`,
+  so the glass island painted over them **and stayed tappable through the modal
+  barrier** — on the simulator a tap aimed at "Show on map" switched tabs and
+  dismissed the sheet. Now `useRootNavigator: true`, which four of the chooser
+  sheets already used; the guard test asserts it for every sheet in the shell's
+  files. (The first attempt added `AonNavMetrics.clearance` padding and passed
+  a green gate; running the app is what showed it was the wrong fix.)
 - **The sheet drag handle did not drag the sheet.** `VenueSheet` and
   `VenueInfoSheet` nest a `DraggableScrollableSheet` inside
   `showModalBottomSheet`; Material's handle belongs to the outer modal and
@@ -69,16 +72,19 @@ words per item, in `docs/reviews/2026-09-08-pouya-bug-batch.md`.
 `lib/widgets/{sheet_drag_handle,venue_info_sheet,building_sheet,place_action_buttons,map_mode_toggle,map_category_filter_bar}.dart`,
 `lib/l10n/app_{en,fa}.arb`, `docs/reviews/2026-09-08-pouya-bug-batch.md`.
 
-**Verification:** `./scripts/check.sh` → **CHECK PASSED, exit 0**, 7/7,
-coverage 90.81% (floor 90.4%). Two new test files
-(`locale_switch_formatting_test.dart`, `pouya_2026_09_08_regressions_test.dart`)
-plus a new sheet guard in `bottom_nav_clearance_test.dart`. The locale and
-keyboard tripwires were verified RED against the pre-fix source before being
-accepted, not merely green after it.
+**Verification:** `./scripts/check.sh` → **CHECK PASSED, exit 0**, 7/7. Two new
+test files (`locale_switch_formatting_test.dart`,
+`pouya_2026_09_08_regressions_test.dart`) plus a new sheet guard in
+`bottom_nav_clearance_test.dart`. The locale, keyboard and sheet-layering
+tripwires were each verified RED against the pre-fix source before being
+accepted, not merely green after it. The sheet fixes were also confirmed on the
+6.9" simulator: the venue sheet and the parking sheet now cover the tab bar with
+both actions reachable, and the drag handle expands the sheet.
 
 **Follow-ups:** privacy-policy copy decision; Solar system walk position and
-times from the organisers; the fixes are simulator- and unit-verified but have
-**not** been confirmed on Pouya's device — that needs the next build.
+times from the organisers. The keyboard, locale, duplicate-pill and haptics
+fixes are unit-verified only — they have **not** been exercised on hardware, and
+haptics cannot be felt on a simulator at all. That needs Pouya's next build.
 
 
 ## Raouf: 2026-09-07 — Play Console has no app; the "bootstrap AAB" never existed

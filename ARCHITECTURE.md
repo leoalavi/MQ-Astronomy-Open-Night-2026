@@ -618,16 +618,20 @@ the bottom of the screen is painted over unless it reserves
 `AonNavMetrics.clearance(context)` (bar height + outer padding + content gap +
 the home-indicator inset — roughly 124pt on an iPhone).
 
-This applies to **modal bottom sheets too**, which is the part that was missed.
-A sheet is pushed on the branch navigator, *below* the shell's
-`bottomNavigationBar`, so the island paints straight over its final rows. Four
-sheets shipped ending in a flat `AonSpacing.space6`, which put "Directions" and
-"Show on map" underneath the bar where they could not be tapped at all
-(reported on device 2026-09-08).
+**Modal sheets do not solve this with padding — they solve it with
+`useRootNavigator: true`.** A sheet pushed on the *branch* navigator lives
+inside the shell's `Scaffold`, so the island paints over it **and stays
+hit-testable through the modal barrier**: on device, a tap aimed at a sheet's
+"Show on map" switched tabs and dismissed the sheet (2026-09-08). Padding
+cannot fix that — it only decides where the last item comes to rest, not which
+widget is on top. Pushing on the root navigator puts the sheet and its scrim
+above the whole shell, which is also the correct modal semantics.
 
-`bottom_nav_clearance_test.dart` guards both lists — screens *and* sheets. Its
-screen-only half passed the entire time the sheets were broken; if you add a
-sheet that can reach the bottom of the screen, add it to that list.
+Half the sheets already did this; the rest did not, and those were exactly the
+ones reported broken. `bottom_nav_clearance_test.dart` now guards both claims:
+`AonNavMetrics.clearance` on every shell *screen*, and `useRootNavigator: true`
+on every `showModalBottomSheet` in the shell's files. Its screen-only half
+passed the entire time the sheets were broken.
 
 **Nested sheets have a second trap.** `VenueSheet` and `VenueInfoSheet` put a
 `DraggableScrollableSheet` inside `showModalBottomSheet`. There are then two

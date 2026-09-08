@@ -580,6 +580,13 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     ref.read(mapSelectionProvider.notifier).select(key);
     await showModalBottomSheet<void>(
       context: context,
+      // Root navigator, so the sheet and its scrim cover the shell's floating
+      // tab bar. Without it the island stays ON TOP of the modal: it painted
+      // over this sheet's Directions button AND remained tappable through the
+      // barrier, so a tap meant to hit Directions switched tabs instead
+      // (verified on the 6.9" simulator, 2026-09-08). The choosers in
+      // lib/widgets/*_choices_sheet.dart already did this; these did not.
+      useRootNavigator: true,
       isScrollControlled: true,
       // VenueSheet is a DraggableScrollableSheet, so it carries its own
       // SheetDragHandle inside the scrollable. Material's handle would sit in
@@ -596,6 +603,8 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   void _showParkingSheet(String parkingId) {
     showModalBottomSheet<void>(
       context: context,
+      // Above the floating island — see _showVenueSheet.
+      useRootNavigator: true,
       builder: (_) => ParkingSheet(parkingId: parkingId),
     );
   }
@@ -605,6 +614,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
   Future<void> _openSearch() async {
     final key = await showModalBottomSheet<String>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       builder: (_) => const CampusSearchSheet(),
@@ -638,6 +648,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     // hands a key back for the caller to focus.
     showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       useSafeArea: true,
       showDragHandle: true,
@@ -691,6 +702,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
 
   Future<void> _openDetail(String key) => showModalBottomSheet<void>(
     context: context,
+    useRootNavigator: true,
     isScrollControlled: true,
     useSafeArea: true,
     builder: (_) {
@@ -888,10 +900,10 @@ class VenueSheet extends ConsumerWidget {
           AonSpacing.space5,
           0,
           AonSpacing.space5,
-          // Clear the floating glass island, not a fixed gap. The shell sets
-          // `extendBody: true`, so a plain space6 left this sheet's Directions
-          // button *underneath* the tab bar and untappable (Pouya, 2026-09-08).
-          AonNavMetrics.clearance(context),
+          // The sheet now sits ABOVE the floating island (useRootNavigator), so
+          // it needs the home-indicator inset rather than the island's full
+          // clearance — a DraggableScrollableSheet has no SafeArea of its own.
+          AonSpacing.space6 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           const SheetDragHandle(),
@@ -1015,14 +1027,11 @@ class ParkingSheet extends ConsumerWidget {
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.fromLTRB(
+          padding: const EdgeInsets.fromLTRB(
             AonSpacing.space5,
             0,
             AonSpacing.space5,
-            // See VenueSheet: `extendBody: true` puts the glass island over the
-            // bottom of every sheet, so the Directions button needs the shell's
-            // clearance or it cannot be tapped (West 6, Pouya 2026-09-08).
-            AonNavMetrics.clearance(context),
+            AonSpacing.space6,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

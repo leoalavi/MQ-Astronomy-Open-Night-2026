@@ -12,7 +12,6 @@ import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/map_config.dart';
-import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/widgets/sheet_drag_handle.dart';
 import 'package:aon2026/utils/haptics.dart';
 
@@ -38,6 +37,11 @@ class VenueInfoSheet extends ConsumerWidget {
   static Future<void> show(BuildContext context, String venueId) {
     return showModalBottomSheet<void>(
       context: context,
+      // Root navigator, so the sheet and its scrim cover the shell's floating
+      // tab bar. Without it the island painted over "Show on map" and stayed
+      // tappable through the barrier — a tap aimed at the button switched tabs
+      // (verified on the 6.9" simulator, 2026-09-08).
+      useRootNavigator: true,
       isScrollControlled: true,
       // Handle lives inside the DraggableScrollableSheet below — Material's
       // would sit in the outer modal, where dragging it cannot resize the
@@ -81,10 +85,10 @@ class VenueInfoSheet extends ConsumerWidget {
           AonSpacing.space5,
           0,
           AonSpacing.space5,
-          // Clear the floating glass island: the shell sets `extendBody: true`,
-          // so a fixed space6 left "Show on map" under the tab bar and
-          // untappable (1 Central Courtyard — Pouya, 2026-09-08).
-          AonNavMetrics.clearance(context),
+          // The sheet now sits ABOVE the floating island (useRootNavigator), so
+          // it needs the home-indicator inset rather than the island's full
+          // clearance — a DraggableScrollableSheet has no SafeArea of its own.
+          AonSpacing.space6 + MediaQuery.paddingOf(context).bottom,
         ),
         children: [
           const SheetDragHandle(),

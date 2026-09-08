@@ -135,6 +135,77 @@ void main() {
   });
 
   // ──────────────────────────────────────────────────────────────────────────
+  group('a sheet covers the tab bar instead of hiding behind it', () {
+    // "روی منو قرار می‌گیره... از UI ایراد داره" — the island was drawn over
+    // the sheet's Directions button.
+    //
+    // The layering, not the padding, was the bug: the sheet was pushed on the
+    // BRANCH navigator, inside the shell's Scaffold, so the floating island
+    // painted over it AND stayed hit-testable through the modal barrier. On
+    // the 6.9" simulator a tap aimed at "Show on map" switched tabs. Fixed by
+    // opening these sheets on the root navigator, matching the choosers that
+    // already did. The file-level guard lives in bottom_nav_clearance_test.
+
+    testWidgets('the shell\'s bottom bar cannot be tapped through the sheet',
+        (tester) async {
+      // A miniature of the real shell: a Scaffold with `extendBody: true`, a
+      // bottom bar, and a NESTED navigator for the branch — the arrangement
+      // StatefulShellRoute produces. Opening the sheet from the nested
+      // navigator is what used to leave the bar on top.
+      var tabTapped = false;
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          baseClockProvider.overrideWithValue(FixedClock(EventInfo.at(19, 0))),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AonL10n.localizationsDelegates,
+          supportedLocales: AonL10n.supportedLocales,
+          theme: AonTheme.build(),
+          home: Scaffold(
+            extendBody: true,
+            body: Navigator(
+              onGenerateRoute: (_) => MaterialPageRoute<void>(
+                builder: (branchContext) => Center(
+                  child: ElevatedButton(
+                    onPressed: () =>
+                        VenueInfoSheet.show(branchContext, 'central-courtyard'),
+                    child: const Text('open'),
+                  ),
+                ),
+              ),
+            ),
+            bottomNavigationBar: SizedBox(
+              height: 66,
+              child: ElevatedButton(
+                onPressed: () => tabTapped = true,
+                child: const Text('TAB'),
+              ),
+            ),
+          ),
+        ),
+      ));
+
+      await tester.tap(find.text('open'));
+      await tester.pumpAndSettle();
+      expect(find.byType(SheetDragHandle), findsOneWidget,
+          reason: 'precondition: the sheet is open');
+
+      // Aim squarely at the tab bar. With the sheet on the root navigator its
+      // barrier covers the bar, so this lands on the barrier (which dismisses
+      // the sheet) and never reaches the tab.
+      await tester.tap(find.text('TAB'), warnIfMissed: false);
+      await tester.pumpAndSettle();
+
+      expect(
+        tabTapped,
+        isFalse,
+        reason: 'the floating tab bar is still live through the modal barrier '
+            '— on device a tap aimed at "Show on map" switched tabs instead',
+      );
+    });
+  });
+
   group('a sheet can be dragged by its handle', () {
     // "باید این سفیده رو بکشی بالا اون بیاد بالا... این اتفاق نمی‌افته، باید
     //  داخل رو بکشی بالا" — dragging the white grab handle did nothing; only

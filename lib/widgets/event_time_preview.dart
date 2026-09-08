@@ -69,6 +69,7 @@ class EventTimePreviewCard extends ConsumerWidget {
   Future<void> _pick(BuildContext context, WidgetRef ref) {
     return showModalBottomSheet<void>(
       context: context,
+      useRootNavigator: true,
       isScrollControlled: true,
       builder: (_) => const _TimePickerSheet(),
     );

@@ -150,36 +150,41 @@ void main() {
 
     // ── The gap that let the bug above ship a second time ──
     //
-    // The screen-level guard passed the whole time. A modal bottom sheet is
-    // pushed on the BRANCH navigator, so the shell's island paints straight
-    // over it — and every sheet below ended in a flat `AonSpacing.space6`.
-    // On device that put "Directions" and "Show on map" underneath the tab
-    // bar, where they cannot be tapped at all. Pouya reported it on
-    // 2026-09-08 for West 6 and for 1 Central Courtyard; screenshots at 14:11
-    // and 14:12 show the button and the island occupying the same pixels.
-    test('every sheet shown inside the shell uses the same clearance', () {
-      // Sheets whose content can reach the bottom of the screen. Choosers that
-      // are a short fixed list already pass; they are here so a new action row
-      // added to one of them cannot quietly regress.
+    // The screen-level guard passed the whole time. A modal bottom sheet was
+    // pushed on the BRANCH navigator, which lives INSIDE the shell's Scaffold —
+    // so the floating island painted straight over the sheet, and, worse, was
+    // still hit-testable through the modal barrier. On the 6.9" simulator a tap
+    // aimed at "Show on map" switched tabs and dismissed the sheet instead.
+    // Reported by Pouya 2026-09-08 for West 6 and 1 Central Courtyard.
+    //
+    // Bottom padding cannot fix that: it only governs where the LAST item
+    // comes to rest, not which widget is on top. The fix is
+    // `useRootNavigator: true`, which puts the sheet and its scrim above the
+    // whole shell. Four of the choosers already did this; the rest did not.
+    test('every sheet shown inside the shell opens on the root navigator', () {
       const shellSheets = [
         'lib/widgets/venue_info_sheet.dart',
-        'lib/widgets/building_sheet.dart',
         'lib/widgets/parking_choices_sheet.dart',
         'lib/widgets/toilet_choices_sheet.dart',
         'lib/widgets/information_points_sheet.dart',
-        'lib/widgets/favorites_sheet.dart',
-        'lib/widgets/panorama_building_picker.dart',
-        // VenueSheet and ParkingSheet live in the map screen's own file.
+        'lib/widgets/passport_fact_sheet.dart',
+        'lib/widgets/event_time_preview.dart',
+        'lib/screens/program_screen.dart',
+        // VenueSheet, ParkingSheet, search, favourites and the building sheet
+        // are all opened from the map screen's own file.
         'lib/screens/map_screen.dart',
       ];
-      final missing = <String>[];
+      final trapped = <String>[];
       for (final path in shellSheets) {
         final src = File(path).readAsStringSync();
-        if (!src.contains('AonNavMetrics.clearance')) missing.add(path);
+        // Every showModalBottomSheet in the file must opt in, not just one.
+        final opens = 'showModalBottomSheet'.allMatches(src).length;
+        final rooted = 'useRootNavigator: true'.allMatches(src).length;
+        if (opens > rooted) trapped.add('$path ($opens sheets, $rooted rooted)');
       }
-      expect(missing, isEmpty,
-          reason: 'these sheets end under the floating tab bar, so their last '
-              'action cannot be tapped:\n${missing.join('\n')}');
+      expect(trapped, isEmpty,
+          reason: 'these sheets open UNDER the floating tab bar, which stays '
+              'tappable through the modal barrier:\n${trapped.join('\n')}');
     });
   });
 }

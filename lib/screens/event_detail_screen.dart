@@ -22,6 +22,7 @@ import 'package:aon2026/widgets/empty_state.dart';
 import 'package:aon2026/widgets/save_button.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
 import 'package:aon2026/utils/haptics.dart';
+import 'package:aon2026/config/qa_mode.dart';
 
 /// Full detail for one programme item, plus the action to navigate to it.
 class EventDetailScreen extends ConsumerWidget {
@@ -232,7 +233,13 @@ class EventDetailScreen extends ConsumerWidget {
           ],
 
           // ── Provenance, for the team rather than attendees ──
-          if (event.sourceNote != null) ...[
+          //
+          // Which is exactly why it is behind a QA define. This line quotes the
+          // programme PDF or Liz's email verbatim and names her; on Solar
+          // system walk it also printed the internal classification
+          // ("classified openAllNight (not an exact session)"). It shipped
+          // unconditionally until 2026-09-08. See qa_mode.dart.
+          if (event.sourceNote != null && ref.watch(showSourceNotesProvider)) ...[
             const SizedBox(height: AonSpacing.space6),
             Text(
               l.eventSourceNote(event.sourceNote!),

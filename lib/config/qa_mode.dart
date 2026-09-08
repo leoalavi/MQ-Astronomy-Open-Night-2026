@@ -52,3 +52,30 @@ const bool kPassportResetTool = bool.fromEnvironment('AON_PASSPORT_RESET_TOOL');
 /// the reset dialog without a rebuild.
 final passportResetToolProvider = Provider<bool>((ref) => kPassportResetTool);
 
+
+/// Shows the provenance line under an activity ("Source: Programme p.2 — …").
+///
+/// `AonEvent.sourceNote` is a **data-integrity artefact**, not visitor copy:
+/// `data_integrity_test` requires every event to carry one so each published
+/// time can be traced back to the programme PDF or to Liz's email, and
+/// `docs/data-sources.md` describes it as "the provenance link back to the
+/// PDF/email". The detail screen rendered it unconditionally, so an attendee
+/// opening Solar system walk read:
+///
+/// > Source: Liz 2026-08-31 — "Will go up on Gymnasium Road a few days before
+/// > the event…" … so classified openAllNight (not an exact session).
+///
+/// — an organiser named, an internal email quoted, and the internal enum
+/// `openAllNight` shown to the public. Found on device 2026-09-08 while
+/// re-checking Pouya's report about this screen.
+///
+/// Same treatment as [kPassportResetTool], for the same reason: a build that
+/// does not pass the define folds `false` in at compile time.
+///
+/// ```
+/// flutter run --dart-define=AON_SHOW_SOURCE_NOTES=true
+/// ```
+const bool kShowSourceNotes = bool.fromEnvironment('AON_SHOW_SOURCE_NOTES');
+
+/// Riverpod view of [kShowSourceNotes], so tests can exercise both modes.
+final showSourceNotesProvider = Provider<bool>((ref) => kShowSourceNotes);

@@ -14,6 +14,8 @@ import 'package:aon2026/services/event_phase.dart';
 import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/widgets/sheet_drag_handle.dart';
 import 'package:aon2026/widgets/venue_info_sheet.dart';
+import 'package:aon2026/config/qa_mode.dart';
+import 'package:aon2026/screens/event_detail_screen.dart';
 
 /// Regressions from Pouya's device pass on 2026-09-08.
 ///
@@ -272,6 +274,81 @@ void main() {
         find.descendant(of: find.byType(Scrollable), matching: handle),
         findsWidgets,
       );
+    });
+  });
+
+  // ──────────────────────────────────────────────────────────────────────────
+  group('internal provenance does not ship to attendees', () {
+    // Found on device 2026-09-08 while re-checking Pouya's Solar system walk
+    // report — he had not named this one, and the first pass missed it.
+    //
+    // `AonEvent.sourceNote` is a data-integrity artefact: data_integrity_test
+    // requires one on EVERY event so each published time traces back to the
+    // programme PDF or to Liz's email, and docs/data-sources.md calls it "the
+    // provenance link back to the PDF/email". The detail screen's own comment
+    // says "for the team rather than attendees" — and then rendered it
+    // unconditionally. On Solar system walk a visitor read:
+    //
+    //   Source: Liz 2026-08-31 — "Will go up on Gymnasium Road a few days
+    //   before the event…" … so classified openAllNight (not an exact session).
+    //
+    // An organiser named, an internal email quoted, an internal enum exposed.
+
+    testWidgets('a release build shows no "Source:" line', (tester) async {
+      await tester.pumpWidget(host(
+        const EventDetailScreen(eventId: 'solar-system-walk'),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Source:'), findsNothing);
+      expect(find.textContaining('openAllNight'), findsNothing,
+          reason: 'the internal timing enum reached the public screen');
+      expect(find.textContaining('Liz'), findsNothing,
+          reason: 'an organiser is named to attendees');
+    });
+
+    testWidgets('the QA define brings it back for the team', (tester) async {
+      // The provenance still has to be reachable — it is how a data claim gets
+      // audited. It just needs the define, like every other QA-only surface.
+      SharedPreferences.setMockInitialValues({});
+      await tester.pumpWidget(ProviderScope(
+        overrides: [
+          baseClockProvider.overrideWithValue(FixedClock(EventInfo.at(19, 0))),
+          showSourceNotesProvider.overrideWithValue(true),
+        ],
+        child: MaterialApp(
+          localizationsDelegates: AonL10n.localizationsDelegates,
+          supportedLocales: AonL10n.supportedLocales,
+          theme: AonTheme.build(),
+          home: const EventDetailScreen(eventId: 'solar-system-walk'),
+        ),
+      ));
+      await tester.pumpAndSettle();
+
+      // It is the last item on a long screen, so scroll to it rather than
+      // asserting on what happens to be built.
+      await tester.scrollUntilVisible(
+        find.textContaining('Source:'),
+        400,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('Source:'), findsWidgets);
+    });
+
+    testWidgets('the visitor-facing honesty notes are NOT what got hidden',
+        (tester) async {
+      // Guard against over-correcting. The amber confidence notes are shipped
+      // copy and a deliberate invariant (ARCHITECTURE §14.2/§14.5) — Liz
+      // published no start or finish for this walk, and the app must say so.
+      await tester.pumpWidget(host(
+        const EventDetailScreen(eventId: 'solar-system-walk'),
+      ));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('not published'), findsWidgets,
+          reason: 'the unpublished-time note is the one thing that must stay');
     });
   });
 

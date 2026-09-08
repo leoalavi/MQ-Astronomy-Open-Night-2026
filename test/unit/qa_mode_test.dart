@@ -82,6 +82,19 @@ void main() {
       addTearDown(c.dispose);
       expect(c.read(passportResetToolProvider), isFalse);
     });
+
+    test('source notes are off by default', () {
+      // The provenance line quotes the programme PDF or Liz's email verbatim,
+      // names her, and on Solar system walk printed the internal
+      // classification. It is a data-integrity artefact — data_integrity_test
+      // requires one on every event — not visitor copy, and it shipped
+      // unconditionally until 2026-09-08.
+      expect(kShowSourceNotes, isFalse,
+          reason: 'attendees would read an internal email quote');
+      final c = ProviderContainer();
+      addTearDown(c.dispose);
+      expect(c.read(showSourceNotesProvider), isFalse);
+    });
   });
 
   group('PRODUCTION mode still enforces campus scope', () {

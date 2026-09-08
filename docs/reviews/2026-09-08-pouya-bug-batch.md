@@ -89,3 +89,49 @@ both plausible referents and the screenshots in this batch show nothing wrong
 with either. This repository has a documented incident where three defects were
 fabricated by inferring from one function and then repeated by two gauntlets and
 two external reviews. Ask Pouya what this one was rather than inventing it.
+
+
+---
+
+## Second pass, 2026-09-08 evening — re-checking every item against the audio
+
+Raouf asked whether everything Pouya raised was actually tested. Re-reading the
+five transcripts line by line against what shipped turned up one item the first
+pass answered too quickly, one it missed entirely, and one open question it had
+already closed correctly.
+
+**Checked and confirmed correct as first judged**
+
+- *"Solar system walk … یه کم این مشکل داره"* — I had dismissed the clipped
+  "Show on map" / "360° view" row in his screenshot as ordinary mid-scroll.
+  Confirmed on the 6.9" simulator: the screen scrolls, both buttons are fully
+  reachable, nothing is trapped behind the Save / Walk there bar.
+- *"نمی‌دونم فقط برای اون بود یا برای همه‌شون بود"* (the drag handle — one sheet
+  or all of them?). Answered: only the two sheets that nest a
+  `DraggableScrollableSheet` were broken, and both are fixed. The chooser
+  sheets use a plain modal, where Material's handle correctly drags to dismiss
+  — verified on the Toilets chooser.
+- *"این هپتیکس **باز** کار نمی‌کنه"* — "again" implies an earlier failed fix.
+  `git log --grep=haptic` shows only feature commits, no prior bugfix, so this
+  is a re-report of something never addressed, not a regression. The coverage
+  diagnosis stands.
+
+**Missed entirely on the first pass — now fixed**
+
+- **The provenance line ships to attendees.** Opening any activity showed
+  `Source: …`. On Solar system walk that read: *Source: Liz 2026-08-31 — "Will
+  go up on Gymnasium Road a few days before the event…" … so classified
+  openAllNight (not an exact session).* An organiser named, an internal email
+  quoted, and the internal timing enum shown to the public. The screen's own
+  comment says "for the team rather than attendees" and it rendered
+  unconditionally anyway. Now behind `AON_SHOW_SOURCE_NOTES`, the same per-run
+  define pattern `qa_mode.dart` already uses — created after a `kDebugMode`
+  control reached an App Store screenshot on 2026-09-06. Pouya did not name
+  this one; it was found by opening the screen he complained about.
+
+**Known cosmetic issue, deliberately not changed**
+
+- The chooser sheets still pad their bottom with `AonNavMetrics.clearance`.
+  Now that they sit above the island that is roughly 124pt of dead space at the
+  end of the sheet. It predates this batch, is cosmetic, and changing it means
+  re-verifying six sheets — logged rather than folded into a bug-fix pass.

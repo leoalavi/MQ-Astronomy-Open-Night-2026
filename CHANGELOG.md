@@ -53,6 +53,18 @@ words per item, in `docs/reviews/2026-09-08-pouya-bug-batch.md`.
   eagerly, so turning haptics on demonstrates them on the spot instead of
   staying silent for a frame.
 
+**Found on the second pass, after re-reading the audio line by line**
+- **The provenance line was shipping to attendees.** Every activity showed
+  `Source: …`; on Solar system walk that meant *"Liz 2026-08-31 — …so classified
+  openAllNight (not an exact session)"* — an organiser named, an internal email
+  quoted, the internal timing enum exposed. `sourceNote` is a data-integrity
+  artefact (`data_integrity_test` requires one per event) and the screen's own
+  comment says "for the team rather than attendees"; it rendered unconditionally
+  regardless. Now behind `AON_SHOW_SOURCE_NOTES`, matching the `qa_mode.dart`
+  pattern adopted after a `kDebugMode` control reached an App Store screenshot.
+  Pouya did not report this — it was found by opening the screen he complained
+  about.
+
 **Not defects — left alone deliberately**
 - The amber notes on **Solar system walk** encode the `openAllNight` case (Liz:
   "no set opening times") and an unconfirmed position. Removing them breaks
@@ -60,6 +72,11 @@ words per item, in `docs/reviews/2026-09-08-pouya-bug-batch.md`.
   organisers confirm — an organiser question, not a code change.
 - The **`MACQUARIE UNIVERSITY`** line in his hero screenshot predates `91d5f14`;
   already removed.
+- The clipped action row on **Solar system walk** is ordinary mid-scroll —
+  confirmed on the 6.9" simulator that both buttons are reachable.
+- The **drag handle on the chooser sheets** was never broken: those are plain
+  modals where Material's handle correctly drags to dismiss (verified on
+  Toilets). Only the two nested `DraggableScrollableSheet`s were affected.
 
 **Escalated, not touched**
 - Pouya asked for the **Privacy Policy to be rewritten from scratch**. It is

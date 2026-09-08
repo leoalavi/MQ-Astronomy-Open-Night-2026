@@ -59,3 +59,33 @@ The actual cause is which navigator the sheet is pushed on, and the repository
 already had the right answer in four other sheets. Recorded here because the
 first diagnosis looked convincing and passed a green gate — the thing that
 caught it was opening the app and tapping the button.
+
+
+---
+
+## Open question — the first half of voice note 5 (`00000311`)
+
+Note 5 covers two things. The second is unambiguous and is fixed above (#2):
+
+> "وقتی که از انگلیسی به فارسی تغییر می‌دی و بعد از فارسی به انگلیسی دوباره،
+>  اون ساعت‌ها همچنان فارسی می‌مونن" — switch EN→FA then FA→EN and the times
+>  stay Persian.
+
+The **first** half is not reliably decodable. Two independent passes
+(`medium` default, and `medium` with beam search and a domain prompt) agree only
+on the opening:
+
+> "و خالیش هم مشکل تو حالت پرویو هست، وقتی که مثلا می‌زنی پرویو برای یه ساعتی،
+>  میاد اون قسمت بالا … و اشکال می‌کنه … که اون پایین هست، بشون مشکل می‌شه."
+
+Roughly: *"there is also a problem in preview mode — when you preview a
+particular hour, that top section … glitches … the one at the bottom has a
+problem."* The words between are lost, and the run with beam search truncated
+the clip entirely rather than improving it. `large-v3` cannot be used to settle
+it: it stalls on this machine (17 min, ~15% CPU, no output).
+
+**Deliberately not guessed at.** The preview banner and the bottom island are
+both plausible referents and the screenshots in this batch show nothing wrong
+with either. This repository has a documented incident where three defects were
+fabricated by inferring from one function and then repeated by two gauntlets and
+two external reviews. Ask Pouya what this one was rather than inventing it.

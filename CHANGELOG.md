@@ -82,7 +82,9 @@ accepted, not merely green after it. The sheet fixes were also confirmed on the
 both actions reachable, and the drag handle expands the sheet.
 
 **Follow-ups:** privacy-policy copy decision; Solar system walk position and
-times from the organisers. The keyboard, locale, duplicate-pill and haptics
+times from the organisers; **the first half of voice note 5 is undecodable** and
+describes a second preview-mode problem — ask Pouya rather than guessing (see
+the triage doc). The keyboard, locale, duplicate-pill and haptics
 fixes are unit-verified only — they have **not** been exercised on hardware, and
 haptics cannot be felt on a simulator at all. That needs Pouya's next build.
 

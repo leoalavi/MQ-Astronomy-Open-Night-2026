@@ -24,6 +24,7 @@ import 'package:aon2026/services/url_opener.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/widgets/event_time_preview.dart';
 import 'package:aon2026/widgets/section_header.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// Visitor settings.
 ///
@@ -210,7 +211,13 @@ class _SwitchCard extends StatelessWidget {
     return Card(
       child: SwitchListTile.adaptive(
         value: value,
-        onChanged: onChanged,
+        // Every settings switch confirms itself with a tick. The haptics
+        // switch included: `setHapticsEnabled` updates the master switch
+        // eagerly, so turning haptics ON demonstrates them on the spot.
+        onChanged: (v) {
+          AonHaptics.select();
+          onChanged(v);
+        },
         secondary: Icon(icon),
         title: Text(title),
         subtitle: Text(body),
@@ -246,6 +253,7 @@ class _AppearanceCard extends ConsumerWidget {
         groupValue: selected,
         onChanged: (v) {
           if (v != null) {
+            AonHaptics.select();
             ref.read(appSettingsProvider.notifier).setThemeMode(v);
           }
         },
@@ -312,7 +320,10 @@ class _LanguageCard extends ConsumerWidget {
     return Card(
       child: RadioGroup<String?>(
         groupValue: selected,
-        onChanged: (v) => ref.read(appSettingsProvider.notifier).setLocale(v),
+        onChanged: (v) {
+          AonHaptics.select();
+          ref.read(appSettingsProvider.notifier).setLocale(v);
+        },
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

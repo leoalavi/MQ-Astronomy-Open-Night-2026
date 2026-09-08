@@ -21,6 +21,7 @@ import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/empty_state.dart';
 import 'package:aon2026/widgets/event_card.dart';
 import 'package:aon2026/widgets/section_header.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// How the programme is grouped.
 enum ProgramView {
@@ -78,6 +79,9 @@ class ProgramScreen extends ConsumerWidget {
       // unusable. As slivers the controls simply scroll away and the programme
       // gets the full viewport, which is what a visitor is here for.
       body: CustomScrollView(
+        // Scrolling the programme puts the keyboard away too — the gesture a
+        // visitor reaches for first once they have typed their query.
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         slivers: [
           SliverToBoxAdapter(
             child: Column(
@@ -199,6 +203,17 @@ class _SearchFieldState extends ConsumerState<_SearchField> {
         onChanged: (value) =>
             ref.read(eventFilterProvider.notifier).setQuery(value),
         textInputAction: TextInputAction.search,
+        // Dismiss the keyboard when the search is submitted, and when the
+        // visitor taps anywhere outside the field.
+        //
+        // Flutter's default tap-outside action deliberately does NOT unfocus
+        // for *touch* pointers on iOS and Android (see
+        // `EditableTextTapOutsideAction` in editable_text.dart) — so on a phone
+        // the keyboard stayed up over the results no matter where you tapped,
+        // and the only escape was the system back gesture. Reported
+        // 2026-09-08. The field has to opt in.
+        onTapOutside: (_) => FocusScope.of(context).unfocus(),
+        onSubmitted: (_) => FocusScope.of(context).unfocus(),
         decoration: InputDecoration(
           hintText: l.programSearchHint,
           prefixIcon: const Icon(Icons.search_rounded),
@@ -361,6 +376,7 @@ class _FilterBar extends ConsumerWidget {
                       ? Icon(Icons.check_rounded, color: sheetContext.aon.accent)
                       : null,
                   onTap: () {
+                    AonHaptics.select();
                     Navigator.of(sheetContext).pop();
                     o.onSelect();
                   },
@@ -488,8 +504,10 @@ class _ViewSwitcher extends ConsumerWidget {
         ],
         selected: {view},
         showSelectedIcon: false,
-        onSelectionChanged: (s) =>
-            ref.read(programViewProvider.notifier).set(s.first),
+        onSelectionChanged: (s) {
+          AonHaptics.select();
+          ref.read(programViewProvider.notifier).set(s.first);
+        },
       ),
     );
   }

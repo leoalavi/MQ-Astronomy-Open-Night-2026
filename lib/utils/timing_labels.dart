@@ -40,7 +40,19 @@ extension EventPhaseL10n on EventPhase {
         EventPhase.future => null,
         EventPhase.today => l.phaseTonight,
         EventPhase.startingSoon => l.phaseStartsSoon,
-        EventPhase.running => l.phaseHappeningNow,
+        // Deliberately null, not `phaseHappeningNow`.
+        //
+        // The hero pill sits directly above the "Happening now" activity rail,
+        // whose header is the *same string* (`timingHappeningNow`) and whose
+        // cards each carry the same badge again. On the night that put
+        // "Happening now" on screen four times in one viewport, with the
+        // topmost one saying the least — it repeats what the date pill above
+        // it and the section below it already establish. Reported by Pouya,
+        // 2026-09-08: "دوبار Happening Now تکرار شده، اولی اون بالایه اضافه هست".
+        //
+        // Every other phase stays: each says something the rail cannot
+        // ("Starts soon", "Ending soon", "This event has finished").
+        EventPhase.running => null,
         EventPhase.endingSoon => l.phaseEndingSoon,
         EventPhase.ended => l.phaseEnded,
       };

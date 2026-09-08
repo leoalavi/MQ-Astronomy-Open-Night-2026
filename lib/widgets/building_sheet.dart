@@ -10,6 +10,8 @@ import 'package:aon2026/services/building_providers.dart';
 import 'package:aon2026/services/maps_nav_providers.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/widgets/favorite_toggle.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 String buildingCategoryLabel(AonL10n l, BuildingCategory c) => switch (c) {
       BuildingCategory.academic => l.mapCatAcademic,
@@ -51,8 +53,12 @@ class BuildingSheet extends ConsumerWidget {
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
-              AonSpacing.space5, AonSpacing.space4, AonSpacing.space5, AonSpacing.space6),
+          // Bottom = the shell's clearance, not a fixed gap: `extendBody: true`
+          // runs the floating glass island over the base of every sheet, and a
+          // plain space6 left the directions CTA under it (Pouya, 2026-09-08).
+          padding: EdgeInsets.fromLTRB(
+              AonSpacing.space5, AonSpacing.space4, AonSpacing.space5,
+              AonNavMetrics.clearance(context)),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,6 +120,7 @@ class _BuildingDirectionsButton extends ConsumerWidget {
         width: double.infinity,
         child: FilledButton.icon(
           onPressed: () {
+            AonHaptics.tap();
             Navigator.of(context).pop();
             context.push(Routes.googleNavTo('building:${building.id}'));
           },

@@ -7,6 +7,80 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-08 — Pouya's device pass: six UI defects fixed, two escalated
+
+**Scope:** Triage and fix of the bug batch Pouya sent over WhatsApp on 8 Sep
+(nine screenshots, five Persian voice notes). Full triage, including his own
+words per item, in `docs/reviews/2026-09-08-pouya-bug-batch.md`.
+
+**Fixed**
+- **Program search: the keyboard could not be dismissed.** Flutter's default
+  tap-outside action deliberately does not unfocus for *touch* pointers on iOS
+  and Android, so the keyboard covered the results with no way out but the
+  system back gesture. The field now handles `onTapOutside`/`onSubmitted`, and
+  the programme scroll view dismisses on drag.
+- **The formatting locale went stale.** Persian → "Match my device" left
+  `TimeFormat.locale` pinned to `fa`, giving an English UI with Persian times
+  and digits ("Previewing ۴ب.ظ. on event night", "Up next ۱۴"). Cause:
+  `TimeFormat.locale` was assigned inside `localeResolutionCallback`, which
+  Flutter only consults while `MaterialApp.locale` is non-null — on a null
+  override `LocalizationsResolver` returns a cached locale. Now read from the
+  resolved locale in `MaterialApp.builder`, which cannot go stale.
+- **"Happening now" appeared twice on Home.** `phaseHappeningNow` and
+  `timingHappeningNow` were the same words, and the hero pill sat directly
+  above the rail header using the other one. `EventPhase.running` now
+  contributes no hero pill; every other phase still does, because each says
+  something the rail cannot. The orphaned ARB key is gone from both locales.
+- **Sheet actions sat under the floating tab bar.** Four sheets ended in a flat
+  `AonSpacing.space6` while the shell runs `extendBody: true`, so "Directions"
+  and "Show on map" were painted over by the glass island and could not be
+  tapped (West 6; 1 Central Courtyard). All four now reserve
+  `AonNavMetrics.clearance`.
+- **The sheet drag handle did not drag the sheet.** `VenueSheet` and
+  `VenueInfoSheet` nest a `DraggableScrollableSheet` inside
+  `showModalBottomSheet`; Material's handle belongs to the outer modal and
+  cannot move the inner sheet's extent, so only dragging the *contents* worked.
+  Those two now pass `showDragHandle: false` and render a new `SheetDragHandle`
+  inside their own scroll view.
+- **Haptics did nothing.** The plumbing was correct — the coverage was not.
+  Only five widget types ever called `AonHaptics`, so every plain Material
+  button, switch, radio and filter was silent while Settings promised "a gentle
+  vibration when you tap buttons". Added `AonHaptics.tap()`/`select()` and wired
+  the shared surfaces. `setHapticsEnabled` now updates the master switch
+  eagerly, so turning haptics on demonstrates them on the spot instead of
+  staying silent for a frame.
+
+**Not defects — left alone deliberately**
+- The amber notes on **Solar system walk** encode the `openAllNight` case (Liz:
+  "no set opening times") and an unconfirmed position. Removing them breaks
+  invariants #2/#5 and `liz_update_2026_08_31_test.dart`. They resolve when the
+  organisers confirm — an organiser question, not a code change.
+- The **`MACQUARIE UNIVERSITY`** line in his hero screenshot predates `91d5f14`;
+  already removed.
+
+**Escalated, not touched**
+- Pouya asked for the **Privacy Policy to be rewritten from scratch**. It is
+  legal copy naming Leo Alavi as publisher, and the in-app dialog is only the
+  fallback shown while `EventConfig.privacyPolicyUrl` is null. Raouf's and
+  Leo's call.
+
+**Files:** `lib/main.dart`, `lib/screens/{program,settings,map,event_detail}_screen.dart`,
+`lib/services/app_settings.dart`, `lib/utils/{haptics,timing_labels}.dart`,
+`lib/widgets/{sheet_drag_handle,venue_info_sheet,building_sheet,place_action_buttons,map_mode_toggle,map_category_filter_bar}.dart`,
+`lib/l10n/app_{en,fa}.arb`, `docs/reviews/2026-09-08-pouya-bug-batch.md`.
+
+**Verification:** `./scripts/check.sh` → **CHECK PASSED, exit 0**, 7/7,
+coverage 90.81% (floor 90.4%). Two new test files
+(`locale_switch_formatting_test.dart`, `pouya_2026_09_08_regressions_test.dart`)
+plus a new sheet guard in `bottom_nav_clearance_test.dart`. The locale and
+keyboard tripwires were verified RED against the pre-fix source before being
+accepted, not merely green after it.
+
+**Follow-ups:** privacy-policy copy decision; Solar system walk position and
+times from the organisers; the fixes are simulator- and unit-verified but have
+**not** been confirmed on Pouya's device — that needs the next build.
+
+
 ## Raouf: 2026-09-07 — Play Console has no app; the "bootstrap AAB" never existed
 
 **Scope:** Attempting the last B3 step (register the Play App Signing SHA-1 on

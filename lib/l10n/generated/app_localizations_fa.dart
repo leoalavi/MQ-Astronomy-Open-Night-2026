@@ -141,9 +141,6 @@ class AonL10nFa extends AonL10n {
   String get phaseStartsSoon => 'به‌زودی آغاز می‌شود';
 
   @override
-  String get phaseHappeningNow => 'هم‌اکنون در حال اجرا';
-
-  @override
   String get phaseEndingSoon => 'رو به پایان';
 
   @override

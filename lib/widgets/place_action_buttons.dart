@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// Compact, paired navigation actions for one verified destination.
 ///
@@ -26,6 +27,9 @@ class PlaceActionButtons extends StatelessWidget {
     void navigate(String route, {required bool replace}) {
       // Capture this before a modal callback pops the route that owns context.
       final router = GoRouter.of(context);
+      // Both actions funnel through here, so one call covers Directions and
+      // Show on map on every screen that embeds this pair.
+      AonHaptics.tap();
       beforeNavigate?.call();
       if (replace) {
         router.go(route);

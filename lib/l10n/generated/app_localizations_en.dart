@@ -141,9 +141,6 @@ class AonL10nEn extends AonL10n {
   String get phaseStartsSoon => 'Starts soon';
 
   @override
-  String get phaseHappeningNow => 'Happening now';
-
-  @override
   String get phaseEndingSoon => 'Ending soon';
 
   @override

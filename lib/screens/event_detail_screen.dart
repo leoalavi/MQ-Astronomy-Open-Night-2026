@@ -21,6 +21,7 @@ import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/empty_state.dart';
 import 'package:aon2026/widgets/save_button.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// Full detail for one programme item, plus the action to navigate to it.
 class EventDetailScreen extends ConsumerWidget {
@@ -257,8 +258,10 @@ class EventDetailScreen extends ConsumerWidget {
                 const SizedBox(width: AonSpacing.space3),
                 Expanded(
                   child: FilledButton.icon(
-                    onPressed: () =>
-                        context.push(Routes.googleNavTo('venue:${venue.id}')),
+                    onPressed: () {
+                      AonHaptics.tap();
+                      context.push(Routes.googleNavTo('venue:${venue.id}'));
+                    },
                     icon: const Icon(Icons.directions_walk_rounded),
                     label: Text(l.actionWalkThere),
                   ),

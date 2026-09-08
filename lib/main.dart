@@ -182,19 +182,33 @@ class _AonAppState extends ConsumerState<AonApp> {
       supportedLocales: AonL10n.supportedLocales,
       locale: ref.watch(localeProvider),
       routerConfig: _router,
-      // Keep intl's formatting locale in step with the UI locale, so dates
-      // and times are never English inside a Persian screen.
-      localeResolutionCallback: (device, supported) {
-        // Match by language code, falling back to the first supported locale
-        // (English). Mirrors Flutter's own resolution for our simple case.
-        final resolved = supported.firstWhere(
-          (s) => s.languageCode == device?.languageCode,
-          orElse: () => supported.first,
-        );
-        TimeFormat.locale = resolved.toLanguageTag();
-        return resolved;
-      },
+      // Match by language code, falling back to the first supported locale
+      // (English). Mirrors Flutter's own resolution for our simple case.
+      //
+      // This callback resolves the locale. It must NOT also be where
+      // `TimeFormat.locale` is set — see the builder below for why.
+      localeResolutionCallback: (device, supported) => supported.firstWhere(
+        (s) => s.languageCode == device?.languageCode,
+        orElse: () => supported.first,
+      ),
       builder: (context, child) {
+        // Keep intl's formatting locale in step with the UI locale, so dates,
+        // times and digits are never Persian inside an English screen.
+        //
+        // Read from the RESOLVED locale here rather than assigning it inside
+        // `localeResolutionCallback`. That callback only runs while
+        // `MaterialApp.locale` is non-null: with an explicit override,
+        // `LocalizationsResolver.locale` re-resolves on every read, but on
+        // "Match my device" (`locale == null`) it returns a *cached*
+        // `_resolvedLocale` and the callback is never consulted again.
+        //
+        // So Persian → "Match my device" used to leave `TimeFormat.locale`
+        // stuck on `fa`, producing an English UI with Persian times and
+        // digits — "Previewing ۴ب.ظ. on event night", "Happening now ۲".
+        // Reported 2026-09-08. `Localizations.localeOf` cannot go stale
+        // because the builder rebuilds whenever the resolved locale changes.
+        TimeFormat.locale = Localizations.localeOf(context).toLanguageTag();
+
         // Clamp the OS text scale to the app's verified range (see
         // lib/app/text_scale.dart). Every surface is hardened to 2.0; the cap
         // is held there deliberately so the app never exposes an unverified

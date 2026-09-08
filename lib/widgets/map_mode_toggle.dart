@@ -4,6 +4,7 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 enum MapMode { campusMap, panorama }
 
@@ -38,7 +39,10 @@ class MapModeToggle extends StatelessWidget {
               _Segment(
                 label: _label(l, mode),
                 selected: value == mode,
-                onTap: () => onChanged(mode),
+                onTap: () {
+                  AonHaptics.select();
+                  onChanged(mode);
+                },
               ),
             ],
           ],

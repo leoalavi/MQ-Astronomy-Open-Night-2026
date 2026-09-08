@@ -610,6 +610,44 @@ double-flipped the backdrop on Android's GLES path, so every glass surface was
 a vertical mirror of what lay behind it (fixed 2026-09-06). Verify glass on the
 Android emulator (Impeller/GLES) as well as on iOS after touching the shader.
 
+### 11.2 The floating tab bar overlaps EVERYTHING, sheets included
+
+`AppShell` sets `extendBody: true` so the Liquid Glass island has live content
+to refract. That makes the island a permanent overlay: any content that reaches
+the bottom of the screen is painted over unless it reserves
+`AonNavMetrics.clearance(context)` (bar height + outer padding + content gap +
+the home-indicator inset — roughly 124pt on an iPhone).
+
+This applies to **modal bottom sheets too**, which is the part that was missed.
+A sheet is pushed on the branch navigator, *below* the shell's
+`bottomNavigationBar`, so the island paints straight over its final rows. Four
+sheets shipped ending in a flat `AonSpacing.space6`, which put "Directions" and
+"Show on map" underneath the bar where they could not be tapped at all
+(reported on device 2026-09-08).
+
+`bottom_nav_clearance_test.dart` guards both lists — screens *and* sheets. Its
+screen-only half passed the entire time the sheets were broken; if you add a
+sheet that can reach the bottom of the screen, add it to that list.
+
+**Nested sheets have a second trap.** `VenueSheet` and `VenueInfoSheet` put a
+`DraggableScrollableSheet` inside `showModalBottomSheet`. There are then two
+independent drag mechanisms: the modal's own (which the theme's
+`showDragHandle: true` handle drives, and which only dismisses), and the inner
+sheet's extent (driven solely by its scrollable). Material's handle therefore
+could not resize the sheet — dragging it did nothing. Those two sheets pass
+`showDragHandle: false` and render `SheetDragHandle` as the first item *inside*
+their scroll view instead. Do not re-enable the theme handle on them.
+
+### 11.3 Haptics are opt-in per call site
+
+`AonHaptics` has a working master switch mirrored from the preference, but
+nothing invokes it automatically: Flutter's `Feedback.forTap` is a no-op on
+iOS, and there is no theme-level hook for a button press. So a new interactive
+surface is **silent until someone calls `AonHaptics.tap()` or `.select()` in
+it**. Between launch and 2026-09-08 only five widget types did, which read from
+the outside as "haptics are broken". `pouya_2026_09_08_regressions_test.dart`
+pins the shared surfaces; extend it when you add another.
+
 ## 12. Configuration
 
 | Configuration | Purpose | Required? | Source | Secret? |

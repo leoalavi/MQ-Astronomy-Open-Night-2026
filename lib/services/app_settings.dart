@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// Visitor preferences.
 ///
@@ -97,6 +98,12 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
   Future<void> setHapticsEnabled(bool value) async {
     state =
         AsyncData((state.value ?? _fallback).copyWith(hapticsEnabled: value));
+    // Apply to the master switch NOW rather than waiting for `AonApp.build` to
+    // mirror it on the next frame. The switch's own confirming tick fires
+    // inside this turn, so a stale static would invert it: turning haptics ON
+    // would be silent and turning them OFF would still buzz — which reads
+    // exactly like the "haptics are broken" report this fix answers.
+    AonHaptics.globalEnabled = value;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_kHaptics, value);
   }

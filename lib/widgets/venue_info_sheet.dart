@@ -12,6 +12,9 @@ import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/map_config.dart';
+import 'package:aon2026/widgets/nav_metrics.dart';
+import 'package:aon2026/widgets/sheet_drag_handle.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// What a Quick Access shortcut opens.
 ///
@@ -36,6 +39,10 @@ class VenueInfoSheet extends ConsumerWidget {
     return showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      // Handle lives inside the DraggableScrollableSheet below — Material's
+      // would sit in the outer modal, where dragging it cannot resize the
+      // inner sheet. See SheetDragHandle.
+      showDragHandle: false,
       builder: (_) => VenueInfoSheet(venueId: venueId),
     );
   }
@@ -70,13 +77,17 @@ class VenueInfoSheet extends ConsumerWidget {
       maxChildSize: MapConfig.venueSheetMaxExtent,
       builder: (context, controller) => ListView(
         controller: controller,
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AonSpacing.space5,
           0,
           AonSpacing.space5,
-          AonSpacing.space6,
+          // Clear the floating glass island: the shell sets `extendBody: true`,
+          // so a fixed space6 left "Show on map" under the tab bar and
+          // untappable (1 Central Courtyard — Pouya, 2026-09-08).
+          AonNavMetrics.clearance(context),
         ),
         children: [
+          const SheetDragHandle(),
           // ── Heading ──
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -148,6 +159,7 @@ class VenueInfoSheet extends ConsumerWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: () {
+                AonHaptics.tap();
                 Navigator.of(context).pop();
                 context.push(Routes.googleNavTo('venue:$venueId'));
               },
@@ -161,6 +173,7 @@ class VenueInfoSheet extends ConsumerWidget {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
+                AonHaptics.tap();
                 Navigator.of(context).pop();
                 context.go(Routes.mapFocus('venue:$venueId'));
               },

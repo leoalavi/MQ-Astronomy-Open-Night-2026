@@ -7,6 +7,7 @@ import 'package:aon2026/models/venue.dart';
 import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/utils/venue_style.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// Horizontal category filter row for the map.
 ///
@@ -53,7 +54,10 @@ class MapCategoryFilterBar extends StatelessWidget {
           return _MapCategoryChip(
             category: category,
             isSelected: selected.contains(category),
-            onTap: () => onToggle(category),
+            onTap: () {
+              AonHaptics.select();
+              onToggle(category);
+            },
           );
         },
       ),

@@ -36,6 +36,8 @@ import 'package:aon2026/widgets/map_config.dart';
 import 'package:aon2026/widgets/map_control_island.dart';
 import 'package:aon2026/widgets/locate_button.dart';
 import 'package:aon2026/widgets/user_location_layer.dart';
+import 'package:aon2026/widgets/sheet_drag_handle.dart';
+import 'package:aon2026/utils/haptics.dart';
 
 /// Campus map showing event venues, facilities, parking and transport.
 ///
@@ -526,8 +528,10 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 bottom: AonNavMetrics.clearance(context) - AonSpacing.space3,
               ),
               child: FloatingActionButton.extended(
-                onPressed: () =>
-                    context.push(Routes.googleNavTo('venue:central-courtyard')),
+                onPressed: () {
+                  AonHaptics.tap();
+                  context.push(Routes.googleNavTo('venue:central-courtyard'));
+                },
                 backgroundColor: context.aon.accent,
                 foregroundColor: context.aon.onAccent,
                 icon: const Icon(Icons.directions_walk_rounded),
@@ -577,6 +581,11 @@ class _MapScreenState extends ConsumerState<MapScreen> {
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
+      // VenueSheet is a DraggableScrollableSheet, so it carries its own
+      // SheetDragHandle inside the scrollable. Material's handle would sit in
+      // the outer modal instead, where dragging it cannot resize the inner
+      // sheet — see SheetDragHandle for the full explanation.
+      showDragHandle: false,
       builder: (_) => VenueSheet(venueId: venueId),
     );
     // Dismissing the sheet ends the selection, so the map returns to its
@@ -875,13 +884,17 @@ class VenueSheet extends ConsumerWidget {
       maxChildSize: MapConfig.venueSheetMaxExtent,
       builder: (context, scrollController) => ListView(
         controller: scrollController,
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           AonSpacing.space5,
           0,
           AonSpacing.space5,
-          AonSpacing.space6,
+          // Clear the floating glass island, not a fixed gap. The shell sets
+          // `extendBody: true`, so a plain space6 left this sheet's Directions
+          // button *underneath* the tab bar and untappable (Pouya, 2026-09-08).
+          AonNavMetrics.clearance(context),
         ),
         children: [
+          const SheetDragHandle(),
           Row(
             children: [
               Icon(
@@ -921,6 +934,7 @@ class VenueSheet extends ConsumerWidget {
             width: double.infinity,
             child: FilledButton.icon(
               onPressed: () {
+                AonHaptics.tap();
                 Navigator.of(context).pop();
                 context.push(Routes.googleNavTo('venue:${venue.id}'));
               },
@@ -952,6 +966,7 @@ class VenueSheet extends ConsumerWidget {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: () {
+                  AonHaptics.tap();
                   Navigator.of(context).pop();
                   context.push(Routes.panoramaFor(venue.id));
                 },
@@ -1000,11 +1015,14 @@ class ParkingSheet extends ConsumerWidget {
     return SafeArea(
       child: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(
+          padding: EdgeInsets.fromLTRB(
             AonSpacing.space5,
             0,
             AonSpacing.space5,
-            AonSpacing.space6,
+            // See VenueSheet: `extendBody: true` puts the glass island over the
+            // bottom of every sheet, so the Directions button needs the shell's
+            // clearance or it cannot be tapped (West 6, Pouya 2026-09-08).
+            AonNavMetrics.clearance(context),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -1051,6 +1069,7 @@ class ParkingSheet extends ConsumerWidget {
                   width: double.infinity,
                   child: FilledButton.icon(
                     onPressed: () {
+                      AonHaptics.tap();
                       Navigator.of(context).pop();
                       context.push(Routes.googleNavTo('parking:${parking.id}'));
                     },

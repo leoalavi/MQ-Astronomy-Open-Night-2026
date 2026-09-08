@@ -283,12 +283,6 @@ abstract class AonL10n {
   /// **'Starts soon'**
   String get phaseStartsSoon;
 
-  /// No description provided for @phaseHappeningNow.
-  ///
-  /// In en, this message translates to:
-  /// **'Happening now'**
-  String get phaseHappeningNow;
-
   /// No description provided for @phaseEndingSoon.
   ///
   /// In en, this message translates to:

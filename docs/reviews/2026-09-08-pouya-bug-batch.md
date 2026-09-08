@@ -129,9 +129,20 @@ already closed correctly.
   control reached an App Store screenshot on 2026-09-06. Pouya did not name
   this one; it was found by opening the screen he complained about.
 
-**Known cosmetic issue, deliberately not changed**
+**Cosmetic follow-up — also fixed**
 
-- The chooser sheets still pad their bottom with `AonNavMetrics.clearance`.
-  Now that they sit above the island that is roughly 124pt of dead space at the
-  end of the sheet. It predates this batch, is cosmetic, and changing it means
-  re-verifying six sheets — logged rather than folded into a bug-fix pass.
+- The chooser sheets still padded their bottom with `AonNavMetrics.clearance`.
+  Now that they sit above the island that was roughly 124pt of dead space at
+  the end of every one, on top of a `SafeArea` that already absorbed the home
+  indicator. Five sheets corrected to `AonSpacing.space6` (parking, toilets,
+  information points, favourites, and the programme's filter sheet).
+
+  `PanoramaBuildingPicker` deliberately keeps its clearance: it looks like a
+  chooser but is rendered **inline** on the Map screen in 360° mode, under the
+  island — Pouya reported its last legend card hidden behind the bar on
+  2026-08-28. `bottom_nav_clearance_test` now pins both directions, since the
+  two rules pull opposite ways and had already drifted once.
+
+  Verified on the 6.9" simulator: toilets, parking, information points, the
+  programme filter and favourites all size to their content with no trailing
+  gap, and still clear the tab bar.

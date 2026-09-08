@@ -186,5 +186,50 @@ void main() {
           reason: 'these sheets open UNDER the floating tab bar, which stays '
               'tappable through the modal barrier:\n${trapped.join('\n')}');
     });
+
+    // The other half of the same rule, and the reason it is worth stating: the
+    // two corrections pull in OPPOSITE directions and had already drifted.
+    //
+    // A screen inside the shell scrolls under the island, so it reserves
+    // `AonNavMetrics.clearance`. A sheet on the root navigator sits ABOVE the
+    // island and wraps itself in a SafeArea, so the same clearance is simply
+    // ~124pt of dead space at the end of the sheet — which is what the chooser
+    // sheets shipped with. Whichever way someone gets this wrong, one of these
+    // two tests fails.
+    test('a root-navigator sheet does NOT also reserve the island clearance',
+        () {
+      // Standalone sheet widgets only: map_screen.dart and program_screen.dart
+      // each hold a screen AND a sheet, so a file-level check cannot separate
+      // them there.
+      const rootSheets = [
+        'lib/widgets/venue_info_sheet.dart',
+        'lib/widgets/building_sheet.dart',
+        'lib/widgets/parking_choices_sheet.dart',
+        'lib/widgets/toilet_choices_sheet.dart',
+        'lib/widgets/information_points_sheet.dart',
+        'lib/widgets/favorites_sheet.dart',
+      ];
+      final padded = <String>[];
+      for (final path in rootSheets) {
+        final src = File(path).readAsStringSync();
+        if (src.contains('AonNavMetrics.clearance')) padded.add(path);
+      }
+      expect(padded, isEmpty,
+          reason: 'these sheets float above the island, so the clearance is '
+              'dead space at the end of the sheet:\n${padded.join('\n')}');
+    });
+
+    test('a picker rendered INSIDE the shell still needs it', () {
+      // The counter-example that keeps the rule honest. PanoramaBuildingPicker
+      // looks like a chooser sheet but is rendered inline on the Map screen in
+      // 360° mode, under the island — so it must keep the clearance. Pouya
+      // reported its last legend card hidden behind the bar on 2026-08-28.
+      final src =
+          File('lib/widgets/panorama_building_picker.dart').readAsStringSync();
+      expect(src.contains('AonNavMetrics.clearance'), isTrue,
+          reason: 'this one is NOT a sheet — it scrolls under the tab bar');
+      expect(src.contains('showModalBottomSheet'), isFalse,
+          reason: 'if it became a sheet, move it to the list above instead');
+    });
   });
 }

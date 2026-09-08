@@ -6,7 +6,6 @@ import 'package:aon2026/app/theme/aon_spacing.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/providers.dart';
 import 'package:aon2026/utils/bidi.dart';
-import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/widgets/place_action_buttons.dart';
 
 /// Home's parking chooser. It lists every official free parking area but only
@@ -30,11 +29,15 @@ class ParkingChoicesSheet extends ConsumerWidget {
 
     return SafeArea(
       child: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
+        padding: const EdgeInsets.fromLTRB(
           AonSpacing.space5,
           0,
           AonSpacing.space5,
-          AonNavMetrics.clearance(context),
+          // `space6`, not the shell clearance: this sheet opens on the ROOT
+          // navigator, so it sits ABOVE the floating island rather than under
+          // it, and the SafeArea above already absorbs the home indicator.
+          // Clearance here just left ~124pt of dead space (2026-09-08).
+          AonSpacing.space6,
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

@@ -84,6 +84,13 @@ words per item, in `docs/reviews/2026-09-08-pouya-bug-batch.md`.
   fallback shown while `EventConfig.privacyPolicyUrl` is null. Raouf's and
   Leo's call.
 
+**Cosmetic follow-up, same day:** the five chooser sheets padded their bottom
+with `AonNavMetrics.clearance` on top of a `SafeArea` that already absorbed the
+home indicator — ~124pt of dead space now that they float above the island.
+Corrected to `AonSpacing.space6`. `PanoramaBuildingPicker` keeps its clearance
+deliberately: it is rendered inline on the Map screen, under the island, not as
+a sheet. `bottom_nav_clearance_test` now pins both directions of the rule.
+
 **Files:** `lib/main.dart`, `lib/screens/{program,settings,map,event_detail}_screen.dart`,
 `lib/services/app_settings.dart`, `lib/utils/{haptics,timing_labels}.dart`,
 `lib/widgets/{sheet_drag_handle,venue_info_sheet,building_sheet,place_action_buttons,map_mode_toggle,map_category_filter_bar}.dart`,

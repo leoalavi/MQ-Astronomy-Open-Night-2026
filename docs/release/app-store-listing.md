@@ -15,9 +15,9 @@ venues, which is not something the build can guarantee.
 ## Name — 30 characters max
 
 ```
-Astronomy Open Night
+Astronomy Open Night 2026
 ```
-*(20 characters.)* Matches `CFBundleDisplayName`, so the Home-screen name and
+*(25 characters.)* Matches `CFBundleDisplayName`, so the Home-screen name and
 the store name agree — a mismatch is a common 2.3.1 flag.
 
 ## Subtitle — 30 characters max

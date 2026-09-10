@@ -1,10 +1,14 @@
 # Google Play Release Audit — Astronomy Open Night 2026 (`aon2026`)
 
-**Date:** 2026-09-05 · **Publisher (confirmed by Leo Alavi):** Leo Alavi, personal
+**Original audit:** 2026-09-05 · **Current-state reconciliation:** 2026-09-10 · **Publisher account (confirmed by Leo Alavi):** Leo Alavi, personal
 Google Play developer account · **Application ID:** `au.edu.mq.astronomy.aon2026`
 (unchanged. **Correction 2026-09-07:** this line used to say a Play App Signing bootstrap AAB had been uploaded under it — Play Console shows *no app* in Leo's account and the package as *available*, so no upload ever happened)
-· **Artefact audited:** `build/app/outputs/bundle/release/app-release.aab`,
-`1.0.0 (3)` (the merged tree also carries Build 3 for iOS), built from the working tree described in *Changes Made*.
+· **Historical artefact audited:** the 5–6 September audit inspected a signed
+`build/app/outputs/bundle/release/app-release.aab`, `1.0.0 (3)`. The current
+repository candidate is `1.0.0 (4)`. The historical artefact is
+not a current release candidate. The 10 September build reached release signing
+validation and then stopped because the configured external upload keystore is
+not present on this machine.
 
 Every claim below names its evidence. Where something could not be verified in
 this environment it says **UNVERIFIED** and why. Nothing here promises
@@ -16,9 +20,9 @@ acceptance — Play review is partly automated and partly human.
 
 **CONDITIONALLY READY.**
 
-The Android build is code-complete and passes every check that can be run
-here: targetSdk 36, a signed release App Bundle, 16 KB-aligned native code, a
-minimal merged manifest with no restricted permissions, no foreground services,
+The Android build is code-complete and passes every check that does not require
+the external signing credential: targetSdk 36, release compilation and manifest
+merge, a minimal merged manifest with no restricted permissions or foreground services,
 no exported components beyond the launcher activity, lint with zero errors, the
 full Dart gate, and the core journeys driven on an Android 16 emulator.
 
@@ -38,11 +42,13 @@ Android camera-denial path prompted the visitor twice in a row (P1 UX/policy).
 > support: `astronomyopennight@mq.edu.au`. Remaining Play work is **not code**:
 > deploy the page, then enter the URL + Data-safety answers in the Console.
 
-What remains is **not code**: a public HTTPS Privacy Policy URL, the Play
-Console forms (Data safety, content rating, app content), the feature graphic
-and Android screenshots, and — because this is a **personal developer account
-created after 13 November 2023** — the closed-test requirement (12 testers,
-14 days) before production access.
+What remains is external or credential-bound: restore the upload keystore (or
+update the ignored signing configuration to its real location), produce and
+inspect a newly signed AAB, deploy the public HTTPS Privacy Policy URL, complete
+the Play Console forms, and — because this is a **personal developer account
+created after 13 November 2023** — satisfy the closed-test requirement (12
+testers, 14 days) before production access. The feature graphic and six Android
+phone screenshots are already complete.
 
 ## Release Risk
 
@@ -56,16 +62,16 @@ by the same asset-rights question the iOS audit carries. Code risk is LOW.
 
 | Item | Value |
 |---|---|
-| Flutter / Dart | 3.47.1 stable / 3.13.1 |
+| Flutter / Dart | **Current verification:** Flutter 3.44.0 / Dart 3.12.0. Older rows below preserve the original audit environment where relevant. |
 | Java (Gradle) | Android Studio JBR, OpenJDK 21.0.10 (the shell default is Java 23 — set `JAVA_HOME` to the JBR) |
 | Kotlin | 2.3.20 |
 | Gradle / AGP | 9.1.0 / 8.12.1 (Flutter warns AGP < 9.0.1 will lose support soon — not a Play requirement) |
 | Android SDK | compileSdk 36, build-tools 36.1.0, NDK 28.2.13676358 |
 | compileSdk / targetSdk / minSdk | **36 / 36 / 24** (Flutter 3.47 defaults; read from the built APK badging) |
-| versionName / versionCode | **1.0.0 / 3** (`pubspec.yaml` `1.0.0+3`, bumped upstream in `02720db`; the first AAB inspected today was build 2 — the final one is rebuilt at 3) |
+| versionName / versionCode | **Current candidate: 1.0.0 / 4** (`pubspec.yaml` `1.0.0+4`). Historical signed audit artefact: 1.0.0 / 3. |
 | applicationId | `au.edu.mq.astronomy.aon2026` |
 | Emulator | AVD `aon_api36`, Pixel 8, `system-images;android-36.1;google_apis_playstore;arm64-v8a`, Android 16 (API 36); `getconf PAGE_SIZE` = 4096 |
-| Commit | `3a435f9` (main; re-verified 2026-09-06 19:30 after the mirrored-glass fix `65ebf45`, the QA-define change `c125067` and the screenshot recapture `e3faf49`) |
+| Commit | Original audit: `3a435f9`. Current source baseline: `9181385`; current final-pass changes are intentionally uncommitted. |
 
 ## Commands Actually Executed
 
@@ -91,7 +97,7 @@ WebFetch: Play target API page, personal-account testing page, Data safety page,
 | `flutter analyze` | No issues | run on the final tree |
 | `flutter test` / `./scripts/check.sh` | **CHECK PASSED 7/7, exit 0** on `46dc81e`, and again on the final tree before commit (see the commit series); targeted suites green after each fix | gate logs |
 | Android lint (`lintRelease`) | **0 errors, 6 warnings** (`IconLauncherShape` ×5 on the legacy PNGs, `MonochromeLauncherIcon` ×1 — deliberate, see P3) | `build/app/reports/lint-results-release.xml` |
-| Release AAB | **BUILT** (rebuilt from `3a435f9`, 2026-09-06 19:30) — `app-release.aab`, **1.0.0 (3)**, 129.0 MB, signed with the upload key (CN "Astronomy Open Night upload key", SHA-256 `33:21:F0:14:16:A2:3B:53:6C:81:E7:8C:CA:81:8D:DE:0D:1B:65:D6:01:2B:B9:A7:41:EA:73:28:E9:7B:88:2A`); adaptive icon resources present; all arm64-v8a / x86_64 libraries re-checked at ≥ 0x4000 after the final rebuild | `jarsigner`, `keytool -printcert -jarfile`, `unzip -l`, `llvm-readelf` |
+| Release AAB | **CREDENTIAL-BOUND (current)** — on 2026-09-10 release compilation and manifest processing reached `validateSigningRelease`, then failed closed because the configured external upload keystore path was absent. The signed 2026-09-06 bundle was a historical audit artefact, not a candidate from the current tree. | current build log; historical `jarsigner`/ELF evidence remains applicable only to the historical artefact |
 | Release APK (install test) | Built, v2-signed with the same key, `debuggable=false`, installed and launched on the API 36 emulator | `apksigner`, `apkanalyzer`, `adb install` |
 | 16 KB page size | **PASS (static)**: every arm64-v8a and x86_64 library has LOAD alignment ≥ 0x4000 (Flutter/Dart libs 0x10000, ML Kit/CameraX/datastore 0x4000); `zipalign -c -P 16 -v 4` → "Verification successful". The only 0x1000 library is `armeabi-v7a/libbarhopper_v3.so` (32-bit, exempt). **Runtime on a 16 KB device: NOT VERIFIED** — the installed API 36.1 image runs 4 KB pages | `llvm-readelf -l`, `zipalign` |
 | Native ABIs | arm64-v8a, armeabi-v7a, x86_64 (7 `.so` each) — no accidental exclusion | `aapt2 dump badging` |
@@ -132,11 +138,11 @@ HUMAN ACTION REQUIRED.
 | Policy | Applicable | Status | Evidence | Severity | Action |
 |---|---|---|---|---|---|
 | Target API level — new apps/updates must target Android 16 (API 36) from 31 Aug 2026 | Yes | **PASS** | badging `targetSdkVersion:'36'` | — | — |
-| Android App Bundle required for new apps | Yes | **PASS** | `app-release.aab` built and signed | — | Upload the AAB, never the APK |
-| Play App Signing | Yes | **HUMAN** | Upload key generated here. **No Play App Signing cert exists yet (checked 2026-09-07): the app has never been created in Play Console.** Create the app, upload the signed AAB to Internal testing, then register the SHA-1 Play shows on the Android Maps key. | P1 | Register this upload certificate (or reset the upload key) in Play Console before uploading |
+| Android App Bundle required for new apps | Yes | **HUMAN / CREDENTIAL** | Current release build stops at signing because the configured external keystore is absent | P1 | Restore the credential, rebuild, then inspect and upload the AAB (never the APK) |
+| Play App Signing | Yes | **HUMAN** | **No Play App Signing cert exists yet (checked 2026-09-07): the app has never been created in Play Console.** The upload credential configured locally is currently absent. | P1 | Restore the upload credential, create the app, upload the newly signed AAB to a test track, then register the Play App Signing SHA-1 on the Android Maps key |
 | 16 KB page-size support (apps targeting 15+; hard cut-off for updates 1 Feb 2027) | Yes | **PASS (static)** | ELF + zipalign checks above | — | Optionally verify on a 16 KB device |
 | Data safety — accurate, includes SDK data, form mandatory | Yes | **HUMAN** (answers prepared; **were wrong before today**) | Maps SDK + ML Kit disclosures; answers in *Data Safety* | P0 if wrong | Enter the answers below verbatim |
-| Privacy policy — in Console **and** in-app, publicly accessible | Yes | **HUMAN** for the URL; **PASS** in-app | In-app: Settings → Privacy Policy opens the full text offline (`settingsPrivacyPolicyBody`); hosted copy `docs/release/android-privacy-policy.html` is ready but **not hosted** | P0 until hosted | Host the HTML at a stable HTTPS URL, paste it in Console, set `EventConfig.privacyPolicyUrl` |
+| Privacy policy — in Console **and** in-app, publicly accessible | Yes | **HUMAN** for deployment; **PASS** in-app/source sync | Settings → Privacy Policy renders the shared `webPrivacy*` source; `tool/privacy/gen_privacy_html.py` generates `web/privacy.html` and the release copy. The canonical URL is configured but DNS/hosting is not live. | P0 until live | Deploy `https://aon.syllabus-sync.app/privacy`, verify it publicly, and paste it in Console |
 | User Data — disclosure + consent for location sent to a third party | Yes | **PASS** | Explicit `MapsNavDisclosure` before any Google surface; revocable in Settings; `routes_consent_guard_test`, `privacy-consent` E2E | — | — |
 | Permissions — minimal, contextual, no background location | Yes | **PASS** | Merged manifest: INTERNET, CAMERA, FINE/COARSE location, ACCESS_NETWORK_STATE only; location asked on first "Show my location" tap, camera on entering the scanner | — | — |
 | Account creation / deletion | No | **N/A** | No accounts anywhere; "Delete my data" offered anyway | — | Answer "no account" in Console |
@@ -163,7 +169,7 @@ HUMAN ACTION REQUIRED.
 | # | Finding | Status |
 |---|---|---|
 | P0-1 | **Data safety / privacy copy said "no data collected"** while the shipped Android build embeds Google Maps SDK (device metadata, IP, pseudonymous SDK id, crash traces, map interactions) and ML Kit barcode scanning (device/app info, per-installation identifiers, usage/performance diagnostics). Google's own disclosure pages list these; Play's definition of *collected* covers SDK traffic. A mismatch between the form and behaviour is a policy violation. | **FIXED in code and docs** (Leo's `46dc81e`: in-app summary + full policy text EN/FA, `android-privacy-policy.html`; this audit: `docs/release/play-store-listing.md` Data safety answers rewritten, README/ARCHITECTURE aligned). **HUMAN:** enter the answers in Console |
-| P0-2 | **No hosted Privacy Policy URL.** Required for the Console form and the listing. | **HUMAN** — host `docs/release/android-privacy-policy.html` |
+| P0-2 | **Canonical Privacy Policy URL is not live.** Required for the Console form and listing. | **HUMAN** — deploy and verify `https://aon.syllabus-sync.app/privacy` |
 | P0-3 | **Production access on a personal account created after 13 Nov 2023** requires a 14-day closed test with 12 opted-in testers. | **HUMAN** — see Testing Track Requirement |
 
 ## P1 Findings
@@ -173,7 +179,7 @@ HUMAN ACTION REQUIRED.
 | P1-1 | **Camera denial prompted twice on Android.** Declining the OS camera dialog puts the app through `inactive → resumed`; the scanner view restarted the camera on every `resumed`, and `MobileScannerController.start()` does **not** throw on a refusal (it parks the error in `controller.value`), so the "denied" state was never known and a second system prompt followed the first "Don't allow" immediately — which on Android 11+ also spends the ask-again allowance. Invisible on iOS (one prompt ever). Reproduced three times on the emulator (Maestro tap, then an adb-injected tap with `dumpsys package` showing `CAMERA: granted=false USER_SET` while the dialog was back on screen). | **FIXED** — `passport_scanner_view.dart`: a resume restarts the camera only when this view stopped it for the background (paused/hidden/detached) or the visitor returns from app Settings; no stop on `inactive`; refusal read from `controller.value.error`. Rule `shouldRestartScannerOnResume` pinned by 5 unit tests. **Re-verified:** after denial the screen shows "Camera unavailable — enter the code", "Open app settings" and "Enter a code"; permission flags `USER_SET`; no second dialog |
 | P1-0 | **Every glass surface rendered a vertical MIRROR of its backdrop on Android** (tab bar, hero date pill, map island): `shaders/glass_refraction.frag` un-flipped the sampled Y coordinate under `IMPELLER_TARGET_OPENGLES`, but `FlutterFragCoord()` already normalises orientation per backend and the `ImageFilter.shader` backdrop is supplied in that same orientation, so Android's OpenGLES path (the emulator, and every device Impeller runs on GLES) was double-flipped. iOS (Metal) never defined the macro, so it never showed. Reported by Raouf 2026-09-06; confirmed by capture (a streak through the date pill, the top of the hero showing inside the bottom tab bar). | **FIXED** — the backend-specific flip is removed; before/after captures on the API 36 emulator show the correct backdrop through the glass. No change on Metal/Vulkan |
 | P1-2 | **`INTERNET` permission was only in the debug/profile manifests.** Release builds merge only `src/main`, so a release build had no INTERNET permission and Google Routes/Maps could never work in production. | **FIXED** in `46dc81e` (declared in `src/main/AndroidManifest.xml`); merged release manifest verified |
-| P1-3 | **Upload key.** No release keystore existed; a release build fails closed by design. | **FIXED** — upload keystore generated outside the repo (`~/Keys/aon2026/aon2026-upload.jks`, PKCS12, RSA-4096, 30 y), credentials in git-ignored `android/key.properties`. **HUMAN:** back it up; register the certificate in Play App Signing (the earlier bootstrap AAB was signed with a different key — request an upload-key reset if Play still expects that one) |
+| P1-3 | **Upload key.** Release signing fails closed by design. | **CREDENTIAL-BOUND (current)** — `android/key.properties` points to an external keystore that is absent on this machine. Restore the correct keystore (or update the ignored configuration to its actual path), back it up securely, rebuild, and register the resulting upload certificate in Play App Signing. No bootstrap AAB was uploaded. |
 | P1-4 | Location prompt fired on merely opening the Map tab (Play/Apple both want contextual requests). | **FIXED** in `46dc81e` — Map entry only restores an existing grant; the OS dialog appears on the first "Show my location" tap, compass entry or directions request. Docs/tests/flows reconciled by this audit |
 | P1-5 | Leo's commit also downgraded the **iOS** project file/scheme (`objectVersion 60→54`, `LastUpgradeCheck 2660→1510`, custom prepare script) — the configuration that uploaded TestFlight Build 1. | **REVERTED** to `bfe383d` in this tree |
 
@@ -278,12 +284,13 @@ in-app copy.
 
 ## Privacy Policy
 
-- **In-app:** Settings → Privacy Policy opens the full text offline (dialog),
-  EN + FA; it names the publisher (Leo Alavi), contact, data flows, retention,
-  deletion and the Google links. Once `EventConfig.privacyPolicyUrl` is set the
-  row opens the hosted page instead.
-- **Hosted:** `docs/release/android-privacy-policy.html` — same text, ready to
-  host. **Not yet at a public URL (HUMAN).**
+- **In-app:** Settings → Privacy Policy renders the shared sectioned policy,
+  EN + FA, including identity, contacts, data flows, retention, deletion and
+  third-party processing.
+- **Generated HTML:** `web/privacy.html` and
+  `docs/release/android-privacy-policy.html` are generated from the same
+  `webPrivacy*` source and guarded by sync tests. The canonical URL is
+  `https://aon.syllabus-sync.app/privacy`; DNS/hosting is not live (HUMAN).
 - The older MQ-publisher draft in `docs/release/hosted-pages.md` is marked
   *not approved for Android* (its "nothing collected" claim is false for this build).
 
@@ -366,21 +373,18 @@ apply. The event is 19 September — start the closed test immediately.
 
 ## Human Actions Required
 
-1. Back up `~/Keys/aon2026/aon2026-upload.jks` and `android/key.properties`
-   somewhere safe; register the upload certificate (SHA-256 above) in Play App
-   Signing, or request an upload-key reset if Play still expects the earlier
-   bootstrap key.
-2. Host `docs/release/android-privacy-policy.html` at a stable public HTTPS
-   URL; paste it in Console; set `EventConfig.privacyPolicyUrl`.
+1. Restore the correct external upload keystore (or update the ignored
+   `android/key.properties` to its actual location), back it up securely,
+   rebuild the signed AAB, and register its upload certificate in Play App
+   Signing.
+2. Deploy and verify `https://aon.syllabus-sync.app/privacy`, then paste it in
+   Play Console.
 3. Complete Data safety with the answers above; complete content rating, ads,
    app access, target audience.
 4. Restrict the Android Maps key in GCP to the package + signing certificates;
    enable the Routes API (B3).
-5. Capture Android screenshots and a feature graphic (not from the hero photo).
-6. Upload the AAB to a closed track; run the 14-day / 12-tester period; apply
+5. Upload the newly signed AAB to a closed track; run the 14-day / 12-tester period; apply
    for production access.
-7. Written redistribution rights for the map artwork, buildings dataset, 360°
-   photographs and the hero image (B6 — same as iOS).
 
 ---
 
@@ -421,7 +425,7 @@ apply. The event is 19 September — start the closed test immediately.
 - [x] flutter analyze / flutter test passed
 - [x] Integration tests passed where available
 - [x] Android lint: 0 errors
-- [x] Release AAB built, inspected, signing verified, package ID and versionCode verified
+- [ ] Current-tree release AAB built and signing verified — **blocked only by the absent external upload keystore; historical AAB evidence is not substituted**
 - [x] Store listing / screenshots / content rating / target audience / ads reviewed
 - [x] App access instructions prepared
 - [x] Play App Signing reviewed (HUMAN step remains)
@@ -433,10 +437,10 @@ apply. The event is 19 September — start the closed test immediately.
 
 ## DO NOT SUBMIT — to production, yet.
 
-The bundle is ready for the **closed testing track today**. Production
-submission is blocked by exactly these non-code items: (1) a public HTTPS
-Privacy Policy URL in Console and in `EventConfig.privacyPolicyUrl`; (2) the
-Data safety form entered as above; (3) the upload certificate registered with
-Play App Signing; (4) the 14-day / 12-tester closed test and production-access
-approval; (5) asset redistribution rights (B6). Once those are done, the same
-AAB (or a rebuild at the next build number) is the production candidate.
+There is no current signed bundle to upload. Closed-track submission is blocked
+by: (1) restoring the external upload keystore and rebuilding/inspecting the
+AAB; (2) deploying the canonical Privacy Policy URL; (3) entering the Data
+safety and other Console forms; (4) registering signing certificates and
+completing Maps-key restrictions; and (5) the 14-day / 12-tester closed test
+and production-access approval. No code change is currently identified for
+these items.

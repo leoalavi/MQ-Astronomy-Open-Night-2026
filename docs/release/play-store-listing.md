@@ -57,7 +57,7 @@ changes; it was negative-verified by injecting `AD_ID` and watching it fire.
 ### App name — 30 characters
 
 ```
-Astronomy Open Night
+Astronomy Open Night 2026
 ```
 
 ### Short description — 80 characters
@@ -100,7 +100,9 @@ notes:
 
 - Email: `leo@leoalavi.dev` — **mandatory and shown publicly** (publisher: Leo Alavi, personal account, confirmed 2026-09-05)
 - Website: the MQ event page (optional)
-- Privacy Policy: **mandatory** — host `docs/release/android-privacy-policy.html` at a stable public HTTPS URL; the same text ships inside the app (Settings → Privacy Policy)
+- Privacy Policy: **mandatory** — deploy and verify
+  `https://aon.syllabus-sync.app/privacy`; the in-app and semantic HTML copies
+  are generated from the same `webPrivacy*` source
 
 ---
 
@@ -140,10 +142,10 @@ stay in `SharedPreferences` on the device.
 |---|---|---|---|---|---|---|
 | **Location → Precise location** | Yes | Yes (Google) | Yes — used to answer the route request | Optional (needs consent + OS permission) | App functionality | Route origin sent to Google Routes; Maps SDK derives approximate location from IP |
 | **Location → Approximate location** | Yes | Yes (Google) | Yes | Optional | App functionality | Same flow when the OS grants approximate only; IP-derived by the Maps SDK |
-| **App info and performance → Crash logs** | Yes | No (Google as service provider) | No | Required (SDK-driven) | Analytics | Maps SDK crash stack traces |
-| **App info and performance → Diagnostics** | Yes | No | No | Required | Analytics | ML Kit performance metrics/latency; Maps SDK metrics |
+| **App info and performance → Crash logs** | Yes | No (Google as service provider) | No | Optional (Google map feature) | Analytics | Maps SDK crash stack traces |
+| **App info and performance → Diagnostics** | Yes | No | No | Optional (Google map or Android scanner feature) | Analytics | ML Kit performance metrics/latency; Maps SDK metrics |
 | **App activity → App interactions** | Yes | No | No | Optional (only once a Google map is loaded) | Analytics | Maps SDK map interaction events (pan/zoom) |
-| **Device or other IDs** | Yes | No | No | Required | Analytics | ML Kit per-installation and diagnostic device identifiers; Maps SDK pseudonymous SDK identifier |
+| **Device or other IDs** | Yes | No | No | Optional (Google map or Android scanner feature) | Analytics | ML Kit per-installation and diagnostic device identifiers; Maps SDK pseudonymous SDK identifier |
 | Personal info, Financial, Health, Messages, Photos/videos, Audio, Files, Calendar, Contacts, Web browsing | **No** | — | — | — | — | Not declared, not used; camera frames are decoded in memory and never stored or uploaded by the app |
 
 "Shared" is answered **Yes** only for location, because that is data the app
@@ -158,11 +160,10 @@ Google-bound data as shared, over-declaring is not penalised.
 | Is all collected data encrypted in transit? | **Yes** |
 | Do you provide a way for users to request data deletion? | On-device data: **Yes** (Settings → "Delete my data"). SDK-held data: **No / handled by Google** — the in-app policy says exactly this |
 
-**Consistency rule:** these answers, the in-app Privacy Policy text
-(`settingsPrivacyPolicyBody`, EN + FA), the hosted
-`docs/release/android-privacy-policy.html`, and the Settings summary
-(`settingsPrivacyBody`) now say the same thing. `test/unit/privacy_copy_truth_test.dart`
-fails if the in-app copy drops the ML Kit / identifier / backup disclosures.
+**Consistency rule:** these answers, the in-app Privacy Policy presentation,
+`web/privacy.html`, and `docs/release/android-privacy-policy.html` use the same
+sectioned `webPrivacy*` source. The privacy sync and truth tests fail if a
+generated copy drifts or required disclosures disappear.
 
 ### Account deletion requirement
 
@@ -233,14 +234,10 @@ Same three as the App Store, plus one:
    that names either the app or the publishing entity. **Ready:**
    `https://aon.syllabus-sync.app/privacy` — a static, readable HTML page (names
    the app; developer-hosted). Deploy the web build and it is live.
-2. **Redistribution permission** for the map artwork, `buildings.json` and the
-   photographs.
-3. **Real stamp codes.**
-4. **A publisher decision for the `au.edu.mq.astronomy.aon2026` package.** The
-   package sits in the university's reverse-DNS namespace while the app is an
-   independent project — see the bundle-identifier entry in
-   `docs/release/organiser-requests.md`. It must NOT be published under a
-   university account.
+2. **A current signed AAB** — restore the external upload keystore (or update
+   the ignored signing configuration to its real path), rebuild and inspect it.
+3. **Play Console setup** — create the app, complete the prepared declarations,
+   register signing certificates and complete the closed-test requirement.
 
 The Play-only graphic production is now **complete**: the **512 × 512 icon**
 (regenerated 2026-09-07 — it had been the stock Flutter logo), the

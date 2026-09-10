@@ -9,6 +9,7 @@ import 'nav_trace.dart';
 import 'google_routes_service.dart';
 import 'location_providers.dart';
 import 'location_service.dart';
+import 'maps_build_keys.dart';
 import 'maps_consent_providers.dart';
 import 'maps_consent_store.dart';
 import 'routes_client_identity.dart';
@@ -44,17 +45,14 @@ final mapsNavPlatformProvider = Provider<MapsNavPlatform>((ref) {
 /// `--dart-define`. Empty when not supplied. These are DIFFERENT keys from the
 /// native Maps SDK keys (which live in the platform secret files, T0).
 final androidRoutesKeyProvider = Provider<String>(
-    (ref) => const String.fromEnvironment('GOOGLE_MAPS_ANDROID_ROUTES_KEY'));
-final iosRoutesKeyProvider = Provider<String>(
-    (ref) => const String.fromEnvironment('GOOGLE_MAPS_IOS_ROUTES_KEY'));
+  (ref) => configuredAndroidRoutesKey,
+);
+final iosRoutesKeyProvider = Provider<String>((ref) => configuredIosRoutesKey);
 
-/// The web Routes key. Separate because a production web key carries an HTTP
-/// REFERRER restriction, which is mutually exclusive with the Android/iOS app
-/// restrictions — so web genuinely needs its own key once keys are locked down.
-/// Falls back to the shared `MAPS_API_KEY` (see [activeRoutesKeyProvider]),
-/// which is what the current unrestricted dev key relies on.
-final webRoutesKeyProvider = Provider<String>(
-    (ref) => const String.fromEnvironment('GOOGLE_MAPS_WEB_ROUTES_KEY'));
+/// The web Routes key is the same HTTP-referrer-restricted `MAPS_API_KEY` used
+/// by Maps JavaScript. The conditional build-key import ensures a web build has
+/// no references to either native route-key define.
+final webRoutesKeyProvider = Provider<String>((ref) => configuredWebRoutesKey);
 
 /// The Routes key for the ACTIVE platform — NOT "either key" (#5). An Android
 /// build carrying only the iOS key must resolve to empty here.
@@ -82,8 +80,9 @@ final activeRoutesKeyProvider = Provider<String>((ref) {
 });
 
 /// True when the active platform has a non-empty Routes key.
-final routesConfiguredProvider =
-    Provider<bool>((ref) => ref.watch(activeRoutesKeyProvider).isNotEmpty);
+final routesConfiguredProvider = Provider<bool>(
+  (ref) => ref.watch(activeRoutesKeyProvider).isNotEmpty,
+);
 
 /// The effective native Maps SDK key for this run — one key drives every Google
 /// surface (the embedded map, and the Routes call when no platform Routes key
@@ -97,7 +96,8 @@ final routesConfiguredProvider =
 /// instead of falsely reporting "Google Maps is not configured yet".
 /// Overridable in tests.
 final nativeMapsApiKeyProvider = Provider<String>(
-    (ref) => const String.fromEnvironment('MAPS_API_KEY'));
+  (ref) => configuredMapsApiKey,
+);
 
 /// Whether the native Maps SDK key was configured for THIS build.
 ///
@@ -107,8 +107,9 @@ final nativeMapsApiKeyProvider = Provider<String>(
 /// Kept a distinct provider from [routesConfiguredProvider] so the capability
 /// matrix can still prove the "routes present but native map absent → disabled"
 /// trap is closed. Overridable in tests.
-final embeddedMapConfiguredProvider =
-    Provider<bool>((ref) => ref.watch(nativeMapsApiKeyProvider).isNotEmpty);
+final embeddedMapConfiguredProvider = Provider<bool>(
+  (ref) => ref.watch(nativeMapsApiKeyProvider).isNotEmpty,
+);
 
 /// WHY embedded Google navigation is or is not available.
 ///
@@ -153,7 +154,9 @@ final googleNavAvailabilityProvider = Provider<GoogleNavAvailability>((ref) {
 /// [googleNavAvailabilityProvider] so the boolean and the reason can never
 /// disagree.
 final googleNavEnabledProvider = Provider<bool>(
-    (ref) => ref.watch(googleNavAvailabilityProvider) == GoogleNavAvailability.ready);
+  (ref) =>
+      ref.watch(googleNavAvailabilityProvider) == GoogleNavAvailability.ready,
+);
 
 /// Boolean-only capability trace for QA. Contains NO key material — only
 /// whether each input is present — so it is safe in logs and bug reports.
@@ -192,9 +195,7 @@ final routesServiceProvider = FutureProvider<RoutesService>((ref) async {
   };
   final source = explicitRoutesKey.isNotEmpty
       ? 'platform-routes-define'
-      : (const String.fromEnvironment('MAPS_API_KEY').isNotEmpty
-          ? 'maps-define'
-          : 'native-runtime');
+      : (configuredMapsApiKey.isNotEmpty ? 'maps-define' : 'native-runtime');
   navTrace('routes_key source=$source ${keyFingerprint(key)}');
   final client = http.Client();
   ref.onDispose(client.close);
@@ -228,8 +229,10 @@ class ConsentGuardedRoutesService implements RoutesService {
   }) async {
     if (consent() != MapsConsent.accepted) return const RouteConsentRefused();
 
-    final result =
-        await inner.walkingRoute(origin: origin, destination: destination);
+    final result = await inner.walkingRoute(
+      origin: origin,
+      destination: destination,
+    );
 
     // Re-check AFTER the await. An HTTP request already on the wire cannot be
     // recalled — claiming otherwise would be a lie — but its response must not
@@ -248,24 +251,32 @@ const Duration kRouteRequestTimeout = Duration(seconds: 15);
 /// a single (origin,dest) bills a single Routes call. Retry = invalidate on an
 /// explicit user action, never an automatic re-fetch.
 final navRouteProvider = FutureProvider.autoDispose
-    .family<RouteResult, ((double, double), (double, double))>((ref, args) async {
-  navTrace('nav_route_provider_start');
-  final service = await ref.watch(routesServiceProvider.future);
-  navTrace('nav_route_got_service');
-  // HARD BOUND. Nothing downstream may leave the screen pending forever: a
-  // stalled socket, a captive portal or a silently-dropped response all used to
-  // mean an eternal spinner. A timeout becomes a typed failure like any other,
-  // so the map stays up and Retry is offered.
-  final r = await service
-      .walkingRoute(origin: args.$1, destination: args.$2)
-      .timeout(kRouteRequestTimeout, onTimeout: () {
-    navTrace('route_timeout after '
-        '${kRouteRequestTimeout.inSeconds}s');
-    return const RouteTimeout();
-  });
-  navTrace('provider_complete result=${r.runtimeType}');
-  return r;
-});
+    .family<RouteResult, ((double, double), (double, double))>((
+      ref,
+      args,
+    ) async {
+      navTrace('nav_route_provider_start');
+      final service = await ref.watch(routesServiceProvider.future);
+      navTrace('nav_route_got_service');
+      // HARD BOUND. Nothing downstream may leave the screen pending forever: a
+      // stalled socket, a captive portal or a silently-dropped response all used to
+      // mean an eternal spinner. A timeout becomes a typed failure like any other,
+      // so the map stays up and Retry is offered.
+      final r = await service
+          .walkingRoute(origin: args.$1, destination: args.$2)
+          .timeout(
+            kRouteRequestTimeout,
+            onTimeout: () {
+              navTrace(
+                'route_timeout after '
+                '${kRouteRequestTimeout.inSeconds}s',
+              );
+              return const RouteTimeout();
+            },
+          );
+      navTrace('provider_complete result=${r.runtimeType}');
+      return r;
+    });
 
 /// The resolved walking-origin for a nav session. Three distinct outcomes,
 /// because they need three different screens:

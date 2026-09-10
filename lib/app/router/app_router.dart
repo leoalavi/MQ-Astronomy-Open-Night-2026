@@ -43,7 +43,7 @@ abstract final class Routes {
   static String settings = '/settings';
 
   /// Standalone Privacy page. On web this is the canonical, shareable
-  /// `…/astronomy-open-night/privacy` address; it is a full-screen route above
+  /// `https://aon.syllabus-sync.app/privacy` address; it is a full-screen route above
   /// the shell so a deep link or refresh lands straight on it.
   static String privacy = '/privacy';
 

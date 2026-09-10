@@ -8,7 +8,7 @@ campus, before the final submission.
 **Fill in as you go.** A row is only done when the "Observed" column is written.
 An empty column is an open item, not a pass.
 
-**Build to test:** the Build 3 archive (or a release build of the same commit),
+**Build to test:** the current Build 4 candidate (or the signed/TestFlight build produced from the same approved source),
 installed via TestFlight — not a debug build. Note the device and iOS version at
 the top of your notes.
 

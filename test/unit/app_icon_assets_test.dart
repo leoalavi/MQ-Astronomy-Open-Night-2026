@@ -101,14 +101,14 @@ void main() {
     }
   });
 
-  test('visitor-facing platform names are Astronomy Open Night', () {
+  test('visitor-facing mobile names use the 2026 app identity', () {
     expect(
       File('ios/Runner/Info.plist').readAsStringSync(),
-      contains('<string>Astronomy Open Night</string>'),
+      contains('<string>Astronomy Open Night 2026</string>'),
     );
     expect(
       File('android/app/src/main/AndroidManifest.xml').readAsStringSync(),
-      contains('android:label="Astronomy Open Night"'),
+      contains('android:label="Astronomy Open Night 2026"'),
     );
     expect(
       File('web/manifest.json').readAsStringSync(),

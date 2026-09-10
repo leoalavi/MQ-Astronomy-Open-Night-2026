@@ -2,8 +2,8 @@
 
 The web app is the **same Flutter app**, built for the web target. There is no
 separate web project, no second copy of the event data, and no backend. This
-document covers building, hosting, environment variables, SPA routing, and what
-works offline.
+document covers building, hosting, environment variables, SPA routing, and its
+online-first behaviour.
 
 > Native iOS/Android is unaffected by anything here. The web-specific code sits
 > behind `kIsWeb` / conditional-import seams that already existed in the
@@ -42,9 +42,9 @@ flutter build web --release \
   (`build/web/canvaskit/`) instead of `gstatic.com`, so the app makes no Google
   request just to render. (Persian glyphs are covered separately by the bundled
   Vazirmatn font — see `## Web fonts` below.)
-- `--dart-define-from-file=.env.web` supplies `MAPS_API_KEY` (and, if used, the
-  web-specific Routes key) at build time, with the **native route keys left
-  empty** so they never enter the web bundle (see the security note below).
+- `--dart-define-from-file=.env.web` supplies the single web `MAPS_API_KEY` at
+  build time. Conditional imports exclude the Android and iOS route-key defines
+  from the web compilation unit.
   **Without a key the app still works** — the illustrated campus basemap,
   programme, My Night, Passport, 360° tours and Info are offline/basemap
   features; only Google walking directions need the key, and they degrade to a
@@ -55,8 +55,8 @@ Output is written to `build/web/`.
 
 ## SPA routing + the static Privacy Policy
 
-The app uses `go_router` with real path URLs (`/program`, `/night`, `/map`,
-`/info`, `/settings`, `/privacy`). Two rules are needed:
+The app uses `go_router` with real path URLs (`/program`, `/my-night`, the
+`/night` alias, `/map`, `/info`, `/settings`, `/privacy`). Two rules are needed:
 
 1. **`/privacy` serves the static `privacy.html`** — the canonical, JS-free
    Privacy Policy that a store reviewer or JS-disabled client can read without
@@ -108,42 +108,33 @@ HTTPS only.
 
 | Name | Purpose | Notes |
 | --- | --- | --- |
-| `MAPS_API_KEY` | Maps JavaScript API (embedded map) and, if no web-specific Routes key is set, the Routes API on web | Web keys are public in `main.dart.js` — **must** carry an HTTP-referrer restriction. See `docs/google-maps-setup.md`. |
-| `GOOGLE_MAPS_WEB_ROUTES_KEY` | Optional web-only Routes key | If set, web uses it for Routes; otherwise `MAPS_API_KEY` serves both. |
+| `MAPS_API_KEY` | Maps JavaScript API (embedded map) and Routes API on web | Web keys are public in `main.dart.js` and **must** carry an HTTP-referrer restriction. See `docs/google-maps-setup.md`. |
 
 Supply these via `.env` (git-ignored) consumed by `--dart-define-from-file`, or
 via the CI secret store. **Do not** reuse the Android package or iOS bundle
 restricted keys for web — application restrictions are mutually exclusive; the
 web key is its own key with an HTTP-referrer restriction.
 
-### Security: don't ship the native keys in the web bundle
+### Security: native keys cannot enter the web compilation unit
 
-`lib/services/maps_nav_providers.dart` reads `GOOGLE_MAPS_ANDROID_ROUTES_KEY`,
-`GOOGLE_MAPS_IOS_ROUTES_KEY` and `GOOGLE_MAPS_WEB_ROUTES_KEY` via
-`String.fromEnvironment`. dart2js therefore **embeds whatever those defines hold
-at build time into `main.dart.js`** — even the native ones. So build the web
-release with an env file whose **native route keys are empty**, e.g. a
-`.env.web`:
+`lib/services/maps_build_keys.dart` conditionally selects the web build-key
+module. That module references only `MAPS_API_KEY`; the Android and iOS Routes
+define names and values are absent from the web compilation unit. Use this
+minimal `.env.web`:
 
 ```
 APP_ENV=production
 MAPS_API_KEY=<the web Maps JS key, HTTP-referrer restricted>
-GOOGLE_MAPS_WEB_ROUTES_KEY=<the web Routes key, HTTP-referrer restricted>
-GOOGLE_MAPS_ANDROID_ROUTES_KEY=
-GOOGLE_MAPS_IOS_ROUTES_KEY=
 ```
 
 ```bash
 flutter build web --release --dart-define-from-file=.env.web \
-  --base-href /
+  --base-href / --no-web-resources-cdn
 ```
 
-This keeps the Android/iOS keys out of the web JS entirely. The web key(s) that
-remain **will** be visible in `main.dart.js` — that is inherent to the Maps
-JavaScript API — which is exactly why they must carry an HTTP-referrer
-restriction (see `docs/google-maps-setup.md`). The repo's shared dev `.env`
-(one unrestricted key in all four fields — release blocker **B3**) is for local
-QA only and must never be the key a public web build ships.
+The web key **will** be visible in `main.dart.js`; that is inherent to the Maps
+JavaScript API. Restrict it to `https://aon.syllabus-sync.app/*` and
+`https://aon.syllabus-sync.app/`, and to Maps JavaScript API and Routes API.
 
 ## HTTPS only
 
@@ -169,30 +160,24 @@ What this means in practice:
   connection; point attendees who want reliable offline use to the native app.
 - **What persists locally:** My Night, Passport stamps, favourites and settings
   are in `localStorage` and survive refresh/reopen (not cleared by cache).
-- **Requires a connection:** the Google Maps embedded map and walking directions
-  (by design — only after consent); **CanvasKit** (loaded from `gstatic.com`
-  unless built with `--no-web-resources-cdn`); and **Persian glyphs** (Noto
-  fonts fetched from `fonts.gstatic.com` — see `## Web fonts` note below).
+- **Requires a connection:** the initial app shell, and the Google Maps embedded
+  map and walking directions when the related feature is used after consent.
+  Production CanvasKit, Vazirmatn and CanvasKit's Arabic fallback font are all
+  served from the app's own origin.
 
 Installation is **not** forced — the primary experience is a normal browser tab.
 The manifest lets a visitor add it to the home screen, but without a functional
 service worker an installed instance still needs the network.
 
-## Web fonts and CanvasKit (external requests)
+## Web fonts and CanvasKit
 
-Two Google (`gstatic.com`) requests happen on the web build regardless of Maps
-consent, and both should be closed before a privacy-sensitive public release:
-
-1. **CanvasKit** loads from `https://www.gstatic.com/flutter-canvaskit/…` by
-   default. Build with **`--no-web-resources-cdn`** to serve the copy already in
-   `build/web/canvaskit/` locally instead.
-2. **Persian text** has **no bundled font**; CanvasKit fetches Noto from
-   `fonts.gstatic.com` at runtime, so Persian is **not available offline** and
-   makes an uncovered Google request. Bundle an OFL Persian face (e.g.
-   Vazirmatn) and set it as `fontFamilyFallback` to fix both.
-
-Until (1) and (2) are done, the in-app claim that Google is only involved for
-maps/after consent is **not strictly accurate for the web build**.
+Production builds use `--no-web-resources-cdn`, so CanvasKit and its WASM are
+served from `build/web/canvaskit/`. Vazirmatn is bundled for the app's Persian
+typography, with its OFL licence under `assets/fonts/vazirmatn/`. CanvasKit's
+automatic Arabic fallback is redirected by `web/flutter_bootstrap.js` to the
+bundled Noto Sans Arabic subset under `web/fonts/`, where its OFL licence is
+also included. No `gstatic.com` or `fonts.gstatic.com` request is required to
+render the app.
 
 ## Analytics
 

@@ -369,34 +369,22 @@ clears the path to GO.
 
 ## B7 — Store privacy/support publishing prerequisites
 
-- **Exact problem.** The production Privacy Policy / Support store-metadata URLs
-  are not yet provisioned. The finished policy/support copy exists in
-  `docs/release/hosted-pages.md` but is not hosted.
-- **Partly closed 2026-09-05 by `46dc81e`.** The *in-app* half is done: Settings
-  now carries a Privacy Policy card (`settings_screen.dart:146`,
-  `_PrivacyPolicyCard`) that opens `config.privacyPolicyUrl` when one is
-  configured and otherwise shows the full policy **offline, in a dialog**
-  (`settingsPrivacyPolicyBody`, EN + FA), so the requirement is met even before
-  hosting exists. `test/widget/settings_privacy_policy_test.dart` covers both
-  paths. Android ships `docs/release/android-privacy-policy.html` for the Play
-  field. The old evidence line below — "no `url_launcher` / `launchUrl` anywhere
-  in `lib/`" — is superseded: `lib/services/url_opener.dart` is now the single
-  seam that opens external links. **Conditions 2 and 6 are met; the blocker stays
-  `OPEN` on the hosted URLs and the store-metadata fields (1, 3, 4, 5, 7–10),
-  which only the organisers can provide.**
-- **Hosting resolved in build, not yet in production (2026-09-10).** The policy,
-  support and terms pages are generated from one reviewed source and served by a
-  dedicated Worker at `aon.syllabus-sync.app`. `scripts/export-aon-pages.mjs` (in
-  the information-site repository) refuses to export unless the English in-app
-  `settingsPrivacyPolicyBody` matches the hosted text character for character, so
-  the in-app and hosted policies cannot drift. `tests/aon/app.spec.ts` fetches all
-  three pages in Chromium, Firefox and WebKit, checks the policy renders with
-  JavaScript disabled, and checks the Persian section is present.
-  `docs/release/android-privacy-policy.html` is now a copy of the exported page,
-  produced by the build rather than by hand.
+- **Exact problem.** The canonical Privacy Policy URL is configured in source,
+  but its DNS/hosting is not live. The official event page is already public and
+  is the Support URL.
+- **In-app and generated copies complete (2026-09-10).** Settings → Privacy
+  Policy renders the shared, sectioned `webPrivacy*` source. The same source
+  generates the semantic, JavaScript-free `web/privacy.html` and
+  `docs/release/android-privacy-policy.html`; sync and truth tests guard against
+  drift. The canonical URL is `https://aon.syllabus-sync.app/privacy`.
+- **Hosting bundle verified locally, not in production.** The information-site
+  build script assembles the Flutter web build, the canonical privacy HTML and
+  the separately maintained support/terms pages into the dedicated AON Worker
+  bundle. Cross-browser tests cover all app routes, no-JavaScript privacy HTML,
+  Persian content and refresh-safe routing.
 - **What is still missing for `CLOSED — VERIFIED`.** Nothing is deployed. The
   evidence rule needs a live HTTPS fetch of `https://aon.syllabus-sync.app/privacy`
-  and `/support`, and the URLs entered in App Store Connect and Play Console.
+  and the store URLs entered in App Store Connect and Play Console.
   Until then this stays `RESOLVED — AWAITING VERIFICATION` and must not be read
   as a GO.
 
@@ -415,20 +403,16 @@ clears the path to GO.
   require the privacy policy to be reachable from inside the app — which this
   build does not currently offer. This blocks store submission (it does not
   affect on-the-night in-app behaviour).
-- **Evidence / source.** `lib/screens/settings_screen.dart:146` (policy card,
-  online + offline paths) and `lib/services/url_opener.dart`;
-  `docs/release/hosted-pages.md` (ready, unhosted copy);
+- **Evidence / source.** `lib/screens/privacy_screen.dart`,
+  `tool/privacy/gen_privacy_html.py`, the generated HTML copies and their sync
+  tests;
   Apple App Store Connect privacy/URL fields + App Review Guidelines; Google
   Play policy requirements.
 - **Support URL resolved 2026-09-05.** The official event site,
   <https://event.mq.edu.au/astronomy-open-night/>, is public HTTPS, needs no
   login, is Macquarie's own, is specific to this event, and carries the
   enquiries address `astronomyopennight@mq.edu.au`. Fetched and read on
-  2026-09-05; it also states the event as Saturday 19 September 2026, 4pm–10pm,
-  matching `EventConfig`. That satisfies condition 4. *(It also says the event
-  is currently sold out and that no tickets are sold on the night — worth the
-  organisers deciding whether the app should say so; the app currently does
-  not, and that is a content question, not a store blocker.)*
+  2026-09-05. That satisfies condition 4.
 - **Why Macquarie's own Privacy Policy cannot be used, checked rather than
   assumed.** `policies.mq.edu.au/document/view.php?id=107` scopes itself to
   employees, students, researchers and people handling information on the
@@ -438,16 +422,13 @@ clears the path to GO.
   Google, and no ML Kit diagnostics. Pointing App Review at it would be an
   inaccurate disclosure — B1's defect, one layer out. Full reasoning:
   `docs/release/app-store-connect-final-checklist.md` §1.
-- **Hosting decided 2026-09-05.** Asked whether the University's own privacy
-  policy could be used: no — it does not describe this app's behaviour (Routes,
-  Google Maps' own collection, ML Kit) and a policy that does not match the app
-  is itself a 5.1.1 defect. What *is* right, and is what this blocker always
-  wanted, is **MQ hosting the app's own policy** — the finished copy in
-  `hosted-pages.md` — at an `mq.edu.au` URL. Any stable public HTTPS URL
-  satisfies both stores if MQ hosting is slow. Reasoning recorded in
-  `docs/release/hosted-pages.md`.
-- **Owner.** Organisers (host the pages) + product (add the in-app entry point).
-- **Status.** `OPEN`.
+- **Hosting decision superseded 2026-09-10.** The app-specific policy belongs
+  at the canonical developer-controlled URL
+  `https://aon.syllabus-sync.app/privacy`; the University-wide policy and the
+  historical `hosted-pages.md` draft are not substitutes.
+- **Owner.** Infrastructure/deployment for DNS and hosting; store-account owners
+  for metadata fields.
+- **Status.** `RESOLVED IN SOURCE — AWAITING DEPLOYMENT AND VERIFICATION`.
 - **Exact conditions to close.**
   1. The production Privacy Policy page is hosted at a stable HTTPS URL.
   2. The app exposes the Privacy Policy in an easily accessible location
@@ -483,13 +464,13 @@ clears the path to GO.
 
 ---
 
-## Info + Settings audit verdict (2026-09-01)
+## Info + Settings audit verdict (historical, 2026-09-01)
 
-Recorded so a stored conclusion is not stale: the Info + Settings subsystem has
+This section records the 1 September state only. Its B7 conclusions are
+superseded by the 10 September reconciliation above. At that time, the subsystem had
 **no implementation defect** (privacy copy is truthful and test-guarded, erase is
 scope-accurate and session-before-storage, preview is session-only and badged,
-language/theme persist, RTL is correct). But because of **B7** (no accessible
-in-app privacy-policy surface) it is not store-release-ready:
+language/theme persistence and correct RTL, but no accessible in-app policy surface:
 
 - **INFO → CONDITIONAL GO** — implementation is good, but the app lacks the
   required accessible privacy-policy surface (B7).

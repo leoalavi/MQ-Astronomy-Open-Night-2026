@@ -21,16 +21,18 @@ void main() {
     String? iosRoutesKey,
     String? androidRoutesKey,
   }) {
-    final c = ProviderContainer(overrides: [
-      mapsNavPlatformProvider.overrideWithValue(platform),
-      nativeMapsApiKeyProvider.overrideWithValue(mapsKey),
-      if (webRoutesKey != null)
-        webRoutesKeyProvider.overrideWithValue(webRoutesKey),
-      if (iosRoutesKey != null)
-        iosRoutesKeyProvider.overrideWithValue(iosRoutesKey),
-      if (androidRoutesKey != null)
-        androidRoutesKeyProvider.overrideWithValue(androidRoutesKey),
-    ]);
+    final c = ProviderContainer(
+      overrides: [
+        mapsNavPlatformProvider.overrideWithValue(platform),
+        nativeMapsApiKeyProvider.overrideWithValue(mapsKey),
+        if (webRoutesKey != null)
+          webRoutesKeyProvider.overrideWithValue(webRoutesKey),
+        if (iosRoutesKey != null)
+          iosRoutesKeyProvider.overrideWithValue(iosRoutesKey),
+        if (androidRoutesKey != null)
+          androidRoutesKeyProvider.overrideWithValue(androidRoutesKey),
+      ],
+    );
     addTearDown(c.dispose);
     return c;
   }
@@ -43,32 +45,40 @@ void main() {
 
     test('web with a key reaches READY — the exact reported failure', () {
       final c = container(platform: MapsNavPlatform.web);
-      expect(c.read(googleNavAvailabilityProvider),
-          GoogleNavAvailability.ready);
-      expect(c.read(googleNavEnabledProvider), isTrue,
-          reason: 'web must be allowed to render the embedded map');
+      expect(
+        c.read(googleNavAvailabilityProvider),
+        GoogleNavAvailability.ready,
+      );
+      expect(
+        c.read(googleNavEnabledProvider),
+        isTrue,
+        reason: 'web must be allowed to render the embedded map',
+      );
     });
 
     test('unsupported now means DESKTOP only', () {
       final c = container(platform: MapsNavPlatform.unsupported);
-      expect(c.read(googleNavAvailabilityProvider),
-          GoogleNavAvailability.platformUnsupported);
+      expect(
+        c.read(googleNavAvailabilityProvider),
+        GoogleNavAvailability.platformUnsupported,
+      );
     });
   });
 
   group('web Routes key resolution', () {
     test('web no longer returns an empty Routes key', () {
       final c = container(platform: MapsNavPlatform.web);
-      expect(c.read(activeRoutesKeyProvider), 'shared-key',
-          reason: 'web used to be hard-coded to "" purely because of platform');
+      expect(
+        c.read(activeRoutesKeyProvider),
+        'shared-key',
+        reason: 'web used to be hard-coded to "" purely because of platform',
+      );
       expect(c.read(routesConfiguredProvider), isTrue);
     });
 
-    test('a dedicated web Routes key wins over the shared key', () {
-      // Production: the web key is referrer-restricted and must be its own.
-      final c = container(
-          platform: MapsNavPlatform.web, webRoutesKey: 'web-only-key');
-      expect(c.read(activeRoutesKeyProvider), 'web-only-key');
+    test('web uses its single referrer-restricted Maps key for Routes', () {
+      final c = container(platform: MapsNavPlatform.web);
+      expect(c.read(activeRoutesKeyProvider), 'shared-key');
     });
 
     test('web does NOT borrow the android or ios Routes key', () {
@@ -78,10 +88,15 @@ void main() {
         iosRoutesKey: 'ios-key',
         androidRoutesKey: 'android-key',
       );
-      expect(c.read(activeRoutesKeyProvider), isEmpty,
-          reason: 'a platform-restricted key would be rejected from a browser');
-      expect(c.read(googleNavAvailabilityProvider),
-          GoogleNavAvailability.missingMapsKey);
+      expect(
+        c.read(activeRoutesKeyProvider),
+        isEmpty,
+        reason: 'a platform-restricted key would be rejected from a browser',
+      );
+      expect(
+        c.read(googleNavAvailabilityProvider),
+        GoogleNavAvailability.missingMapsKey,
+      );
     });
 
     test('desktop still gets no Routes key at all', () {
@@ -110,22 +125,28 @@ void main() {
   group('mobile behaviour is untouched', () {
     test('ios and android still resolve their own Routes keys', () {
       expect(
-        container(platform: MapsNavPlatform.ios, iosRoutesKey: 'i')
-            .read(activeRoutesKeyProvider),
+        container(
+          platform: MapsNavPlatform.ios,
+          iosRoutesKey: 'i',
+        ).read(activeRoutesKeyProvider),
         'i',
       );
       expect(
-        container(platform: MapsNavPlatform.android, androidRoutesKey: 'a')
-            .read(activeRoutesKeyProvider),
+        container(
+          platform: MapsNavPlatform.android,
+          androidRoutesKey: 'a',
+        ).read(activeRoutesKeyProvider),
         'a',
       );
     });
 
-    test('an android build carrying only the ios key still resolves empty',
-        () {
+    test('an android build carrying only the ios key still resolves empty', () {
       // The original cross-key trap must stay closed.
       final c = container(
-          platform: MapsNavPlatform.android, mapsKey: '', iosRoutesKey: 'ios');
+        platform: MapsNavPlatform.android,
+        mapsKey: '',
+        iosRoutesKey: 'ios',
+      );
       expect(c.read(activeRoutesKeyProvider), isEmpty);
     });
   });

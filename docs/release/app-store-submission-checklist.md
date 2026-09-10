@@ -4,8 +4,8 @@
 > That file holds the single, current answer set (App Privacy, Age Rating,
 > availability, contact). This document is the older 2026-08-23 requirements
 > audit; where the two ever differ, the final checklist wins. Rows below have
-> been reconciled to Build 3 (`1.0.0+3`, uploaded and approved for external
-> TestFlight, Australia-only).
+> been reconciled to the current Build 4 candidate (`1.0.0+4`). Build 3 remains
+> approved for external TestFlight but predates the current shared source.
 
 Audited against the Apple developer documentation current on **2026-08-23**.
 Sources are linked per section. Items are marked:
@@ -28,7 +28,7 @@ Sources are linked per section. Items are marked:
 | iOS release build succeeds | **DONE** | `flutter build ios --release --no-codesign` → exit 0 |
 | App icon incl. 1024×1024 marketing icon, no alpha | **DONE** | `AppIcon.appiconset`, 19 entries, all with filenames |
 | `ITSAppUsesNonExemptEncryption` declared | **DONE** | `Info.plist` → `false`; rationale in `export-compliance.md` |
-| Version/build set to `1.0.0+3` | **DONE** | `pubspec.yaml` → `version: 1.0.0+3`. **Build 3 is uploaded to App Store Connect and approved for external TestFlight.** `1.0.0+1` (TestFlight Build 1) and `1.0.0+2` (Build 2, ITMS-90683 warning) are spent; Build 3 fixes ITMS-90683 and was accepted without it recurring. Do not bump to Build 4 unless a repo-side change forces a new binary. |
+| Version/build set to `1.0.0+4` | **DONE IN SOURCE; UPLOAD REQUIRES HUMAN SIGNING/ASC** | `pubspec.yaml` → `version: 1.0.0+4`. Build 3 is approved for external TestFlight but predates the current shared-source changes; Build 4 is the next candidate and has not been signed or uploaded. |
 
 Source: <https://developer.apple.com/news/upcoming-requirements/>
 
@@ -42,7 +42,7 @@ Source: <https://developer.apple.com/news/upcoming-requirements/>
 | Required-reason APIs declared | **DONE** (re-audited 2026-09-05) | The app manifest declares **SystemBootTime 35F9.1** and **FileTimestamp C617.1**: `sensors_plus` (`systemUptime`) and `package_info_plus` (`fileModificationDate`) are statically linked into Runner via SwiftPM and ship *empty* manifests, so their use is attributed to the Runner executable. `shared_preferences_foundation` (UserDefaults 1C8F.1) and `Flutter.framework` declare their own. Guarded by `test/unit/ios_privacy_manifest_test.dart`. |
 | No third-party SDK on Apple's manifest-required list | **DONE** | Pods are Flutter, `flutter_inappwebview_ios`, `google_maps_flutter_ios`, `GoogleMaps`, `Google-Maps-iOS-Utils`, `OrderedSet` — none listed. |
 | Purpose strings for camera / location / motion | **DONE** (re-audited 2026-09-05) | **Four** keys, not three: camera, motion, `NSLocationWhenInUseUsageDescription` and `NSLocationAlwaysAndWhenInUseUsageDescription`. The last was added after App Store Connect returned **ITMS-90683** against Build 2 — `geolocator_apple`'s `requestAlwaysAuthorization` is statically linked into Runner, so Apple's scan demands the string even though the app only ever requests When In Use. Camera and motion say the data stays on device; **the two location strings must not** — the Routes call sends the origin to Google. Guarded by `test/unit/ios_location_purpose_test.dart` (4 tests). |
-| **Privacy Policy URL** in App Store Connect | **YOU (paste only)** | 5.1.1(i) mandatory metadata. **Ready:** `https://aon.syllabus-sync.app/privacy` — live static page, developer-hosted (not MQ). Paste into ASC. |
+| **Privacy Policy URL** in App Store Connect | **YOU, after deployment** | 5.1.1(i) mandatory metadata. Canonical value: `https://aon.syllabus-sync.app/privacy`. The local static artifact is ready; public DNS/hosting was not reachable during the 2026-09-10 audit. Deploy and verify it before pasting into ASC. |
 | App Privacy questionnaire ("Nutrition Label") | **READY TO ENTER** | **Not** "Data Not Collected" — the app sends Precise Location to Google Routes and embeds the Google Maps SDK. The single authoritative answer set is in [`app-store-connect-final-checklist.md`](app-store-connect-final-checklist.md) §3: Precise Location + Coarse Location, Identifiers, Product Interaction, Other Usage Data, Crash Data, Performance Data — all App Functionality, not linked, not tracking. |
 
 Sources: <https://developer.apple.com/documentation/bundleresources/privacy-manifest-files> ·
@@ -88,11 +88,11 @@ screenshots are required**, not optional.
 
 These are not code. They are the critical path.
 
-1. **URLs (all ready):** Privacy Policy `https://aon.syllabus-sync.app/privacy`
-   (developer-hosted static page), Support `https://event.mq.edu.au/astronomy-open-night/`
-   (official event page), Terms `https://aon.syllabus-sync.app/astronomy-open-night/terms`
-   on the info site (carries the Google Maps flow-down). Privacy and Support are
-   hard ASC requirements and are both live-ready.
+1. **URLs:** Privacy Policy `https://aon.syllabus-sync.app/privacy` (local static
+   artifact ready; deploy and verify), Support
+   `https://event.mq.edu.au/astronomy-open-night/` (official event page), Terms
+   `https://info.syllabus-sync.app/astronomy-open-night/terms` (carries the
+   Google Maps flow-down). Privacy and Support are hard ASC requirements.
 2. **Apple Developer Program membership — REOPENED 2026-09-07.** The bundle
    ID is `au.edu.mq.astronomy.aon2026`, an `au.edu.mq` namespace. This entry
    used to say publication needed the University's Apple Developer account or

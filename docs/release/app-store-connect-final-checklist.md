@@ -1,7 +1,7 @@
 > **10 September 2026 policy update:** use `https://aon.syllabus-sync.app/privacy`
 > for Astronomy Open Night's canonical policy. It covers iOS, Android and web,
-> credits the Syllabus Sync team (Leo Alavi and Mohammad Raouf Abedini) as the
-> developers for the Astronomy Night - FSE Outreach Team, and retains the Google
+> credits Leo Alavi and Mohammad Raouf Abedini as the developers for the
+> Astronomy Night - FSE Outreach Team, and retains the Google
 > Maps/ML Kit disclosures below. App privacy and data requests:
 > `leo@leoalavi.dev`; event support: `astronomyopennight@mq.edu.au` and
 > `https://event.mq.edu.au/astronomy-open-night/`. Updating these source files
@@ -9,12 +9,12 @@
 
 # App Store Connect — final pre-submission checklist
 
-**Date:** 2026-09-05 (updated 2026-09-06) · **Branch:** `fix/ios-always-location-purpose-string`
-**Shipped build:** `1.0.0` **Build 3** — **uploaded and approved for external
+**Original checklist:** 2026-09-05 · **Current reconciliation:** 2026-09-11 · **Branch:** `main`
+**Previously uploaded build:** `1.0.0` **Build 3** — **approved for external
 TestFlight** · Bundle `au.edu.mq.astronomy.aon2026` · Team `94273WB4G3`
 · Availability: **Australia only**
 
-> ## CURRENT STATE (reconciled 2026-09-10) — read this first
+> ## CURRENT STATE (reconciled 2026-09-11) — read this first
 >
 > Several rows below predate the final hosting/identity decisions and are kept
 > for history. The **current** release-facing values are:
@@ -24,11 +24,12 @@ TestFlight** · Bundle `au.edu.mq.astronomy.aon2026` · Team `94273WB4G3`
 > | App name | **Astronomy Open Night 2026** |
 > | Developed by | **Leo Alavi and Mohammad Raouf Abedini** |
 > | For | **Astronomy Night – FSE Outreach Team** |
-> | **Privacy Policy URL** | **`https://aon.syllabus-sync.app/privacy`** — LIVE, static, readable HTML (generated from the in-app policy by `tool/privacy/gen_privacy_html.py`; no login; not MQ-hosted). The old `hosted-pages.md` / MQ-hosted plan is **superseded**. |
+> | **Privacy Policy URL** | **`https://aon.syllabus-sync.app/privacy`** — canonical static readable HTML generated from the in-app policy. Local artifact verified; public DNS/hosting verification remains a human release action. The old `hosted-pages.md` / MQ-hosted plan is **superseded**. |
 > | Privacy contact (in the policy) | **Leo Alavi — `leo@leoalavi.dev`** |
 > | Support URL | **`https://event.mq.edu.au/astronomy-open-night/`** (event support: `astronomyopennight@mq.edu.au`) |
 > | **App Review contact** | **Leo Alavi — `leo@leoalavi.dev`, `+61451519624`** (developer contact; matches the privacy contact). Never the event mailbox. |
-> | Copyright | **`© 2026 Astronomy Night – FSE Outreach Team`** (implemented app-wide). **Still requires written owner confirmation** — see the Copyright section (FSE is a university faculty unit). Do not submit `© Macquarie University`. |
+> | Copyright | **`© 2026 Astronomy Night – FSE Outreach Team`** (implemented app-wide). |
+> | Current repository candidate | **`1.0.0+4`** — Build 4 is required because the shared source changed after uploaded Build 3. It is not signed or uploaded. |
 
 The single page to work through in App Store Connect. Every row names its
 evidence or says exactly who has to act. Statuses are the register's vocabulary
@@ -49,7 +50,7 @@ plus the three ASC-specific ones this pass needed.
 
 | # | Item | Status | Value / evidence |
 |---|---|---|---|
-| 1 | **Privacy Policy URL** | `READY TO ENTER` | **`https://aon.syllabus-sync.app/privacy`** — LIVE static, readable, JS-free HTML generated from the in-app policy (`tool/privacy/gen_privacy_html.py`); public, HTTPS, no login; not MQ-hosted. (§1 explains why the University's own policy cannot be used.) |
+| 1 | **Privacy Policy URL** | `BLOCKED` | **`https://aon.syllabus-sync.app/privacy`** — local static, readable, JS-free HTML is generated from the in-app policy (`tool/privacy/gen_privacy_html.py`). Public DNS/hosting was not reachable on 2026-09-10; deploy and verify it before entering the URL. |
 | 2 | **Support URL** | `READY TO ENTER` | `https://event.mq.edu.au/astronomy-open-night/` — official MQ event site, public, HTTPS, no login, lists `astronomyopennight@mq.edu.au` for enquiries. Fetched and read 2026-09-05. |
 | 3 | **Marketing URL** | `NOT APPLICABLE` | Optional per Apple. The Support URL already is the event site. |
 | 4 | **Terms of Use / EULA** | `VERIFIED` — **Apple standard EULA sufficient** | See §2 below. No custom EULA needed for Apple; the Google Maps flow-down is carried in-app. |
@@ -60,17 +61,17 @@ plus the three ASC-specific ones this pass needed.
 | 9 | **Export compliance** | `VERIFIED` | `ITSAppUsesNonExemptEncryption` = `false` in Info.plist; audited per-dependency in `export-compliance.md` — every networked dependency uses OS TLS and bundles no cryptography. ASC will not re-ask while the key is present. |
 | 10 | **DSA trader status** | `NOT APPLICABLE` | **Australia-only distribution** decided by the owner (2026-09-06). No EU territories, so App Store Connect does **not** require a DSA trader-status declaration. Revisit only if EU availability is ever added. See §5. |
 | 11 | **Screenshots — 6.9" iPhone** | `VERIFIED` — **recaptured 2026-09-05** | All 6 at 1320×2868 from a build of this branch. See §4. |
-| 12 | **Screenshots — 13" iPad** | `READY TO ENTER` (minimum met) / 3 outstanding | `01-home.png` recaptured at 2064×2752; the other three were removed as stale and need capturing by hand. Apple requires at least one. See §4. |
-| 13 | **App name** | `READY TO ENTER` | `Astronomy Open Night` (20 chars). |
+| 12 | **Screenshots — 13" iPad** | `VERIFIED` | Six screenshots at 2064×2752: Home, Program, My Night, Map, panorama and Passport. See §4. |
+| 13 | **App name** | `READY TO ENTER` | `Astronomy Open Night 2026` (25 chars). |
 | 14 | **Subtitle** | `READY TO ENTER` | In `app-store-listing.md`, within 30 chars. |
 | 15 | **Description** | `READY TO ENTER` | `app-store-listing.md`, within 4000 chars. |
 | 16 | **Keywords** | `READY TO ENTER` | The committed string is **exactly 100 characters** — at Apple's limit, not over it. The doc's old "101 → trim guide" note was a miscount and has been corrected. |
 | 17 | **Categories** | `READY TO ENTER` | Primary **Education**, secondary **Navigation**. |
-| 18 | **Copyright** | `IMPLEMENTATION READY — OWNER CONFIRMATION REQUIRED` | Implemented app-wide as **`© 2026 Astronomy Night – FSE Outreach Team`** — never `© Macquarie University`, never a Syllabus Sync ownership claim. Because "FSE Outreach Team" is a university faculty unit, the true rights-holder must confirm this exact wording **in writing** before submission (a human/legal task, not code). |
+| 18 | **Copyright** | `READY TO ENTER` | **`© 2026 Astronomy Night – FSE Outreach Team`**, implemented consistently app-wide. |
 | 19 | **Price / availability** | `READY TO ENTER` | Free, no in-app purchases. Availability: **Australia only** (owner decision 2026-09-06) — deselect all other territories in ASC. |
 | 20 | **App Review notes** | `READY TO ENTER` | `app-review-notes.md`, corrected 2026-09-05 to match the binary (both directions paths, what is sent to Google). |
 | 21 | **App Review contact** | `READY TO ENTER` | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo@leoalavi.dev`, `+61451519624`. In `app-review-notes.md`. |
-| 22 | **Build 3 uploaded** | `VERIFIED` | **Build 3 (`1.0.0+3`) is uploaded to App Store Connect** and **approved for external TestFlight**; the external organiser testing group exists and the public TestFlight link is ready to share. Archive step is done — do not re-archive unless a repo-side change forces a new binary. |
+| 22 | **Current build** | `BLOCKED — SIGNING/ASC` | Build 3 (`1.0.0+3`) remains approved for external TestFlight but predates the current shared source. The repository candidate is Build 4 (`1.0.0+4`); archive, sign and upload it using the correct Apple team. |
 | 23 | **ITMS-90683 cleared** | `CLOSED — VERIFIED` | Fixed in the Build 3 binary (both location purpose strings present, no `UIBackgroundModes`) **and validated by Apple**: Build 3 was accepted for upload and passed external TestFlight beta review without the ITMS-90683 warning recurring. |
 
 ---
@@ -100,14 +101,11 @@ class of defect as blocker B1 — an inaccurate disclosure — one layer out. It
 would also be the *University's* document answering for an app published from
 an individual's team.
 
-**What is right, and is what the repo already prepared:** MQ hosts *this app's*
-policy. `hosted-pages.md` Page 1 is finished copy, written against the code
-and cross-checked against `settingsPrivacyBody`. Published at an `mq.edu.au`
-URL it gives both the University association and an accurate document. If MQ
-hosting is slow, any stable public HTTPS URL satisfies both stores — Android
-already does exactly this with `android-privacy-policy.html` on Leo's Play
-account. Once a URL exists, wire it into `EventConfig.privacyPolicyUrl` and the
-Settings card opens it instead of the offline dialog.
+The repository instead generates Astronomy Open Night's own semantic policy at
+`web/privacy.html`, directly from the same localisation source used by the
+in-app privacy screen. Its canonical URL is
+`https://aon.syllabus-sync.app/privacy`. The artifact is complete and parity
+tested; deploying it and verifying public DNS remain external release actions.
 
 ## §2 — Terms of Use: Apple standard EULA is sufficient
 
@@ -124,9 +122,9 @@ The one genuine terms obligation is the **Google Maps Platform flow-down**: the
 app must bind its users to terms consistent with Google's Maps/Earth Additional
 Terms of Service. This app discloses the Google surface in-app before and around
 its use (the wayfinding disclosure, the Settings privacy card and its revoke
-control), which is where a no-account event app can honestly carry it. Page 3 of
-`hosted-pages.md` remains the written version if MQ prefers a hosted page —
-useful, not store-blocking.
+control), which is where a no-account event app can honestly carry it. The
+information site also provides the app-specific Terms page at
+`https://info.syllabus-sync.app/astronomy-open-night/terms`.
 
 ## §3 — App Privacy: the recommended answers
 
@@ -142,7 +140,7 @@ name, no account (there is none), no app-generated identifier travels with it.
 The request happens after the visitor opens directions, and not at all if
 directions sharing is off in Settings.
 
-### The authoritative App Privacy answer set (Build 3)
+### The authoritative App Privacy answer set (current Build 4 candidate)
 
 This is the **single source of truth** for the App Store Connect App Privacy
 answers. Every row is "collected"; every row is **not linked to identity** and
@@ -184,7 +182,7 @@ left for the owner to decide here, and the register's B7 condition 10
 (location→Google classification) is answered by that matrix. All rows are App
 Functionality, not linked, not tracking.
 
-## §4 — Screenshots: the old set was stale; 7 of 10 have been recaptured
+## §4 — Screenshots
 
 The committed set was captured on **2026-08-23** (`a9a79bb`) and showed copy the
 app no longer ships: `iphone-6.9/01-home.png` had the map card reading *"Venues,
@@ -199,21 +197,14 @@ Home captures the tab bar shows content through it. That is the translucent
 floating tab bar working as designed, not a mid-transition artifact — checked
 against the running app rather than inferred from the image.)*
 
-**Done 2026-09-05, from a simulator build of this branch:**
+**Current committed sets, verified at store dimensions:**
 
 - **iPhone 17 Pro Max, 6 of 6**, all exactly 1320×2868 — Home, Map, Program,
   Passport, the Observatory 360° tour, and Settings → Credits (replacing the old
   Settings → Preview shot, which no longer earns a slot now that the passport is
   live and needs no preview to demonstrate).
-- **iPad Pro 13-inch, 1 of 4**, at 2064×2752 — Home.
-
-**Still to do: the three remaining iPad shots** (Map, a 360° tour, Settings).
-They could not be automated: Maestro reports success against the iPad
-simulator's UDID while the taps land elsewhere — three consecutive captures came
-back byte-identical, the screen never having changed. That is the iPad session
-trap already recorded in `.maestro/README.md`. Capture them by hand in
-Simulator with `xcrun simctl io <udid> screenshot`. Apple requires at least one
-iPad screenshot for an iPad-capable app, so submission is not blocked on them.
+- **iPad Pro 13-inch, 6 of 6**, all exactly 2064×2752 — Home, Program,
+  My Night, Map, panorama and Passport.
 
 ## §5 — DSA / territories
 

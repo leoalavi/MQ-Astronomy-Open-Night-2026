@@ -256,8 +256,8 @@ required for the web build.
 - iOS key → *iOS apps*: bundle id `au.edu.mq.astronomy.aon2026` (sent as
   `X-Ios-Bundle-Identifier`).
 - Web key → *HTTP referrers*: the served origin(s). Supply it as
-  `GOOGLE_MAPS_WEB_ROUTES_KEY` (Routes) and `MAPS_API_KEY` (Maps JS); with only
-  `MAPS_API_KEY` set, web uses it for both.
+  `MAPS_API_KEY` for both Maps JavaScript API and Routes API. A conditional
+  import excludes the native route-key defines from web builds.
 
   **Header format trap (found 2026-09-07):** the Cloud console and `keytool`
   *display* the SHA-1 as `A4:26:BD:...`, but the `X-Android-Cert` **header must

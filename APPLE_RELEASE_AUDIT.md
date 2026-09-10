@@ -7,30 +7,35 @@ uncommitted working tree · **Bundle:** `au.edu.mq.astronomy.aon2026` · **Versi
 Every claim below names its evidence. Where something could not be verified in
 this environment it says **UNVERIFIED** and why.
 
+> **CURRENT STATE — 2026-09-10.** This document preserves the evidence from the
+> original 5 September audit. Current source is based on `9181385` plus the
+> intentionally uncommitted final-pass changes. The canonical policy is
+> `https://aon.syllabus-sync.app/privacy`; its in-app and semantic HTML copies
+> share the `webPrivacy*` source and pass sync tests, but public DNS/hosting is
+> not live. The official Support URL is
+> `https://event.mq.edu.au/astronomy-open-night/`. Content-rights and App
+> Privacy classification decisions are closed in the current checklist. Because
+> shared source changed after uploaded Build 3, a newly signed/uploaded build is
+> required before submission. The current unsigned iOS release build succeeds.
+
 ---
 
 ## Executive Summary
 
 **CONDITIONALLY READY.**
 
-The *code and binary* have no known P0 and no unresolved P1 that is under the
-repository's control. Two P1s found today were fixed and re-verified (privacy
-manifest, review-notes contradiction). The remaining blockers are **not code**:
-they are the same four people/infrastructure items already tracked in
-`docs/release-blockers.md` (B3 GCP keys, B4 physical-device pass, B6 asset
-redistribution rights, B7 hosted Privacy/Support URLs). Signing is **not** a
-blocker: TestFlight Build 1 was archived and uploaded from Xcode on 2026-09-05
-(Team "Leo Alavi", bundle `au.edu.mq.astronomy.aon2026`). The CLI archive
-attempt in *this* audit environment failed only because this macOS user's Xcode
-is signed into a different, individual team (see Signing reconciliation).
+The code has no known P0 or unresolved P1 under repository control. The
+remaining current actions require infrastructure or store-account access: make
+the canonical policy URL live, configure the production Maps keys, sign/upload
+a new build from current source, enter App Store Connect metadata and perform
+physical/production smoke testing. Uploaded Build 3 is historical evidence, not
+the final candidate after the current shared-source changes.
 
 ## Acceptance Risk
 
-**MEDIUM** — driven entirely by items outside the code: the publisher account
-(a university-branded app must be submitted from Macquarie's account or with
-written authority, guidelines 4.1 / 5.2.1), the unresolved asset rights (5.2),
-and the not-yet-hosted Privacy Policy URL (5.1.1(i)). With those closed, the
-residual risk is LOW.
+**MEDIUM** — driven by external deployment, signing, production Maps-key setup,
+physical-device verification and App Store Connect completion. Code risk is
+LOW after the current gates.
 
 ## Onboarding Decision
 
@@ -121,7 +126,7 @@ were confirmed through secondary sources and the official code list.
 | 4.1 Copycats / impersonation | Yes | **RISK — external** | App is MQ-branded with an `au.edu.mq` bundle id; must ship from MQ's account or with written authority | Medium | Organisers (`docs/release/organiser-requests.md` §4) |
 | 4.2 Minimum functionality (not a web wrapper) | Yes | PASS | Offline programme, illustrated map, 360° tours, compass, passport; the only WebView loads bundled files over `localhost` | Low | — |
 | 4.8 Sign in with Apple | No | N/A | No third-party login, no accounts | — | — |
-| 5.1.1(i) Privacy policy in ASC **and in-app** | Yes | **BLOCKED — external (B7)** | In-app row exists (`_PrivacyPolicyCard`) and activates when `EventConfig.privacyPolicyUrl` is set; hosted copy ready in `docs/release/hosted-pages.md` | High until hosted | MQ hosts the page; set the URL; run `settings_privacy_policy_test.dart` |
+| 5.1.1(i) Privacy policy in ASC **and in-app** | Yes | **BLOCKED — deployment only (B7)** | In-app policy and generated semantic HTML share the `webPrivacy*` source; canonical URL configured; public DNS/hosting not live | High until hosted | Deploy and verify `https://aon.syllabus-sync.app/privacy`, then enter it in ASC |
 | 5.1.1(ii) Consent for data collection; withdrawable | Yes | PASS | Explicit `MapsNavDisclosure` before any Google surface; Settings revoke; verified E2E (privacy-consent, privacy-revoke-retry) | Low | — |
 | 5.1.1(iii) Data minimisation | Yes | PASS | Only camera/location/motion; no photos, contacts, mic, ATT | Low | — |
 | 5.1.1(iv) Respect denial, offer alternatives | Yes | PASS | Location denied → map still works; camera denied → manual code entry (E2E `passport.yaml`) | Low | — |
@@ -272,28 +277,21 @@ Pre-archive check: in Xcode → Runner → Signing & Capabilities, Team must rea
 - [x] No background modes, no ATT, no push
 - [x] Portrait-only on iPhone; all orientations on iPad; iPad screenshots exist
 - [x] Review notes drafted (`docs/release/app-review-notes.md`) — **fill in the contact name/email/phone**
-- [ ] **Privacy Policy URL** (B7) — host `docs/release/hosted-pages.md` page 1, then set `EventConfig.privacyPolicyUrl`
-- [ ] **Support URL** (B7) — page 2
+- [ ] **Privacy Policy URL** (B7) — deploy and verify `https://aon.syllabus-sync.app/privacy`, then enter it in ASC
+- [ ] **Support URL** — enter `https://event.mq.edu.au/astronomy-open-night/`
 - [ ] App Privacy questionnaire — answers below
 - [ ] Age rating questionnaire — answers below
 - [ ] Archive Build 2 from the same Xcode/account that uploaded Build 1 (team 94273WB4G3); ASC validates on upload
-- [ ] Written redistribution permission for the map artwork, buildings dataset, 360° photos and hero photograph (B6)
 - [ ] Optional: Accessibility Nutrition Labels (VoiceOver, Larger Text, Reduced Motion)
 
 ## Recommended Privacy Answers (App Privacy "nutrition label")
 
-Start from **"Data Not Collected"** for every category: no account, no
-analytics, no advertising, no identifiers, no crash reporting; everything the
-app stores stays on the device and is not linked to a person.
-
-**One item needs a legal decision (B7 item 10):** when the visitor accepts the
-walking-directions disclosure, their coarse/precise location is sent to Google
-Routes and Google receives the request. Apple's definition of "collected"
-covers data "transmitted off the device in a way that allows you and/or your
-third-party partners to access it". If counsel decides this counts, declare
-**Location → Precise Location → App Functionality → Not linked to identity →
-Not used for tracking**. The app-side disclosure and consent are already in
-place either way. Do not answer this one by default.
+The original tentative recommendation below is superseded. Use the resolved,
+authoritative matrix in
+`docs/release/app-store-connect-final-checklist.md` §3: Precise Location,
+Coarse Location, Identifiers, Product Interaction, Other Usage Data, Crash Data
+and Performance Data are collected for App Functionality, not linked to the
+user and not used for tracking. Every other Apple category is not collected.
 
 ## Recommended Age Rating Answers
 
@@ -400,19 +398,11 @@ Dynamic Type 200% / Reduce Motion support. Replace `<NAME>/<EMAIL>/<PHONE>`.
 that can be run here, but submission is blocked by items no repository change
 can close:
 
-1. Host the Privacy Policy and Support pages on `mq.edu.au` and set
-   `EventConfig.privacyPolicyUrl` (B7; guideline 5.1.1(i)).
-2. Obtain written redistribution permission for the campus map artwork, the
-   buildings dataset, the 360° photographs and the hero photograph (B6; 5.2).
-3. Publisher identity: Build 1 shipped to TestFlight from team `94273WB4G3`
-   ("Leo Alavi"). For the *public* listing of a University-branded app under an
-   `au.edu.mq` bundle id, hold written authority from Macquarie to publish on
-   its behalf, or transfer to the University's account (4.1 / 5.2.1). TestFlight
-   internal testing is not affected.
-4. Decide the App Privacy classification of the consented location→Google
-   request with legal (B7 item 10), then complete the App Privacy and age-rating
-   questionnaires.
+1. Deploy and verify `https://aon.syllabus-sync.app/privacy`.
+2. Archive/sign/upload a new build from the current approved source using team
+   `94273WB4G3`; Build 3 predates these shared-source changes.
+3. Enter the canonical Privacy and Support URLs, the resolved App Privacy
+   matrix, age rating, metadata and review contact in App Store Connect.
 
-Once those four are done, re-run `./scripts/check.sh` and the Maestro suite on
-the submission commit and submit; the expected outcome is **APP STORE SUBMISSION
-RECOMMENDED** with LOW residual risk.
+After those external/account-bound steps, perform production smoke testing and
+submit when approved.

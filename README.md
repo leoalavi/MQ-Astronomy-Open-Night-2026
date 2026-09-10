@@ -2,7 +2,7 @@
 
 <!-- Typing animation -->
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=2800&pause=700&color=F59E0B&center=true&vCenter=true&width=860&lines=Event+Guide+%2B+Night-Time+Campus+Wayfinding;Program+%C2%B7+Map+%C2%B7+360%C2%B0+Tours+%C2%B7+Passport+Rally;Flutter+3.44+%C2%B7+Riverpod+3+%C2%B7+go_router;Offline-First+%C2%B7+Zero+Backend+%C2%B7+English+%2B+Persian)](https://readme-typing-svg.demolab.com)
+[![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=700&size=20&duration=2800&pause=700&color=F59E0B&center=true&vCenter=true&width=860&lines=Event+Guide+%2B+Night-Time+Campus+Wayfinding;Program+%C2%B7+Map+%C2%B7+360%C2%B0+Tours+%C2%B7+Passport+Rally;Flutter+3.44+%C2%B7+Riverpod+3+%C2%B7+go_router;Native+Offline+Assets+%C2%B7+Zero+Backend+%C2%B7+English+%2B+Persian)](https://readme-typing-svg.demolab.com)
 
 <!-- Badges -->
 
@@ -38,7 +38,7 @@ It is an independent student project, **not an official university product and n
 
 ## 🎯 Problem & Value Proposition
 
-Public university events usually hand visitors a printed A3 map and hope for the best. Astronomy Open Night puts the pieces a visitor actually needs on the night into one offline-first app:
+Public university events usually hand visitors a printed A3 map and hope for the best. Astronomy Open Night puts the pieces a visitor actually needs on the night into one app across iOS, Android and web:
 
 - **Live Programme Awareness:** All 36 official activities, talks and the keynote, filterable by real published start time and activity type, with a live "happening now / starting soon / later tonight" view driven by an injectable clock.
 - **Night-Time Wayfinding:** An illustrated campus map with search and favourites, Google Maps walking directions scoped to campus, hand-authored offline routes as a fallback, and a compass "point me there" mode.
@@ -113,7 +113,7 @@ Public university events usually hand visitors a printed A3 map and hope for the
 
 ### Key Architectural Decisions
 
-- **Offline-First Event Data.** The full programme, venues, parking and panorama data are `const` Dart compiled into the binary — no asset load, no JSON parse, no cache, no network. Only the map basemap and Google walking directions need connectivity.
+- **Bundled Event Data.** The full programme, venues and parking data are compiled into the app. Native builds bundle the illustrated map and panoramas for offline use. The web app is online-first and lazily loads a panorama only when opened. Google Maps and walking directions require connectivity and consent.
 - **Time Is Always Injected.** Nothing in the app calls `DateTime.now()` directly; every screen reads `currentTimeProvider`. That is what makes "What's on now" fully testable before the event date ever arrives.
 - **Confidence Is a Type, Not a Convention.** `DataConfidence` (`confirmed` / `derived` / `placeholder`) lives on the data itself, and the UI renders a visible note wherever a placeholder appears — a visitor is never shown an invented fact as if it were official.
 - **Zero-Credential by Default.** The app builds and runs with no `.env` file at all. The only optional key is a single Google Maps API key for walking directions; without it, the Directions screen shows a clear "not configured yet" message instead of a crash or a fake route.

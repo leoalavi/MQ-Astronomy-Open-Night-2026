@@ -137,21 +137,47 @@ screen all require a secure context. Redirect HTTP → HTTPS at the host.
 
 ## Offline / PWA
 
-Flutter's web build emits a service worker (`flutter_service_worker.js`) and the
-app is installable via `manifest.json`.
+> **Web is online-first, not offline-first.** Flutter 3.44 has **deprecated its
+> service worker**: the emitted `flutter_service_worker.js` is a stub that
+> **unregisters itself** on activation and precaches nothing. So the web build
+> has **no service-worker offline cache**. (The *native* iOS/Android apps remain
+> offline-first — their assets are bundled into the app.)
 
-**Works offline once the app has loaded** (all bundled, no network):
-- App shell, programme, My Night, Passport (manual codes), Info, campus basemap,
-  and the 360° venue tours — every panorama image is bundled.
-- My Night, Passport stamps, favourites and settings persist in the browser
-  (localStorage) across refresh and reopen.
+What this means in practice:
 
-**Requires a connection:**
-- Google Maps embedded map and walking directions (by design — the request goes
-  to Google, and only after the visitor agrees).
+- **No forced bulk download.** Because nothing is precached, installing/opening
+  the web app does **not** download the ~56 MB panorama library. A 360° tour's
+  images are fetched only when that tour is opened. First load is the app shell
+  (`main.dart.js` ≈ 4.3 MB + CanvasKit), not the whole 101 MB bundle.
+- **Best-effort caching only.** Repeat visits reuse the browser's HTTP cache,
+  but there is no guaranteed offline mode on the night. Treat web as needing a
+  connection; point attendees who want reliable offline use to the native app.
+- **What persists locally:** My Night, Passport stamps, favourites and settings
+  are in `localStorage` and survive refresh/reopen (not cleared by cache).
+- **Requires a connection:** the Google Maps embedded map and walking directions
+  (by design — only after consent); **CanvasKit** (loaded from `gstatic.com`
+  unless built with `--no-web-resources-cdn`); and **Persian glyphs** (Noto
+  fonts fetched from `fonts.gstatic.com` — see `## Web fonts` note below).
 
 Installation is **not** forced — the primary experience is a normal browser tab.
-The manifest simply lets a visitor add it to the home screen if they want.
+The manifest lets a visitor add it to the home screen, but without a functional
+service worker an installed instance still needs the network.
+
+## Web fonts and CanvasKit (external requests)
+
+Two Google (`gstatic.com`) requests happen on the web build regardless of Maps
+consent, and both should be closed before a privacy-sensitive public release:
+
+1. **CanvasKit** loads from `https://www.gstatic.com/flutter-canvaskit/…` by
+   default. Build with **`--no-web-resources-cdn`** to serve the copy already in
+   `build/web/canvaskit/` locally instead.
+2. **Persian text** has **no bundled font**; CanvasKit fetches Noto from
+   `fonts.gstatic.com` at runtime, so Persian is **not available offline** and
+   makes an uncovered Google request. Bundle an OFL Persian face (e.g.
+   Vazirmatn) and set it as `fontFamilyFallback` to fix both.
+
+Until (1) and (2) are done, the in-app claim that Google is only involved for
+maps/after consent is **not strictly accurate for the web build**.
 
 ## Analytics
 

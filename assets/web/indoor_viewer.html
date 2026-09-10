@@ -153,6 +153,19 @@
             delete hs.text;
           });
         });
+        // The host and the iframe both trigger the tour (see the ready/load
+        // handshake below), so loadTour normally runs twice. Pannellum builds a
+        // whole viewer per call, so without this the second call stacked a
+        // second WebGL canvas and a second loading box over the first, downloaded
+        // every panorama twice and leaked the first viewer's GL context. Tear the
+        // previous one down and empty the container so the later call wins
+        // cleanly, exactly as the handshake comment promises.
+        if (mqViewer) {
+          try { mqViewer.destroy(); } catch (e) { /* already gone */ }
+          mqViewer = null;
+        }
+        var container = document.getElementById('panorama');
+        while (container.firstChild) container.removeChild(container.firstChild);
         mqViewer = pannellum.viewer('panorama', config);
         mqViewer.on('scenechange', reportSceneChange);
       } catch (e) {

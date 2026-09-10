@@ -53,7 +53,7 @@ clears the path to GO.
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
 | B6 | Redistribution permission — three University asset sets settled by the owner's attestation (2026-09-05); the **Home hero photograph** ships on its existing credit by the owner's explicit decision, with the residual 5.2 risk accepted | Asset rights | Owner (decided) | `CLOSED — OWNER DECISION (accepted risk)` |
-| B7 | **Support URL found** (`event.mq.edu.au/astronomy-open-night/`, verified live 2026-09-05); the in-app policy surface exists offline; the **Privacy Policy URL is still unhosted** — and MQ's own institutional policy cannot substitute | Store publishing / privacy | Organisers / product | `OPEN` — Privacy Policy URL only |
+| B7 | **Support URL found** (`event.mq.edu.au/astronomy-open-night/`, verified live 2026-09-05); the in-app policy surface exists offline; the Privacy Policy page is now built and parity-checked for `https://aon.syllabus-sync.app/privacy` but **is not deployed yet** | Store publishing / privacy | Organisers / product | `RESOLVED — AWAITING VERIFICATION` — needs a live fetch of the hosted URL |
 
 ---
 
@@ -384,6 +384,22 @@ clears the path to GO.
   seam that opens external links. **Conditions 2 and 6 are met; the blocker stays
   `OPEN` on the hosted URLs and the store-metadata fields (1, 3, 4, 5, 7–10),
   which only the organisers can provide.**
+- **Hosting resolved in build, not yet in production (2026-09-10).** The policy,
+  support and terms pages are generated from one reviewed source and served by a
+  dedicated Worker at `aon.syllabus-sync.app`. `scripts/export-aon-pages.mjs` (in
+  the information-site repository) refuses to export unless the English in-app
+  `settingsPrivacyPolicyBody` matches the hosted text character for character, so
+  the in-app and hosted policies cannot drift. `tests/aon/app.spec.ts` fetches all
+  three pages in Chromium, Firefox and WebKit, checks the policy renders with
+  JavaScript disabled, and checks the Persian section is present.
+  `docs/release/android-privacy-policy.html` is now a copy of the exported page,
+  produced by the build rather than by hand.
+- **What is still missing for `CLOSED — VERIFIED`.** Nothing is deployed. The
+  evidence rule needs a live HTTPS fetch of `https://aon.syllabus-sync.app/privacy`
+  and `/support`, and the URLs entered in App Store Connect and Play Console.
+  Until then this stays `RESOLVED — AWAITING VERIFICATION` and must not be read
+  as a GO.
+
 - **Verified 2026 store requirements.**
   - Apple requires a **Privacy Policy URL for all apps**.
   - Apple's App Review Guidelines require the privacy policy to also be

@@ -4,6 +4,38 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 
 void main() {
+  test('the web policy screen text carries the third-party disclosures', () async {
+    // PrivacyScreen renders the webPrivacy* strings, not settingsPrivacyPolicyBody,
+    // so these need their own check.
+    for (final locale in AonL10n.supportedLocales) {
+      final l = await AonL10n.delegate.load(locale);
+      expect(l.webPrivacyCameraBody, contains('ML Kit'));
+      expect(l.webPrivacyMapsBody, contains('policies.google.com/privacy'));
+      expect(l.webPrivacyScope.trim(), isNotEmpty);
+    }
+  });
+
+  test('English and Persian policies stay structurally parallel', () async {
+    // A Persian edit that drops or adds a paragraph would ship a policy that
+    // says different things in each language, and nothing else checks this.
+    final en =
+        (await AonL10n.delegate.load(const Locale('en'))).settingsPrivacyPolicyBody;
+    final fa =
+        (await AonL10n.delegate.load(const Locale('fa'))).settingsPrivacyPolicyBody;
+    final enParas = en.split('\n\n');
+    final faParas = fa.split('\n\n');
+    expect(faParas.length, enParas.length,
+        reason: 'the Persian policy has a different number of paragraphs than '
+            'the English one, so one language is saying more than the other');
+    for (var i = 0; i < enParas.length; i++) {
+      expect(enParas[i].trim(), isNotEmpty, reason: 'English paragraph $i is blank');
+      expect(faParas[i].trim(), isNotEmpty, reason: 'Persian paragraph $i is blank');
+    }
+    // The contact address is language-independent and must survive translation.
+    expect(fa, contains('leo@leoalavi.dev'));
+    expect(en, contains('leo@leoalavi.dev'));
+  });
+
   test('the English privacy copy does not deny what the app now does', () async {
     final en = await AonL10n.delegate.load(const Locale('en'));
     final body = en.settingsPrivacyBody.toLowerCase();

@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
@@ -18,6 +20,11 @@ import 'package:aon2026/widgets/panorama_web_view.dart';
 /// or tour-less `venueId` (incl. a hostile deep link) yields the unavailable
 /// state, never an arbitrary asset read. Missing/empty/errored manifests do the
 /// same. There is always a back affordance so the user is never trapped.
+/// Passes taps through the web 360° `<iframe>` to the Flutter control on top.
+/// No-op on native.
+Widget _maybeIntercept(Widget child) =>
+    kIsWeb ? PointerInterceptor(child: child) : child;
+
 class PanoramaScreen extends ConsumerWidget {
   const PanoramaScreen({super.key, required this.venueId});
 
@@ -59,7 +66,10 @@ class PanoramaScreen extends ConsumerWidget {
           Positioned(
             top: MediaQuery.paddingOf(context).top + AonSpacing.space3,
             left: AonSpacing.space4,
-            child: GlassSurface(
+            // On web the 360° viewer is an <iframe> platform view that would
+            // otherwise swallow this button's taps; PointerInterceptor lets
+            // them through. No-op wrap on native (gated on kIsWeb).
+            child: _maybeIntercept(GlassSurface(
               variant: GlassVariant.control,
               allowShader: false,
               borderRadius: BorderRadius.circular(AonSpacing.radiusFull),
@@ -70,7 +80,7 @@ class PanoramaScreen extends ConsumerWidget {
                     color: context.aon.contentPrimary),
                 onPressed: () => context.pop(),
               ),
-            ),
+            )),
           ),
         ],
       ),

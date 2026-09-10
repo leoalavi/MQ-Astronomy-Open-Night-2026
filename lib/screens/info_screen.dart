@@ -4,6 +4,8 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
+import 'package:aon2026/config/app_identity.dart';
+import 'package:aon2026/services/url_opener.dart';
 import 'package:aon2026/utils/bidi.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:aon2026/data/event_info.dart';
@@ -179,6 +181,44 @@ class InfoScreen extends ConsumerWidget {
             icon: Icons.cloud_rounded,
             title: l.infoCloudTitle,
             body: l.infoCloudBody,
+          ),
+
+          // ── Official event information & support ──
+          //
+          // The single authoritative source for times, tickets and updates is
+          // Macquarie University's own event site. Support/contact routes here
+          // too — the app carries no personal or university-impersonating
+          // address of its own.
+          SectionHeader(
+            title: l.infoRegistrationAndInfo,
+            icon: Icons.public_rounded,
+            iconColor: context.aon.mapFacility,
+          ),
+          Card(
+            child: ListTile(
+              key: const Key('info-official-website'),
+              leading: Icon(Icons.open_in_new_rounded, color: context.aon.accent),
+              title: Text(l.infoOfficialWebsite),
+              subtitle: Text(l.infoOfficialWebsiteSubtitle),
+              onTap: () async {
+                final opener = ref.read(urlOpenerProvider);
+                await opener(Uri.parse(AppIdentity.eventWebsiteUrl));
+              },
+            ),
+          ),
+
+          // Footer credit. Names the two developers only — never the event
+          // owner and never a company/brand. This is an independent project; it
+          // must not present itself as an official University product.
+          const SizedBox(height: AonSpacing.space6),
+          Center(
+            child: Text(
+              l.commonDevelopedByFooter(Bidi.isolate(AppIdentity.developers)),
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.aon.contentTertiary,
+              ),
+            ),
           ),
         ],
       ),

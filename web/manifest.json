@@ -1,11 +1,20 @@
 {
     "name": "Astronomy Open Night 2026",
     "short_name": "Astronomy Open Night",
-    "start_url": ".",
+    "id": "/",
+    "start_url": "/",
+    "scope": "/",
+    "lang": "en",
+    "dir": "auto",
     "display": "standalone",
     "background_color": "#05070F",
     "theme_color": "#05070F",
-    "description": "Event discovery and night-time campus wayfinding for Astronomy Open Night 2026.",
+    "description": "Event companion for Astronomy Open Night 2026 — programme, campus map, Astronomy Passport and your saved plan. Saturday 19 September 2026, 4pm–10pm, Macquarie University.",
+    "categories": [
+        "education",
+        "events",
+        "navigation"
+    ],
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

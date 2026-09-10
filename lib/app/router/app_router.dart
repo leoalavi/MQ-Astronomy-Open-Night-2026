@@ -15,6 +15,7 @@ import 'package:aon2026/screens/google_nav_screen.dart';
 import 'package:aon2026/screens/passport_reward_screen.dart';
 import 'package:aon2026/screens/passport_scan_screen.dart';
 import 'package:aon2026/screens/passport_screen.dart';
+import 'package:aon2026/screens/privacy_screen.dart';
 import 'package:aon2026/widgets/app_shell.dart';
 
 /// Route paths, in one place so nothing hard-codes a string literal.
@@ -40,6 +41,11 @@ abstract final class Routes {
   static String eventDetail = '/event/:id';
   static String wayfinding = '/wayfinding';
   static String settings = '/settings';
+
+  /// Standalone Privacy page. On web this is the canonical, shareable
+  /// `…/astronomy-open-night/privacy` address; it is a full-screen route above
+  /// the shell so a deep link or refresh lands straight on it.
+  static String privacy = '/privacy';
 
   /// Astronomy Passport (Phase 6). Builders are registered in the tasks that
   /// create each screen, so no builder imports a screen before it exists.
@@ -196,6 +202,11 @@ GoRouter buildRouter() {
         parentNavigatorKey: rootNavigatorKey,
         path: Routes.passport,
         builder: (context, state) => const PassportScreen(),
+      ),
+      GoRoute(
+        parentNavigatorKey: rootNavigatorKey,
+        path: Routes.privacy,
+        builder: (context, state) => const PrivacyScreen(),
       ),
     ],
   );

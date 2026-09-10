@@ -15,6 +15,11 @@ dependencies:
     sdk: flutter
   flutter_localizations:
     sdk: flutter
+  # Web-only, from the SDK: lib/app/url_strategy_web.dart calls
+  # usePathUrlStrategy() so web routes are clean paths, not hash fragments.
+  # Pulled in only by the web conditional import; native never links it.
+  flutter_web_plugins:
+    sdk: flutter
 
   # State management — mirrors the MQ Journey stack so the team keeps one
   # mental model across both products.
@@ -50,6 +55,12 @@ dependencies:
   web: ^1.0.0
   http: ^1.6.0
   url_launcher: ^6.3.2
+  # Web-only need: the 360° tour is an <iframe> (a web platform view), which
+  # swallows pointer events for the Flutter controls floated over it (scene
+  # rail, title, back button). PointerInterceptor lets those taps through. On
+  # iOS/Android/desktop its implementation is a passthrough, so native is
+  # unaffected. Maintained under flutter/packages.
+  pointer_interceptor: ^0.10.1
 
 
 dev_dependencies:

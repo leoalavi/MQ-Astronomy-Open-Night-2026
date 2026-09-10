@@ -1,4 +1,6 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
+import 'package:pointer_interceptor/pointer_interceptor.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
@@ -6,6 +8,7 @@ import 'package:aon2026/models/indoor_manifest.dart';
 import 'package:aon2026/widgets/glass_surface.dart';
 import 'package:aon2026/widgets/panorama_scene_rail.dart';
 import 'package:aon2026/widgets/panorama_web_view.dart';
+import 'package:aon2026/widgets/panorama_web_viewer.dart';
 
 /// Builds the panorama viewer. Injectable so the scene-state orchestration can
 /// be tested without a real platform WebView (default = [PanoramaWebView]).
@@ -19,13 +22,29 @@ Widget _defaultViewerBuilder({
   required IndoorManifest manifest,
   required String? sceneId,
   required ValueChanged<String> onSceneChanged,
-}) =>
-    PanoramaWebView(
-      manifest: manifest,
-      firstSceneId: sceneId,
-      sceneId: sceneId,
-      onSceneChanged: onSceneChanged,
+}) {
+  // Web hosts the same bundled Pannellum tour in a same-origin iframe (no local
+  // server, no flutter_inappwebview). Native keeps the server-backed webview.
+  // The `reduceMotion` flag can only be read from a BuildContext, so it is
+  // resolved inside the web viewer's own build via the ambient MediaQuery there;
+  // here we pass what both paths share.
+  if (kIsWeb) {
+    return Builder(
+      builder: (context) => buildPanoramaWebViewer(
+        manifest: manifest,
+        sceneId: sceneId,
+        onSceneChanged: onSceneChanged,
+        reduceMotion: MediaQuery.disableAnimationsOf(context),
+      ),
     );
+  }
+  return PanoramaWebView(
+    manifest: manifest,
+    firstSceneId: sceneId,
+    sceneId: sceneId,
+    onSceneChanged: onSceneChanged,
+  );
+}
 
 /// The immersive tour: viewer (full-bleed) + a glass title island + the scene
 /// rail. Owns the selected-scene state and keeps the rail and viewer in sync
@@ -66,6 +85,14 @@ class _PanoramaTourViewState extends State<PanoramaTourView> {
     if (id != _selected) setState(() => _selected = id);
   }
 
+  /// On web the viewer is an `<iframe>` platform view that captures pointer
+  /// events for anything painted over it, so the floated controls would be
+  /// dead to touch. [PointerInterceptor] restores their taps. It is a no-op
+  /// wrap on native, but gating on `kIsWeb` keeps the mobile widget tree — and
+  /// its golden/widget tests — byte-for-byte unchanged.
+  Widget _overlay(Widget child) =>
+      kIsWeb ? PointerInterceptor(child: child) : child;
+
   @override
   Widget build(BuildContext context) {
     final build = widget.viewerBuilder ?? _defaultViewerBuilder;
@@ -82,7 +109,7 @@ class _PanoramaTourViewState extends State<PanoramaTourView> {
             top: MediaQuery.paddingOf(context).top + AonSpacing.space3,
             left: AonSpacing.space4,
             right: AonSpacing.space4,
-            child: GlassSurface(
+            child: _overlay(GlassSurface(
               variant: GlassVariant.control,
               allowShader: false,
               padding: EdgeInsetsDirectional.only(
@@ -98,17 +125,17 @@ class _PanoramaTourViewState extends State<PanoramaTourView> {
                     .titleMedium
                     ?.copyWith(color: context.aon.contentPrimary),
               ),
-            ),
+            )),
           ),
         Positioned(
           left: AonSpacing.space4,
           right: AonSpacing.space4,
           bottom: MediaQuery.paddingOf(context).bottom + AonSpacing.space4,
-          child: PanoramaSceneRail(
+          child: _overlay(PanoramaSceneRail(
             manifest: widget.manifest,
             selectedSceneId: _selected,
             onSceneSelected: _select, // rail tap → viewer
-          ),
+          )),
         ),
       ],
     );

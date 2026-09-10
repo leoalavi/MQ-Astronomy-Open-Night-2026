@@ -1,8 +1,11 @@
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
+import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/text_scale.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
@@ -616,6 +619,13 @@ class _PrivacyPolicyCard extends ConsumerWidget {
           vertical: AonSpacing.space1,
         ),
         onTap: () async {
+          // Web has a real, shareable privacy page at /privacy — open it in the
+          // app rather than a dialog, so its URL can be linked and refreshed.
+          // Native keeps the inline dialog (its copy is Play/Android-specific).
+          if (kIsWeb) {
+            await context.push(Routes.privacy);
+            return;
+          }
           final policyUrl = url;
           if (policyUrl == null) {
             await showDialog<void>(

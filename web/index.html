@@ -1,28 +1,51 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <!--
-    If you are serving your web app in a path other than the root, change the
-    href value below to reflect the base path you are serving from.
+    Base href. Flutter replaces $FLUTTER_BASE_HREF with the value of the
+    `--base-href` argument at build time. This app is served at the ROOT of its
+    own host, https://aon.syllabus-sync.app/ (a dedicated subdomain used purely
+    as hosting infrastructure). Build with:
 
-    The path provided below has to start and end with a slash "/" in order for
-    it to work correctly.
+      flutter build web --release --dart-define-from-file=.env.web \
+        --base-href /
 
-    For more details:
-    * https://developer.mozilla.org/en-US/docs/Web/HTML/Element/base
-
-    This is a placeholder for base href that will be replaced by the value of
-    the `--base-href` argument provided to `flutter build`.
+    Nothing here hard-codes the path, so the same source serves any mount point.
   -->
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="Event discovery and night-time campus wayfinding for Astronomy Open Night 2026.">
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="description"
+        content="Astronomy Open Night 2026 — the event companion for Saturday 19 September 2026, 4pm–10pm at Macquarie University. Programme, campus map, Astronomy Passport and your saved plan, right in your browser.">
+  <meta name="theme-color" content="#05070F">
+
+  <!-- Canonical URL. Astronomy Open Night is an independent project; the
+       aon.syllabus-sync.app subdomain is used purely as hosting infrastructure
+       and implies no ownership or affiliation. -->
+  <link rel="canonical" href="https://aon.syllabus-sync.app/">
+
+  <!-- Open Graph / social preview. The share image is the app's OWN icon — a
+       rights-safe asset. No third-party or event imagery is used. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Astronomy Open Night 2026">
+  <meta property="og:title" content="Astronomy Open Night 2026">
+  <meta property="og:description"
+        content="Programme, campus map, Astronomy Passport and your saved plan for Astronomy Open Night — Saturday 19 September 2026, 4pm–10pm, Macquarie University.">
+  <meta property="og:url" content="https://aon.syllabus-sync.app/">
+  <meta property="og:image" content="icons/Icon-512.png">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Astronomy Open Night 2026">
+  <meta name="twitter:description"
+        content="The event companion for Astronomy Open Night — Saturday 19 September 2026, Macquarie University.">
+  <meta name="twitter:image" content="icons/Icon-512.png">
 
   <!-- iOS meta tags & icons -->
   <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Astronomy Open Night">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
@@ -53,16 +76,41 @@
     production web key MUST carry an HTTP-referrer restriction. See
     docs/google-maps-setup.md.
   -->
+
+  <style>
+    /* Themed pre-load state, shown only until Flutter paints. Dark to match the
+       app's night theme, so there is no white flash before the bundle boots.
+       Flutter clears <body> on start, removing this automatically. */
+    html, body { margin: 0; padding: 0; background-color: #05070F; }
+    #boot {
+      position: fixed; inset: 0; display: flex; align-items: center;
+      justify-content: center; flex-direction: column;
+      font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      color: #B9C0D4;
+    }
+    #boot .spinner {
+      width: 34px; height: 34px; border-radius: 50%;
+      border: 3px solid rgba(255, 185, 69, 0.25);
+      border-top-color: #FFB945; /* app accent */
+      animation: boot-spin 0.9s linear infinite;
+    }
+    #boot .label { margin-top: 14px; font-size: 14px; letter-spacing: 0.2px; }
+    @keyframes boot-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      #boot .spinner { animation: none; }
+    }
+  </style>
 </head>
 <body>
-  <!--
-    You can customize the "flutter_bootstrap.js" script.
-    This is useful to provide a custom configuration to the Flutter loader
-    or to give the user feedback during the initialization process.
-
-    For more details:
-    * https://docs.flutter.dev/platform-integration/web/initialization
-  -->
+  <div id="boot" aria-hidden="true">
+    <div class="spinner"></div>
+    <div class="label">Astronomy Open Night 2026</div>
+  </div>
+  <noscript>
+    <div style="color:#B9C0D4;font-family:sans-serif;padding:24px;text-align:center">
+      This app needs JavaScript. Please enable it, or install the mobile app.
+    </div>
+  </noscript>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

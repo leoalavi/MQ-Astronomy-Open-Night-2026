@@ -2550,6 +2550,150 @@ abstract class AonL10n {
   /// In en, this message translates to:
   /// **'Astronomy Open Night is published on Google Play by Leo Alavi, an independent developer. Privacy contact: leo@leoalavi.dev. Last updated: 5 September 2026.\n\nThere is no account, sign-in, advertising or developer-operated analytics service. Passport stamps, favourites, your saved plan and preferences are stored locally. Android may include local data in system backups or device transfers according to your device settings.\n\nLocation is optional. It is processed on your device for the campus map and compass. When you request walking directions and agree to Google Maps, the route origin (which may be your precise or approximate location) and destination are sent to Google over HTTPS.\n\nGoogle Maps also receives map requests, IP address, device and app information, an SDK-specific identifier, crash diagnostics and map interactions to provide and improve its services. No Google map is loaded until you agree; you can revoke that choice in Settings.\n\nOn Android, the QR scanner uses Google ML Kit. Camera images are processed on your device and are not saved or uploaded by the app. ML Kit reports device/app information, installation identifiers, performance and usage diagnostics to Google over HTTPS. You can enter the printed station code instead of using the camera.\n\nSaved stamps, favourites and plans remain until you delete them. Settings → Delete my data clears these items and Google Maps consent; language and appearance preferences are retained. This does not delete data already received by Google or copies held in system backups. Google controls retention and deletion of its service data under its privacy policy, available in the Google Maps privacy section below.\n\nWe do not operate a server holding your saved plan or stamps. Local storage uses Android\'s app sandbox; this does not promise absolute security. Contact the address above with privacy questions. This policy covers all visitors.'**
   String get settingsPrivacyPolicyBody;
+
+  /// No description provided for @webPrivacyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get webPrivacyTitle;
+
+  /// No description provided for @webPrivacyLastUpdated.
+  ///
+  /// In en, this message translates to:
+  /// **'Last updated: {date}'**
+  String webPrivacyLastUpdated(String date);
+
+  /// No description provided for @webPrivacyIntro.
+  ///
+  /// In en, this message translates to:
+  /// **'This is the privacy notice for the Astronomy Open Night 2026 web app. The app has no account and no sign-in, and it runs entirely in your browser. It is an event companion application developed by {developer} for {forTeam}. Official event information and support are provided through the official event website.'**
+  String webPrivacyIntro(String developer, String forTeam);
+
+  /// No description provided for @webPrivacyStorageHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'What the app stores in your browser'**
+  String get webPrivacyStorageHeading;
+
+  /// No description provided for @webPrivacyStorageBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Your saved plan (My Night), collected Astronomy Passport stamps, favourite places, your language and theme choice, and whether you agreed to load Google Maps are stored locally in your browser. This information stays in your browser on this device — we have no server and cannot see it. Clearing this site\'s data in your browser, or using Delete my data in Settings, removes it.'**
+  String get webPrivacyStorageBody;
+
+  /// No description provided for @webPrivacyLocationHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get webPrivacyLocationHeading;
+
+  /// No description provided for @webPrivacyLocationBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The campus map works without location. If you allow it, your browser shares your position with the page so it can show where you are on the map. It is used only in the page, is not sent to us and is not stored. If you deny location, the map still works.'**
+  String get webPrivacyLocationBody;
+
+  /// No description provided for @webPrivacyCameraHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Camera and QR codes'**
+  String get webPrivacyCameraHeading;
+
+  /// No description provided for @webPrivacyCameraBody.
+  ///
+  /// In en, this message translates to:
+  /// **'On the web app the Astronomy Passport uses manual code entry: you type the short code printed on each venue\'s sign. The web app does not open your camera and does not upload any images.'**
+  String get webPrivacyCameraBody;
+
+  /// No description provided for @webPrivacyMapsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Google Maps and walking directions'**
+  String get webPrivacyMapsHeading;
+
+  /// No description provided for @webPrivacyMapsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The campus map is an image built into the app and needs no connection. If you choose to load a Google map or ask for walking directions, Google receives that request — including the start and end points of the route (the start may be your precise or approximate location), your IP address, and device and browser information — under its own privacy policy (https://policies.google.com/privacy). No Google map is loaded and no request is sent until you agree, and you can change that choice in Settings.'**
+  String get webPrivacyMapsBody;
+
+  /// No description provided for @webPrivacyAnalyticsHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'No tracking'**
+  String get webPrivacyAnalyticsHeading;
+
+  /// No description provided for @webPrivacyAnalyticsBody.
+  ///
+  /// In en, this message translates to:
+  /// **'The app contains no analytics, advertising, tracking pixels or third-party trackers, and sets no cookies to identify you. The only third party involved is Google, only for the maps and directions described above, and only after you agree. We do not sell your personal data.'**
+  String get webPrivacyAnalyticsBody;
+
+  /// No description provided for @webPrivacyRetentionHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeping and deleting your data'**
+  String get webPrivacyRetentionHeading;
+
+  /// No description provided for @webPrivacyRetentionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Because everything is stored only in your browser, it stays until you remove it. Settings → Delete my data clears your saved plan, stamps, favourites and Google Maps consent; your language and appearance preferences are kept. This does not delete data already received by Google.'**
+  String get webPrivacyRetentionBody;
+
+  /// No description provided for @webPrivacyContactHeading.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact and support'**
+  String get webPrivacyContactHeading;
+
+  /// No description provided for @webPrivacyContactBody.
+  ///
+  /// In en, this message translates to:
+  /// **'For help or privacy questions, use the support and contact details on the official Astronomy Open Night event website.'**
+  String get webPrivacyContactBody;
+
+  /// No description provided for @webPrivacyCredit.
+  ///
+  /// In en, this message translates to:
+  /// **'Developed by {developer} for {forTeam}. Official event information and support: the official event website.'**
+  String webPrivacyCredit(String developer, String forTeam);
+
+  /// No description provided for @infoOfficialWebsite.
+  ///
+  /// In en, this message translates to:
+  /// **'Official event website'**
+  String get infoOfficialWebsite;
+
+  /// No description provided for @infoOfficialWebsiteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Times, tickets and updates from the official event website'**
+  String get infoOfficialWebsiteSubtitle;
+
+  /// No description provided for @commonDevelopedByFooter.
+  ///
+  /// In en, this message translates to:
+  /// **'Built by {developer}'**
+  String commonDevelopedByFooter(String developer);
+
+  /// No description provided for @webPrivacyPageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Astronomy Open Night 2026 — Privacy Policy'**
+  String get webPrivacyPageTitle;
+
+  /// No description provided for @webPrivacyScope.
+  ///
+  /// In en, this message translates to:
+  /// **'This policy applies specifically to the Astronomy Open Night 2026 app. It does not apply to any other website or application.'**
+  String get webPrivacyScope;
+
+  /// No description provided for @webPrivacyPublishedLinkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Read the published Privacy Policy'**
+  String get webPrivacyPublishedLinkLabel;
 }
 
 class _AonL10nDelegate extends LocalizationsDelegate<AonL10n> {

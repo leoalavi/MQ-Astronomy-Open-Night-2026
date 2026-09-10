@@ -58,6 +58,7 @@ macos/build/
 .env
 .env.*
 !.env.example
+!.env.web.example
 
 # Firebase / Google service configs
 google-services.json

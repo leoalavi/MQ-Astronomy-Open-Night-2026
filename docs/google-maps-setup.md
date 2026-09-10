@@ -269,7 +269,36 @@ required for the web build.
 
 **API restrictions** (what the key may call): restrict each key to only the APIs
 it needs — Android key → Maps SDK for Android + Routes API; iOS key → Maps SDK
-for iOS + Routes API; web key → Maps JavaScript API.
+for iOS + Routes API; web key → Maps JavaScript API **+ Routes API** (web calls
+the Routes API directly for walking directions, so both are required).
+
+### HTTP-referrer patterns for the web build
+
+The web key's *Application restriction* → **HTTP referrers** must list every
+origin the app is served from. The app runs at the root of its own subdomain,
+`https://aon.syllabus-sync.app/`.
+
+**Production referrers:**
+
+```
+https://aon.syllabus-sync.app/*
+https://aon.syllabus-sync.app/
+```
+
+The `/*` pattern is what Google matches on (referrer patterns match the **page
+origin**). Do **not** add `info.syllabus-sync.app/*`, `syllabus-sync.app/*` or
+`sylla.syllabus-sync.app/*` — the app is not served from those origins. And do
+**not** use `syllabussync.app/*` (wrong domain — the real one has a hyphen).
+
+**Development only** (keep on a *separate* dev key, never the production key):
+
+```
+http://localhost:*
+http://127.0.0.1:*
+```
+
+Never reuse the Android package or iOS bundle restriction for web — application
+restrictions are mutually exclusive, so the web key is its own key.
 
 ## Key rotation
 

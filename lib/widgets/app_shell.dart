@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
@@ -92,59 +93,152 @@ class AppShell extends ConsumerWidget {
       ref.read(mapVisibleProvider.notifier).set(onMap);
     });
 
-    return Scaffold(
-      // The body runs behind the floating island so the glass has live content
-      // to refract.
-      extendBody: true,
-      body: Column(
-        children: [
-          // Visible on every tab while the clock is simulated. Without it, a
-          // phone left in preview mode shows a confidently wrong programme
-          // with no explanation.
-          const EventTimePreviewBanner(),
-          Expanded(
-            // The banner already consumes the status-bar inset via its own
-            // SafeArea. Without removing the top padding here, every tab's
-            // AppBar applies that same inset a second time, opening a ~50pt
-            // empty band between the banner and the screen title.
-            child: previewing
-                ? MediaQuery.removePadding(
-                    context: context,
-                    removeTop: true,
-                    child: navigationShell,
-                  )
-                : navigationShell,
+    // One selection handler for both navigation surfaces (island + rail), so a
+    // tap behaves identically whichever layout is on screen.
+    void select(int index) {
+      // Fire-and-forget haptic; `unawaited` makes the intent explicit
+      // and is future-proof if this callback ever becomes async.
+      unawaited(AonHaptics.selection(true));
+      // Tapping the active tab returns it to its root — the
+      // platform-standard behaviour on both iOS and Android.
+      navigationShell.goBranch(
+        index,
+        initialLocation: index == navigationShell.currentIndex,
+      );
+    }
+
+    // The tab content, shared by the phone (island) and wide (rail) layouts.
+    final content = Column(
+      children: [
+        // Visible on every tab while the clock is simulated. Without it, a
+        // phone left in preview mode shows a confidently wrong programme
+        // with no explanation.
+        const EventTimePreviewBanner(),
+        Expanded(
+          // The banner already consumes the status-bar inset via its own
+          // SafeArea. Without removing the top padding here, every tab's
+          // AppBar applies that same inset a second time, opening a ~50pt
+          // empty band between the banner and the screen title.
+          child: previewing
+              ? MediaQuery.removePadding(
+                  context: context,
+                  removeTop: true,
+                  child: navigationShell,
+                )
+              : navigationShell,
+        ),
+      ],
+    );
+
+    // Responsive navigation. Phones keep the signature floating Liquid Glass
+    // island (the brand's nav). On the **web**, a wide viewport (tablet/desktop
+    // browser) gets a NavigationRail instead — same six branches, same indices,
+    // same handler: one IA rendered two ways, not a second navigation model.
+    // The rail is gated on `kIsWeb` so the native app is byte-for-byte
+    // unchanged (a native tablet keeps the island exactly as it shipped).
+    // `840` is Material's compact→expanded breakpoint.
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final wide = kIsWeb && constraints.maxWidth >= 840;
+        if (wide) {
+          return Scaffold(
+            body: SafeArea(
+              child: Row(
+                // Rail as the first child: `Row` honours the ambient text
+                // direction, so it sits on the left in LTR and automatically on
+                // the right in Persian/RTL — the conventional side each way.
+                children: [
+                  _AonNavigationRail(
+                    items: items,
+                    currentIndex: navigationShell.currentIndex,
+                    onSelected: select,
+                  ),
+                  Expanded(child: content),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Scaffold(
+          // The body runs behind the floating island so the glass has live
+          // content to refract.
+          extendBody: true,
+          body: content,
+          bottomNavigationBar: SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+              child: GlassSurface(
+                variant: GlassVariant.control,
+                borderRadius: BorderRadius.circular(
+                  AonNavMetrics.resolvedBarHeight(context) / 2,
+                ),
+                child: LiquidTabBar(
+                  height: AonNavMetrics.resolvedBarHeight(context),
+                  currentIndex: navigationShell.currentIndex,
+                  color: context.aon.contentSecondary,
+                  selectedColor: context.aon.accent,
+                  accent: context.aon.accent,
+                  items: items,
+                  onSelected: select,
+                ),
+              ),
+            ),
           ),
-        ],
-      ),
-      bottomNavigationBar: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-          child: GlassSurface(
-            variant: GlassVariant.control,
-            borderRadius: BorderRadius.circular(
-              AonNavMetrics.resolvedBarHeight(context) / 2,
+        );
+      },
+    );
+  }
+}
+
+/// The wide-screen side navigation. A themed [NavigationRail] that reuses the
+/// same [LiquidNavItem] list the island uses, so the two surfaces can never
+/// drift out of sync. Labels are always shown — a rail with room for them
+/// should use it, and it keeps the desktop nav readable and accessible.
+class _AonNavigationRail extends StatelessWidget {
+  const _AonNavigationRail({
+    required this.items,
+    required this.currentIndex,
+    required this.onSelected,
+  });
+
+  final List<LiquidNavItem> items;
+  final int currentIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    final aon = context.aon;
+    return SingleChildScrollView(
+      // A short window (or 200% text) must never clip a destination: the rail
+      // scrolls rather than overflowing. IntrinsicHeight lets the rail fill the
+      // viewport when there is room, so its own background covers the column.
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minHeight: MediaQuery.sizeOf(context).height),
+        child: IntrinsicHeight(
+          child: NavigationRail(
+            backgroundColor: aon.surfaceRaised,
+            selectedIndex: currentIndex,
+            onDestinationSelected: onSelected,
+            labelType: NavigationRailLabelType.all,
+            groupAlignment: -0.85,
+            indicatorColor: aon.accent.withValues(alpha: 0.16),
+            selectedIconTheme: IconThemeData(color: aon.accent),
+            unselectedIconTheme: IconThemeData(color: aon.contentSecondary),
+            selectedLabelTextStyle: TextStyle(
+              color: aon.accent,
+              fontWeight: FontWeight.w600,
             ),
-            child: LiquidTabBar(
-              height: AonNavMetrics.resolvedBarHeight(context),
-              currentIndex: navigationShell.currentIndex,
-              color: context.aon.contentSecondary,
-              selectedColor: context.aon.accent,
-              accent: context.aon.accent,
-              items: items,
-              onSelected: (index) {
-                // Fire-and-forget haptic; `unawaited` makes the intent explicit
-                // and is future-proof if this callback ever becomes async.
-                unawaited(AonHaptics.selection(true));
-                // Tapping the active tab returns it to its root — the
-                // platform-standard behaviour on both iOS and Android.
-                navigationShell.goBranch(
-                  index,
-                  initialLocation: index == navigationShell.currentIndex,
-                );
-              },
-            ),
+            unselectedLabelTextStyle: TextStyle(color: aon.contentSecondary),
+            destinations: [
+              for (final item in items)
+                NavigationRailDestination(
+                  icon: Icon(item.icon),
+                  selectedIcon: Icon(item.activeIcon),
+                  label: Text(item.label),
+                ),
+            ],
           ),
         ),
       ),

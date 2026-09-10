@@ -115,11 +115,22 @@
     var mqViewer = null;
 
     function reportSceneChange(sceneId) {
+      // Native (iOS/Android) path: flutter_inappwebview's JS bridge.
       if (window.flutter_inappwebview &&
           window.flutter_inappwebview.callHandler) {
         window.flutter_inappwebview.callHandler(
           'indoorSceneChanged',
           sceneId
+        );
+      }
+      // Web path: this viewer is an <iframe> hosted by the Flutter web app,
+      // which has no JS bridge. Report scene changes to the parent instead.
+      // The parent is same-origin (both are served from the app's own origin),
+      // so a scene id is the only thing that ever crosses this boundary.
+      if (window.parent && window.parent !== window) {
+        window.parent.postMessage(
+          { source: 'aon-panorama', type: 'sceneChanged', sceneId: sceneId },
+          window.location.origin
         );
       }
     }
@@ -147,6 +158,33 @@
       } catch (e) {
         console.error('Pannellum load failed:', e);
       }
+    }
+
+    // Web path only. On native, Flutter drives loadTour()/selectScene() through
+    // the webview's privileged JS-injection API; on web there is no such hook,
+    // so the Flutter host posts structured commands in and we call the same
+    // functions here. Passing the config as a message (not eval) is why the web
+    // build does not need CSP 'unsafe-eval'. Only same-origin messages from our
+    // own host are honoured — the config is our own bundled data either way.
+    window.addEventListener('message', function (event) {
+      if (event.origin !== window.location.origin) return;
+      var data = event.data;
+      if (!data || data.source !== 'aon-host') return;
+      if (data.type === 'loadTour') {
+        loadTour(data.config);
+      } else if (data.type === 'selectScene') {
+        selectScene(data.sceneId);
+      }
+    });
+
+    // Tell the host we are ready to receive the tour. The iframe may finish
+    // loading before or after the Flutter widget mounts its listener, so the
+    // host also posts on its own load-stop; whichever happens second wins.
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage(
+        { source: 'aon-panorama', type: 'ready' },
+        window.location.origin
+      );
     }
   </script>
 </body>

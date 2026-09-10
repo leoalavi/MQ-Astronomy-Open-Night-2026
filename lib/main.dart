@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/theme/aon_theme.dart';
+import 'package:aon2026/app/url_strategy.dart';
 import 'package:aon2026/utils/haptics.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
@@ -74,6 +75,11 @@ Future<(MapsConsent, MapsConsentStore)> loadMapsConsent({MapsConsentStore? store
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Web: clean path URLs (…/astronomy-open-night/privacy) instead of hash
+  // routes. No-op on native. The host must rewrite unknown paths to index.html
+  // (see docs/web-deployment.md).
+  configureUrlStrategy();
 
   // Lock to portrait. The app is used one-handed while walking; a rotation
   // mid-stride is never intentional here.

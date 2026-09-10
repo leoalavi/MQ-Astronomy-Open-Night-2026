@@ -206,20 +206,8 @@ class InfoScreen extends ConsumerWidget {
               },
             ),
           ),
-
-          // Footer credit. Names the two developers only — never the event
-          // owner and never a company/brand. This is an independent project; it
-          // must not present itself as an official University product.
-          const SizedBox(height: AonSpacing.space6),
-          Center(
-            child: Text(
-              l.commonDevelopedByFooter(Bidi.isolate(AppIdentity.developers)),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: context.aon.contentTertiary,
-              ),
-            ),
-          ),
+          // No developer credit here on purpose: credits live only on Home and
+          // at the bottom of Settings (enforced by credits_placement_test).
         ],
       ),
     );

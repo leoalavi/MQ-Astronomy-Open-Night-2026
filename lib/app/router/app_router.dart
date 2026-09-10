@@ -208,6 +208,13 @@ GoRouter buildRouter() {
         path: Routes.privacy,
         builder: (context, state) => const PrivacyScreen(),
       ),
+      // `/night` is a friendly alias for the My Night tab (`/my-night`), kept so
+      // a shared `…/night` link resolves rather than 404-ing. Redirect-only, so
+      // the canonical tab URL stays `/my-night`.
+      GoRoute(
+        path: '/night',
+        redirect: (context, state) => Routes.myNight,
+      ),
     ],
   );
 }

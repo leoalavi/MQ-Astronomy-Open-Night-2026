@@ -165,7 +165,7 @@ void main() {
     // and the assertions below were left behind, which is how they came to
     // demand wording the app no longer ships.
     expect(find.textContaining('No account or advertising'), findsOneWidget);
-    expect(find.textContaining('local app or browser storage'), findsOneWidget);
+    expect(find.textContaining('stored locally'), findsOneWidget);
     expect(find.textContaining('ML Kit'), findsOneWidget);
     expect(
         find.textContaining('send the route origin and destination to Google'),

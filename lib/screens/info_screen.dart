@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart' show kIsWeb;
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -207,21 +206,8 @@ class InfoScreen extends ConsumerWidget {
               },
             ),
           ),
-
-          // Web footer only; native credits remain on Home and Settings.
-          // Footer credit. Names the two developers only — never the event
-          // owner and never a company/brand. This is an independent project; it
-          // must not present itself as an official University product.
-          if (kIsWeb)
-          Center(
-            child: Text(
-              l.commonDevelopedByFooter(Bidi.isolate(AppIdentity.developers)),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: context.aon.contentTertiary,
-              ),
-            ),
-          ),
+          // No developer credit here on purpose: credits live only on Home and
+          // at the bottom of Settings (enforced by credits_placement_test).
         ],
       ),
     );

@@ -75,20 +75,34 @@ dev_dependencies:
   plugin_platform_interface: ^2.1.8
 
 flutter:
-  fonts:
-    - family: NotoSansArabic
-      fonts:
-        - asset: assets/fonts/NotoSansArabic.ttf
   uses-material-design: true
   generate: true
 
   shaders:
     - shaders/glass_refraction.frag
   assets:
-    - assets/fonts/OFL.txt
     - assets/images/
     - assets/web/indoor_viewer.html
     - assets/web/pannellum/
     - assets/data/indoor/
     - assets/data/buildings.json
     - assets/maps/
+    # Ship the font licence alongside the app (SIL OFL 1.1 requires it).
+    - assets/fonts/vazirmatn/OFL.txt
+
+  # Vazirmatn (SIL OFL 1.1) is bundled ONLY as a Persian/Arabic fallback face —
+  # it is never the primary family, so Latin/English keeps the platform system
+  # font unchanged. It exists so Persian renders from a bundled font instead of
+  # CanvasKit fetching Noto from fonts.gstatic.com at runtime (offline-capable,
+  # no third-party font request). See lib/app/theme/aon_typography.dart.
+  fonts:
+    - family: Vazirmatn
+      fonts:
+        - asset: assets/fonts/vazirmatn/Vazirmatn-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/vazirmatn/Vazirmatn-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/vazirmatn/Vazirmatn-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/vazirmatn/Vazirmatn-Bold.ttf
+          weight: 700

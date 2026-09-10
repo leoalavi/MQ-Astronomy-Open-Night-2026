@@ -14,6 +14,22 @@
 TestFlight** · Bundle `au.edu.mq.astronomy.aon2026` · Team `94273WB4G3`
 · Availability: **Australia only**
 
+> ## CURRENT STATE (reconciled 2026-09-10) — read this first
+>
+> Several rows below predate the final hosting/identity decisions and are kept
+> for history. The **current** release-facing values are:
+>
+> | Field | Current value |
+> |---|---|
+> | App name | **Astronomy Open Night 2026** |
+> | Developed by | **Leo Alavi and Mohammad Raouf Abedini** |
+> | For | **Astronomy Night – FSE Outreach Team** |
+> | **Privacy Policy URL** | **`https://aon.syllabus-sync.app/privacy`** — LIVE, static, readable HTML (generated from the in-app policy by `tool/privacy/gen_privacy_html.py`; no login; not MQ-hosted). The old `hosted-pages.md` / MQ-hosted plan is **superseded**. |
+> | Privacy contact (in the policy) | **Leo Alavi — `leo@leoalavi.dev`** |
+> | Support URL | **`https://event.mq.edu.au/astronomy-open-night/`** (event support: `astronomyopennight@mq.edu.au`) |
+> | **App Review contact** | ⚠️ **CONFIRM:** row 21 records `leo.alavi.dev@gmail.com` + phone (supplied 2026-09-06); the privacy policy uses `leo@leoalavi.dev`. Decide which Leo wants in the ASC App-Review-contact field. Do **not** use the event mailbox for App Review. |
+> | Copyright | **`© 2026 Astronomy Night – FSE Outreach Team`** (implemented app-wide). **Still requires written owner confirmation** — see the Copyright section (FSE is a university faculty unit). Do not submit `© Macquarie University`. |
+
 The single page to work through in App Store Connect. Every row names its
 evidence or says exactly who has to act. Statuses are the register's vocabulary
 plus the three ASC-specific ones this pass needed.

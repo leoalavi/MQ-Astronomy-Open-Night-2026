@@ -8,8 +8,16 @@ import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:aon2026/services/url_opener.dart';
 import 'package:aon2026/utils/bidi.dart';
 
-/// The same reviewed iOS, Android and web policy used by the offline dialog.
-/// Hosted HTML at the canonical /privacy URL is exported from this policy.
+/// The Astronomy Open Night 2026 **web** privacy page.
+///
+/// Reachable at `/privacy` — under the app's `/astronomy-open-night/` base href
+/// that is `…/astronomy-open-night/privacy`, the canonical hosted address. It
+/// deliberately does NOT reuse the native `settingsPrivacyPolicyBody`, which is
+/// Play/Android-specific (it names Google Play publication, ML Kit and Android
+/// backups). This page describes what the *web* build actually does: browser
+/// localStorage, browser geolocation, manual passport codes (no camera), and
+/// Google Maps only after consent. Every identity string comes from
+/// [AppIdentity] so the publisher/owner framing stays configurable and correct.
 class PrivacyScreen extends ConsumerWidget {
   const PrivacyScreen({super.key});
 
@@ -19,13 +27,18 @@ class PrivacyScreen extends ConsumerWidget {
     final theme = Theme.of(context);
     final aon = context.aon;
 
-    Future<void> openLink(String url) async {
-      final ok = await ref.read(urlOpenerProvider)(Uri.parse(url));
-      if (!context.mounted || ok) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(l.settingsPrivacyPolicyUnavailable)),
-      );
-    }
+    Widget heading(String text) => Padding(
+          padding: const EdgeInsets.only(
+            top: AonSpacing.space6,
+            bottom: AonSpacing.space2,
+          ),
+          // Semantics.header so screen readers announce these as headings and
+          // users can jump between them.
+          child: Semantics(
+            header: true,
+            child: Text(text, style: theme.textTheme.titleMedium),
+          ),
+        );
 
     Widget body(String text) => Text(
           text,
@@ -60,16 +73,40 @@ class PrivacyScreen extends ConsumerWidget {
                       ?.copyWith(color: aon.contentSecondary),
                 ),
                 const SizedBox(height: AonSpacing.space4),
-                body(l.settingsPrivacyPolicyBody),
+                body(l.webPrivacyIntro(
+                  // Developer names are proper nouns — isolate so they stay LTR
+                  // and in order inside the Persian (RTL) paragraph.
+                  Bidi.isolate(AppIdentity.developers),
+                  Bidi.isolate(AppIdentity.forTeam),
+                )),
+                const SizedBox(height: AonSpacing.space3),
+                // Scope: this policy is specific to this app and covers no other
+                // site or application.
+                body(l.webPrivacyScope),
+
+                heading(l.webPrivacyStorageHeading),
+                body(l.webPrivacyStorageBody),
+                heading(l.webPrivacyLocationHeading),
+                body(l.webPrivacyLocationBody),
+                heading(l.webPrivacyCameraHeading),
+                body(l.webPrivacyCameraBody),
+                heading(l.webPrivacyMapsHeading),
+                body(l.webPrivacyMapsBody),
+                heading(l.webPrivacyAnalyticsHeading),
+                body(l.webPrivacyAnalyticsBody),
+                heading(l.webPrivacyRetentionHeading),
+                body(l.webPrivacyRetentionBody),
+                heading(l.webPrivacyContactHeading),
+                body(l.webPrivacyContactBody),
+
                 const SizedBox(height: AonSpacing.space4),
-                // The hosted HTML also exposes clickable third-party policies.
+                // This screen IS the canonical policy (…/privacy on the app's
+                // own host), so it links out only to the official event site.
                 FilledButton.tonalIcon(
-                  onPressed: () => openLink(AppIdentity.canonicalPrivacyUrl),
-                  icon: const Icon(Icons.policy_outlined),
-                  label: Text(l.webPrivacyPublishedLinkLabel),
-                ),
-                FilledButton.tonalIcon(
-                  onPressed: () => openLink(AppIdentity.eventWebsiteUrl),
+                  onPressed: () async {
+                    final opener = ref.read(urlOpenerProvider);
+                    await opener(Uri.parse(AppIdentity.eventWebsiteUrl));
+                  },
                   icon: const Icon(Icons.open_in_new_rounded),
                   label: Text(l.infoOfficialWebsite),
                 ),
@@ -77,9 +114,7 @@ class PrivacyScreen extends ConsumerWidget {
                 const Divider(height: AonSpacing.space8),
                 Text(
                   l.webPrivacyCredit(
-                    // The credit under the policy must match the credit inside
-                    // it: the team, with both developers named.
-                    Bidi.isolate(AppIdentity.developerCredit),
+                    Bidi.isolate(AppIdentity.developers),
                     Bidi.isolate(AppIdentity.forTeam),
                   ),
                   style: theme.textTheme.bodySmall

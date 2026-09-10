@@ -30,22 +30,6 @@ void main() {
     'homeFactMetroBody': 'Transport for NSW station name — wayfinding fact',
   };
 
-  /// Exact sentences that may name the university because they **disclaim** a
-  /// relationship rather than assert one. These are removed from a string
-  /// before the branding check runs, so the tripwire stays live for every other
-  /// mention in the same string — allowlisting a whole key would not.
-  ///
-  /// The event team asked for this scope sentence on 2026-09-09 and reaffirmed
-  /// it on 2026-09-10. It names the university only to say the policy does not
-  /// cover the university's website, which lowers implied affiliation instead
-  /// of raising it. Anything beyond a disclaimer still fails.
-  const disclaimerAllowlist = <String>[
-    'It does not apply to other Syllabus Sync products or to the Macquarie '
-        'University website.',
-    'این سیاست شامل سایر محصولات Syllabus Sync یا وب\u200cسایت دانشگاه Macquarie '
-        'نمی\u200cشود.',
-  ];
-
   test('no shipped UI string names the university', () async {
     for (final path in arbs) {
       final decoded =
@@ -53,12 +37,8 @@ void main() {
 
       decoded.forEach((key, value) {
         if (key.startsWith('@') || value is! String) return;
-        var checked = value;
-        for (final disclaimer in disclaimerAllowlist) {
-          checked = checked.replaceAll(disclaimer, '');
-        }
-        final names = checked.toLowerCase().contains('macquarie') ||
-            checked.contains('مکواری');
+        final names = value.toLowerCase().contains('macquarie') ||
+            value.contains('مکواری');
         if (!names) return;
         expect(
           geographicAllowlist.containsKey(key),

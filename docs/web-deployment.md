@@ -13,55 +13,35 @@ works offline.
 
 The app is served at the **root of its own dedicated subdomain**,
 `aon.syllabus-sync.app`. The `syllabus-sync.app` domain is used **only as
-hosting infrastructure** — Astronomy Open Night was developed by the Syllabus
-Sync team (Leo Alavi and Mohammad Raouf Abedini) for the Astronomy Night – FSE
-Outreach Team, which runs the event and holds the copyright. The team built it;
-that does **not** make it a Syllabus Sync product or part of any "ecosystem",
-and nothing about the hosting domain implies ownership or affiliation. See
-`lib/config/app_identity.dart` for the attribution model each party is named
-under.
+hosting infrastructure** — Astronomy Open Night is an independent project (built
+by Leo Alavi and Mohammad Raouf Abedini for the Astronomy Night – FSE Outreach
+Team), **not** a Syllabus Sync product and not part of any "ecosystem". Nothing
+about the hosting domain implies ownership or affiliation.
 
 | Thing | URL | Served by |
 | --- | --- | --- |
 | Web app | `https://aon.syllabus-sync.app/` | this Flutter bundle |
-| Canonical Privacy Policy | `https://aon.syllabus-sync.app/privacy` | static HTML exported from the reviewed policy; in-app navigation renders the same policy |
+| Canonical Privacy Policy | `https://aon.syllabus-sync.app/privacy` | this app's own `/privacy` route |
 | Official event info / support | `https://event.mq.edu.au/astronomy-open-night/` | Macquarie University |
 
-The privacy policy covers iOS, Android and web at the app's own `/privacy` page — the same address used for
+The privacy policy is the app's own `/privacy` page — the same address used for
 the App Store and Google Play privacy fields. It is deliberately fine that the
 privacy domain (`aon.syllabus-sync.app`) and the support domain
 (`event.mq.edu.au`) differ; neither store requires them to match.
-
-## Production workflow (10 September 2026)
-
-The sibling `Info_S` repository owns `wrangler.aon.jsonc` and the Cloudflare
-build/deploy scripts. Run `npm run aon:build` there to build without native API
-keys, bundle Flutter rendering resources and the Persian fallback font locally,
-export the static privacy/support/terms pages, generate the panorama CSP hash,
-and scan the public bundle. `npm run test:aon` exercises the Worker locally in
-Chromium, Firefox and WebKit. `npm run aon:deploy` deploys after these gates.
-Supply `CLOUDFLARE_API_TOKEN` only in the process environment.
-
-The export refuses to proceed if `settingsPrivacyPolicyBody` in the English ARB
-differs from the reviewed policy in `Info_S`. The Persian policy is included in
-the static HTML. Refresh `docs/release/android-privacy-policy.html` from
-`build/web/privacy.html` after export. Native settings use
-`AppIdentity.canonicalPrivacyUrl`; native binaries must be rebuilt to pick up
-these source changes.
-
-The current web release has no embedded Google Maps key. The campus map and
-external directions fallback remain available; native keys must never be used
-for web. The sections below describe an optional keyed build, which also needs
-a reviewed CSP for the Google endpoints.
 
 ## Build
 
 ```bash
 flutter build web --release \
   --dart-define-from-file=.env.web \
-  --base-href /
+  --base-href / \
+  --no-web-resources-cdn
 ```
 
+- `--no-web-resources-cdn` serves CanvasKit/WASM from the app's own origin
+  (`build/web/canvaskit/`) instead of `gstatic.com`, so the app makes no Google
+  request just to render. (Persian glyphs are covered separately by the bundled
+  Vazirmatn font — see `## Web fonts` below.)
 - `--dart-define-from-file=.env.web` supplies `MAPS_API_KEY` (and, if used, the
   web-specific Routes key) at build time, with the **native route keys left
   empty** so they never enter the web bundle (see the security note below).
@@ -73,17 +53,26 @@ flutter build web --release \
 
 Output is written to `build/web/`.
 
-## SPA routing — required for refresh & deep links
+## SPA routing + the static Privacy Policy
 
 The app uses `go_router` with real path URLs (`/program`, `/night`, `/map`,
-`/info`, `/settings`, `/privacy`). A static host must **rewrite unknown paths to
-`index.html`** so that refreshing or opening a deep link does not 404:
+`/info`, `/settings`, `/privacy`). Two rules are needed:
+
+1. **`/privacy` serves the static `privacy.html`** — the canonical, JS-free
+   Privacy Policy that a store reviewer or JS-disabled client can read without
+   the Flutter runtime (`web/privacy.html`, generated from the in-app strings by
+   `tool/privacy/gen_privacy_html.py`). This rule must come **before** the
+   catch-all.
+2. **Everything else rewrites to `index.html`** so refreshing/deep-linking any
+   app route does not 404. (The in-app Settings → Privacy link still opens the
+   Flutter privacy screen client-side; the *same* content, one source.)
 
 **Vercel** (`vercel.json`):
 
 ```json
 {
   "rewrites": [
+    { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
@@ -92,23 +81,24 @@ The app uses `go_router` with real path URLs (`/program`, `/night`, `/map`,
 **Netlify** (`_redirects`):
 
 ```
-/*  /index.html  200
+/privacy   /privacy.html   200
+/*         /index.html     200
 ```
 
 **Nginx**:
 
 ```
-location / {
-  try_files $uri $uri/ /index.html;
-}
+location = /privacy { try_files /privacy.html =404; }
+location /          { try_files $uri $uri/ /index.html; }
 ```
 
-Because the app owns the whole `aon.syllabus-sync.app` origin, the catch-all
-rewrite is safe — there are no other routes on this host to protect.
+`build/web/privacy.html` is emitted automatically (Flutter copies `web/` into
+the build). Verify: after `flutter build web`, `build/web/privacy.html` exists
+and opens as plain readable HTML.
 
 ## Hosting
 
-The production Cloudflare Worker serves the contents of `build/web/` as static files at the root of
+Serve the contents of `build/web/` as static files at the root of
 `aon.syllabus-sync.app`, and add the catch-all rewrite above. Any static host
 works (Vercel/Netlify/Cloudflare Pages/S3+CloudFront/Nginx); the Flutter bundle
 is just static assets. Point the subdomain's DNS at that host and serve over
@@ -162,20 +152,47 @@ screen all require a secure context. Redirect HTTP → HTTPS at the host.
 
 ## Offline / PWA
 
-The app supplies `manifest.json`. Offline availability in a browser depends on which assets that browser has cached; a first visit needs a connection. Do not promise all venue images are available offline after loading only the Home screen.
+> **Web is online-first, not offline-first.** Flutter 3.44 has **deprecated its
+> service worker**: the emitted `flutter_service_worker.js` is a stub that
+> **unregisters itself** on activation and precaches nothing. So the web build
+> has **no service-worker offline cache**. (The *native* iOS/Android apps remain
+> offline-first — their assets are bundled into the app.)
 
-**Available in the web bundle** (offline reuse depends on browser cache):
-- App shell, programme, My Night, Passport (manual codes), Info, campus basemap,
-  and the 360° venue tours — every panorama image is bundled.
-- My Night, Passport stamps, favourites and settings persist in the browser
-  (localStorage) across refresh and reopen.
+What this means in practice:
 
-**Requires a connection:**
-- Google Maps embedded map and walking directions (by design — the request goes
-  to Google, and only after the visitor agrees).
+- **No forced bulk download.** Because nothing is precached, installing/opening
+  the web app does **not** download the ~56 MB panorama library. A 360° tour's
+  images are fetched only when that tour is opened. First load is the app shell
+  (`main.dart.js` ≈ 4.3 MB + CanvasKit), not the whole 101 MB bundle.
+- **Best-effort caching only.** Repeat visits reuse the browser's HTTP cache,
+  but there is no guaranteed offline mode on the night. Treat web as needing a
+  connection; point attendees who want reliable offline use to the native app.
+- **What persists locally:** My Night, Passport stamps, favourites and settings
+  are in `localStorage` and survive refresh/reopen (not cleared by cache).
+- **Requires a connection:** the Google Maps embedded map and walking directions
+  (by design — only after consent); **CanvasKit** (loaded from `gstatic.com`
+  unless built with `--no-web-resources-cdn`); and **Persian glyphs** (Noto
+  fonts fetched from `fonts.gstatic.com` — see `## Web fonts` note below).
 
 Installation is **not** forced — the primary experience is a normal browser tab.
-The manifest simply lets a visitor add it to the home screen if they want.
+The manifest lets a visitor add it to the home screen, but without a functional
+service worker an installed instance still needs the network.
+
+## Web fonts and CanvasKit (external requests)
+
+Two Google (`gstatic.com`) requests happen on the web build regardless of Maps
+consent, and both should be closed before a privacy-sensitive public release:
+
+1. **CanvasKit** loads from `https://www.gstatic.com/flutter-canvaskit/…` by
+   default. Build with **`--no-web-resources-cdn`** to serve the copy already in
+   `build/web/canvaskit/` locally instead.
+2. **Persian text** has **no bundled font**; CanvasKit fetches Noto from
+   `fonts.gstatic.com` at runtime, so Persian is **not available offline** and
+   makes an uncovered Google request. Bundle an OFL Persian face (e.g.
+   Vazirmatn) and set it as `fontFamilyFallback` to fix both.
+
+Until (1) and (2) are done, the in-app claim that Google is only involved for
+maps/after consent is **not strictly accurate for the web build**.
 
 ## Analytics
 

@@ -20,6 +20,14 @@ import 'package:flutter/material.dart';
 abstract final class AonTypography {
   static const String? _fontPrimary = null;
 
+  /// Persian/Arabic fallback face. The primary family stays the platform system
+  /// font (Latin/English is unchanged), but for glyphs the system/Roboto face
+  /// lacks — Persian in particular — text falls back to the **bundled**
+  /// Vazirmatn instead of CanvasKit fetching Noto from `fonts.gstatic.com` on
+  /// the web. This makes Persian render offline and adds no third-party font
+  /// request. Applied to the whole [TextTheme] via `.apply()` below.
+  static const List<String> _fontFallback = ['Vazirmatn'];
+
   /// The scale, rendered in [baseColor]. The colour is supplied by the theme
   /// rather than baked in, so the same scale serves light and dark.
   static TextTheme textThemeFor(Color baseColor) => _build(baseColor);
@@ -142,6 +150,8 @@ abstract final class AonTypography {
         color: base,
         letterSpacing: 0.4,
       ),
-    );
+      // Every style gets the bundled Persian fallback; the primary family is
+      // untouched (null → system), so English typography is unchanged.
+    ).apply(fontFamilyFallback: _fontFallback);
   }
 }

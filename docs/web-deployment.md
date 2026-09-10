@@ -34,9 +34,14 @@ privacy domain (`aon.syllabus-sync.app`) and the support domain
 ```bash
 flutter build web --release \
   --dart-define-from-file=.env.web \
-  --base-href /
+  --base-href / \
+  --no-web-resources-cdn
 ```
 
+- `--no-web-resources-cdn` serves CanvasKit/WASM from the app's own origin
+  (`build/web/canvaskit/`) instead of `gstatic.com`, so the app makes no Google
+  request just to render. (Persian glyphs are covered separately by the bundled
+  Vazirmatn font — see `## Web fonts` below.)
 - `--dart-define-from-file=.env.web` supplies `MAPS_API_KEY` (and, if used, the
   web-specific Routes key) at build time, with the **native route keys left
   empty** so they never enter the web bundle (see the security note below).
@@ -48,17 +53,26 @@ flutter build web --release \
 
 Output is written to `build/web/`.
 
-## SPA routing — required for refresh & deep links
+## SPA routing + the static Privacy Policy
 
 The app uses `go_router` with real path URLs (`/program`, `/night`, `/map`,
-`/info`, `/settings`, `/privacy`). A static host must **rewrite unknown paths to
-`index.html`** so that refreshing or opening a deep link does not 404:
+`/info`, `/settings`, `/privacy`). Two rules are needed:
+
+1. **`/privacy` serves the static `privacy.html`** — the canonical, JS-free
+   Privacy Policy that a store reviewer or JS-disabled client can read without
+   the Flutter runtime (`web/privacy.html`, generated from the in-app strings by
+   `tool/privacy/gen_privacy_html.py`). This rule must come **before** the
+   catch-all.
+2. **Everything else rewrites to `index.html`** so refreshing/deep-linking any
+   app route does not 404. (The in-app Settings → Privacy link still opens the
+   Flutter privacy screen client-side; the *same* content, one source.)
 
 **Vercel** (`vercel.json`):
 
 ```json
 {
   "rewrites": [
+    { "source": "/privacy", "destination": "/privacy.html" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
@@ -67,19 +81,20 @@ The app uses `go_router` with real path URLs (`/program`, `/night`, `/map`,
 **Netlify** (`_redirects`):
 
 ```
-/*  /index.html  200
+/privacy   /privacy.html   200
+/*         /index.html     200
 ```
 
 **Nginx**:
 
 ```
-location / {
-  try_files $uri $uri/ /index.html;
-}
+location = /privacy { try_files /privacy.html =404; }
+location /          { try_files $uri $uri/ /index.html; }
 ```
 
-Because the app owns the whole `aon.syllabus-sync.app` origin, the catch-all
-rewrite is safe — there are no other routes on this host to protect.
+`build/web/privacy.html` is emitted automatically (Flutter copies `web/` into
+the build). Verify: after `flutter build web`, `build/web/privacy.html` exists
+and opens as plain readable HTML.
 
 ## Hosting
 

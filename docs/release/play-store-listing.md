@@ -1,3 +1,12 @@
+> **10 September 2026 policy update:** use `https://aon.syllabus-sync.app/privacy`
+> for Astronomy Open Night's canonical policy. It covers iOS, Android and web,
+> credits the Syllabus Sync team (Leo Alavi and Mohammad Raouf Abedini) as the
+> developers for the Astronomy Night - FSE Outreach Team, and retains the Google
+> Maps/ML Kit disclosures below. App privacy and data requests:
+> `leo@leoalavi.dev`; event support: `astronomyopennight@mq.edu.au` and
+> `https://event.mq.edu.au/astronomy-open-night/`. Updating these source files
+> does not update the store console or an already uploaded binary.
+
 # Google Play — requirements, listing copy, and the Data safety answers
 
 Audited against Google Play documentation current on **2026-08-23**.

@@ -17,6 +17,9 @@ import 'package:aon2026/widgets/liquid_tab_bar.dart';
 import 'package:aon2026/widgets/nav_metrics.dart';
 import 'package:go_router/go_router.dart';
 
+/// Platform seam keeps web layout testable without changing native navigation.
+final webNavigationProvider = Provider<bool>((ref) => kIsWeb);
+
 /// The tab shell wrapping the six top-level screens.
 ///
 /// The bottom navigation is a floating Liquid Glass-inspired island (the
@@ -139,7 +142,7 @@ class AppShell extends ConsumerWidget {
     // `840` is Material's compact→expanded breakpoint.
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = kIsWeb && constraints.maxWidth >= 840;
+        final wide = ref.watch(webNavigationProvider) && constraints.maxWidth >= 840;
         if (wide) {
           return Scaffold(
             body: SafeArea(

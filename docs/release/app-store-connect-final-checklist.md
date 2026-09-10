@@ -1,3 +1,12 @@
+> **10 September 2026 policy update:** use `https://aon.syllabus-sync.app/privacy`
+> for Astronomy Open Night's canonical policy. It covers iOS, Android and web,
+> credits the Syllabus Sync team (Leo Alavi and Mohammad Raouf Abedini) as the
+> developers for the Astronomy Night - FSE Outreach Team, and retains the Google
+> Maps/ML Kit disclosures below. App privacy and data requests:
+> `leo@leoalavi.dev`; event support: `astronomyopennight@mq.edu.au` and
+> `https://event.mq.edu.au/astronomy-open-night/`. Updating these source files
+> does not update the store console or an already uploaded binary.
+
 # App Store Connect — final pre-submission checklist
 
 **Date:** 2026-09-05 (updated 2026-09-06) · **Branch:** `fix/ios-always-location-purpose-string`
@@ -24,7 +33,7 @@ plus the three ASC-specific ones this pass needed.
 
 | # | Item | Status | Value / evidence |
 |---|---|---|---|
-| 1 | **Privacy Policy URL** | `BLOCKED` | Macquarie's own policy does **not** cover this app — see §1 below. The app-specific copy is written (`hosted-pages.md` Page 1) and needs hosting at any stable HTTPS URL. |
+| 1 | **Privacy Policy URL** | `AWAITING DEPLOY` | `https://aon.syllabus-sync.app/privacy`. Macquarie's own policy does **not** cover this app — see §1 below. The page is built, parity-checked against the in-app policy and covered by end-to-end tests, but it is not deployed yet, so the URL cannot be entered until it answers over HTTPS. |
 | 2 | **Support URL** | `READY TO ENTER` | `https://event.mq.edu.au/astronomy-open-night/` — official MQ event site, public, HTTPS, no login, lists `astronomyopennight@mq.edu.au` for enquiries. Fetched and read 2026-09-05. |
 | 3 | **Marketing URL** | `NOT APPLICABLE` | Optional per Apple. The Support URL already is the event site. |
 | 4 | **Terms of Use / EULA** | `VERIFIED` — **Apple standard EULA sufficient** | See §2 below. No custom EULA needed for Apple; the Google Maps flow-down is carried in-app. |

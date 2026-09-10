@@ -4,6 +4,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:aon2026/data/event_info.dart';
+import 'package:aon2026/config/app_identity.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 
 /// Per-event configuration.
@@ -82,17 +83,13 @@ class EventConfig {
   /// because the event is after sunset; the user can still override it.
   final AppThemeMode defaultThemeMode;
 
-  /// The production, publicly-reachable HTTPS Privacy Policy URL (App Store /
-  /// Play require the policy to be accessible from inside the app). **Null until
-  /// the page is hosted** — do NOT guess a university path (release blocker B7),
-  /// and do not host it on a university domain: the app is not a university
-  /// product. When null, the Settings Privacy Policy row is hidden rather than
-  /// offering a dead link; setting this one value activates it.
+  /// Public HTTPS policy. A null value opens the bundled offline policy.
+  /// Astronomy Open Night uses its independent host's canonical /privacy URL.
   final String? privacyPolicyUrl;
 
   Duration get duration => endsAt.difference(startsAt);
 
-  EventConfig copyWith({String? privacyPolicyUrl}) => EventConfig(
+  EventConfig copyWith({String? privacyPolicyUrl, bool clearPrivacyPolicyUrl = false}) => EventConfig(
         id: id,
         name: name,
         shortName: shortName,
@@ -105,7 +102,7 @@ class EventConfig {
         quickAccess: quickAccess,
         features: features,
         defaultThemeMode: defaultThemeMode,
-        privacyPolicyUrl: privacyPolicyUrl ?? this.privacyPolicyUrl,
+        privacyPolicyUrl: clearPrivacyPolicyUrl ? null : privacyPolicyUrl ?? this.privacyPolicyUrl,
       );
 
   // ══════════════════════════════════════════════════════
@@ -113,6 +110,7 @@ class EventConfig {
   // ══════════════════════════════════════════════════════
   static EventConfig get astronomyOpenNight => EventConfig(
     id: 'aon-2026',
+    privacyPolicyUrl: AppIdentity.canonicalPrivacyUrl,
     name: EventInfo.name,
     shortName: 'Astronomy',
     // Source: official programme, page 2 short-talks blurb — "designed for

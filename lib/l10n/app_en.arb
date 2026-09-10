@@ -101,7 +101,7 @@
   "@programTimeNotPublishedHeading": {
     "description": "Programme section heading grouping activities with no published time"
   },
-  "programTimeNotPublishedBlurb": "The official programme doesn\u2019t list times for these. Ask at an information point on the night.",
+  "programTimeNotPublishedBlurb": "The official programme doesn’t list times for these. Ask at an information point on the night.",
   "@programTimeNotPublishedBlurb": {
     "description": "Explains the time-not-published group so it does not read as a bug"
   },
@@ -367,7 +367,7 @@
   },
   "settingsPrivacy": "Privacy",
   "settingsPrivacyTitle": "What this app shares",
-  "settingsPrivacyBody": "No account or advertising. Stamps, favourites, your plan and preferences are stored locally; Android system backups may include them.\n\nCamera images stay on your device. On Android, Google ML Kit reports technical/usage diagnostics and installation identifiers.\n\nLocation supports the campus map and compass. After you agree, walking directions send the route origin and destination to Google. Google Maps also collects technical data, identifiers, crash diagnostics and map interactions.\n\nRead the Privacy Policy below for details, retention, deletion and contact information.",
+  "settingsPrivacyBody": "No account or advertising. Stamps, favourites, your plan and preferences stay in local app or browser storage; iOS and Android system backups may include app data.\n\nNative camera images stay on your device. On Android, Google ML Kit reports technical/usage diagnostics and installation identifiers. Web uses manual passport codes without a camera.\n\nLocation supports the campus map and compass. After you agree, walking directions send the route origin and destination to Google. Google Maps also receives technical data, identifiers, diagnostics and map interactions. Cloudflare processes web requests to deliver the site.\n\nRead the Privacy Policy below for details, retention, deletion and contact information.",
   "settingsCredits": "Credits",
   "settingsCreditsHeroImage": "Hero image",
   "settingsCreditsEventMaterials": "Event materials",
@@ -606,7 +606,7 @@
   "@mapNavNeedLocation": {
     "description": "No location permission/fix for Google nav"
   },
-  "mapNavPlatformUnsupported": "Walking directions with the live map work on the iPhone and Android apps. This build can\u2019t show the Google map.",
+  "mapNavPlatformUnsupported": "Walking directions with the live map work on the iPhone and Android apps. This build can’t show the Google map.",
   "@mapNavPlatformUnsupported": {
     "description": "Shown on web/desktop, where google_maps_flutter has no implementation — NOT a missing-key problem"
   },
@@ -626,7 +626,7 @@
   "@mapNavRouteUnavailable": {
     "description": "Compact banner under a still-visible map when the Routes request fails"
   },
-  "mapNavFindingRoute": "Finding your walking route\u2026",
+  "mapNavFindingRoute": "Finding your walking route…",
   "@mapNavFindingRoute": {
     "description": "Strip under an already-visible map while the route request is in flight"
   },
@@ -776,7 +776,7 @@
       }
     }
   },
-  "compassUnconfirmedBlurb": "We don\u2019t have a confirmed position for these, so the compass can\u2019t point to them. Check the printed map or ask at an information point.",
+  "compassUnconfirmedBlurb": "We don’t have a confirmed position for these, so the compass can’t point to them. Check the printed map or ask at an information point.",
   "@compassUnconfirmedBlurb": {
     "description": "Explains the unconfirmed group so it does not read as broken"
   },
@@ -1212,9 +1212,9 @@
   "@timeRelativeIn": {
     "description": "Countdown to a session start, e.g. 'in 12 min'.",
     "placeholders": {
-          "duration": {
-                "type": "String"
-          }
+      "duration": {
+        "type": "String"
+      }
     }
   },
   "timeRelativeEnded": "ended",
@@ -1229,22 +1229,22 @@
   "@timeDurationHours": {
     "description": "A whole number of hours, with no minutes remainder.",
     "placeholders": {
-          "hours": {
-                "type": "int",
-                "format": "decimalPattern"
-          }
+      "hours": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
     }
   },
   "listAnd": "{items} and {last}",
   "@listAnd": {
     "description": "Joins the last item of a list, e.g. 'A, B and C'.",
     "placeholders": {
-          "items": {
-                "type": "String"
-          },
-          "last": {
-                "type": "String"
-          }
+      "items": {
+        "type": "String"
+      },
+      "last": {
+        "type": "String"
+      }
     }
   },
   "passportRewardIncomplete": "Your passport is not complete yet — keep collecting stamps.",
@@ -1259,10 +1259,10 @@
   "@passportRewardAllCollected": {
     "description": "Celebration headline on the reward screen.",
     "placeholders": {
-          "total": {
-                "type": "int",
-                "format": "decimalPattern"
-          }
+      "total": {
+        "type": "int",
+        "format": "decimalPattern"
+      }
     }
   },
   "passportRewardShowStaff": "Show this to staff at the prize booth.",
@@ -1285,18 +1285,18 @@
   "@passportCellCollected": {
     "description": "Accessible name of a collected passport cell.",
     "placeholders": {
-          "name": {
-                "type": "String"
-          }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "passportCellNotCollected": "{name}, not yet collected",
   "@passportCellNotCollected": {
     "description": "Accessible name of an uncollected passport cell.",
     "placeholders": {
-          "name": {
-                "type": "String"
-          }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "passportCellOpensFact": "Opens astronomy fact",
@@ -1327,39 +1327,54 @@
   "@panoramaCardComingSoon": {
     "description": "Accessible name of a picker card with no tour.",
     "placeholders": {
-          "name": {
-                "type": "String"
-          }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "panoramaCardTour": "{name}, 360 tour",
   "@panoramaCardTour": {
     "description": "Accessible name of a picker card with a real tour.",
     "placeholders": {
-          "name": {
-                "type": "String"
-          }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "panoramaCardDemoTour": "{name}, demo 360 tour",
   "@panoramaCardDemoTour": {
     "description": "Accessible name of a picker card with a placeholder tour.",
     "placeholders": {
-          "name": {
-                "type": "String"
-          }
+      "name": {
+        "type": "String"
+      }
     }
   },
   "passportCameraSettings": "Open app settings",
   "passportScannerPrivacy": "Camera images stay on your device. On Android, Google ML Kit reports technical and usage diagnostics. You can enter the printed code instead. See Privacy Policy in Settings.",
-  "settingsPrivacyPolicyBody": "Astronomy Open Night is published on Google Play by Leo Alavi, an independent developer. Privacy contact: leo@leoalavi.dev. Last updated: 5 September 2026.\n\nThere is no account, sign-in, advertising or developer-operated analytics service. Passport stamps, favourites, your saved plan and preferences are stored locally. Android may include local data in system backups or device transfers according to your device settings.\n\nLocation is optional. It is processed on your device for the campus map and compass. When you request walking directions and agree to Google Maps, the route origin (which may be your precise or approximate location) and destination are sent to Google over HTTPS.\n\nGoogle Maps also receives map requests, IP address, device and app information, an SDK-specific identifier, crash diagnostics and map interactions to provide and improve its services. No Google map is loaded until you agree; you can revoke that choice in Settings.\n\nOn Android, the QR scanner uses Google ML Kit. Camera images are processed on your device and are not saved or uploaded by the app. ML Kit reports device/app information, installation identifiers, performance and usage diagnostics to Google over HTTPS. You can enter the printed station code instead of using the camera.\n\nSaved stamps, favourites and plans remain until you delete them. Settings → Delete my data clears these items and Google Maps consent; language and appearance preferences are retained. This does not delete data already received by Google or copies held in system backups. Google controls retention and deletion of its service data under its privacy policy, available in the Google Maps privacy section below.\n\nWe do not operate a server holding your saved plan or stamps. Local storage uses Android's app sandbox; this does not promise absolute security. Contact the address above with privacy questions. This policy covers all visitors.",
+  "settingsPrivacyPolicyBody": "This Privacy Policy applies specifically to the Astronomy Open Night 2026 app, and covers its iOS, Android and web versions. It does not apply to other Syllabus Sync products or to the Macquarie University website. Astronomy Open Night was developed by the Syllabus Sync team (Leo Alavi and Mohammad Raouf Abedini) for the Astronomy Night – FSE Outreach Team, which runs the event and holds the copyright. It is published under Leo Alavi's store developer account, and Leo Alavi is the App Store seller. The app is not affiliated with, endorsed or sponsored by any university, and the developers do not own or run the event; official event information and support are provided through the official event website. The syllabus-sync.app domain is the technical host of this policy and the web app, which does not make Astronomy Open Night a Syllabus Sync product. This policy covers everyone who uses the app. Last updated 10 September 2026.\n\nWhat the app collects\n\nThere is no account, sign-in, advertising or developer-operated analytics service. There is no tracking, and we do not sell your personal data. We do not operate a server that holds your saved plan or stamps.\n\nThe app stores passport stamps, favourites, your saved plan, Google Maps consent and your preferences on your device. The web version stores these in your browser. Your device's own backup (iCloud or device backups on iOS; system backups or device transfers on Android) may include that local data, according to your device settings.\n\nLocation\n\nLocation is optional and the app works without it. If you allow it, the app uses your location on your device to show where you are on the campus map and to point the compass toward a venue. The compass also reads your device's motion sensor to tell which way you are facing; that reading never leaves your device.\n\nWhen you request walking directions and agree to Google Maps, the app sends the route origin (which may be your precise or approximate location) and the destination to Google over HTTPS. Until you agree, the app loads no Google map and sends no request.\n\nGoogle Maps and walking directions\n\nThe campus map is an image stored inside the app and works offline. Walking directions on a Google map are the one exception, and the app asks before using them.\n\nTo provide and improve its services, Google Maps also receives map requests, your IP address, device and app information, an SDK-specific identifier, crash and performance diagnostics, usage data and map interactions. On web, Google receives device and browser information with map and directions requests. You can revoke your Google Maps choice at any time in Settings.\n\nCamera and QR scanning\n\nThe app uses the camera for one purpose: reading the QR code on a venue sign for the Astronomy Passport. It starts only when you tap Scan. The app processes camera images on your device and never saves or uploads them.\n\nOn Android, the QR scanner uses Google ML Kit, which reports device and app information, installation identifiers, and performance and usage diagnostics to Google over HTTPS. You can type the printed station code instead of using the camera.\n\nThe web version does not open the camera: the Astronomy Passport uses manual code entry, where you type the printed station code. No image is captured or uploaded.\n\nWeb hosting and external links\n\nCloudflare hosts the web app and these pages. Loading them sends your IP address, requested URL and browser request information to Cloudflare so it can deliver and protect the site. This hosting traffic is separate from the app's locally saved plan and stamps.\n\nOpening an external link, including the official event website or Google Maps, sends a request to that provider. Its own privacy policy then applies.\n\nRetention and deletion\n\nSaved stamps, favourites and plans remain until you delete them. In the app, Settings, then Delete my data, clears these items and your Google Maps consent; language and appearance preferences are retained.\n\nDeleting data in the app does not delete data that Google has already received, or copies held in system backups. Google controls retention and deletion of its own service data under its privacy policy. Removing the mobile app removes its local app data but may leave system backups. On web, clear this site's data in your browser to remove all locally saved preferences as well.\n\nSecurity\n\nMobile local storage uses the operating system's app sandbox. The web version uses browser storage for this site. Neither provides a promise of absolute security.\n\nChildren\n\nThe app is intended for general audiences attending a public event. It has no account and asks for no personal details from anyone, including children. The third-party services and hosting described above still process their disclosed data when used. The app does not link saved plans or stamps to an account.\n\nChanges\n\nIf this policy changes, we will update this page and the date above.\n\nContact\n\nPrivacy questions and data requests about the app: leo@leoalavi.dev. That address reaches the developer account holder, who can act on the app itself.\n\nEvent information and event support: astronomyopennight@mq.edu.au, or the official event website.\n\nAstronomy Open Night 2026\n\nDeveloped by the Syllabus Sync team (Leo Alavi and Mohammad Raouf Abedini) for the Astronomy Night – FSE Outreach Team.\n\nOfficial event information and support: https://event.mq.edu.au/astronomy-open-night/\n\nContact: astronomyopennight@mq.edu.au",
   "webPrivacyTitle": "Privacy",
   "webPrivacyLastUpdated": "Last updated: {date}",
-  "@webPrivacyLastUpdated": {"placeholders": {"date": {"type": "String"}}},
+  "@webPrivacyLastUpdated": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
   "webPrivacyIntro": "This is the privacy notice for the Astronomy Open Night 2026 web app. The app has no account and no sign-in, and it runs entirely in your browser. It is an event companion application developed by {developer} for {forTeam}. Official event information and support are provided through the official event website.",
-  "@webPrivacyIntro": {"placeholders": {"developer": {"type": "String"}, "forTeam": {"type": "String"}}},
+  "@webPrivacyIntro": {
+    "placeholders": {
+      "developer": {
+        "type": "String"
+      },
+      "forTeam": {
+        "type": "String"
+      }
+    }
+  },
   "webPrivacyStorageHeading": "What the app stores in your browser",
-  "webPrivacyStorageBody": "Your saved plan (My Night), collected Astronomy Passport stamps, favourite places, your language and theme choice, and whether you agreed to load Google Maps are stored locally in your browser. This information stays in your browser on this device — we have no server and cannot see it. Clearing this site's data in your browser, or using Delete my data in Settings, removes it.",
+  "webPrivacyStorageBody": "Your plan, stamps, favourite places, Google Maps consent and preferences are stored in your browser. We do not receive that saved data. Delete my data in Settings clears the plan, stamps, favourites and Maps consent, retaining language and appearance. Clearing this site's data in your browser also removes those preferences.",
   "webPrivacyLocationHeading": "Location",
   "webPrivacyLocationBody": "The campus map works without location. If you allow it, your browser shares your position with the page so it can show where you are on the map. It is used only in the page, is not sent to us and is not stored. If you deny location, the map still works.",
   "webPrivacyCameraHeading": "Camera and QR codes",
@@ -1367,18 +1382,33 @@
   "webPrivacyMapsHeading": "Google Maps and walking directions",
   "webPrivacyMapsBody": "The campus map is an image built into the app and needs no connection. If you choose to load a Google map or ask for walking directions, Google receives that request — including the start and end points of the route (the start may be your precise or approximate location), your IP address, and device and browser information — under its own privacy policy (https://policies.google.com/privacy). No Google map is loaded and no request is sent until you agree, and you can change that choice in Settings.",
   "webPrivacyAnalyticsHeading": "No tracking",
-  "webPrivacyAnalyticsBody": "The app contains no analytics, advertising, tracking pixels or third-party trackers, and sets no cookies to identify you. The only third party involved is Google, only for the maps and directions described above, and only after you agree. We do not sell your personal data.",
+  "webPrivacyAnalyticsBody": "The app contains no developer-operated analytics, advertising or tracking pixels, and we do not sell your personal data. Cloudflare processes web requests to deliver and protect the site. Google Maps receives data only after consent; external links follow their own providers' privacy policies.",
   "webPrivacyRetentionHeading": "Keeping and deleting your data",
   "webPrivacyRetentionBody": "Because everything is stored only in your browser, it stays until you remove it. Settings → Delete my data clears your saved plan, stamps, favourites and Google Maps consent; your language and appearance preferences are kept. This does not delete data already received by Google.",
   "webPrivacyContactHeading": "Contact and support",
-  "webPrivacyContactBody": "For help or privacy questions, use the support and contact details on the official Astronomy Open Night event website.",
+  "webPrivacyContactBody": "For app privacy questions, contact leo@leoalavi.dev. For event information and event support, use the official event website.",
   "webPrivacyCredit": "Developed by {developer} for {forTeam}. Official event information and support: the official event website.",
-  "@webPrivacyCredit": {"placeholders": {"developer": {"type": "String"}, "forTeam": {"type": "String"}}},
+  "@webPrivacyCredit": {
+    "placeholders": {
+      "developer": {
+        "type": "String"
+      },
+      "forTeam": {
+        "type": "String"
+      }
+    }
+  },
   "infoOfficialWebsite": "Official event website",
   "infoOfficialWebsiteSubtitle": "Times, tickets and updates from the official event website",
   "commonDevelopedByFooter": "Built by {developer}",
-  "@commonDevelopedByFooter": {"placeholders": {"developer": {"type": "String"}}},
-  "webPrivacyPageTitle": "Astronomy Open Night 2026 — Privacy Policy",
+  "@commonDevelopedByFooter": {
+    "placeholders": {
+      "developer": {
+        "type": "String"
+      }
+    }
+  },
+  "webPrivacyPageTitle": "Astronomy Open Night 2026: Privacy Policy",
   "webPrivacyScope": "This policy applies specifically to the Astronomy Open Night 2026 app. It does not apply to any other website or application.",
   "webPrivacyPublishedLinkLabel": "Read the published Privacy Policy"
 }

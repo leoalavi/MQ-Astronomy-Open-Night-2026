@@ -9,29 +9,50 @@
 /// one reads from here, so the identity can be corrected in a single edit and
 /// can never drift between screens.
 ///
-/// ## The identity model (owner-confirmed)
+/// ## The identity model (event team, 2026-09-09, reaffirmed 2026-09-10)
 ///
-/// Astronomy Open Night 2026 is an **independent event companion app**. It is
-/// developed by **Leo Alavi and Mohammad Raouf Abedini** for the **Astronomy
-/// Night – FSE Outreach Team**. Official event information and support are
-/// provided through the Macquarie University Astronomy Open Night website.
+/// Each party is named for exactly what it does:
 ///
-/// It is **not** a Syllabus Sync product and is **not** part of any "Syllabus
-/// Sync ecosystem". The `syllabus-sync.app` domain is used **only as hosting
-/// infrastructure** (this app is served from the `aon.syllabus-sync.app`
-/// subdomain). The domain must never be presented as evidence of ownership or
-/// affiliation, and "Syllabus Sync" must never appear as the developer,
-/// publisher, owner or product family of this app.
+/// * **Leo Alavi** holds the store developer account and is the App Store
+///   seller of record.
+/// * **The Syllabus Sync team** — Leo Alavi and Mohammad Raouf Abedini —
+///   developed the app. This is the credit the event team asked for, and both
+///   names stay with it.
+/// * **Astronomy Night – FSE Outreach Team** runs the event and holds the
+///   copyright.
+/// * **The Macquarie University event site** is the official event and support
+///   source, alongside the event team's own address.
+/// * **The `syllabus-sync.app` domain** is the technical host of this app and
+///   its privacy policy (served at `aon.syllabus-sync.app`), and nothing more.
+///
+/// The app is therefore **not** a Syllabus Sync product and **not** part of any
+/// "Syllabus Sync ecosystem", even though the Syllabus Sync team built it. Both
+/// statements are true together and both must stay on the page. The domain must
+/// never be presented as evidence of ownership, and "Syllabus Sync" must never
+/// appear as the **publisher, owner or product family** of this app.
+///
+/// An earlier revision of this file removed the team credit entirely and made
+/// the developers two unaffiliated individuals. The event team rejected that
+/// wording on 2026-09-10 and restored the credit above; do not re-remove it.
 ///
 /// Rules encoded here, not to be undone lightly:
 /// * The developers are [developers]. They are **not** the event owner.
 /// * The copyright holder is the event team ([copyrightLine]) — never
 ///   "© Macquarie University" and never a developer's name.
-/// * Support/contact routes to the official Macquarie University event website,
-///   never to a personal or university-impersonating address.
+/// * Event support routes to the official event website. App privacy questions
+///   use the publisher contact recorded in the store declarations.
 abstract final class AppIdentity {
-  /// Who built the app. Two individuals — not a company or "team" brand.
+  /// Who built the app, named individually.
   static const String developers = 'Leo Alavi and Mohammad Raouf Abedini';
+
+  /// The developer credit as the event team asked for it: the team, with both
+  /// individuals named. Never shorten it to one half.
+  static const String developerCredit =
+      'the Syllabus Sync team ($developers)';
+
+  /// The event team's own contact address, supplied 2026-09-09. Event questions
+  /// only — app privacy and data requests use the developer account holder.
+  static const String eventContactEmail = 'astronomyopennight@mq.edu.au';
 
   /// The event team the app is built *for* (the "for" party). Uses an en dash.
   static const String forTeam = 'Astronomy Night – FSE Outreach Team';

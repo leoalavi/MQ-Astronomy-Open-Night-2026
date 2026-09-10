@@ -75,12 +75,17 @@ dev_dependencies:
   plugin_platform_interface: ^2.1.8
 
 flutter:
+  fonts:
+    - family: NotoSansArabic
+      fonts:
+        - asset: assets/fonts/NotoSansArabic.ttf
   uses-material-design: true
   generate: true
 
   shaders:
     - shaders/glass_refraction.frag
   assets:
+    - assets/fonts/OFL.txt
     - assets/images/
     - assets/web/indoor_viewer.html
     - assets/web/pannellum/

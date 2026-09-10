@@ -13,21 +13,46 @@ works offline.
 
 The app is served at the **root of its own dedicated subdomain**,
 `aon.syllabus-sync.app`. The `syllabus-sync.app` domain is used **only as
-hosting infrastructure** — Astronomy Open Night is an independent project (built
-by Leo Alavi and Mohammad Raouf Abedini for the Astronomy Night – FSE Outreach
-Team), **not** a Syllabus Sync product and not part of any "ecosystem". Nothing
-about the hosting domain implies ownership or affiliation.
+hosting infrastructure** — Astronomy Open Night was developed by the Syllabus
+Sync team (Leo Alavi and Mohammad Raouf Abedini) for the Astronomy Night – FSE
+Outreach Team, which runs the event and holds the copyright. The team built it;
+that does **not** make it a Syllabus Sync product or part of any "ecosystem",
+and nothing about the hosting domain implies ownership or affiliation. See
+`lib/config/app_identity.dart` for the attribution model each party is named
+under.
 
 | Thing | URL | Served by |
 | --- | --- | --- |
 | Web app | `https://aon.syllabus-sync.app/` | this Flutter bundle |
-| Canonical Privacy Policy | `https://aon.syllabus-sync.app/privacy` | this app's own `/privacy` route |
+| Canonical Privacy Policy | `https://aon.syllabus-sync.app/privacy` | static HTML exported from the reviewed policy; in-app navigation renders the same policy |
 | Official event info / support | `https://event.mq.edu.au/astronomy-open-night/` | Macquarie University |
 
-The privacy policy is the app's own `/privacy` page — the same address used for
+The privacy policy covers iOS, Android and web at the app's own `/privacy` page — the same address used for
 the App Store and Google Play privacy fields. It is deliberately fine that the
 privacy domain (`aon.syllabus-sync.app`) and the support domain
 (`event.mq.edu.au`) differ; neither store requires them to match.
+
+## Production workflow (10 September 2026)
+
+The sibling `Info_S` repository owns `wrangler.aon.jsonc` and the Cloudflare
+build/deploy scripts. Run `npm run aon:build` there to build without native API
+keys, bundle Flutter rendering resources and the Persian fallback font locally,
+export the static privacy/support/terms pages, generate the panorama CSP hash,
+and scan the public bundle. `npm run test:aon` exercises the Worker locally in
+Chromium, Firefox and WebKit. `npm run aon:deploy` deploys after these gates.
+Supply `CLOUDFLARE_API_TOKEN` only in the process environment.
+
+The export refuses to proceed if `settingsPrivacyPolicyBody` in the English ARB
+differs from the reviewed policy in `Info_S`. The Persian policy is included in
+the static HTML. Refresh `docs/release/android-privacy-policy.html` from
+`build/web/privacy.html` after export. Native settings use
+`AppIdentity.canonicalPrivacyUrl`; native binaries must be rebuilt to pick up
+these source changes.
+
+The current web release has no embedded Google Maps key. The campus map and
+external directions fallback remain available; native keys must never be used
+for web. The sections below describe an optional keyed build, which also needs
+a reviewed CSP for the Google endpoints.
 
 ## Build
 
@@ -83,7 +108,7 @@ rewrite is safe — there are no other routes on this host to protect.
 
 ## Hosting
 
-Serve the contents of `build/web/` as static files at the root of
+The production Cloudflare Worker serves the contents of `build/web/` as static files at the root of
 `aon.syllabus-sync.app`, and add the catch-all rewrite above. Any static host
 works (Vercel/Netlify/Cloudflare Pages/S3+CloudFront/Nginx); the Flutter bundle
 is just static assets. Point the subdomain's DNS at that host and serve over
@@ -137,10 +162,9 @@ screen all require a secure context. Redirect HTTP → HTTPS at the host.
 
 ## Offline / PWA
 
-Flutter's web build emits a service worker (`flutter_service_worker.js`) and the
-app is installable via `manifest.json`.
+The app supplies `manifest.json`. Offline availability in a browser depends on which assets that browser has cached; a first visit needs a connection. Do not promise all venue images are available offline after loading only the Home screen.
 
-**Works offline once the app has loaded** (all bundled, no network):
+**Available in the web bundle** (offline reuse depends on browser cache):
 - App shell, programme, My Night, Passport (manual codes), Info, campus basemap,
   and the 360° venue tours — every panorama image is bundled.
 - My Night, Passport stamps, favourites and settings persist in the browser

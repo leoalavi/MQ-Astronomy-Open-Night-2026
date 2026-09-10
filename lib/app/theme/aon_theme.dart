@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 
 import 'package:aon2026/app/theme/aon_palette.dart';
@@ -23,7 +24,11 @@ abstract final class AonTheme {
 
   static ThemeData forBrightness(Brightness brightness) {
     final palette = AonPalette.of(brightness);
-    final textTheme = AonTypography.textThemeFor(palette.contentPrimary);
+    // CanvasKit otherwise fetches Persian fallback glyphs from Google before
+    // consent. Bundle the fallback and keep native system typography unchanged.
+    final textTheme = AonTypography.textThemeFor(palette.contentPrimary).apply(
+      fontFamilyFallback: kIsWeb ? const ['NotoSansArabic'] : null,
+    );
 
     final colorScheme = ColorScheme(
       brightness: brightness,
@@ -48,6 +53,7 @@ abstract final class AonTheme {
     );
 
     return ThemeData(
+      fontFamilyFallback: kIsWeb ? const ['NotoSansArabic'] : null,
       useMaterial3: true,
       brightness: brightness,
       extensions: <ThemeExtension<dynamic>>[palette],

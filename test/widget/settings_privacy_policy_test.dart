@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:aon2026/config/event_config.dart';
+import 'package:aon2026/config/app_identity.dart';
 import 'package:aon2026/screens/settings_screen.dart';
 import 'package:aon2026/services/url_opener.dart';
 
@@ -15,6 +16,14 @@ import 'package:aon2026/services/url_opener.dart';
 /// dead link ships while the production URL is still unhosted.
 void main() {
   const testUrl = 'https://policy.example.test/privacy';
+
+  test('the shipped app uses the canonical hosted policy', () {
+    expect(EventConfig.astronomyOpenNight.privacyPolicyUrl,
+        AppIdentity.canonicalPrivacyUrl);
+    expect(AppIdentity.canonicalPrivacyUrl,
+        'https://aon.syllabus-sync.app/privacy');
+  });
+
 
   Widget harness({
     required String? policyUrl,
@@ -26,7 +35,7 @@ void main() {
     return ProviderScope(
       overrides: [
         eventConfigProvider.overrideWithValue(
-          EventConfig.astronomyOpenNight.copyWith(privacyPolicyUrl: policyUrl),
+          EventConfig.astronomyOpenNight.copyWith(privacyPolicyUrl: policyUrl, clearPrivacyPolicyUrl: policyUrl == null),
         ),
         urlOpenerProvider.overrideWithValue((uri) async {
           opened?.add(uri);
@@ -42,11 +51,12 @@ void main() {
     );
   }
 
-  Future<void> scrollTo(WidgetTester t, Finder f) => t.scrollUntilVisible(
-        f,
-        300,
-        scrollable: find.byType(Scrollable).first,
-      );
+  Future<void> scrollTo(WidgetTester t, Finder f) async {
+    await t.scrollUntilVisible(f, 200, scrollable: find.byType(Scrollable).first);
+    await t.pumpAndSettle();
+    await t.ensureVisible(f);
+    await t.pumpAndSettle();
+  }
 
   testWidgets('a configured URL shows a Privacy Policy row that opens it',
       (t) async {

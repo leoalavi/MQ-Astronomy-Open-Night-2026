@@ -1,3 +1,12 @@
+> **SUPERSEDED — 2026-09-10.** This file described an earlier plan to host three
+> pages on an external/MQ domain. The **current** canonical Privacy Policy is
+> the developer-hosted static page `https://aon.syllabus-sync.app/privacy`
+> (generated from the in-app policy by `tool/privacy/gen_privacy_html.py`;
+> synchronised by `test/unit/privacy_html_sync_test.dart`). Support is the
+> official event page `https://event.mq.edu.au/astronomy-open-night/`. This file
+> is kept for history only — do not use its URLs/plan as current instructions.
+> See `docs/release/app-store-connect-final-checklist.md` (CURRENT STATE block).
+
 > **Android release correction — 5 September 2026:** Leo Alavi confirmed that
 > Android will use his personal Play account. The historical MQ publisher draft
 > below is not approved for Android publication. Its “nothing collected” claims

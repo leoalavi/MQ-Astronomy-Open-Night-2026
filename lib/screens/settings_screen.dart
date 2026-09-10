@@ -1,11 +1,7 @@
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-
-import 'package:aon2026/app/router/app_router.dart';
 import 'package:aon2026/app/text_scale.dart';
 import 'package:aon2026/app/theme/aon_palette.dart';
 import 'package:aon2026/app/theme/aon_spacing.dart';
@@ -23,7 +19,7 @@ import 'package:aon2026/services/passport_providers.dart';
 import 'package:aon2026/services/passport_preview.dart';
 import 'package:aon2026/services/preview_location.dart';
 import 'package:aon2026/services/maps_consent_store.dart';
-import 'package:aon2026/services/url_opener.dart';
+import 'package:aon2026/screens/privacy_screen.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/widgets/event_time_preview.dart';
 import 'package:aon2026/widgets/section_header.dart';
@@ -147,7 +143,7 @@ class SettingsScreen extends ConsumerWidget {
 
           // The full policy is available offline even before hosting is configured.
           _gap,
-          _PrivacyPolicyCard(url: config.privacyPolicyUrl),
+          const _PrivacyPolicyCard(),
 
           // ── Your data ──
           SectionHeader(
@@ -465,8 +461,9 @@ class _DeleteMyDataCard extends ConsumerWidget {
             const SizedBox(height: AonSpacing.space2),
             Text(
               l.settingsEraseBody,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: context.aon.contentSecondary),
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
             ),
             const SizedBox(height: AonSpacing.space2),
             Align(
@@ -484,7 +481,10 @@ class _DeleteMyDataCard extends ConsumerWidget {
   }
 
   Future<void> _confirmErase(
-      BuildContext context, WidgetRef ref, AonL10n l) async {
+    BuildContext context,
+    WidgetRef ref,
+    AonL10n l,
+  ) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (dialogContext) => AlertDialog(
@@ -523,9 +523,9 @@ class _DeleteMyDataCard extends ConsumerWidget {
     if (!context.mounted) return;
 
     // Never claim a success we did not verify.
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(ok ? l.settingsEraseDone : l.settingsEraseFailed),
-    ));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(ok ? l.settingsEraseDone : l.settingsEraseFailed)),
+    );
   }
 }
 
@@ -598,55 +598,27 @@ class _GoogleMapsPrivacyCard extends ConsumerWidget {
   }
 }
 
-/// The in-app Privacy Policy link. Opens the hosted policy in the browser; if
-/// the browser cannot open it, says so honestly rather than doing nothing.
-class _PrivacyPolicyCard extends ConsumerWidget {
-  const _PrivacyPolicyCard({required this.url});
-
-  final String? url;
+/// The in-app Privacy Policy entry point. Every platform renders the same
+/// canonical, sectioned policy that also generates the public semantic HTML.
+class _PrivacyPolicyCard extends StatelessWidget {
+  const _PrivacyPolicyCard();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget build(BuildContext context) {
     final l = AonL10n.of(context);
     return Card(
       child: ListTile(
         key: const Key('settings-privacy-policy'),
         leading: Icon(Icons.policy_outlined, color: context.aon.accent),
         title: Text(l.settingsPrivacyPolicy),
-        trailing: Icon(url == null ? Icons.chevron_right_rounded : Icons.open_in_new_rounded),
+        trailing: const Icon(Icons.chevron_right_rounded),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: AonSpacing.space4,
           vertical: AonSpacing.space1,
         ),
         onTap: () async {
-          // Web has a real, shareable privacy page at /privacy — open it in the
-          // app rather than a dialog, so its URL can be linked and refreshed.
-          // Native keeps the inline dialog (its copy is Play/Android-specific).
-          if (kIsWeb) {
-            await context.push(Routes.privacy);
-            return;
-          }
-          final policyUrl = url;
-          if (policyUrl == null) {
-            await showDialog<void>(
-              context: context,
-              builder: (dialogContext) => AlertDialog(
-                scrollable: true,
-                title: Text(l.settingsPrivacyPolicy),
-                content: Text(l.settingsPrivacyPolicyBody),
-                actions: [TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(),
-                  child: Text(MaterialLocalizations.of(dialogContext).closeButtonLabel),
-                )],
-              ),
-            );
-            return;
-          }
-          final opener = ref.read(urlOpenerProvider);
-          final ok = await opener(Uri.parse(policyUrl));
-          if (!context.mounted || ok) return;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l.settingsPrivacyPolicyUnavailable)),
+          await Navigator.of(context).push<void>(
+            MaterialPageRoute<void>(builder: (_) => const PrivacyScreen()),
           );
         },
       ),
@@ -719,7 +691,10 @@ class _CreditsCard extends StatelessWidget {
             const SizedBox(height: 2),
             Text(l.settingsMapDataAttribution, style: body),
             const Divider(height: AonSpacing.space6),
-            Text(l.settingsCreditsDevelopers, style: theme.textTheme.titleSmall),
+            Text(
+              l.settingsCreditsDevelopers,
+              style: theme.textTheme.titleSmall,
+            ),
             const SizedBox(height: 2),
             // Names are proper nouns — isolate them so they stay LTR in Persian.
             Text(
@@ -859,4 +834,3 @@ class _MapsLicenceLink extends ConsumerWidget {
     );
   }
 }
-

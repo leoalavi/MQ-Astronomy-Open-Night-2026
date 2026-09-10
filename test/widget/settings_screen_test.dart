@@ -164,12 +164,15 @@ void main() {
     // `46dc81e` rewrote this copy (Android ML Kit diagnostics, backup limits)
     // and the assertions below were left behind, which is how they came to
     // demand wording the app no longer ships.
-    expect(find.textContaining('No account or advertising'), findsOneWidget);
-    expect(find.textContaining('stored locally'), findsOneWidget);
+    expect(find.textContaining('No account or sign-in'), findsOneWidget);
+    expect(find.textContaining('browser localStorage'), findsOneWidget);
     expect(find.textContaining('ML Kit'), findsOneWidget);
     expect(
-        find.textContaining('send the route origin and destination to Google'),
-        findsOneWidget);
+      find.textContaining(
+        'precise or approximate location may be sent to Google',
+      ),
+      findsOneWidget,
+    );
     // Task 7: the card must never again promise that nothing leaves the phone —
     // location does, once the visitor asks for walking directions. And it may
     // not claim the app collects no analytics: ML Kit reports diagnostics on
@@ -179,7 +182,9 @@ void main() {
     expect(find.textContaining('collects no analytics'), findsNothing);
   });
 
-  testWidgets('credits the hero image and the real map sources', (tester) async {
+  testWidgets('credits the hero image and the real map sources', (
+    tester,
+  ) async {
     await tester.pumpWidget(harness());
     await tester.pumpAndSettle();
 
@@ -195,8 +200,10 @@ void main() {
     // Task 5: the app makes no OSM tile requests, so it no longer credits OSM.
     expect(find.textContaining('OpenStreetMap'), findsNothing);
     expect(
-      find.text('Campus map: Astronomy Open Night 2026 programme. Walking '
-          'directions and the map they appear on are provided by Google.'),
+      find.text(
+        'Campus map: Astronomy Open Night 2026 programme. Walking '
+        'directions and the map they appear on are provided by Google.',
+      ),
       findsOneWidget,
     );
   });

@@ -8,7 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:aon2026/config/event_config.dart';
 import 'package:aon2026/config/app_identity.dart';
 import 'package:aon2026/screens/settings_screen.dart';
-import 'package:aon2026/services/url_opener.dart';
+import 'package:aon2026/screens/privacy_screen.dart';
 
 /// B7: the in-app Privacy Policy entry point. Stores require the privacy policy
 /// to be reachable from inside the app. The row is config-driven — it appears
@@ -24,7 +24,6 @@ void main() {
         'https://aon.syllabus-sync.app/privacy');
   });
 
-
   Widget harness({
     required String? policyUrl,
     List<Uri>? opened,
@@ -37,10 +36,6 @@ void main() {
         eventConfigProvider.overrideWithValue(
           EventConfig.astronomyOpenNight.copyWith(privacyPolicyUrl: policyUrl, clearPrivacyPolicyUrl: policyUrl == null),
         ),
-        urlOpenerProvider.overrideWithValue((uri) async {
-          opened?.add(uri);
-          return openOk;
-        }),
       ],
       child: MaterialApp(
         locale: locale,
@@ -58,10 +53,10 @@ void main() {
     await t.pumpAndSettle();
   }
 
-  testWidgets('a configured URL shows a Privacy Policy row that opens it',
-      (t) async {
-    final opened = <Uri>[];
-    await t.pumpWidget(harness(policyUrl: testUrl, opened: opened));
+  testWidgets('a configured URL shows the shared in-app Privacy Policy', (
+    t,
+  ) async {
+    await t.pumpWidget(harness(policyUrl: testUrl));
     await t.pumpAndSettle();
 
     final row = find.byKey(const Key('settings-privacy-policy'));
@@ -71,39 +66,40 @@ void main() {
 
     await t.tap(row);
     await t.pumpAndSettle();
-    expect(opened, [Uri.parse(testUrl)]);
+    expect(find.byType(PrivacyScreen), findsOneWidget);
+    expect(
+      find.textContaining('Astronomy Open Night 2026 is developed by'),
+      findsOneWidget,
+    );
+    await t.scrollUntilVisible(
+      find.text('Android only: Google ML Kit'),
+      400,
+      scrollable: find.byType(Scrollable).last,
+    );
+    expect(find.textContaining('Android only: Google ML Kit'), findsOneWidget);
   });
 
-  testWidgets('no hosted URL still exposes a complete offline privacy policy', (t) async {
-    final opened = <Uri>[];
-    await t.pumpWidget(harness(policyUrl: null, opened: opened));
+  testWidgets('no hosted URL still exposes the complete shared policy', (
+    t,
+  ) async {
+    await t.pumpWidget(harness(policyUrl: null));
     await t.pumpAndSettle();
     final row = find.byKey(const Key('settings-privacy-policy'));
     await scrollTo(t, row);
     await t.tap(row);
     await t.pumpAndSettle();
-    expect(find.byType(AlertDialog), findsOneWidget);
+    expect(find.byType(PrivacyScreen), findsOneWidget);
     expect(find.textContaining('Leo Alavi'), findsOneWidget);
+    await t.scrollUntilVisible(
+      find.text('Android only: Google ML Kit'),
+      400,
+      scrollable: find.byType(Scrollable).last,
+    );
     expect(find.textContaining('ML Kit'), findsWidgets);
-    expect(opened, isEmpty);
-  });
-
-  testWidgets('a failed open is reported honestly, never a crash', (t) async {
-    await t.pumpWidget(harness(policyUrl: testUrl, openOk: false));
-    await t.pumpAndSettle();
-    final row = find.byKey(const Key('settings-privacy-policy'));
-    await scrollTo(t, row);
-    await t.tap(row);
-    await t.pumpAndSettle();
-    final l = await AonL10n.delegate.load(const Locale('en'));
-    expect(find.text(l.settingsPrivacyPolicyUnavailable), findsOneWidget);
-    expect(t.takeException(), isNull);
   });
 
   testWidgets('the row label is real Persian under fa', (t) async {
-    await t.pumpWidget(
-      harness(policyUrl: testUrl, locale: const Locale('fa')),
-    );
+    await t.pumpWidget(harness(policyUrl: testUrl, locale: const Locale('fa')));
     await t.pumpAndSettle();
     final row = find.byKey(const Key('settings-privacy-policy'));
     await scrollTo(t, row);

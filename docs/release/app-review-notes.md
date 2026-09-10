@@ -136,7 +136,7 @@ ACCESSIBILITY
 Supports Dynamic Type to 200%, VoiceOver, and Reduce Motion.
 
 CONTACT
-Leo Alavi, leo.alavi.dev@gmail.com, +61451519624
+Leo Alavi, leo@leoalavi.dev, +61451519624
 ```
 
 ---
@@ -147,7 +147,7 @@ Leo Alavi, leo.alavi.dev@gmail.com, +61451519624
 |---|---|
 | First name | Leo |
 | Last name | Alavi |
-| Email | leo.alavi.dev@gmail.com |
+| Email | leo@leoalavi.dev |
 | Phone | +61451519624 |
 
 Supplied by Leo 2026-09-06 and pasted into the CONTACT line above. This is the

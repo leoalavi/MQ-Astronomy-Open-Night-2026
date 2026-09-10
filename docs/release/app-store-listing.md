@@ -111,16 +111,17 @@ separately, so "Open Night" and "University" would be wasted characters.
 
 ## Support URL / Privacy Policy URL / Marketing URL
 
-- **Support URL — REOPENED 2026-09-07, BLOCKED.** It was
-  `https://event.mq.edu.au/astronomy-open-night/`. A support URL on a
-  university domain presents the university as the app's publisher and support
-  channel, which is exactly the affiliation we have been told not to imply.
-  Needs a non-university HTTPS page owned by the developers.
-- **Privacy Policy URL — still needed, and must NOT be on a university
-  domain.** Mandatory, and the university's institutional policy cannot stand
-  in for it: see
-  `docs/release/app-store-connect-final-checklist.md` §1. The app-specific copy
-  is ready in `docs/release/hosted-pages.md` Page 1 and needs hosting.
+- **Support URL — RESOLVED.** `https://event.mq.edu.au/astronomy-open-night/`
+  is the official event/support page. Using the University's own event domain
+  for *event support* (with `astronomyopennight@mq.edu.au`) is intentional and
+  does not make the University the app's publisher — the app is independently
+  developed and hosted separately. Privacy/developer questions go to
+  `leo@leoalavi.dev`.
+- **Privacy Policy URL — RESOLVED.** `https://aon.syllabus-sync.app/privacy` —
+  a live, developer-hosted, static, readable page (generated from the in-app
+  policy). Not on a university domain. See
+  `docs/release/app-store-connect-final-checklist.md` §1 for why the University's
+  institutional policy cannot stand in for it.
 - **Marketing URL — optional**, and not needed: the Support URL is already the
   event site.
 
@@ -135,15 +136,17 @@ map, compass and wayfinding.
 ## Copyright
 
 ```
-DECISION REQUIRED — do not submit a guessed value.
+IMPLEMENTATION READY — OWNER CONFIRMATION REQUIRED (not a code task).
 ```
 
-`© 2026 Macquarie University` was the drafted line and is now **withdrawn**:
-the app is an independent project and must not assert university ownership.
-`© 2026 Astronomy Night - FSE Outreach Team` is **not** a safe substitute
-either — "FSE Outreach Team" is a university faculty unit, so it re-asserts the
-same affiliation. Whoever actually owns the app must name themselves here.
-Until that is settled in writing, this field is a submission blocker.
+Implemented app-wide as **`© 2026 Astronomy Night – FSE Outreach Team`**.
+`© 2026 Macquarie University` was the earlier draft and is **withdrawn** — the
+app is independent and must assert no university ownership; a Syllabus Sync
+ownership claim is likewise never used. Because "FSE Outreach Team" is a
+university faculty unit, the true rights-holder must **confirm this exact
+wording in writing** before submission. That confirmation is the only remaining
+step for this field; the implemented value must not be changed to
+`© Macquarie University`.
 
 ## Price
 

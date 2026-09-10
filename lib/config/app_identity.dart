@@ -54,6 +54,12 @@ abstract final class AppIdentity {
   static const String eventWebsiteUrl =
       'https://event.mq.edu.au/astronomy-open-night/';
 
+  /// Privacy and developer enquiries.
+  static const String privacyContactEmail = 'leo@leoalavi.dev';
+
+  /// Official event information and visitor support.
+  static const String eventSupportEmail = 'astronomyopennight@mq.edu.au';
+
   /// Where the app is hosted. A dedicated subdomain used purely as technical
   /// hosting infrastructure — NOT a statement of ownership or affiliation, and
   /// NOT the Syllabus Sync platform, Sylla or an "ecosystem". The app is served

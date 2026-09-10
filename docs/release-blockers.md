@@ -509,7 +509,7 @@ in-app privacy-policy surface) it is not store-release-ready:
   the Build 3 binary carries both location purpose strings and no
   `UIBackgroundModes`, and Apple accepted the binary for external beta review
   without the warning recurring. **App Review contact supplied by Leo** (Leo
-  Alavi, `leo.alavi.dev@gmail.com`, `+61451519624`) and pasted into
+  Alavi, `leo@leoalavi.dev`, `+61451519624`) and pasted into
   `app-review-notes.md`. **App Privacy answer set finalized** as the single
   source of truth in `app-store-connect-final-checklist.md` §3 (see B7
   condition 10). No code changed; **no Build 4 required**. Stale text removed

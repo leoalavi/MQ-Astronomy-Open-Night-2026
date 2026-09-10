@@ -21,7 +21,11 @@ import re
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 ARB = ROOT / "lib/l10n/app_en.arb"
 IDENT = ROOT / "lib/config/app_identity.dart"
-OUT = ROOT / "web/privacy.html"
+OUTS = (
+    ROOT / "web/privacy.html",
+    # Historical release path, now an exact mirror rather than a second policy.
+    ROOT / "docs/release/android-privacy-policy.html",
+)
 
 
 def dart_const(name: str) -> str:
@@ -45,6 +49,9 @@ def main() -> None:
     arb = json.loads(ARB.read_text("utf-8"))
     developers = dart_const("developers")
     for_team = dart_const("forTeam")
+    privacy_email = dart_const("privacyContactEmail")
+    support_email = dart_const("eventSupportEmail")
+    event_website = dart_const("eventWebsiteUrl")
     year = dart_const("copyrightYear")
     holder = dart_const("copyrightHolder")
     copyright_line = f"© {year} {holder}"
@@ -55,6 +62,10 @@ def main() -> None:
         return (arb[key]
                 .replace("{developer}", developers)
                 .replace("{forTeam}", for_team)
+                .replace("{privacyEmail}", privacy_email)
+                .replace("{supportEmail}", support_email)
+                .replace("{eventWebsite}", event_website)
+                .replace("{privacyUrl}", canonical)
                 .replace("{date}", last_updated))
 
     title = arb["webPrivacyPageTitle"]
@@ -62,6 +73,7 @@ def main() -> None:
         ("webPrivacyStorageHeading", "webPrivacyStorageBody"),
         ("webPrivacyLocationHeading", "webPrivacyLocationBody"),
         ("webPrivacyCameraHeading", "webPrivacyCameraBody"),
+        ("webPrivacyMlKitHeading", "webPrivacyMlKitBody"),
         ("webPrivacyMapsHeading", "webPrivacyMapsBody"),
         ("webPrivacyAnalyticsHeading", "webPrivacyAnalyticsBody"),
         ("webPrivacyRetentionHeading", "webPrivacyRetentionBody"),
@@ -115,8 +127,9 @@ def main() -> None:
 </body>
 </html>
 """
-    OUT.write_text(doc, "utf-8")
-    print(f"wrote {OUT.relative_to(ROOT)} ({len(doc)} bytes)")
+    for out in OUTS:
+        out.write_text(doc, "utf-8")
+        print(f"wrote {out.relative_to(ROOT)} ({len(doc)} bytes)")
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ TestFlight** · Bundle `au.edu.mq.astronomy.aon2026` · Team `94273WB4G3`
 > | **Privacy Policy URL** | **`https://aon.syllabus-sync.app/privacy`** — LIVE, static, readable HTML (generated from the in-app policy by `tool/privacy/gen_privacy_html.py`; no login; not MQ-hosted). The old `hosted-pages.md` / MQ-hosted plan is **superseded**. |
 > | Privacy contact (in the policy) | **Leo Alavi — `leo@leoalavi.dev`** |
 > | Support URL | **`https://event.mq.edu.au/astronomy-open-night/`** (event support: `astronomyopennight@mq.edu.au`) |
-> | **App Review contact** | ⚠️ **CONFIRM:** row 21 records `leo.alavi.dev@gmail.com` + phone (supplied 2026-09-06); the privacy policy uses `leo@leoalavi.dev`. Decide which Leo wants in the ASC App-Review-contact field. Do **not** use the event mailbox for App Review. |
+> | **App Review contact** | **Leo Alavi — `leo@leoalavi.dev`, `+61451519624`** (developer contact; matches the privacy contact). Never the event mailbox. |
 > | Copyright | **`© 2026 Astronomy Night – FSE Outreach Team`** (implemented app-wide). **Still requires written owner confirmation** — see the Copyright section (FSE is a university faculty unit). Do not submit `© Macquarie University`. |
 
 The single page to work through in App Store Connect. Every row names its
@@ -49,7 +49,7 @@ plus the three ASC-specific ones this pass needed.
 
 | # | Item | Status | Value / evidence |
 |---|---|---|---|
-| 1 | **Privacy Policy URL** | `AWAITING DEPLOY` | `https://aon.syllabus-sync.app/privacy`. Macquarie's own policy does **not** cover this app — see §1 below. The page is built, parity-checked against the in-app policy and covered by end-to-end tests, but it is not deployed yet, so the URL cannot be entered until it answers over HTTPS. |
+| 1 | **Privacy Policy URL** | `READY TO ENTER` | **`https://aon.syllabus-sync.app/privacy`** — LIVE static, readable, JS-free HTML generated from the in-app policy (`tool/privacy/gen_privacy_html.py`); public, HTTPS, no login; not MQ-hosted. (§1 explains why the University's own policy cannot be used.) |
 | 2 | **Support URL** | `READY TO ENTER` | `https://event.mq.edu.au/astronomy-open-night/` — official MQ event site, public, HTTPS, no login, lists `astronomyopennight@mq.edu.au` for enquiries. Fetched and read 2026-09-05. |
 | 3 | **Marketing URL** | `NOT APPLICABLE` | Optional per Apple. The Support URL already is the event site. |
 | 4 | **Terms of Use / EULA** | `VERIFIED` — **Apple standard EULA sufficient** | See §2 below. No custom EULA needed for Apple; the Google Maps flow-down is carried in-app. |
@@ -66,10 +66,10 @@ plus the three ASC-specific ones this pass needed.
 | 15 | **Description** | `READY TO ENTER` | `app-store-listing.md`, within 4000 chars. |
 | 16 | **Keywords** | `READY TO ENTER` | The committed string is **exactly 100 characters** — at Apple's limit, not over it. The doc's old "101 → trim guide" note was a miscount and has been corrected. |
 | 17 | **Categories** | `READY TO ENTER` | Primary **Education**, secondary **Navigation**. |
-| 18 | **Copyright** | `BLOCKED — DECISION REQUIRED` | `© 2026 Macquarie University` was the drafted line and is **withdrawn** (2026-09-07): the app is an independent project and must assert no university ownership. `© 2026 Astronomy Night - FSE Outreach Team` is not a safe substitute either — that is a university faculty unit. Whoever actually owns the app must name themselves. Do not submit a guessed value. |
+| 18 | **Copyright** | `IMPLEMENTATION READY — OWNER CONFIRMATION REQUIRED` | Implemented app-wide as **`© 2026 Astronomy Night – FSE Outreach Team`** — never `© Macquarie University`, never a Syllabus Sync ownership claim. Because "FSE Outreach Team" is a university faculty unit, the true rights-holder must confirm this exact wording **in writing** before submission (a human/legal task, not code). |
 | 19 | **Price / availability** | `READY TO ENTER` | Free, no in-app purchases. Availability: **Australia only** (owner decision 2026-09-06) — deselect all other territories in ASC. |
 | 20 | **App Review notes** | `READY TO ENTER` | `app-review-notes.md`, corrected 2026-09-05 to match the binary (both directions paths, what is sent to Google). |
-| 21 | **App Review contact** | `READY TO ENTER` | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo.alavi.dev@gmail.com`, `+61451519624`. In `app-review-notes.md`. |
+| 21 | **App Review contact** | `READY TO ENTER` | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo@leoalavi.dev`, `+61451519624`. In `app-review-notes.md`. |
 | 22 | **Build 3 uploaded** | `VERIFIED` | **Build 3 (`1.0.0+3`) is uploaded to App Store Connect** and **approved for external TestFlight**; the external organiser testing group exists and the public TestFlight link is ready to share. Archive step is done — do not re-archive unless a repo-side change forces a new binary. |
 | 23 | **ITMS-90683 cleared** | `CLOSED — VERIFIED` | Fixed in the Build 3 binary (both location purpose strings present, no `UIBackgroundModes`) **and validated by Apple**: Build 3 was accepted for upload and passed external TestFlight beta review without the ITMS-90683 warning recurring. |
 

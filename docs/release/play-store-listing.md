@@ -230,8 +230,9 @@ Same three as the App Store, plus one:
 
 1. **Privacy Policy URL** — mandatory, and Play adds constraints Apple does not:
    a live, publicly accessible, **non-geofenced**, **non-PDF**, non-editable URL
-   that names either the app or the publishing entity. The copy is written; it
-   needs hosting.
+   that names either the app or the publishing entity. **Ready:**
+   `https://aon.syllabus-sync.app/privacy` — a static, readable HTML page (names
+   the app; developer-hosted). Deploy the web build and it is live.
 2. **Redistribution permission** for the map artwork, `buildings.json` and the
    photographs.
 3. **Real stamp codes.**

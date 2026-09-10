@@ -27,6 +27,17 @@ the app's privacy copy and Data safety draft said "nothing is collected", which
 the Google Maps SDK and ML Kit disclosures contradict (P0 consistency), and the
 Android camera-denial path prompted the visitor twice in a row (P1 UX/policy).
 
+> **CURRENT STATE (2026-09-10).** The Privacy Policy URL is settled:
+> **`https://aon.syllabus-sync.app/privacy`** — a developer-hosted static,
+> readable page generated from the app's in-app policy
+> (`tool/privacy/gen_privacy_html.py`, synced by
+> `test/unit/privacy_html_sync_test.dart`). It is the **single canonical policy**
+> for Play, the App Store and the web. This **supersedes** the earlier
+> "host `docs/release/android-privacy-policy.html`" plan referenced below — that
+> HTML is retained for history only. Privacy contact: `leo@leoalavi.dev`; event
+> support: `astronomyopennight@mq.edu.au`. Remaining Play work is **not code**:
+> deploy the page, then enter the URL + Data-safety answers in the Console.
+
 What remains is **not code**: a public HTTPS Privacy Policy URL, the Play
 Console forms (Data safety, content rating, app content), the feature graphic
 and Android screenshots, and — because this is a **personal developer account

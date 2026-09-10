@@ -42,7 +42,7 @@ Source: <https://developer.apple.com/news/upcoming-requirements/>
 | Required-reason APIs declared | **DONE** (re-audited 2026-09-05) | The app manifest declares **SystemBootTime 35F9.1** and **FileTimestamp C617.1**: `sensors_plus` (`systemUptime`) and `package_info_plus` (`fileModificationDate`) are statically linked into Runner via SwiftPM and ship *empty* manifests, so their use is attributed to the Runner executable. `shared_preferences_foundation` (UserDefaults 1C8F.1) and `Flutter.framework` declare their own. Guarded by `test/unit/ios_privacy_manifest_test.dart`. |
 | No third-party SDK on Apple's manifest-required list | **DONE** | Pods are Flutter, `flutter_inappwebview_ios`, `google_maps_flutter_ios`, `GoogleMaps`, `Google-Maps-iOS-Utils`, `OrderedSet` — none listed. |
 | Purpose strings for camera / location / motion | **DONE** (re-audited 2026-09-05) | **Four** keys, not three: camera, motion, `NSLocationWhenInUseUsageDescription` and `NSLocationAlwaysAndWhenInUseUsageDescription`. The last was added after App Store Connect returned **ITMS-90683** against Build 2 — `geolocator_apple`'s `requestAlwaysAuthorization` is statically linked into Runner, so Apple's scan demands the string even though the app only ever requests When In Use. Camera and motion say the data stays on device; **the two location strings must not** — the Routes call sends the origin to Google. Guarded by `test/unit/ios_location_purpose_test.dart` (4 tests). |
-| **Privacy Policy URL** in App Store Connect | **YOU** | 5.1.1(i) makes this mandatory metadata. MQ-hosted. **Blocking — nothing can be submitted without it.** |
+| **Privacy Policy URL** in App Store Connect | **YOU (paste only)** | 5.1.1(i) mandatory metadata. **Ready:** `https://aon.syllabus-sync.app/privacy` — live static page, developer-hosted (not MQ). Paste into ASC. |
 | App Privacy questionnaire ("Nutrition Label") | **READY TO ENTER** | **Not** "Data Not Collected" — the app sends Precise Location to Google Routes and embeds the Google Maps SDK. The single authoritative answer set is in [`app-store-connect-final-checklist.md`](app-store-connect-final-checklist.md) §3: Precise Location + Coarse Location, Identifiers, Product Interaction, Other Usage Data, Crash Data, Performance Data — all App Functionality, not linked, not tracking. |
 
 Sources: <https://developer.apple.com/documentation/bundleresources/privacy-manifest-files> ·
@@ -60,8 +60,8 @@ Apple: *over 40% of unresolved issues are guideline 2.1*.
 | Review notes written, with **verified** navigation steps | **DONE** | `docs/release/app-review-notes.md`. Steps verified against the actual widget tree: six tabs (Home, Program, Night, Map, Info, Settings); the passport is **not** a tab — it is the Home card / Info button. |
 | Demo account | **N/A** | No account, no sign-in, no server. Stated in the notes. |
 | Backend live during review | **N/A** | Offline-first; no backend. |
-| **Support URL** in App Store Connect | **YOU** | Required. MQ-hosted. **Blocking.** |
-| App Review contact name/email/phone | **DONE** | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo.alavi.dev@gmail.com`, `+61451519624`. In `app-review-notes.md`. |
+| **Support URL** in App Store Connect | **YOU (paste only)** | Required. **Ready:** `https://event.mq.edu.au/astronomy-open-night/` — the official event/support page (event support: `astronomyopennight@mq.edu.au`). Its being on the MQ event domain is intentional. |
+| App Review contact name/email/phone | **DONE** | Supplied by Leo 2026-09-06: **Leo Alavi**, `leo@leoalavi.dev`, `+61451519624`. In `app-review-notes.md`. |
 
 Source: <https://developer.apple.com/distribute/app-review/>
 
@@ -88,9 +88,11 @@ screenshots are required**, not optional.
 
 These are not code. They are the critical path.
 
-1. **Three MQ-hosted URLs, requested in one round**: Privacy Policy, Support,
-   Terms of Use (the last carries the Google Maps flow-down). Privacy and
-   Support are hard ASC requirements.
+1. **URLs (all ready):** Privacy Policy `https://aon.syllabus-sync.app/privacy`
+   (developer-hosted static page), Support `https://event.mq.edu.au/astronomy-open-night/`
+   (official event page), Terms `https://aon.syllabus-sync.app/astronomy-open-night/terms`
+   on the info site (carries the Google Maps flow-down). Privacy and Support are
+   hard ASC requirements and are both live-ready.
 2. **Apple Developer Program membership — REOPENED 2026-09-07.** The bundle
    ID is `au.edu.mq.astronomy.aon2026`, an `au.edu.mq` namespace. This entry
    used to say publication needed the University's Apple Developer account or

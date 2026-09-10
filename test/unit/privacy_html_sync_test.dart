@@ -28,17 +28,30 @@ void main() {
 
   String norm(String s) => s.replaceAll(RegExp(r'\s+'), ' ').trim();
 
-  test('privacy.html is a static, readable, JS-free page with correct metadata', () {
-    expect(html, startsWith('<!DOCTYPE html>'));
-    expect(html, contains('<html lang="en">'));
-    expect(html, contains('<title>${en.webPrivacyPageTitle}</title>'));
-    expect(html, contains('<h1>${en.webPrivacyPageTitle}</h1>'));
-    expect(html, contains('rel="canonical" href="${AppIdentity.canonicalPrivacyUrl}"'));
-    // No app runtime, no unresolved template tokens.
-    expect(html, isNot(contains('flutter')));
-    expect(html, isNot(contains('{developer}')));
-    expect(html, isNot(contains('{forTeam}')));
-    expect(html, isNot(contains('{date}')));
+  test(
+    'privacy.html is a static, readable, JS-free page with correct metadata',
+    () {
+      expect(html, startsWith('<!DOCTYPE html>'));
+      expect(html, contains('<html lang="en">'));
+      expect(html, contains('<title>${en.webPrivacyPageTitle}</title>'));
+      expect(html, contains('<h1>${en.webPrivacyPageTitle}</h1>'));
+      expect(
+        html,
+        contains('rel="canonical" href="${AppIdentity.canonicalPrivacyUrl}"'),
+      );
+      // No app runtime, no unresolved template tokens.
+      expect(html, isNot(contains('flutter')));
+      expect(html, isNot(contains('{developer}')));
+      expect(html, isNot(contains('{forTeam}')));
+      expect(html, isNot(contains('{date}')));
+    },
+  );
+
+  test('the legacy release copy is an exact generated mirror', () {
+    expect(
+      File('docs/release/android-privacy-policy.html').readAsStringSync(),
+      html,
+    );
   });
 
   test('every in-app privacy section is present verbatim in privacy.html', () {
@@ -46,20 +59,38 @@ void main() {
       norm(en.webPrivacyLastUpdated(AppIdentity.privacyLastUpdated)),
       norm(en.webPrivacyIntro(AppIdentity.developers, AppIdentity.forTeam)),
       norm(en.webPrivacyScope),
-      en.webPrivacyStorageHeading, en.webPrivacyStorageBody,
-      en.webPrivacyLocationHeading, en.webPrivacyLocationBody,
-      en.webPrivacyCameraHeading, en.webPrivacyCameraBody,
-      en.webPrivacyMapsHeading, en.webPrivacyMapsBody,
-      en.webPrivacyAnalyticsHeading, en.webPrivacyAnalyticsBody,
-      en.webPrivacyRetentionHeading, en.webPrivacyRetentionBody,
-      en.webPrivacyContactHeading, en.webPrivacyContactBody,
+      en.webPrivacyStorageHeading,
+      en.webPrivacyStorageBody,
+      en.webPrivacyLocationHeading,
+      en.webPrivacyLocationBody,
+      en.webPrivacyCameraHeading,
+      en.webPrivacyCameraBody,
+      en.webPrivacyMlKitHeading,
+      en.webPrivacyMlKitBody,
+      en.webPrivacyMapsHeading,
+      en.webPrivacyMapsBody,
+      en.webPrivacyAnalyticsHeading,
+      en.webPrivacyAnalyticsBody,
+      en.webPrivacyRetentionHeading,
+      en.webPrivacyRetentionBody,
+      en.webPrivacyContactHeading,
+      en.webPrivacyContactBody(
+        AppIdentity.privacyContactEmail,
+        AppIdentity.eventSupportEmail,
+        AppIdentity.eventWebsiteUrl,
+        AppIdentity.canonicalPrivacyUrl,
+      ),
       norm(en.webPrivacyCredit(AppIdentity.developers, AppIdentity.forTeam)),
       AppIdentity.copyrightLine,
     ];
     for (final chunk in expected) {
-      expect(text, contains(norm(chunk)),
-          reason: 'web/privacy.html is stale — regenerate with '
-              'tool/privacy/gen_privacy_html.py. Missing: "${norm(chunk)}"');
+      expect(
+        text,
+        contains(norm(chunk)),
+        reason:
+            'web/privacy.html is stale — regenerate with '
+            'tool/privacy/gen_privacy_html.py. Missing: "${norm(chunk)}"',
+      );
     }
   });
 
@@ -71,6 +102,9 @@ void main() {
     expect(html, isNot(contains('Syllabus Sync')));
     expect(html.toLowerCase(), isNot(contains('macquarie university')));
     expect(html, isNot(matches(RegExp(r'©\s*20\d\d\s*Macquarie'))));
-    expect(html, contains('© ${AppIdentity.copyrightYear} ${AppIdentity.copyrightHolder}'));
+    expect(
+      html,
+      contains('© ${AppIdentity.copyrightYear} ${AppIdentity.copyrightHolder}'),
+    );
   });
 }

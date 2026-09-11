@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -34,6 +36,38 @@ GeoBounds boundsFor({
   return GeoBounds((minLat, minLng), (maxLat, maxLng));
 }
 
+/// Computes the browser's *initial* camera from origin/destination bounds.
+///
+/// This is intentionally used only in [GoogleMap.initialCameraPosition]. A
+/// live camera mutation during the route-result/platform-view resize is what
+/// blanks Google Maps' web tile pane in the affected renderer.
+({(double lat, double lng) center, double zoom}) webInitialCameraForBounds(
+  GeoBounds bounds,
+  Size viewport, {
+  double padding = 48,
+}) {
+  final center = (
+    (bounds.southwest.$1 + bounds.northeast.$1) / 2,
+    (bounds.southwest.$2 + bounds.northeast.$2) / 2,
+  );
+  final width = math.max(1.0, viewport.width - padding * 2);
+  final height = math.max(1.0, viewport.height - padding * 2 - 96);
+  final lngSpan = math.max(1e-9, bounds.northeast.$2 - bounds.southwest.$2);
+
+  double mercatorY(double latitude) {
+    final lat = latitude.clamp(-85.05112878, 85.05112878) * math.pi / 180;
+    return math.log(math.tan(math.pi / 4 + lat / 2)) / (2 * math.pi);
+  }
+
+  final latSpan = math.max(
+    1e-9,
+    (mercatorY(bounds.northeast.$1) - mercatorY(bounds.southwest.$1)).abs(),
+  );
+  final lngZoom = math.log(width * 360 / (256 * lngSpan)) / math.ln2;
+  final latZoom = math.log(height / (256 * latSpan)) / math.ln2;
+  return (center: center, zoom: math.min(lngZoom, latZoom).clamp(15.0, 18.0));
+}
+
 /// The tile-rendering surface. Production renders a real `GoogleMap`; widget
 /// tests inject a fake so they never need a platform view. Keeping this a local
 /// seam avoids faking `google_maps_flutter`'s platform interface (which would
@@ -68,7 +102,7 @@ class GoogleEmbeddedMapSurface implements EmbeddedMapSurface {
 /// `google_maps_flutter_web` is applying a camera update. In Chrome that leaves
 /// the map and its tile nodes mounted but clears their painted tiles. Both
 /// `newLatLngBounds` and `newLatLngZoom` reproduce it. The stable web behavior
-/// is therefore to keep the initial destination-centred camera and update only
+/// is therefore to keep the initial origin/destination-framed camera and update only
 /// the marker/polyline overlays. Native maps retain automatic bounds fitting.
 class _RouteMapView extends StatefulWidget {
   const _RouteMapView({
@@ -97,8 +131,22 @@ class _RouteMapViewState extends State<_RouteMapView> {
     northeast: _ll(widget.bounds.northeast),
   );
 
+  CameraPosition _initialCamera(Size size) {
+    if (!kIsWeb) {
+      return CameraPosition(target: _ll(widget.destination), zoom: 15);
+    }
+    final camera = webInitialCameraForBounds(widget.bounds, size);
+    navTrace(
+      'map_web_initial_camera '
+      'target=(${camera.center.$1.toStringAsFixed(5)},'
+      '${camera.center.$2.toStringAsFixed(5)}) '
+      'zoom=${camera.zoom.toStringAsFixed(2)}',
+    );
+    return CameraPosition(target: _ll(camera.center), zoom: camera.zoom);
+  }
+
   /// Fit native cameras to the route. Web deliberately keeps the initial
-  /// destination-centred camera; see the class-level regression note.
+  /// origin/destination-framed camera; see the class-level regression note.
   Future<void> _fit() async {
     final c = _controller;
     if (c == null) return;
@@ -175,10 +223,7 @@ class _RouteMapViewState extends State<_RouteMapView> {
         }
         _lastSize = size;
         return GoogleMap(
-          initialCameraPosition: CameraPosition(
-            target: _ll(widget.destination),
-            zoom: 15,
-          ),
+          initialCameraPosition: _initialCamera(size),
           // Inset the Google logo/attribution AND the my-location button above
           // the bottom info/steps panel.
           padding: const EdgeInsets.only(bottom: 96),

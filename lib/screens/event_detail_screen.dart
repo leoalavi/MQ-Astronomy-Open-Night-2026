@@ -17,7 +17,6 @@ import 'package:aon2026/services/whats_on_service.dart';
 import 'package:aon2026/utils/time_format.dart';
 import 'package:aon2026/utils/timing_labels.dart';
 import 'package:aon2026/utils/venue_style.dart';
-import 'package:aon2026/widgets/confidence_note.dart';
 import 'package:aon2026/widgets/empty_state.dart';
 import 'package:aon2026/widgets/save_button.dart';
 import 'package:aon2026/widgets/timing_badge.dart';
@@ -157,11 +156,6 @@ class EventDetailScreen extends ConsumerWidget {
                     ),
                   ),
                 ],
-                ConfidenceNote(
-                  confidence: session.timeConfidence,
-                  compact: true,
-                  message: l.detailUnpublishedTimes,
-                ),
                 const SizedBox(height: AonSpacing.space3),
               ],
             ],
@@ -396,12 +390,6 @@ class _LocationBlock extends StatelessWidget {
             ],
           ),
         ],
-        const SizedBox(height: AonSpacing.space3),
-        ConfidenceNote(
-          confidence: v.coordinateConfidence,
-          compact: true,
-          message: l.detailPositionUnconfirmed,
-        ),
         const SizedBox(height: AonSpacing.space3),
         _VenueActions(venueId: v.id),
       ],

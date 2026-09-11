@@ -337,18 +337,28 @@ void main() {
       expect(find.textContaining('Source:'), findsWidgets);
     });
 
-    testWidgets('the visitor-facing honesty notes are NOT what got hidden',
+    testWidgets('the amber detail-screen confidence notes are hidden',
         (tester) async {
-      // Guard against over-correcting. The amber confidence notes are shipped
-      // copy and a deliberate invariant (ARCHITECTURE §14.2/§14.5) — Liz
-      // published no start or finish for this walk, and the app must say so.
+      // Owner decision 2026-09-11 (Pouya): the two amber ConfidenceNote lines on
+      // the activity detail screen — "these times are not published…" and "the
+      // exact position… is still being confirmed" — are no longer shown to
+      // attendees. The screen reads cleaner without them.
+      //
+      // The DATA-honesty invariant is untouched: timing stays openAllNight, so
+      // hasPublishedStart/hasPublishedEnd still refuse to render the 4pm
+      // stand-in as a published start (ARCHITECTURE §14 #2/#3, and the
+      // unpublished_time / open_all_night_start_time tests). The internal
+      // provenance stays hidden too (the "Source:" case above). Only the
+      // visitor-facing caveat copy on this screen is suppressed.
       await tester.pumpWidget(host(
         const EventDetailScreen(eventId: 'solar-system-walk'),
       ));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('not published'), findsWidgets,
-          reason: 'the unpublished-time note is the one thing that must stay');
+      expect(find.textContaining('not published'), findsNothing,
+          reason: 'the unpublished-time caveat is intentionally removed');
+      expect(find.textContaining('still being confirmed'), findsNothing,
+          reason: 'the unconfirmed-position caveat is intentionally removed');
     });
   });
 

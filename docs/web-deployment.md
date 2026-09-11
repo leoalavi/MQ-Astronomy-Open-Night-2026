@@ -173,11 +173,23 @@ service worker an installed instance still needs the network.
 
 Production builds use `--no-web-resources-cdn`, so CanvasKit and its WASM are
 served from `build/web/canvaskit/`. Vazirmatn is bundled for the app's Persian
-typography, with its OFL licence under `assets/fonts/vazirmatn/`. CanvasKit's
-automatic Arabic fallback is redirected by `web/flutter_bootstrap.js` to the
-bundled Noto Sans Arabic subset under `web/fonts/`, where its OFL licence is
-also included. No `gstatic.com` or `fonts.gstatic.com` request is required to
-render the app.
+typography, with its OFL licence under `assets/fonts/vazirmatn/`.
+
+CanvasKit also has its OWN automatic font fallback (separate from the app theme)
+that, by default, downloads its fonts from `fonts.gstatic.com`. `web/flutter_
+bootstrap.js` redirects that fallback to this origin via `fontFallbackBaseUrl:
+'fonts/'`, so the fallback fonts must be bundled under `web/fonts/` in the same
+`<family>/<version>/<file>` layout Google uses — otherwise every fallback fetch
+404s (served as SPA `index.html`, which the browser then rejects with
+`nosniff`). The bundled set covers what the EN + FA app actually renders:
+
+- `web/fonts/roboto/…` — CanvasKit's default Latin face (Apache-2.0 `LICENSE.txt`).
+- `web/fonts/notosans/…` — Noto Sans, general Latin fallback (OFL `OFL.txt`).
+- `web/fonts/notosansarabic/…` — Persian/Arabic fallback (OFL `OFL.txt`).
+
+If a future engine bump changes the fallback subset URLs (the versioned hash
+filenames), re-capture the requested paths from a real load and re-bundle them.
+No `gstatic.com` or `fonts.gstatic.com` request is required to render the app.
 
 ## Analytics
 

@@ -4,7 +4,7 @@ description: >-
   companion for Astronomy Open Night (19 September 2026). An independent
   project; not affiliated with, endorsed or sponsored by any university.
 publish_to: 'none'
-version: 1.0.0+4
+version: 1.0.0+5
 
 environment:
   sdk: ^3.11.0

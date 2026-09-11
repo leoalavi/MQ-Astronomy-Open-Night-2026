@@ -78,6 +78,14 @@ class GoogleRoutesService implements RoutesService {
         'bytes=${resp.bodyBytes.length} elapsed=${sw.elapsedMilliseconds}ms');
 
     if (resp.statusCode != 200) {
+      // Surface Google's OWN error classification. This incident cost a
+      // debugging session because a bare `status=400` hid the real cause: the
+      // Routes API reports an expired/invalid key as HTTP 400 INVALID_ARGUMENT
+      // / API_KEY_INVALID — NOT 401/403 — so the status code alone is
+      // misleading. Trace only the two bounded, enum-like fields (the RPC
+      // `status` and the first `error.details[].reason`); never the body, the
+      // free-form message, or a key (see the nav_trace no-secret contract).
+      navTrace('route_error status=${resp.statusCode} ${_errorClass(resp.body)}');
       return RouteApiFailure(resp.statusCode);
     }
 
@@ -133,6 +141,35 @@ class GoogleRoutesService implements RoutesService {
     } catch (e) {
       navTrace('parse_threw (${e.runtimeType})');
       return const RouteMalformed();
+    }
+  }
+
+  /// Extracts Google's bounded error classification from a non-200 body, for
+  /// tracing only. Returns e.g. `status=INVALID_ARGUMENT reason=API_KEY_INVALID`.
+  ///
+  /// SAFE under the nav_trace no-secret contract: it returns ONLY the two
+  /// enum-like fields Google supplies (`error.status` and the first
+  /// `error.details[].reason`) — never the free-form `error.message`, never the
+  /// raw body, never any request echo. A missing/oddly-typed field or a
+  /// non-JSON body degrades to `?` instead of throwing.
+  static String _errorClass(String body) {
+    try {
+      final err = (jsonDecode(body) as Map<String, dynamic>)['error'];
+      if (err is! Map<String, dynamic>) return 'status=? reason=?';
+      final status = err['status'];
+      String? reason;
+      final details = err['details'];
+      if (details is List) {
+        for (final d in details) {
+          if (d is Map && d['reason'] is String) {
+            reason = d['reason'] as String;
+            break;
+          }
+        }
+      }
+      return 'status=${status is String ? status : '?'} reason=${reason ?? '?'}';
+    } catch (_) {
+      return 'status=? reason=?';
     }
   }
 

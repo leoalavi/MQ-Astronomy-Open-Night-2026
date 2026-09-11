@@ -68,6 +68,59 @@ class _FakeSurface implements EmbeddedMapSurface {
       const SizedBox(key: Key('map-surface'));
 }
 
+/// Pending until [complete] is called with a chosen result — reproduces the
+/// exact "route is loading, then resolves to success" transition the web
+/// regression happened on.
+class _HeldService implements RoutesService {
+  final _c = Completer<RouteResult>();
+  void complete(RouteResult r) => _c.complete(r);
+  @override
+  Future<RouteResult> walkingRoute({
+    required (double, double) origin,
+    required (double, double) destination,
+  }) =>
+      _c.future;
+}
+
+/// A stateful fake whose inner widget carries a STABLE key, so its element is
+/// reused across rebuilds exactly as the real `GoogleMap` element is. `creates`
+/// counts `initState` calls (i.e. how many times the map was mounted), and
+/// `lastRoute` records the polyline handed to the surface on the latest build.
+/// This lets the transition test prove the map is NOT remounted on route
+/// success and that the polyline reaches it — the invariants behind the
+/// resize-to-grey fix.
+class _MountCountingSurface implements EmbeddedMapSurface {
+  int lastRouteLength = -1;
+  static int creates = 0;
+  @override
+  Widget build({
+    required GeoBounds bounds,
+    required (double, double) origin,
+    required (double, double) destination,
+    required List<(double, double)> route,
+  }) {
+    lastRouteLength = route.length;
+    return const _CountingMap(key: Key('map-surface'));
+  }
+}
+
+class _CountingMap extends StatefulWidget {
+  const _CountingMap({super.key});
+  @override
+  State<_CountingMap> createState() => _CountingMapState();
+}
+
+class _CountingMapState extends State<_CountingMap> {
+  @override
+  void initState() {
+    super.initState();
+    _MountCountingSurface.creates++;
+  }
+
+  @override
+  Widget build(BuildContext context) => const SizedBox(key: Key('map-inner'));
+}
+
 const _resolved = AsyncData<ResolvedPlace?>(ResolvedPlace(
   kind: PlaceKind.building,
   placeKey: _key,
@@ -293,6 +346,81 @@ void main() {
     expect(find.byKey(const Key('map-surface')), findsOneWidget);
     never.release();
     await t.pumpAndSettle();
+  });
+
+  // REGRESSION (web map blanks after the route loads): the map element must
+  // survive the loading → RouteApiSuccess transition — same mount, polyline
+  // delivered, directions panel added — never a remount/replace. (The actual
+  // web tile repaint is a platform-view concern the fix handles by re-fitting
+  // the camera on resize/route-change; a widget test can pin the mount/overlay
+  // invariants that make that possible.)
+  testWidgets('loading → RouteApiSuccess keeps the SAME map mounted with overlays',
+      (t) async {
+    _MountCountingSurface.creates = 0;
+    final surface = _MountCountingSurface();
+    final held = _HeldService();
+    await t.pumpWidget(_app(_c(service: held), surface: surface));
+    await t.pump();
+    await t.pump(const Duration(milliseconds: 100));
+
+    final l = await _en();
+    // LOADING: map mounted once, "finding route" strip, no polyline yet.
+    expect(find.byKey(const Key('map-surface')), findsOneWidget);
+    expect(find.text(l.mapNavFindingRoute), findsOneWidget);
+    expect(_MountCountingSurface.creates, 1, reason: 'map mounted exactly once');
+    expect(surface.lastRouteLength, 0, reason: 'no polyline while the route loads');
+
+    // TRANSITION → success with a real polyline + a step.
+    held.complete(const RouteSuccess(NavRoute(
+      polyline: [(-33.77, 151.11), (-33.78, 151.12), (-33.785, 151.125)],
+      distanceMeters: 412,
+      eta: Duration(minutes: 6),
+      steps: [NavStep(instruction: 'Head west', distanceMeters: 10)],
+    )));
+    await t.pumpAndSettle();
+
+    // SUCCESS: the SAME map is still mounted (not recreated), the polyline
+    // reached it, and the directions panel appeared over/under it.
+    expect(find.byKey(const Key('map-surface')), findsOneWidget);
+    expect(_MountCountingSurface.creates, 1,
+        reason: 'the map must NOT be remounted when the route succeeds');
+    expect(surface.lastRouteLength, 3,
+        reason: 'the route polyline must reach the still-mounted map');
+    expect(find.textContaining('412 m'), findsOneWidget);
+    expect(find.text(l.mapNavStepsTitle), findsOneWidget);
+  });
+
+  // "Repeated route requests must not blank the map": a failure → Retry →
+  // success cycle drives a real ref.invalidate(navRouteProvider), and the map
+  // stays the same mounted element throughout.
+  testWidgets('failure → Retry → success never remounts the map', (t) async {
+    _MountCountingSurface.creates = 0;
+    final surface = _MountCountingSurface();
+    final svc = _SequencedService(const [
+      RouteMalformed(),
+      RouteSuccess(NavRoute(
+        polyline: [(-33.77, 151.11), (-33.78, 151.12)],
+        distanceMeters: 200,
+        eta: Duration(minutes: 3),
+      )),
+    ]);
+    await t.pumpWidget(_app(_c(service: svc), surface: surface));
+    await t.pumpAndSettle();
+
+    final l = await _en();
+    // Failure banner is up, but the map is already mounted beneath it.
+    expect(find.byKey(const Key('map-surface')), findsOneWidget);
+    expect(_MountCountingSurface.creates, 1);
+
+    await t.tap(find.text(l.mapNavRetry));
+    await t.pumpAndSettle();
+
+    // Success now: still the same single mounted map, polyline delivered.
+    expect(find.byKey(const Key('map-surface')), findsOneWidget);
+    expect(_MountCountingSurface.creates, 1,
+        reason: 'retrying the route must not remount the map');
+    expect(surface.lastRouteLength, 2);
+    expect(find.textContaining('200 m'), findsOneWidget);
   });
 
   testWidgets('sharing turned off mid-flight → no map, one-tap re-enable, no external',

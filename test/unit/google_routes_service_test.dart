@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:http/http.dart' as http;
@@ -200,5 +201,61 @@ void main() {
     // a route object exists but lacks distanceMeters/polyline → malformed, NOT "no route"
     expect(await _svc(_ok('{"routes":[{"duration":"5s"}]}')).walkingRoute(origin: (0, 0), destination: (0, 0)),
         isA<RouteMalformed>());
+  });
+
+  test('REQUEST CONTRACT: WALK carries NO routingPreference or other DRIVE-only option',
+      () async {
+    // The Routes API rejects `routingPreference` with `travelMode: WALK`
+    // (TRAFFIC_AWARE* is a driving concept). Pin that the request stays the
+    // minimal WALK shape so a future edit cannot reintroduce a driving option
+    // that turns every walk into an HTTP 400 INVALID_ARGUMENT.
+    late http.Request seen;
+    final client = MockClient((req) async {
+      seen = req;
+      return http.Response(
+          jsonEncode({
+            'routes': [
+              {'distanceMeters': 1, 'duration': '1s', 'polyline': {'encodedPolyline': ''}}
+            ]
+          }),
+          200);
+    });
+    await _svc(client).walkingRoute(origin: (-33.77, 151.11), destination: (-33.78, 151.12));
+    final body = jsonDecode(seen.body) as Map<String, dynamic>;
+    expect(body['travelMode'], 'WALK');
+    for (final drivingOnly in ['routingPreference', 'trafficModel', 'routeModifiers', 'extraComputations']) {
+      expect(body.containsKey(drivingOnly), isFalse,
+          reason: 'WALK must not send the DRIVE-only field "$drivingOnly"');
+    }
+  });
+
+  test('HTTP 400 INVALID_ARGUMENT/API_KEY_INVALID → RouteApiFailure(400), and the reason is traced (never the body/key)',
+      () async {
+    // The real incident: an expired Routes key comes back as HTTP 400 (not
+    // 401/403) with this exact envelope. The service must classify it as an API
+    // failure AND surface Google's bounded reason so the cause is obvious.
+    const googleBody =
+        '{"error":{"code":400,"message":"API key expired. Please renew the API key.",'
+        '"status":"INVALID_ARGUMENT","details":[{"@type":"type.googleapis.com/google.rpc.ErrorInfo",'
+        '"reason":"API_KEY_INVALID","domain":"googleapis.com"}]}}';
+
+    final logs = <String>[];
+    final original = debugPrint;
+    debugPrint = (String? message, {int? wrapWidth}) => logs.add(message ?? '');
+    try {
+      final r = await _svc(MockClient((_) async => http.Response(googleBody, 400)))
+          .walkingRoute(origin: (-33.77, 151.11), destination: (-33.78, 151.12));
+      expect(r, isA<RouteApiFailure>());
+      expect((r as RouteApiFailure).status, 400);
+    } finally {
+      debugPrint = original;
+    }
+
+    final trace = logs.join('\n');
+    expect(trace, contains('status=INVALID_ARGUMENT'));
+    expect(trace, contains('reason=API_KEY_INVALID'));
+    // The no-secret contract: the free-form message and any key-like text never
+    // reach the trace.
+    expect(trace, isNot(contains('renew the API key')));
   });
 }

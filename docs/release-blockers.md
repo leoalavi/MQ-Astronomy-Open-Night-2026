@@ -49,7 +49,7 @@ clears the path to GO.
 |----|-----------------|----------|-------|--------|
 | B1 | iOS `NSLocationWhenInUseUsageDescription` says location is "never sent anywhere", but Google Routes can transmit the user's origin after Maps consent | Store disclosure / privacy | Product/legal | `CLOSED — VERIFIED` |
 | B2 | Maps Directions currently uses implicit auto-accept on first use rather than an explicit disclosure; wording referring to "after you agree" must be reconciled with the intended consent posture | Privacy / product decision | Product/legal | `CLOSED — VERIFIED` |
-| B3 | Live Google walking routes answer HTTP 200. **Re-verified 2026-09-07: BOTH the iOS and the Android Routes keys are unrestricted** — six live probes all returned 200, including with no identity header and with a deliberately wrong app id. The Android key had never been tested before | Infrastructure / security | Infra | `OPEN` — billing/abuse exposure |
+| B3 | Google Routes key restrictions. The keys that were unrestricted on 2026-09-07 were replaced the same day and are restricted; **re-probed live 2026-09-11: iOS 403 without a bundle id / 200 with `au.edu.mq.astronomy.aon2026`, Android 403 without identity, web key 403 from a foreign referer / 200 from `https://aon.syllabus-sync.app/`.** Two manual steps remain: add the Play App Signing SHA-1 once the app exists in Play Console, and delete the retired `Astronomy` key | Infrastructure / security | Infra | `RESOLVED — AWAITING VERIFICATION` — exposure closed; Play-signed Android calls unproven |
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
 | B6 | Redistribution permission — three University asset sets settled by the owner's attestation (2026-09-05); the **Home hero photograph** ships on its existing credit by the owner's explicit decision, with the residual 5.2 risk accepted | Asset rights | Owner (decided) | `CLOSED — OWNER DECISION (accepted risk)` |
@@ -260,6 +260,34 @@ clears the path to GO.
   `aon2026-android`; (3) run the check script — want 200/403/403 on both;
   (4) rebuild with `--dart-define-from-file=.env` and confirm directions on a
   device; (5) **delete `Astronomy`** — while it exists the hole stays open.
+
+- **RE-PROBED 2026-09-11 — the exposure is closed; the register row above was
+  stale.** This file's own `Status (2026-09-07 12:40)` entry already recorded the
+  replacement keys as `200 / 403 / 403`, but the register table still described
+  the superseded unrestricted ones, so a reader met a direct contradiction.
+  Today's live probes against `routes.googleapis.com`, with no key material
+  printed:
+
+  | Key | correct identity | no identity | foreign identity |
+  |---|---|---|---|
+  | `GOOGLE_MAPS_IOS_ROUTES_KEY` | **200** (`X-Ios-Bundle-Identifier: au.edu.mq.astronomy.aon2026`) | 403 *"Requests from this iOS client application &lt;empty&gt; are blocked"* | — |
+  | `GOOGLE_MAPS_ANDROID_ROUTES_KEY` | not testable here (needs the signing SHA-1) | 403 *"Requests from this Android client application &lt;empty&gt; are blocked"* | 403 with package only |
+  | `MAPS_API_KEY` (web) | **200** from `Referer: https://aon.syllabus-sync.app/` | 403 *"Requests from referer &lt;empty&gt; are blocked"* | 403 from `https://example.com/` |
+
+- **The web key is a third, separate, correctly restricted key.** It is
+  HTTP-referrer locked to the production host and carries no application
+  restriction, which is why shipping it inside `main.dart.js` is safe and
+  intended. It is not either native key: the iOS app ships the iOS routes key
+  (`ios/Flutter/Secrets.xcconfig`) and Android ships the Android one
+  (`android/secrets.properties`). Deployed in the web bundle on 2026-09-11 and
+  verified present in the live `main.dart.js`, with both native keys verified
+  **absent** from it.
+- **What keeps this short of `CLOSED — VERIFIED`.** The Android key is provably
+  restricted, but whether its allowlisted SHA-1 matches what Play actually signs
+  cannot be checked until the app exists in Play Console. If it does not, every
+  Play-installed directions request 403s while sideloaded builds keep working —
+  the failure mode this file already warned about. That check belongs to the
+  physical-device pass in B4 and to the Play App Signing step above.
 
 ## B4 — Physical-device validation outstanding
 

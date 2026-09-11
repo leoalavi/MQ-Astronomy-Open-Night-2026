@@ -22,8 +22,11 @@ void main() {
   group('rotation is impossible', () {
     test('the map flags exclude rotate but keep pan and zoom', () {
       const f = MapConfig.mapInteractiveFlags;
-      expect(InteractiveFlag.hasRotate(f), isFalse,
-          reason: 'the printed artwork is only legible north-up');
+      expect(
+        InteractiveFlag.hasRotate(f),
+        isFalse,
+        reason: 'the printed artwork is only legible north-up',
+      );
       // The gestures a visitor actually needs must survive the removal.
       expect(InteractiveFlag.hasDrag(f), isTrue);
       expect(InteractiveFlag.hasPinchZoom(f), isTrue);
@@ -35,25 +38,31 @@ void main() {
       // Guards the call site as well as the constant: an InteractionOptions with
       // InteractiveFlag.all, or a rotation gesture wired by hand, would undo it.
       final src = File('lib/screens/map_screen.dart').readAsStringSync();
-      expect(src.contains('MapConfig.mapInteractiveFlags'), isTrue,
-          reason: 'the campus map must pass the rotation-free flag set');
-      expect(src.contains('InteractiveFlag.all'), isFalse,
-          reason: 'InteractiveFlag.all silently includes rotate');
+      expect(
+        src.contains('MapConfig.mapInteractiveFlags'),
+        isTrue,
+        reason: 'the campus map must pass the rotation-free flag set',
+      );
+      expect(
+        src.contains('InteractiveFlag.all'),
+        isFalse,
+        reason: 'InteractiveFlag.all silently includes rotate',
+      );
     });
   });
 
   group('the artwork cannot be panned off screen', () {
     // A camera helper at a given zoom/centre inside a fixed viewport.
     MapCamera cameraAt(LatLng centre, double zoom, Size size) => MapCamera(
-          crs: const CrsSimple(),
-          center: centre,
-          zoom: zoom,
-          rotation: 0,
-          // Rotation is locked to 0, so the rotated and non-rotated viewports
-          // are the same box.
-          nonRotatedSize: size,
-          size: size,
-        );
+      crs: const CrsSimple(),
+      center: centre,
+      zoom: zoom,
+      rotation: 0,
+      // Rotation is locked to 0, so the rotated and non-rotated viewports
+      // are the same box.
+      nonRotatedSize: size,
+      size: size,
+    );
 
     final bounds = MapConfig.aonMapBounds;
     final artworkCentre = LatLng(
@@ -94,22 +103,37 @@ void main() {
       );
       final centre = out.projectAtZoom(out.center, out.zoom);
       final view = Rect.fromCenter(
-          center: centre, width: size.width, height: size.height);
+        center: centre,
+        width: size.width,
+        height: size.height,
+      );
 
-      expect(view.overlaps(art), isTrue,
-          reason: 'the campus must never leave the screen entirely');
+      expect(
+        view.overlaps(art),
+        isTrue,
+        reason: 'the campus must never leave the screen entirely',
+      );
 
       // The precise per-axis guarantee: on each axis, EITHER the artwork covers
       // the viewport (nothing empty can show) OR the artwork sits entirely
       // inside it (all of the map is in frame). Never a half-off-screen third
       // case, which is what the old containCenter allowed.
-      void axisHolds(double viewLo, double viewHi, double artLo, double artHi,
-          String axis) {
+      void axisHolds(
+        double viewLo,
+        double viewHi,
+        double artLo,
+        double artHi,
+        String axis,
+      ) {
         final covers = artLo <= viewLo + 0.01 && artHi >= viewHi - 0.01;
         final inside = artLo >= viewLo - 0.01 && artHi <= viewHi + 0.01;
-        expect(covers || inside, isTrue,
-            reason: 'on $axis the artwork is neither covering the viewport nor '
-                'fully inside it — i.e. it hangs half off screen');
+        expect(
+          covers || inside,
+          isTrue,
+          reason:
+              'on $axis the artwork is neither covering the viewport nor '
+              'fully inside it — i.e. it hangs half off screen',
+        );
       }
 
       axisHolds(view.left, view.right, art.left, art.right, 'x');
@@ -128,16 +152,20 @@ void main() {
     });
 
     test('equality is by bounds, so flutter_map can diff it cheaply', () {
-      expect(ContainOrCentreCamera(bounds: bounds),
-          ContainOrCentreCamera(bounds: bounds));
+      expect(
+        ContainOrCentreCamera(bounds: bounds),
+        ContainOrCentreCamera(bounds: bounds),
+      );
     });
   });
 
   group('zoom bounds stay sane', () {
     test('the range is ordered and the focus zoom sits inside it', () {
       expect(MapConfig.mapMinZoom, lessThan(MapConfig.mapMaxZoom));
-      expect(MapConfig.mapFocusZoom,
-          inInclusiveRange(MapConfig.mapMinZoom, MapConfig.mapMaxZoom));
+      expect(
+        MapConfig.mapFocusZoom,
+        inInclusiveRange(MapConfig.mapMinZoom, MapConfig.mapMaxZoom),
+      );
     });
 
     test('the pinned values are the tuned ones', () {
@@ -157,14 +185,16 @@ void main() {
   group('strict zoom scale', () {
     final bounds = MapConfig.aonMapBounds;
     MapCamera camAt(double zoom, Size size) => MapCamera(
-          crs: const CrsSimple(),
-          center: LatLng((bounds.south + bounds.north) / 2,
-              (bounds.west + bounds.east) / 2),
-          zoom: zoom,
-          rotation: 0,
-          nonRotatedSize: size,
-          size: size,
-        );
+      crs: const CrsSimple(),
+      center: LatLng(
+        (bounds.south + bounds.north) / 2,
+        (bounds.west + bounds.east) / 2,
+      ),
+      zoom: zoom,
+      rotation: 0,
+      nonRotatedSize: size,
+      size: size,
+    );
     // Projected artwork size (px) at a given zoom — independent of MapConfig's
     // 256·2^z shortcut, so this cross-checks it.
     (double, double) artworkPx(double zoom, Size size) {
@@ -177,15 +207,24 @@ void main() {
     test('the floor COVERS the whole box (fills the screen, minimal zoom)', () {
       for (final s in const [Size(320, 568), Size(390, 844), Size(768, 1024)]) {
         final (w, h) = artworkPx(MapConfig.minZoomForViewport(s), s);
-        expect(w, greaterThanOrEqualTo(s.width - 0.5),
-            reason: 'width not covered at $s');
-        expect(h, greaterThanOrEqualTo(s.height - 0.5),
-            reason: 'height not covered at $s');
+        expect(
+          w,
+          greaterThanOrEqualTo(s.width - 0.5),
+          reason: 'width not covered at $s',
+        );
+        expect(
+          h,
+          greaterThanOrEqualTo(s.height - 0.5),
+          reason: 'height not covered at $s',
+        );
         // Minimal cover: exactly the binding axis is filled to the edge.
         final wTight = (w - s.width).abs() < 0.5;
         final hTight = (h - s.height).abs() < 0.5;
-        expect(wTight || hTight, isTrue,
-            reason: 'not the MINIMAL covering zoom at $s');
+        expect(
+          wTight || hTight,
+          isTrue,
+          reason: 'not the MINIMAL covering zoom at $s',
+        );
       }
     });
 
@@ -195,15 +234,23 @@ void main() {
       final hUnits = (bounds.north - bounds.south).abs();
       for (final s in const [Size(390, 844), Size(768, 1024)]) {
         final contain = math.min(
-            log2(s.width / (wUnits * 256)), log2(s.height / (hUnits * 256)));
-        expect(MapConfig.minZoomForViewport(s), greaterThanOrEqualTo(contain),
-            reason: 'cover must not be MORE zoomed-out than contain');
+          log2(s.width / (wUnits * 256)),
+          log2(s.height / (hUnits * 256)),
+        );
+        expect(
+          MapConfig.minZoomForViewport(s),
+          greaterThanOrEqualTo(contain),
+          reason: 'cover must not be MORE zoomed-out than contain',
+        );
       }
     });
 
     test('max caps at the crisp 1:1 raster, not the pixelated -2', () {
-      expect(MapConfig.mapMaxZoom, lessThan(-2),
-          reason: 'the old -2 upscaled the 4680px artwork and blurred labels');
+      expect(
+        MapConfig.mapMaxZoom,
+        lessThan(-2),
+        reason: 'the old -2 upscaled the 4680px artwork and blurred labels',
+      );
       // ~1:1 for the AON render (~4680 px over ~123 map-units).
       expect(MapConfig.mapMaxZoom, closeTo(-2.75, 0.1));
     });

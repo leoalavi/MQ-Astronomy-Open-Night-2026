@@ -51,8 +51,10 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     // resolved meant `ensureInitialized()` was never even called and the map
     // could not appear — the screen span on a spinner forever.
     final sdkAsync = ref.watch(mapsSdkReadyProvider);
-    navTrace('build_start sdkLoading=${sdkAsync.isLoading} '
-        'sdkReady=${sdkAsync.asData?.value}');
+    navTrace(
+      'build_start sdkLoading=${sdkAsync.isLoading} '
+      'sdkReady=${sdkAsync.asData?.value}',
+    );
     final resolved = ref.watch(placeResolverProvider(widget.placeKey));
 
     // (1) Capability guard — feature disabled → unavailable panel. No external
@@ -68,7 +70,8 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
       // that simply has no Google map surface sends people hunting for a
       // credentials bug that does not exist.
       final message = switch (availability) {
-        GoogleNavAvailability.platformUnsupported => l.mapNavPlatformUnsupported,
+        GoogleNavAvailability.platformUnsupported =>
+          l.mapNavPlatformUnsupported,
         _ => l.mapNavUnavailable,
       };
       return _scaffold(
@@ -90,7 +93,11 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
       data: (place) {
         final dest = _destOf(place);
         if (place == null || dest == null) {
-          return _scaffold(l, title: place?.title, body: _errorBack(context, l));
+          return _scaffold(
+            l,
+            title: place?.title,
+            body: _errorBack(context, l),
+          );
         }
 
         // (2b) Destination scope — a place off the AON campus map is never
@@ -109,7 +116,9 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.of(context).maybePop(),
-                  child: Text(MaterialLocalizations.of(context).backButtonTooltip),
+                  child: Text(
+                    MaterialLocalizations.of(context).backButtonTooltip,
+                  ),
                 ),
               ],
             ),
@@ -128,7 +137,10 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
         final consent = ref.watch(mapsConsentProvider);
         if (consent == MapsConsent.declined) {
           return _scaffold(
-              l, title: place.title, body: _sharingOffPanel(context, l));
+            l,
+            title: place.title,
+            body: _sharingOffPanel(context, l),
+          );
         }
         if (consent == MapsConsent.unknown) {
           _acceptConsentOnce();
@@ -137,23 +149,38 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
 
         // (4) Location origin, captured once (snapshot), scope-validated.
         final originAsync = ref.watch(navOriginProvider);
-        navTrace('origin_state loading=${originAsync.isLoading} '
-            'hasValue=${originAsync.hasValue} hasError=${originAsync.hasError} '
-            'type=${originAsync.asData?.value.runtimeType}');
+        navTrace(
+          'origin_state loading=${originAsync.isLoading} '
+          'hasValue=${originAsync.hasValue} hasError=${originAsync.hasError} '
+          'type=${originAsync.asData?.value.runtimeType}',
+        );
         return originAsync.when(
-          loading: () => _scaffold(l, title: place.title, body: _spinner(context)),
-          error: (_, _) => _scaffold(
-              l, title: place.title, body: _needLocation(context, l)),
+          loading: () =>
+              _scaffold(l, title: place.title, body: _spinner(context)),
+          error: (_, _) =>
+              _scaffold(l, title: place.title, body: _needLocation(context, l)),
           data: (origin) => switch (origin) {
             // No permission / no fix — we can't draw the route without an origin.
             // Offer a Retry (re-request the fix) in-app; never a bounce out.
-            NavOriginUnavailable() =>
-              _scaffold(l, title: place.title, body: _needLocation(context, l)),
+            NavOriginUnavailable() => _scaffold(
+              l,
+              title: place.title,
+              body: _needLocation(context, l),
+            ),
             // A real fix, but off campus. Do NOT route a long walk-in; say so.
-            NavOriginOffCampus() =>
-              _scaffold(l, title: place.title, body: _offCampusOrigin(context, l)),
+            NavOriginOffCampus() => _scaffold(
+              l,
+              title: place.title,
+              body: _offCampusOrigin(context, l),
+            ),
             // On campus — (5) route request → (6) map / typed error panels.
-            NavOriginOnCampus(:final point) => _routeFlow(context, l, place.title, point, dest),
+            NavOriginOnCampus(:final point) => _routeFlow(
+              context,
+              l,
+              place.title,
+              point,
+              dest,
+            ),
           },
         );
       },
@@ -162,11 +189,18 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
 
   /// (5) → (6): request the walking route for an on-campus origin and render
   /// the map / typed error panel. Split out so the origin `switch` stays flat.
-  Widget _routeFlow(BuildContext context, AonL10n l, String? title,
-      (double, double) origin, (double, double) dest) {
+  Widget _routeFlow(
+    BuildContext context,
+    AonL10n l,
+    String? title,
+    (double, double) origin,
+    (double, double) dest,
+  ) {
     final routeAsync = ref.watch(navRouteProvider((origin, dest)));
-    navTrace('route_flow loading=${routeAsync.isLoading} '
-        'hasValue=${routeAsync.hasValue} hasError=${routeAsync.hasError}');
+    navTrace(
+      'route_flow loading=${routeAsync.isLoading} '
+      'hasValue=${routeAsync.hasValue} hasError=${routeAsync.hasError}',
+    );
     // The MAP does not wait for the route. A pending or failed route only
     // changes the strip under the map, never whether the map exists.
     final RouteResult? result = routeAsync.hasError
@@ -175,8 +209,14 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     return _scaffold(
       l,
       title: title,
-      body: _resultBody(context, l, result, origin, dest,
-          routeLoading: routeAsync.isLoading),
+      body: _resultBody(
+        context,
+        l,
+        result,
+        origin,
+        dest,
+        routeLoading: routeAsync.isLoading,
+      ),
     );
   }
 
@@ -185,10 +225,10 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   /// keyless external hand-off is NOT offered here: it would start the very
   /// long off-campus walk this scope gate exists to prevent.
   Widget _offCampusOrigin(BuildContext context, AonL10n l) => _panel(
-        context,
-        icon: Icons.explore_off_outlined,
-        message: l.mapNavOffCampusOrigin,
-      );
+    context,
+    icon: Icons.explore_off_outlined,
+    message: l.mapNavOffCampusOrigin,
+  );
 
   (double, double)? _destOf(ResolvedPlace? place) {
     if (place?.routingLat == null || place?.routingLng == null) return null;
@@ -214,21 +254,26 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   /// plain panel with a one-tap re-enable. No external hand-off: turning sharing
   /// back on is the only path to directions, and it keeps them inside AON.
   Widget _sharingOffPanel(BuildContext context, AonL10n l) => _panel(
-        context,
-        icon: Icons.location_disabled_outlined,
-        message: l.mapNavDisclosureBody,
-        actions: [
-          FilledButton(
-            key: const Key('nav-enable-sharing'),
-            onPressed: () => ref.read(mapsConsentProvider.notifier).accept(),
-            child: Text(l.mapNavDisclosureAccept),
-          ),
-        ],
-      );
+    context,
+    icon: Icons.location_disabled_outlined,
+    message: l.mapNavDisclosureBody,
+    actions: [
+      FilledButton(
+        key: const Key('nav-enable-sharing'),
+        onPressed: () => ref.read(mapsConsentProvider.notifier).accept(),
+        child: Text(l.mapNavDisclosureAccept),
+      ),
+    ],
+  );
 
-  Widget _resultBody(BuildContext context, AonL10n l, RouteResult? result,
-      (double, double) origin, (double, double) dest,
-      {bool routeLoading = false}) {
+  Widget _resultBody(
+    BuildContext context,
+    AonL10n l,
+    RouteResult? result,
+    (double, double) origin,
+    (double, double) dest, {
+    bool routeLoading = false,
+  }) {
     // Consent withdrawn mid-flight is the ONE case with no map: nothing reached
     // the UI and no Google surface may be constructed, so offer the way back
     // rather than a map the user just revoked permission for.
@@ -243,8 +288,10 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     // not sufficient — readiness must be true.
     navTrace('map_render_branch reached');
     final sdkAsync = ref.watch(mapsSdkReadyProvider);
-    navTrace('sdk_ready_requested '
-        'loading=${sdkAsync.isLoading} value=${sdkAsync.asData?.value}');
+    navTrace(
+      'sdk_ready_requested '
+      'loading=${sdkAsync.isLoading} value=${sdkAsync.asData?.value}',
+    );
     final sdkReady = sdkAsync.asData?.value == true;
     // Distinguish "still initialising" from "resolved: cannot key the SDK".
     // Showing a spinner for the latter span forever, which reads as a hang.
@@ -296,12 +343,17 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
                   width: 16,
                   height: 16,
                   child: CircularProgressIndicator(
-                      strokeWidth: 2, color: context.aon.accent),
+                    strokeWidth: 2,
+                    color: context.aon.accent,
+                  ),
                 ),
                 const SizedBox(width: AonSpacing.space3),
-                Text(l.mapNavFindingRoute,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: context.aon.contentSecondary)),
+                Text(
+                  l.mapNavFindingRoute,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: context.aon.contentSecondary,
+                  ),
+                ),
               ],
             ),
           )
@@ -316,18 +368,23 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   /// Deliberately a banner, not a full-screen panel: the destination is on the
   /// map above it, so the honest message is "the route is unavailable", not
   /// "navigation is unavailable".
-  Widget _routeErrorBanner(BuildContext context, AonL10n l, RouteResult result,
-      (double, double) origin, (double, double) dest) {
+  Widget _routeErrorBanner(
+    BuildContext context,
+    AonL10n l,
+    RouteResult result,
+    (double, double) origin,
+    (double, double) dest,
+  ) {
     final theme = Theme.of(context);
     final (icon, message) = switch (result) {
       RouteNoRoute() => (Icons.directions_off_outlined, l.mapNavNoRoute),
       RouteNetworkFailure() => (Icons.wifi_off_rounded, l.mapNavOffline),
       RouteApiFailure(:final status) => () {
-          // Surface the status to logs so 401/403 (key) vs 429 (quota) vs 5xx
-          // stays diagnosable from a QA report.
-          navTrace('route API failure HTTP $status');
-          return (Icons.error_outline_rounded, l.mapNavRouteUnavailable);
-        }(),
+        // Surface the status to logs so 401/403 (key) vs 429 (quota) vs 5xx
+        // stays diagnosable from a QA report.
+        navTrace('route API failure HTTP $status');
+        return (Icons.error_outline_rounded, l.mapNavRouteUnavailable);
+      }(),
       _ => (Icons.error_outline_rounded, l.mapNavRouteUnavailable),
     };
 
@@ -347,8 +404,9 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
               Expanded(
                 child: Text(
                   message,
-                  style: theme.textTheme.bodyMedium
-                      ?.copyWith(color: context.aon.contentSecondary),
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: context.aon.contentSecondary,
+                  ),
                 ),
               ),
             ],
@@ -365,36 +423,39 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     );
   }
 
-
   Widget _needLocation(BuildContext context, AonL10n l) => _panel(
-        context,
-        icon: Icons.location_off_outlined,
-        message: l.mapNavNeedLocation,
-        // Re-request the fix in-app. `navOriginProvider` is autoDispose, so
-        // invalidating it re-runs the location read on the next watch.
-        actions: [
-          FilledButton.tonal(
-            key: const Key('nav-retry-location'),
-            onPressed: () => ref.invalidate(navOriginProvider),
-            child: Text(l.mapNavRetry),
-          ),
-        ],
-      );
+    context,
+    icon: Icons.location_off_outlined,
+    message: l.mapNavNeedLocation,
+    // Re-request the fix in-app. `navOriginProvider` is autoDispose, so
+    // invalidating it re-runs the location read on the next watch.
+    actions: [
+      FilledButton.tonal(
+        key: const Key('nav-retry-location'),
+        onPressed: () => ref.invalidate(navOriginProvider),
+        child: Text(l.mapNavRetry),
+      ),
+    ],
+  );
 
   Widget _errorBack(BuildContext context, AonL10n l) => _panel(
-        context,
-        icon: Icons.error_outline_rounded,
-        message: l.mapNavError,
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).maybePop(),
-            child: Text(MaterialLocalizations.of(context).backButtonTooltip),
-          ),
-        ],
-      );
+    context,
+    icon: Icons.error_outline_rounded,
+    message: l.mapNavError,
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).maybePop(),
+        child: Text(MaterialLocalizations.of(context).backButtonTooltip),
+      ),
+    ],
+  );
 
   Widget _successPanel(
-      BuildContext context, AonL10n l, NavRoute route, (double, double) dest) {
+    BuildContext context,
+    AonL10n l,
+    NavRoute route,
+    (double, double) dest,
+  ) {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
@@ -407,14 +468,18 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           // Distance · ETA · a WALK badge — the walking headline of the route.
           Row(
             children: [
-              Icon(Icons.directions_walk_rounded,
-                  size: 20, color: context.aon.accent),
+              Icon(
+                Icons.directions_walk_rounded,
+                size: 20,
+                color: context.aon.accent,
+              ),
               const SizedBox(width: AonSpacing.space2),
               Expanded(
                 child: Text(
                   '${formatNavDistance(l, route.distanceMeters)} · ${formatNavEta(l, route.eta)}',
-                  style: theme.textTheme.titleMedium
-                      ?.copyWith(color: context.aon.contentPrimary),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    color: context.aon.contentPrimary,
+                  ),
                 ),
               ),
             ],
@@ -423,19 +488,30 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           // contractual bit; the app adds no generic "beta" caution of its own).
           if (route.warnings.isNotEmpty) ...[
             const SizedBox(height: AonSpacing.space2),
-            Text(l.mapNavWarningsTitle,
-                style: theme.textTheme.labelMedium?.copyWith(color: context.aon.contentSecondary)),
+            Text(
+              l.mapNavWarningsTitle,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
+            ),
             for (final w in route.warnings)
-              Text('• $w',
-                  style: theme.textTheme.bodySmall?.copyWith(color: context.aon.contentTertiary)),
+              Text(
+                '• $w',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: context.aon.contentTertiary,
+                ),
+              ),
           ],
           // A compact, SCROLLABLE step list — only ever the steps Google actually
           // returned (`route.steps`). Bounded so it can't crowd the map above it.
           if (route.steps.isNotEmpty) ...[
             const SizedBox(height: AonSpacing.space3),
-            Text(l.mapNavStepsTitle,
-                style: theme.textTheme.labelMedium
-                    ?.copyWith(color: context.aon.contentSecondary)),
+            Text(
+              l.mapNavStepsTitle,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
+            ),
             const SizedBox(height: AonSpacing.space1),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 148),
@@ -455,22 +531,29 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
   }
 
   Widget _retryButton(
-          BuildContext context, AonL10n l, (double, double) origin, (double, double) dest) =>
-      FilledButton.tonal(
-        onPressed: () => ref.invalidate(navRouteProvider((origin, dest))),
-        child: Text(l.mapNavRetry),
-      );
+    BuildContext context,
+    AonL10n l,
+    (double, double) origin,
+    (double, double) dest,
+  ) => FilledButton.tonal(
+    onPressed: () => ref.invalidate(navRouteProvider((origin, dest))),
+    child: Text(l.mapNavRetry),
+  );
 
   Widget _backButton(BuildContext context) => TextButton(
-        onPressed: () => Navigator.of(context).maybePop(),
-        child: Text(MaterialLocalizations.of(context).backButtonTooltip),
-      );
+    onPressed: () => Navigator.of(context).maybePop(),
+    child: Text(MaterialLocalizations.of(context).backButtonTooltip),
+  );
 
   Widget _spinner(BuildContext context) =>
       Center(child: CircularProgressIndicator(color: context.aon.accent));
 
-  Widget _panel(BuildContext context,
-      {required IconData icon, required String message, List<Widget> actions = const []}) {
+  Widget _panel(
+    BuildContext context, {
+    required IconData icon,
+    required String message,
+    List<Widget> actions = const [],
+  }) {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
@@ -480,12 +563,20 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
           children: [
             Icon(icon, size: 40, color: context.aon.contentTertiary),
             const SizedBox(height: AonSpacing.space3),
-            Text(message,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(color: context.aon.contentSecondary)),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: context.aon.contentSecondary,
+              ),
+            ),
             if (actions.isNotEmpty) ...[
               const SizedBox(height: AonSpacing.space3),
-              Wrap(spacing: AonSpacing.space2, alignment: WrapAlignment.center, children: actions),
+              Wrap(
+                spacing: AonSpacing.space2,
+                alignment: WrapAlignment.center,
+                children: actions,
+              ),
             ],
           ],
         ),
@@ -493,7 +584,8 @@ class _GoogleNavScreenState extends ConsumerState<GoogleNavScreen> {
     );
   }
 
-  Widget _scaffold(AonL10n l, {required String? title, required Widget body}) => Scaffold(
+  Widget _scaffold(AonL10n l, {required String? title, required Widget body}) =>
+      Scaffold(
         backgroundColor: context.aon.surfaceBase,
         appBar: AppBar(title: Text(title ?? l.mapNavGoogle)),
         body: SafeArea(child: body),
@@ -513,19 +605,28 @@ class _StepRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(Icons.directions_walk_rounded,
-            size: 16, color: context.aon.contentTertiary),
+        Icon(
+          Icons.directions_walk_rounded,
+          size: 16,
+          color: context.aon.contentTertiary,
+        ),
         const SizedBox(width: AonSpacing.space2),
         Expanded(
-          child: Text(step.instruction,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(color: context.aon.contentSecondary)),
+          child: Text(
+            step.instruction,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: context.aon.contentSecondary,
+            ),
+          ),
         ),
         if (step.distanceMeters > 0) ...[
           const SizedBox(width: AonSpacing.space2),
-          Text(formatNavDistance(l, step.distanceMeters),
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: context.aon.contentTertiary)),
+          Text(
+            formatNavDistance(l, step.distanceMeters),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: context.aon.contentTertiary,
+            ),
+          ),
         ],
       ],
     );

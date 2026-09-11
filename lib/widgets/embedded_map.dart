@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -57,32 +58,18 @@ class GoogleEmbeddedMapSurface implements EmbeddedMapSurface {
     required (double lat, double lng) origin,
     required (double lat, double lng) destination,
     required List<(double lat, double lng)> route,
-  }) =>
-      _RouteMapView(bounds: bounds, destination: destination, route: route);
+  }) => _RouteMapView(bounds: bounds, destination: destination, route: route);
 }
 
-/// The real Google map, kept ALIVE and CORRECT across the route-state
-/// transition (`loading → RouteApiSuccess`) and across container resizes.
+/// The real Google map, kept alive across the route-state transition
+/// (`loading → RouteApiSuccess`) and container resizes.
 ///
-/// ## The regression this fixes
-///
-/// The map is one child of a `Column`; its sibling grows from a one-line
-/// "finding route" strip to the full distance + steps panel when the route
-/// arrives. That shrinks the map's `Expanded`, so the **web** platform view is
-/// resized. `google_maps_flutter_web` leaves the tile layer BLANK/GREY after a
-/// container resize until the camera is moved — and the original code fit the
-/// camera only once, inside `onMapCreated`, so nothing ever nudged it again.
-/// Result: the map showed correctly during loading, then went grey on success
-/// (Google logo/controls/attribution stayed, because only the tile layer died).
-///
-/// The map element is NOT remounted here (no keys change, same position in the
-/// tree), so the controller and JS map instance persist. The fix is to hold
-/// that controller and re-fit the camera after:
-///   1. creation (initial fit),
-///   2. a route/bounds change (fits the polyline AND repaints the tiles), and
-///   3. any container resize (route panel appears, browser width changes).
-/// Re-fitting is the documented cure for the web resize-to-grey: a camera move
-/// forces the tile layer to re-render at the current size.
+/// On web the route-success rebuild shrinks the slotted platform view while
+/// `google_maps_flutter_web` is applying a camera update. In Chrome that leaves
+/// the map and its tile nodes mounted but clears their painted tiles. Both
+/// `newLatLngBounds` and `newLatLngZoom` reproduce it. The stable web behavior
+/// is therefore to keep the initial destination-centred camera and update only
+/// the marker/polyline overlays. Native maps retain automatic bounds fitting.
 class _RouteMapView extends StatefulWidget {
   const _RouteMapView({
     required this.bounds,
@@ -106,29 +93,28 @@ class _RouteMapViewState extends State<_RouteMapView> {
   static LatLng _ll((double, double) p) => LatLng(p.$1, p.$2);
 
   LatLngBounds get _gBounds => LatLngBounds(
-        southwest: _ll(widget.bounds.southwest),
-        northeast: _ll(widget.bounds.northeast),
-      );
+    southwest: _ll(widget.bounds.southwest),
+    northeast: _ll(widget.bounds.northeast),
+  );
 
-  /// Re-fit the camera to the current bounds. This is the load-bearing repaint:
-  /// on web a camera move forces the tile layer to re-render, so it doubles as
-  /// the cure for the resize-to-grey. `animate` on route arrival (a nicety),
-  /// straight `moveCamera` on a bare resize (no gratuitous motion).
-  Future<void> _fit({required bool animate}) async {
+  /// Fit native cameras to the route. Web deliberately keeps the initial
+  /// destination-centred camera; see the class-level regression note.
+  Future<void> _fit() async {
     final c = _controller;
     if (c == null) return;
+    if (kIsWeb) {
+      navTrace('map_fit_skipped_web polyline=${widget.route.length}');
+      return;
+    }
     final sw = widget.bounds.southwest, ne = widget.bounds.northeast;
-    navTrace('map_fit animate=$animate '
-        'sw=(${sw.$1.toStringAsFixed(5)},${sw.$2.toStringAsFixed(5)}) '
-        'ne=(${ne.$1.toStringAsFixed(5)},${ne.$2.toStringAsFixed(5)}) '
-        'polyline=${widget.route.length}');
+    navTrace(
+      'map_fit '
+      'sw=(${sw.$1.toStringAsFixed(5)},${sw.$2.toStringAsFixed(5)}) '
+      'ne=(${ne.$1.toStringAsFixed(5)},${ne.$2.toStringAsFixed(5)}) '
+      'polyline=${widget.route.length}',
+    );
     try {
-      final update = CameraUpdate.newLatLngBounds(_gBounds, 48);
-      if (animate) {
-        await c.animateCamera(update);
-      } else {
-        await c.moveCamera(update);
-      }
+      await c.moveCamera(CameraUpdate.newLatLngBounds(_gBounds, 48));
     } catch (e) {
       // Invalid/degenerate bounds or a not-yet-laid-out map must never throw out
       // of a frame callback and take the screen down (#9/#10). The map stays;
@@ -137,24 +123,33 @@ class _RouteMapViewState extends State<_RouteMapView> {
     }
   }
 
-  void _fitAfterFrame({required bool animate}) {
+  void _fitAfterLayout() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _fit(animate: animate);
+      if (!mounted) return;
+      _fit();
     });
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
   }
 
   @override
   void didUpdateWidget(covariant _RouteMapView old) {
     super.didUpdateWidget(old);
     final routeChanged = old.route.length != widget.route.length;
-    final boundsChanged = old.bounds.southwest != widget.bounds.southwest ||
+    final boundsChanged =
+        old.bounds.southwest != widget.bounds.southwest ||
         old.bounds.northeast != widget.bounds.northeast;
     if (routeChanged || boundsChanged) {
-      navTrace('map_didUpdate routeChanged=$routeChanged '
-          'boundsChanged=$boundsChanged markers=1 polyline=${widget.route.length}');
-      // After the frame, so the platform view has finished resizing to the new
-      // (smaller) height the success panel forces — THEN re-fit/repaint.
-      _fitAfterFrame(animate: true);
+      navTrace(
+        'map_didUpdate routeChanged=$routeChanged '
+        'boundsChanged=$boundsChanged markers=1 polyline=${widget.route.length}',
+      );
+      // Native fits after layout. Web logs but skips the camera mutation.
+      _fitAfterLayout();
     }
   }
 
@@ -164,22 +159,26 @@ class _RouteMapViewState extends State<_RouteMapView> {
     return LayoutBuilder(
       builder: (context, constraints) {
         final size = constraints.biggest;
-        navTrace('map_build #$_buildCount '
-            'size=${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)} '
-            'controller=${_controller?.hashCode} polyline=${widget.route.length}');
-        // A resize that is NOT already covered by a bounds/route change (e.g. the
-        // browser width changed, or the panel appeared without changing bounds):
-        // re-fit after this frame so the web tiles repaint at the new size.
+        navTrace(
+          'map_build #$_buildCount '
+          'size=${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)} '
+          'controller=${_controller?.hashCode} polyline=${widget.route.length}',
+        );
+        // Track every resize for lifecycle evidence and refit native cameras.
         if (_controller != null && _lastSize != null && size != _lastSize) {
-          navTrace('map_resize from=${_lastSize!.width.toStringAsFixed(0)}x'
-              '${_lastSize!.height.toStringAsFixed(0)} to='
-              '${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}');
-          _fitAfterFrame(animate: false);
+          navTrace(
+            'map_resize from=${_lastSize!.width.toStringAsFixed(0)}x'
+            '${_lastSize!.height.toStringAsFixed(0)} to='
+            '${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
+          );
+          _fitAfterLayout();
         }
         _lastSize = size;
         return GoogleMap(
-          initialCameraPosition:
-              CameraPosition(target: _ll(widget.destination), zoom: 15),
+          initialCameraPosition: CameraPosition(
+            target: _ll(widget.destination),
+            zoom: 15,
+          ),
           // Inset the Google logo/attribution AND the my-location button above
           // the bottom info/steps panel.
           padding: const EdgeInsets.only(bottom: 96),
@@ -194,8 +193,9 @@ class _RouteMapViewState extends State<_RouteMapView> {
             // Destination only — a clear pin for where you're headed. "You" is
             // the blue dot above.
             Marker(
-                markerId: const MarkerId('destination'),
-                position: _ll(widget.destination)),
+              markerId: const MarkerId('destination'),
+              position: _ll(widget.destination),
+            ),
           },
           polylines: {
             // A coloured, rounded walking line reads as a route, not a stray
@@ -217,7 +217,7 @@ class _RouteMapViewState extends State<_RouteMapView> {
             _controller = controller;
             navTrace('map_created controller=${controller.hashCode}');
             // First fit once the view has a size.
-            _fitAfterFrame(animate: true);
+            _fitAfterLayout();
           },
         );
       },
@@ -244,7 +244,16 @@ class EmbeddedMap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bounds = boundsFor(origin: origin, destination: destination, route: route);
-    return surface.build(bounds: bounds, origin: origin, destination: destination, route: route);
+    final bounds = boundsFor(
+      origin: origin,
+      destination: destination,
+      route: route,
+    );
+    return surface.build(
+      bounds: bounds,
+      origin: origin,
+      destination: destination,
+      route: route,
+    );
   }
 }

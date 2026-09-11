@@ -24,7 +24,7 @@ TestFlight** · Bundle `au.edu.mq.astronomy.aon2026` · Team `94273WB4G3`
 > | App name | **Astronomy Open Night 2026** |
 > | Developed by | **Leo Alavi and Mohammad Raouf Abedini** |
 > | For | **Astronomy Night – FSE Outreach Team** |
-> | **Privacy Policy URL** | **`https://aon.syllabus-sync.app/privacy`** — canonical static readable HTML generated from the in-app policy. Local artifact verified; public DNS/hosting verification remains a human release action. The old `hosted-pages.md` / MQ-hosted plan is **superseded**. |
+> | **Privacy Policy URL** | **`https://aon.syllabus-sync.app/privacy`** — canonical static readable HTML generated from the in-app policy. **Live and verified 2026-09-11** (200, HTTPS, no login). The old `hosted-pages.md` / MQ-hosted plan is **superseded**. |
 > | Privacy contact (in the policy) | **Leo Alavi — `leo@leoalavi.dev`** |
 > | Support URL | **`https://event.mq.edu.au/astronomy-open-night/`** (event support: `astronomyopennight@mq.edu.au`) |
 > | **App Review contact** | **Leo Alavi — `leo@leoalavi.dev`, `+61451519624`** (developer contact; matches the privacy contact). Never the event mailbox. |
@@ -50,7 +50,7 @@ plus the three ASC-specific ones this pass needed.
 
 | # | Item | Status | Value / evidence |
 |---|---|---|---|
-| 1 | **Privacy Policy URL** | `BLOCKED` | **`https://aon.syllabus-sync.app/privacy`** — local static, readable, JS-free HTML is generated from the in-app policy (`tool/privacy/gen_privacy_html.py`). Public DNS/hosting was not reachable on 2026-09-10; deploy and verify it before entering the URL. |
+| 1 | **Privacy Policy URL** | `READY TO ENTER` | **`https://aon.syllabus-sync.app/privacy`** — static, readable, JS-free HTML generated from the in-app policy (`tool/privacy/gen_privacy_html.py`). **Deployed and verified live 2026-09-11:** HTTP/2 200, `content-type: text/html`, no login, valid certificate (Google Trust Services, issued 2026-09-10), served by the `astronomy-open-night` Worker on Cloudflare. `https://info.syllabus-sync.app/astronomy-open-night/privacy` 308-redirects here, so the older link also lands on it. |
 | 2 | **Support URL** | `READY TO ENTER` | `https://event.mq.edu.au/astronomy-open-night/` — official MQ event site, public, HTTPS, no login, lists `astronomyopennight@mq.edu.au` for enquiries. Fetched and read 2026-09-05. |
 | 3 | **Marketing URL** | `NOT APPLICABLE` | Optional per Apple. The Support URL already is the event site. |
 | 4 | **Terms of Use / EULA** | `VERIFIED` — **Apple standard EULA sufficient** | See §2 below. No custom EULA needed for Apple; the Google Maps flow-down is carried in-app. |
@@ -105,7 +105,9 @@ The repository instead generates Astronomy Open Night's own semantic policy at
 `web/privacy.html`, directly from the same localisation source used by the
 in-app privacy screen. Its canonical URL is
 `https://aon.syllabus-sync.app/privacy`. The artifact is complete and parity
-tested; deploying it and verifying public DNS remain external release actions.
+tested, and it was deployed and verified live on 2026-09-11: the
+`astronomy-open-night` Cloudflare Worker serves it at that URL over HTTPS with a
+valid certificate and no login.
 
 ## §2 — Terms of Use: Apple standard EULA is sufficient
 

@@ -53,7 +53,7 @@ clears the path to GO.
 | B4 | Real-device validation remains outstanding for GPS field accuracy, magnetometer/compass behaviour and live Google route rendering | Physical-device QA | QA | `UNVERIFIED — PHYSICAL DEVICE REQUIRED` |
 | B5 | Passport station codes (were placeholders, now live in-app); the generated signs must be the ones printed and installed | Event configuration | Organisers | `CLOSED IN APP — SIGNAGE INSTALL PENDING` |
 | B6 | Redistribution permission — three University asset sets settled by the owner's attestation (2026-09-05); the **Home hero photograph** ships on its existing credit by the owner's explicit decision, with the residual 5.2 risk accepted | Asset rights | Owner (decided) | `CLOSED — OWNER DECISION (accepted risk)` |
-| B7 | **Support URL found** (`event.mq.edu.au/astronomy-open-night/`, verified live 2026-09-05); the in-app policy surface exists offline; the Privacy Policy page is now built and parity-checked for `https://aon.syllabus-sync.app/privacy` but **is not deployed yet** | Store publishing / privacy | Organisers / product | `RESOLVED — AWAITING VERIFICATION` — needs a live fetch of the hosted URL |
+| B7 | **Support URL found** (`event.mq.edu.au/astronomy-open-night/`, verified live 2026-09-05); the in-app policy surface exists offline; the Privacy Policy page is **deployed and verified live 2026-09-11** at `https://aon.syllabus-sync.app/privacy` (200, HTTPS, no login) | Store publishing / privacy | Organisers / product | `RESOLVED — AWAITING CONSOLE ENTRY` — the URLs still have to be entered in App Store Connect and Play Console |
 
 ---
 
@@ -369,9 +369,17 @@ clears the path to GO.
 
 ## B7 — Store privacy/support publishing prerequisites
 
-- **Exact problem.** The canonical Privacy Policy URL is configured in source,
-  but its DNS/hosting is not live. The official event page is already public and
-  is the Support URL.
+- **Exact problem (original).** The canonical Privacy Policy URL was configured
+  in source, but its DNS/hosting was not live. The official event page is already
+  public and is the Support URL.
+- **Deployed and fetched live, 2026-09-11.** `https://aon.syllabus-sync.app/`
+  and `https://aon.syllabus-sync.app/privacy` both return HTTP/2 200 over HTTPS
+  with a valid certificate and no login, served by the `astronomy-open-night`
+  Cloudflare Worker. The sibling-path bug that had prevented the build and
+  deploy from ever running is fixed in the information-site repository, and
+  `https://info.syllabus-sync.app/astronomy-open-night/privacy` 308-redirects to
+  the canonical URL. The half of this blocker that was ours is closed; what
+  remains is entering the URLs in the two consoles.
 - **In-app and generated copies complete (2026-09-10).** Settings → Privacy
   Policy renders the shared, sectioned `webPrivacy*` source. The same source
   generates the semantic, JavaScript-free `web/privacy.html` and
@@ -382,11 +390,13 @@ clears the path to GO.
   the separately maintained support/terms pages into the dedicated AON Worker
   bundle. Cross-browser tests cover all app routes, no-JavaScript privacy HTML,
   Persian content and refresh-safe routing.
-- **What is still missing for `CLOSED — VERIFIED`.** Nothing is deployed. The
-  evidence rule needs a live HTTPS fetch of `https://aon.syllabus-sync.app/privacy`
-  and the store URLs entered in App Store Connect and Play Console.
-  Until then this stays `RESOLVED — AWAITING VERIFICATION` and must not be read
-  as a GO.
+- **What is still missing for `CLOSED — VERIFIED`.** The live HTTPS fetch is done
+  (2026-09-11, above). What remains is outside this repository: enter
+  `https://aon.syllabus-sync.app/privacy` as the Privacy Policy URL and
+  `https://event.mq.edu.au/astronomy-open-night/` as the Support URL in App Store
+  Connect and Play Console, keeping the existing App Privacy and Data Safety
+  answer sets. Until those are entered this stays
+  `RESOLVED — AWAITING CONSOLE ENTRY` and must not be read as a GO.
 
 - **Verified 2026 store requirements.**
   - Apple requires a **Privacy Policy URL for all apps**.

@@ -7,6 +7,53 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-12 — Android APK published for direct download
+
+**Scope:** Build and public distribution of the Android app, per Pouya's request
+to put a downloadable APK on the info site.
+
+- **Built a fresh signed release APK from `main`** — `au.edu.mq.astronomy.aon2026`
+  **v1.0.0 (build 5)**, ~138 MB, signed with the upload key
+  (`CN=Astronomy Open Night upload key, O=Leo Alavi`; verified with `apksigner`).
+  Built fresh rather than reusing the 7 Sep APK because that one predated the
+  privacy-copy alignment. Built under **Java 23** (Adoptium): the Android Studio
+  JBR has moved to Java 25, which Gradle 9.1 does not support.
+- **Hosted as a GitHub release** (`aon-android-v1.0.0`) on the **public** info-site
+  repo, not in the site bundle: the APK far exceeds Cloudflare Workers' per-asset
+  limit, the app repo is private (its releases are not publicly downloadable), and
+  the deploy token lacks R2 permission. Download URL verified 200 +
+  `application/vnd.android.package-archive`, resumable.
+- **Linked** as "Download for Android (APK)" on `info.syllabus-sync.app/astronomy-open-night`
+  (info-site PR #23, deployed).
+
+**Verification:** APK signed and version-checked with `apksigner`/`aapt2`; live
+download 200; page link live.
+
+**Follow-ups:** on the next build, upload to a new release tag and bump
+`aonAndroidApkUrl` in the info-site repo. Signed with the upload key (correct for
+sideloading); iOS stays on the App Store path.
+
+---
+
+## Raouf: 2026-09-12 — Standardise the collaborator name to "Leo Alavi"
+
+**Scope:** Owner request that the developer's name read "Leo Alavi" everywhere.
+
+- All **public/user-facing** surfaces already said "Leo Alavi" (`app_identity.dart`,
+  `event_info.dart`, the privacy page, `leo@leoalavi.dev`); the info site already
+  used `linkedin.com/in/leo-alavi` and `github.com/leoalavi`. Confirmed no stale
+  `pouya-alavi` / `mrpouyaalavi` handle anywhere.
+- Updated the remaining **internal** references — one ownership line in
+  `docs/backend-integration.md` and ~18 "field report, Pouya" attribution comments
+  across `lib/` — to "Leo Alavi" (PR #8). Comments and docs only: no behaviour,
+  strings or test changes. The git-ignored private feedback notes and the
+  `pouya_field_fixes_test` identifier keep the accurate historical name.
+
+**Verification:** `./scripts/check.sh` CHECK PASSED (exit 0); 0 "Pouya" left in
+shipped code/docs.
+
+---
+
 ## Raouf: 2026-09-12 — Map audit: restore the coverage gate (was red on main)
 
 **Scope:** End-to-end audit of the two mapping systems — the CrsSimple campus

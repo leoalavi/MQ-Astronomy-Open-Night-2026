@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <title>Walking directions</title>
+  <style>
+    html, body { margin: 0; padding: 0; height: 100%; width: 100%; overflow: hidden; background: #e9eef2; }
+    #map { position: absolute; inset: 0; width: 100%; height: 100%; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <script>
+  // Isolated Google Maps runtime for the AON web Directions screen. It lives in
+  // its OWN same-origin document (an <iframe>), so Flutter's platform-view
+  // semantics/aria-hidden/resize lifecycle cannot touch the map, its tiles, or
+  // its polyline. Flutter talks to it only through postMessage:
+  //   host -> frame: {source:'aon-host', type:'init', key}          (load Maps JS)
+  //   host -> frame: {source:'aon-host', type:'setRoute', origin, destination, polyline}
+  //   frame -> host: {source:'aon-directions', type:'iframe_ready'}
+  //   frame -> host: {source:'aon-directions', type:'map_ready'}
+  //   frame -> host: {source:'aon-directions', type:'route_applied', points}
+  // Diagnostics go to the console prefixed 'WebMapFrame:' (never the key).
+  (function () {
+    "use strict";
+    var HOST = 'aon-host', SELF = 'aon-directions';
+    var ORIGIN = window.location.origin;
+    var map = null, ready = false, pending = null, initStarted = false;
+    var originMarker = null, destMarker = null, polyline = null;
+    var lastBounds = null, lastW = 0, lastH = 0;
+
+    function log() {
+      try { console.log.apply(console, ['WebMapFrame:'].concat([].slice.call(arguments))); } catch (e) {}
+    }
+    function send(msg) { msg.source = SELF; parent.postMessage(msg, ORIGIN); }
+
+    window.addEventListener('message', function (e) {
+      if (e.origin !== ORIGIN) return;            // same-origin only
+      var d = e.data;
+      if (!d || d.source !== HOST) return;
+      if (d.type === 'init') startMaps(d.key);
+      else if (d.type === 'setRoute') onRoute(d);
+    });
+
+    function startMaps(key) {
+      if (initStarted) return; initStarted = true;
+      if (window.google && window.google.maps) { onMapsLoaded(); return; }
+      window.__aonDirInit = onMapsLoaded;
+      var s = document.createElement('script');
+      // Recommended async loading pattern.
+      s.src = 'https://maps.googleapis.com/maps/api/js?key=' +
+        encodeURIComponent(key || '') + '&loading=async&callback=__aonDirInit';
+      s.async = true; s.defer = true;
+      s.onerror = function () { log('maps_script_error'); };
+      document.head.appendChild(s);
+      log('maps_script_injected');
+    }
+
+    function onMapsLoaded() {
+      map = new google.maps.Map(document.getElementById('map'), {
+        center: { lat: -33.7737, lng: 151.1134 }, zoom: 16, maxZoom: 18,
+        mapTypeControl: false, streetViewControl: false, fullscreenControl: true,
+        zoomControl: false, clickableIcons: false, keyboardShortcuts: false,
+        gestureHandling: 'greedy'
+      });
+      map.addListener('idle', function () { log('map_idle zoom=' + map.getZoom()); });
+      ready = true;
+      log('map_ready');
+      send({ type: 'map_ready' });
+      observeResize();
+      if (pending) { onRoute(pending); pending = null; }
+    }
+
+    // Refit only when the container size actually changes — no frame loop.
+    function observeResize() {
+      var el = document.getElementById('map');
+      if (!window.ResizeObserver) return;
+      new ResizeObserver(function () {
+        var w = el.clientWidth, h = el.clientHeight;
+        if (w === lastW && h === lastH) return;
+        lastW = w; lastH = h;
+        if (!map) return;
+        google.maps.event.trigger(map, 'resize');
+        if (lastBounds) map.fitBounds(lastBounds, 48);
+        log('resize ' + w + 'x' + h);
+      }).observe(el);
+    }
+
+    function onRoute(d) {
+      if (!ready) { pending = d; return; }
+      var o = d.origin, dst = d.destination, pts = d.polyline || [];
+      log('route_received points=' + pts.length);
+
+      if (o) {
+        if (!originMarker) originMarker = new google.maps.Marker({ map: map, title: 'Start' });
+        originMarker.setPosition(o);
+      }
+      if (dst) {
+        if (!destMarker) destMarker = new google.maps.Marker({ map: map, title: 'Destination' });
+        destMarker.setPosition(dst);
+      }
+      log('markers_updated');
+
+      if (polyline) { polyline.setMap(null); polyline = null; }
+      if (pts.length > 1) {
+        polyline = new google.maps.Polyline({
+          map: map, path: pts,
+          strokeColor: '#1A73E8', strokeOpacity: 1.0, strokeWeight: 6, zIndex: 1000
+        });
+        log('polyline_updated points=' + pts.length);
+      }
+
+      var b = new google.maps.LatLngBounds();
+      if (o) b.extend(o);
+      if (dst) b.extend(dst);
+      for (var i = 0; i < pts.length; i++) b.extend(pts[i]);
+      lastBounds = b;
+      map.fitBounds(b, 48);
+      log('fit_bounds');
+      // Cap over-zoom on a very short route, once the fit has settled.
+      google.maps.event.addListenerOnce(map, 'idle', function () {
+        if (map.getZoom() > 18) map.setZoom(18);
+      });
+      send({ type: 'route_applied', points: pts.length });
+    }
+
+    // Arm-then-announce: the listener above is registered before this runs, so an
+    // init that arrives in response cannot be missed.
+    log('iframe_ready');
+    send({ type: 'iframe_ready' });
+  })();
+  </script>
+</body>
+</html>

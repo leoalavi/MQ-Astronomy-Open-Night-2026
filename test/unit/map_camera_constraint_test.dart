@@ -4,7 +4,6 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:aon2026/widgets/embedded_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import 'package:aon2026/widgets/map_config.dart';
@@ -256,23 +255,11 @@ void main() {
       expect(MapConfig.mapMaxZoom, closeTo(-2.75, 0.1));
     });
   });
-  group('web directions initial camera', () {
-    test('frames a short route before the async route response arrives', () {
-      const bounds = GeoBounds((-33.7740, 151.1123), (-33.7735, 151.1129));
-      final camera = webInitialCameraForBounds(bounds, const Size(1365, 636));
 
-      expect(camera.center.$1, closeTo(-33.77375, 0.000001));
-      expect(camera.center.$2, closeTo(151.1126, 0.000001));
-      expect(camera.zoom, 18);
-    });
-
-    test('keeps both endpoints visible for a longer campus walk', () {
-      const bounds = GeoBounds((-33.7795, 151.1050), (-33.7690, 151.1190));
-      final desktop = webInitialCameraForBounds(bounds, const Size(1365, 636));
-      final phone = webInitialCameraForBounds(bounds, const Size(390, 500));
-
-      expect(desktop.zoom, inInclusiveRange(15, 18));
-      expect(phone.zoom, lessThan(desktop.zoom));
-    });
-  });
+  // The web Directions camera now lives inside the isolated maps iframe
+  // (web/maps/directions_map.html): it builds a google.maps.LatLngBounds over
+  // origin ∪ destination ∪ route and calls map.fitBounds(bounds, 48) with
+  // maxZoom 18. That framing is exercised at runtime in the browser, not here;
+  // this file keeps the native/campus-map camera coverage above. The shared
+  // geometry input is still `boundsFor`, covered in embedded_map_bounds_test.
 }

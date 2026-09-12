@@ -1,10 +1,13 @@
-import 'dart:math' as math;
-
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 import 'package:aon2026/services/nav_trace.dart';
+// The web Directions map is a dedicated google.maps adapter; native keeps the
+// google_maps_flutter plugin. The conditional import keeps dart:js_interop out
+// of mobile/VM builds — the stub throws and is only reachable on kIsWeb.
+import 'package:aon2026/widgets/web_map_view_stub.dart'
+    if (dart.library.js_interop) 'package:aon2026/widgets/web_map_view.dart';
 
 /// A geographic bounding box in plain tuples — deliberately NOT
 /// `google_maps_flutter`'s `LatLngBounds`, so the bounds math is unit-testable
@@ -14,6 +17,15 @@ class GeoBounds {
   final (double lat, double lng) northeast;
   const GeoBounds(this.southwest, this.northeast);
 }
+
+/// True when [a] and [b] describe a DIFFERENT route line. Compared by value,
+/// not by length: swapping to a new destination whose polyline happens to have
+/// the same number of points is still a change, and a length-only check would
+/// leave the previous line and camera framing in place (stale geometry, #B/#C).
+bool routeGeometryChanged(
+  List<(double lat, double lng)> a,
+  List<(double lat, double lng)> b,
+) => !listEquals(a, b);
 
 /// The camera box: origin ∪ destination ∪ every route point. Origin and
 /// destination are included EXPLICITLY because a returned polyline may not
@@ -36,38 +48,6 @@ GeoBounds boundsFor({
   return GeoBounds((minLat, minLng), (maxLat, maxLng));
 }
 
-/// Computes the browser's *initial* camera from origin/destination bounds.
-///
-/// This is intentionally used only in [GoogleMap.initialCameraPosition]. A
-/// live camera mutation during the route-result/platform-view resize is what
-/// blanks Google Maps' web tile pane in the affected renderer.
-({(double lat, double lng) center, double zoom}) webInitialCameraForBounds(
-  GeoBounds bounds,
-  Size viewport, {
-  double padding = 48,
-}) {
-  final center = (
-    (bounds.southwest.$1 + bounds.northeast.$1) / 2,
-    (bounds.southwest.$2 + bounds.northeast.$2) / 2,
-  );
-  final width = math.max(1.0, viewport.width - padding * 2);
-  final height = math.max(1.0, viewport.height - padding * 2 - 96);
-  final lngSpan = math.max(1e-9, bounds.northeast.$2 - bounds.southwest.$2);
-
-  double mercatorY(double latitude) {
-    final lat = latitude.clamp(-85.05112878, 85.05112878) * math.pi / 180;
-    return math.log(math.tan(math.pi / 4 + lat / 2)) / (2 * math.pi);
-  }
-
-  final latSpan = math.max(
-    1e-9,
-    (mercatorY(bounds.northeast.$1) - mercatorY(bounds.southwest.$1)).abs(),
-  );
-  final lngZoom = math.log(width * 360 / (256 * lngSpan)) / math.ln2;
-  final latZoom = math.log(height / (256 * latSpan)) / math.ln2;
-  return (center: center, zoom: math.min(lngZoom, latZoom).clamp(15.0, 18.0));
-}
-
 /// The tile-rendering surface. Production renders a real `GoogleMap`; widget
 /// tests inject a fake so they never need a platform view. Keeping this a local
 /// seam avoids faking `google_maps_flutter`'s platform interface (which would
@@ -81,8 +61,13 @@ abstract interface class EmbeddedMapSurface {
   });
 }
 
-/// The production surface: a `GoogleMap` with origin+destination markers, the
-/// route polyline, and a camera that fits [bounds] once the map is created.
+/// The production surface. Web and native diverge here:
+///
+///  * **Native** (iOS/Android) renders a `google_maps_flutter` `GoogleMap`
+///    ([_RouteMapView]) — markers, polyline, and a camera fitted to [bounds].
+///  * **Web** renders a dedicated `google.maps` adapter ([buildWebRouteMap]),
+///    because the plugin's web camera move blanks the tiles and its web polyline
+///    overlay does not render. See `web_map_view.dart`.
 class GoogleEmbeddedMapSurface implements EmbeddedMapSurface {
   const GoogleEmbeddedMapSurface();
 
@@ -92,18 +77,24 @@ class GoogleEmbeddedMapSurface implements EmbeddedMapSurface {
     required (double lat, double lng) origin,
     required (double lat, double lng) destination,
     required List<(double lat, double lng)> route,
-  }) => _RouteMapView(bounds: bounds, destination: destination, route: route);
+  }) => kIsWeb
+      ? buildWebRouteMap(
+          bounds: bounds,
+          origin: origin,
+          destination: destination,
+          route: route,
+        )
+      : _RouteMapView(bounds: bounds, destination: destination, route: route);
 }
 
-/// The real Google map, kept alive across the route-state transition
-/// (`loading → RouteApiSuccess`) and container resizes.
+/// The NATIVE (iOS/Android) Google map, kept alive across the route-state
+/// transition (`loading → RouteApiSuccess`) and container resizes.
 ///
-/// On web the route-success rebuild shrinks the slotted platform view while
-/// `google_maps_flutter_web` is applying a camera update. In Chrome that leaves
-/// the map and its tile nodes mounted but clears their painted tiles. Both
-/// `newLatLngBounds` and `newLatLngZoom` reproduce it. The stable web behavior
-/// is therefore to keep the initial origin/destination-framed camera and update only
-/// the marker/polyline overlays. Native maps retain automatic bounds fitting.
+/// Web does NOT use this widget — `GoogleEmbeddedMapSurface.build` routes web to
+/// the `google.maps` adapter (`web_map_view.dart`) because the plugin's web
+/// camera move blanks the tiles and its web polyline overlay does not render.
+/// Everything below therefore runs only on a real device, where
+/// `moveCamera(newLatLngBounds)` and the plugin's overlays behave correctly.
 class _RouteMapView extends StatefulWidget {
   const _RouteMapView({
     required this.bounds,
@@ -131,29 +122,15 @@ class _RouteMapViewState extends State<_RouteMapView> {
     northeast: _ll(widget.bounds.northeast),
   );
 
-  CameraPosition _initialCamera(Size size) {
-    if (!kIsWeb) {
-      return CameraPosition(target: _ll(widget.destination), zoom: 15);
-    }
-    final camera = webInitialCameraForBounds(widget.bounds, size);
-    navTrace(
-      'map_web_initial_camera '
-      'target=(${camera.center.$1.toStringAsFixed(5)},'
-      '${camera.center.$2.toStringAsFixed(5)}) '
-      'zoom=${camera.zoom.toStringAsFixed(2)}',
-    );
-    return CameraPosition(target: _ll(camera.center), zoom: camera.zoom);
-  }
+  // Native only (web uses the google.maps adapter). Start centred on the
+  // destination; `_fit` reframes to the whole route once the map is laid out.
+  CameraPosition _initialCamera(Size size) =>
+      CameraPosition(target: _ll(widget.destination), zoom: 15);
 
-  /// Fit native cameras to the route. Web deliberately keeps the initial
-  /// origin/destination-framed camera; see the class-level regression note.
+  /// Fit the native camera to origin ∪ destination ∪ route with padding.
   Future<void> _fit() async {
     final c = _controller;
     if (c == null) return;
-    if (kIsWeb) {
-      navTrace('map_fit_skipped_web polyline=${widget.route.length}');
-      return;
-    }
     final sw = widget.bounds.southwest, ne = widget.bounds.northeast;
     navTrace(
       'map_fit '
@@ -187,7 +164,9 @@ class _RouteMapViewState extends State<_RouteMapView> {
   @override
   void didUpdateWidget(covariant _RouteMapView old) {
     super.didUpdateWidget(old);
-    final routeChanged = old.route.length != widget.route.length;
+    // Geometry, not length: a new destination whose polyline has the same number
+    // of points must still replace the stale line and re-fit the camera (#B/#C).
+    final routeChanged = routeGeometryChanged(old.route, widget.route);
     final boundsChanged =
         old.bounds.southwest != widget.bounds.southwest ||
         old.bounds.northeast != widget.bounds.northeast;
@@ -196,7 +175,9 @@ class _RouteMapViewState extends State<_RouteMapView> {
         'map_didUpdate routeChanged=$routeChanged '
         'boundsChanged=$boundsChanged markers=1 polyline=${widget.route.length}',
       );
-      // Native fits after layout. Web logs but skips the camera mutation.
+      // Both platforms fit after layout. On web this is the moment the route
+      // geometry arrives (info panel already laid out), so the fit lands on a
+      // settled size — clear of the resize race the old workaround avoided.
       _fitAfterLayout();
     }
   }
@@ -212,14 +193,19 @@ class _RouteMapViewState extends State<_RouteMapView> {
           'size=${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)} '
           'controller=${_controller?.hashCode} polyline=${widget.route.length}',
         );
-        // Track every resize for lifecycle evidence and refit native cameras.
+        // Track every resize for lifecycle evidence. Refit on resize is NATIVE
+        // ONLY: on web a camera move landing on the route-success shrink is the
+        // exact tile-blanking race the old workaround hit, and the web camera is
+        // already fitted on create and on every route-geometry change — the two
+        // moments that actually matter — so an extra resize-driven web fit only
+        // reintroduces the race for no framing benefit.
         if (_controller != null && _lastSize != null && size != _lastSize) {
           navTrace(
             'map_resize from=${_lastSize!.width.toStringAsFixed(0)}x'
             '${_lastSize!.height.toStringAsFixed(0)} to='
             '${size.width.toStringAsFixed(0)}x${size.height.toStringAsFixed(0)}',
           );
-          _fitAfterLayout();
+          if (!kIsWeb) _fitAfterLayout();
         }
         _lastSize = size;
         return GoogleMap(

@@ -21,4 +21,41 @@ void main() {
     expect(b.southwest, (-33.80, 151.10));
     expect(b.northeast, (-33.78, 151.14));
   });
+
+  group('routeGeometryChanged (stale-line / camera-refit trigger)', () {
+    test('identical geometry → not changed', () {
+      const a = [(-33.774, 151.113), (-33.775, 151.115)];
+      expect(routeGeometryChanged(a, a), isFalse);
+      // A different list instance with equal values is still "unchanged".
+      const b = [(-33.774, 151.113), (-33.775, 151.115)];
+      expect(routeGeometryChanged(a, b), isFalse);
+    });
+
+    test('same length but different points → changed (the length-only bug)', () {
+      // Selecting a second venue can return a polyline with the SAME number of
+      // points as the first. A length comparison would call this "unchanged" and
+      // leave the previous line drawn and the camera framing the old route.
+      const first = [(-33.7737, 151.1134), (-33.7746, 151.1151)];
+      const second = [(-33.7737, 151.1134), (-33.7760, 151.1180)];
+      expect(first.length, second.length);
+      expect(routeGeometryChanged(first, second), isTrue);
+    });
+
+    test('different length → changed', () {
+      expect(
+        routeGeometryChanged(
+          const [(-33.774, 151.113)],
+          const [(-33.774, 151.113), (-33.775, 151.115)],
+        ),
+        isTrue,
+      );
+    });
+
+    test('a route appearing (empty → points) → changed', () {
+      expect(
+        routeGeometryChanged(const [], const [(-33.774, 151.113)]),
+        isTrue,
+      );
+    });
+  });
 }

@@ -64,7 +64,7 @@ class UserLocationCircle extends StatelessWidget {
 /// independent of theme. The centre is `mapUserLocation` (blue), the universal
 /// location colour — field testers read the old amber centre as a venue pin.
 ///
-/// Sizing (field report, Pouya 2026-08-28: the old 22px dot "is too small"):
+/// Sizing (field report, Leo Alavi 2026-08-28: the old 22px dot "is too small"):
 ///  - 30px translucent-blue halo — visible but small, and translucent so it
 ///    never obscures a nearby venue pin (which are 44–56px, solid);
 ///  - 18px white ring — the crisp separation from the map;

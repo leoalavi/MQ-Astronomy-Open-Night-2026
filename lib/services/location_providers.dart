@@ -11,7 +11,7 @@ import 'package:aon2026/services/preview_location.dart';
 /// Whether an incoming GPS [incoming] fix should replace the currently displayed
 /// [current] one.
 ///
-/// Field report (Pouya, 2026-08-28): on opening the map the dot first appeared
+/// Field report (Leo Alavi, 2026-08-28): on opening the map the dot first appeared
 /// far off, then hopped three or four times before settling. Cause: the
 /// controller adopted every raw fix, so coarse early cell/Wi-Fi fixes and
 /// same-accuracy GPS scatter each moved the dot. This keeps the sharpest fix

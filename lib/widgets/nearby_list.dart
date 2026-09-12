@@ -132,7 +132,7 @@ class _TargetRow extends ConsumerWidget {
             : Icons.place_rounded;
     // A tapped row AIMS the compass at that place: it locks the target, so the
     // rose draws a navigation arrow at its bearing (§0R-1). Without a visible
-    // selected state the tap felt like a no-op (field report, Pouya 2026-08-28:
+    // selected state the tap felt like a no-op (field report, Leo Alavi 2026-08-28:
     // "I tap a row and nothing happens"). Highlight the current target and show
     // a "pointed here" affordance; re-tapping clears it (never a one-way trap).
     final selected = ref.watch(compassLockedProvider) == target.placeKey;

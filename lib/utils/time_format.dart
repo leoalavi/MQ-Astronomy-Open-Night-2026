@@ -83,7 +83,7 @@ abstract final class TimeFormat {
   /// [TimingConfidence.timeUnpublished] session those bounds are a `4pm–10pm`
   /// *stand-in* kept only so lists can lay out — so the Program card showed
   /// "4pm – 10pm" directly under a "Time not published" heading (field report,
-  /// Pouya 2026-08-28). And a [TimingConfidence.startOnly] session printed a
+  /// Leo Alavi 2026-08-28). And a [TimingConfidence.startOnly] session printed a
   /// `10pm` finish that the programme never published.
   ///
   /// So: an open-all-night activity → "Open all night"; no published start →

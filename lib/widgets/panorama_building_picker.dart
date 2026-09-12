@@ -35,7 +35,7 @@ class PanoramaBuildingPicker extends ConsumerWidget {
       // Runs under the floating glass tab bar (shell `extendBody`), so reserve
       // the same clearance the compass NearbyList does — otherwise the last
       // legend card ("I · 17 Wally's Walk") hides behind the island (field
-      // report, Pouya 2026-08-28).
+      // report, Leo Alavi 2026-08-28).
       padding: EdgeInsets.fromLTRB(
         AonSpacing.space4,
         AonSpacing.space4,

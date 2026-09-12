@@ -1,6 +1,6 @@
 # Frontend ↔ backend integration checklist
 
-**Frontend owner:** Pouya · **Backend / map / 3D owner:** Raouf
+**Frontend owner:** Leo Alavi · **Backend / map / 3D owner:** Raouf
 
 This is the contract between the two halves. It records what the frontend
 consumes today, what it consumes from Raouf's existing code, and what is still

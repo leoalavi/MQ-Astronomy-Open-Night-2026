@@ -67,7 +67,7 @@ final passportResetToolProvider = Provider<bool>((ref) => kPassportResetTool);
 ///
 /// — an organiser named, an internal email quoted, and the internal enum
 /// `openAllNight` shown to the public. Found on device 2026-09-08 while
-/// re-checking Pouya's report about this screen.
+/// re-checking Leo Alavi's report about this screen.
 ///
 /// Same treatment as [kPassportResetTool], for the same reason: a build that
 /// does not pass the define folds `false` in at compile time.

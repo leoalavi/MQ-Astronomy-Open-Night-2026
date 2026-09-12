@@ -71,7 +71,7 @@ class _CompassModeViewState extends ConsumerState<CompassModeView> {
     final headingUsable = avail == HeadingAvailability.available ||
         avail == HeadingAvailability.acquiring;
     // A numbered blip is a cluster COUNT — several places sharing one bearing
-    // (field report, Pouya 2026-08-28: "numbers 8/3/2 with no clue what they
+    // (field report, Leo Alavi 2026-08-28: "numbers 8/3/2 with no clue what they
     // mean"). Explain it, but only when such a blip is actually on the rose, so
     // the hint never appears next to a rose that has no numbers.
     final hasNumberedCluster =
@@ -83,7 +83,7 @@ class _CompassModeViewState extends ConsumerState<CompassModeView> {
     // facing arrow (`_FacingLayer`) needs a live heading, and it already
     // null-guards. So the graphic stays meaningful with NO magnetometer — we
     // always render rose + list once we have a fix, and never collapse the
-    // compass to a bare list (field report, Pouya 2026-08-28: "compass
+    // compass to a bare list (field report, Leo Alavi 2026-08-28: "compass
     // disappears after switching tabs"; the real cause was this branch throwing
     // the rose away the moment heading resolved `unavailable`, which a
     // magnetometer-less simulator hits after its acquire window). When heading

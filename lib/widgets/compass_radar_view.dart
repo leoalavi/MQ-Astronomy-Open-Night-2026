@@ -116,7 +116,7 @@ class CompassRadarView extends ConsumerWidget {
                 ),
               // The rose is centred on YOU. Draw an explicit "you are here"
               // marker so the facing pin at the rim reads as "which way you're
-              // facing", not "a person over there" (field report, Pouya
+              // facing", not "a person over there" (field report, Leo Alavi
               // 2026-08-28). Painted AFTER the blips: on the night, every venue
               // is close, so the blips cluster near the centre — "you" must sit
               // on top of them, never be buried. Ringed to stand apart.

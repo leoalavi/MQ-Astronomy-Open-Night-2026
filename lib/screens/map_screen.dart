@@ -322,7 +322,7 @@ class _MapScreenState extends ConsumerState<MapScreen> {
                 children: [
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      // STRICT zoom-OUT floor for THIS viewport (Pouya): the map
+                      // STRICT zoom-OUT floor for THIS viewport (Leo Alavi): the map
                       // can never shrink below COVERING its box (fills the screen,
                       // long edges crop — Raouf's choice over black letterbox
                       // bands). Wired as flutter_map's native, idempotent

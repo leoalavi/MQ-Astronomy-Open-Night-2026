@@ -139,7 +139,7 @@ abstract final class MapConfig {
   //                 equals the artwork's ~38 px per map-unit (≈4680 px over
   //                 ~123 map-units) at z ≈ -2.72..-2.75; zooming in past it only
   //                 UPSCALES and blurs the printed labels (the old -2 did this,
-  //                 reported by Pouya). This is the strict zoom-IN guard.
+  //                 reported by Leo Alavi). This is the strict zoom-IN guard.
   // Tuned against the CrsSimple math above and the on-device screenshots; the
   // initial fit (≈ -6.3) sits comfortably inside the range so it is authoritative.
   // The strict zoom-OUT guard is NOT mapMinZoom (a fixed number can't equal the

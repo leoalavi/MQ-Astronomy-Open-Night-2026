@@ -244,7 +244,7 @@ class _RouteMapViewState extends State<_RouteMapView> {
           },
           polylines: {
             // A coloured, rounded walking line reads as a route, not a stray
-            // black stroke (field report, Pouya 2026-08-28: "it's just a black
+            // black stroke (field report, Leo Alavi 2026-08-28: "it's just a black
             // line"). Omitted while the route is empty (loading/failed) so no
             // zero-point polyline is diffed onto the map.
             if (widget.route.isNotEmpty)

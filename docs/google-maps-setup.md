@@ -133,7 +133,7 @@ Places API, Directions API (legacy), Geocoding, or Roads API — leave them off.
 
 ### Device 401 from the Routes API — a STALE BAKED KEY, not a code bug
 
-Field run (Pouya, 2026-08-28): the Routes API returned **HTTP 401** on a
+Field run (Leo Alavi, 2026-08-28): the Routes API returned **HTTP 401** on a
 physical iPhone while the same key returns **200** from a server-side probe AND
 from the web build. Root cause is the **build**, not the request:
 

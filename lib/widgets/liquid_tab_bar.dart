@@ -190,7 +190,7 @@ class _LiquidTabBarState extends State<LiquidTabBar>
                 // One fixed lens size — it glides between tabs but never
                 // stretches or changes width. Widened to 0.92 of the slot so the
                 // active halo COMFORTABLY contains the icon + its label + padding
-                // (field report, Pouya 2026-08-28: "Settings" text pokes out of
+                // (field report, Leo Alavi 2026-08-28: "Settings" text pokes out of
                 // the pill). The selected label is separately constrained to the
                 // lens's inner width (see [_buildTab]) so it can never overrun the
                 // halo in any language or at any text scale.

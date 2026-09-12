@@ -154,7 +154,7 @@ final mapsSdkReadyProvider = FutureProvider<bool>((ref) async {
   // Bound the native `initialize` reply. `GMSServices.provideAPIKey` is a fast,
   // synchronous store on iOS, so a healthy handler answers in milliseconds — but
   // a native handler that never replies would leave this future forever pending
-  // and the Directions screen spinning indefinitely (field report, Pouya
+  // and the Directions screen spinning indefinitely (field report, Leo Alavi
   // 2026-08-28: "stayed loading"). On timeout resolve to "not ready": the screen
   // shows the recoverable "map unavailable" panel instead of an endless spinner,
   // and a fresh entry retries (readiness is never cached as failed).

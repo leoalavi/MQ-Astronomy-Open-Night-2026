@@ -44,7 +44,7 @@ abstract final class AonHaptics {
   /// save button and the passport scanner. Every plain Material button in the
   /// app — Directions, Show on map, Walk there, every switch, radio and filter
   /// — was silent, while the Settings screen promised "a gentle vibration when
-  /// you tap buttons". Pouya tested the app end to end and reported haptics as
+  /// you tap buttons". Leo Alavi tested the app end to end and reported haptics as
   /// simply broken; the plumbing was fine, the coverage was not.
   ///
   /// Prefer this over calling [light] with a literal `true` at a button call

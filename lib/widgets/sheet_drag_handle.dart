@@ -20,7 +20,7 @@ import 'package:aon2026/app/theme/aon_palette.dart';
 ///
 /// Material's handle sits in the outer one. So dragging the handle up did
 /// nothing at all, and the sheet could only be expanded by dragging its
-/// *contents* — reported by Pouya on 2026-09-08 ("باید این سفیده رو بکشی بالا
+/// *contents* — reported by Leo Alavi on 2026-09-08 ("باید این سفیده رو بکشی بالا
 /// اون بیاد بالا... این اتفاق نمی‌افته، باید داخل رو بکشی بالا").
 ///
 /// The fix is to pass `showDragHandle: false` at those two call sites and make

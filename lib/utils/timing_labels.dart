@@ -47,7 +47,7 @@ extension EventPhaseL10n on EventPhase {
         // cards each carry the same badge again. On the night that put
         // "Happening now" on screen four times in one viewport, with the
         // topmost one saying the least — it repeats what the date pill above
-        // it and the section below it already establish. Reported by Pouya,
+        // it and the section below it already establish. Reported by Leo Alavi,
         // 2026-09-08: "دوبار Happening Now تکرار شده، اولی اون بالایه اضافه هست".
         //
         // Every other phase stays: each says something the rail cannot

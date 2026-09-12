@@ -7,6 +7,42 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-12 — Map audit: restore the coverage gate (was red on main)
+
+**Scope:** End-to-end audit of the two mapping systems — the CrsSimple campus
+overlay map (`flutter_map`) and the embedded Google wayfinding map
+(`google_maps_flutter`). The full subsystem was inspected file by file
+(`campus_projection`, `map_placement`, `MapConfig`, `venues_data`,
+`panorama_data`, `google_nav_screen`, `nav_trace`) and found sound: fail-closed
+projection that never clamps, a single shared placement priority, per-viewport
+cover-fit zoom with `maxZoom` at the raster's 1:1, consent-gated Google surface,
+in-app-only error/retry panels, and `kDebugMode`-gated tracing that logs only a
+one-way key fingerprint. Dependencies are current (flutter_map 8, geolocator 14,
+google_maps_flutter 2.18); no deprecated map APIs; no hardcoded keys; no XSS
+surface.
+
+**Fixed**
+- **The project gate was RED on `main`.** `flutter analyze` and all ~90 map
+  tests pass, but hand-written line coverage had fallen to **90.12%**, below the
+  **90.4%** ratcheting floor — the Sep-11 web-map camera fixes shipped ~21
+  under-tested lines in `map_screen.dart`. The policy forbids lowering the floor,
+  so the paths were covered with real tests rather than a floor change.
+
+**Added**
+- `test/widget/map_marker_interactions_test.dart` — direct-manipulation coverage
+  the `?focus=` deep-link tests never exercised: tapping a venue pin selects it
+  and opens its sheet, tapping a car-park pin opens the parking sheet, the
+  zoom-in/out buttons drive the camera within `[mapMinZoom, mapMaxZoom]`, and the
+  general wayfinding FAB pushes the walking route.
+
+**Verification:** `./scripts/check.sh` → **CHECK PASSED, exit 0**; coverage back
+to **90.46%** (6821/7540). New test file green (4/4); `flutter analyze` clean.
+
+**Follow-ups:** none blocking. Residual UX/a11y notes are in the audit report;
+the map subsystem is production-ready.
+
+---
+
 ## Raouf: 2026-09-08 — Pouya's device pass: six UI defects fixed, two escalated
 
 **Scope:** Triage and fix of the bug batch Pouya sent over WhatsApp on 8 Sep

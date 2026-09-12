@@ -34,7 +34,11 @@ List<(double lat, double lng)> decodePolyline(String encoded) {
 /// Decode one signed varint delta. Returns `(delta, newIndex, complete)`;
 /// `complete` is false when the string ends mid-chunk (a continuation bit was
 /// set but no byte followed), so the caller can drop an incomplete coordinate.
-(int delta, int newIndex, bool complete) _decodeDelta(String s, int index, int len) {
+(int delta, int newIndex, bool complete) _decodeDelta(
+  String s,
+  int index,
+  int len,
+) {
   // Each delta is a variable-length chunk of 5-bit groups; the high bit (0x20)
   // marks "another byte follows".
   var result = 1;
@@ -46,5 +50,8 @@ List<(double lat, double lng)> decodePolyline(String encoded) {
     result += b << shift;
     shift += 5;
   } while (b >= 0x1f);
-  return ((result & 1) != 0 ? (~(result >> 1)) : (result >> 1), index, true);
+  // Dart web bitwise complement produces an unsigned 32-bit value. Arithmetic
+  // negation preserves the signed delta on both the VM and JavaScript.
+  final magnitude = result >> 1;
+  return ((result & 1) != 0 ? -magnitude - 1 : magnitude, index, true);
 }

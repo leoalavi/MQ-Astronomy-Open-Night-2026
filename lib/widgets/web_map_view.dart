@@ -23,6 +23,7 @@ import 'package:flutter/widgets.dart';
 import 'package:web/web.dart' as web;
 
 import 'package:aon2026/services/nav_trace.dart';
+import 'package:aon2026/services/web_route_payload.dart';
 import 'package:aon2026/widgets/embedded_map.dart';
 
 /// The referrer-restricted browser Maps key (build-time define, same source the
@@ -89,7 +90,10 @@ class _WebDirectionsIframeState extends State<_WebDirectionsIframe> {
       ..style.height = '100%'
       ..style.display = 'block';
 
-    ui_web.platformViewRegistry.registerViewFactory(_viewType, (int _) => _iframe);
+    ui_web.platformViewRegistry.registerViewFactory(
+      _viewType,
+      (int _) => _iframe,
+    );
 
     _onMessageJs = _onMessage.toJS;
     web.window.addEventListener('message', _onMessageJs);
@@ -133,24 +137,35 @@ class _WebDirectionsIframeState extends State<_WebDirectionsIframe> {
   /// correctly sized before it fits the route — no init/size race.
   void _sendRoute() {
     if (!_mapReady) return;
-    _post(<String, Object?>{
-      'source': _hostTag,
-      'type': 'setRoute',
-      'origin': <String, Object?>{'lat': widget.origin.$1, 'lng': widget.origin.$2},
-      'destination': <String, Object?>{
-        'lat': widget.destination.$1,
-        'lng': widget.destination.$2,
-      },
-      'polyline': <Map<String, Object?>>[
-        for (final p in widget.route) <String, Object?>{'lat': p.$1, 'lng': p.$2},
-      ],
-    });
+    const diagnostics = bool.fromEnvironment('ROUTE_GEOMETRY_DIAGNOSTICS');
+    final payload = webRoutePayload(
+      origin: widget.origin,
+      destination: widget.destination,
+      route: widget.route,
+      diagnostics: diagnostics,
+    );
+    if (diagnostics) {
+      // Temporary opt-in coordinate tracing, never init messages or API keys.
+      for (var i = 0; i < widget.route.length; i++) {
+        final point = widget.route[i];
+        web.console.log(
+          'WebMapHost: Dart point[$i] lat=${point.$1} lng=${point.$2}'.toJS,
+        );
+      }
+    }
+    _post(payload);
   }
 
   void _post(Map<String, Object?> message) {
     final target = _iframe.contentWindow;
     if (target == null) return;
-    target.postMessage(message.jsify(), web.window.location.origin.toJS);
+    final wire = message.jsify();
+    if (message['type'] == 'setRoute' && message['diagnostics'] == true) {
+      // Inspect the converted object immediately before structured cloning.
+      web.console.log('WebMapHost: sent'.toJS);
+      web.console.log(wire);
+    }
+    target.postMessage(wire, web.window.location.origin.toJS);
   }
 
   @override

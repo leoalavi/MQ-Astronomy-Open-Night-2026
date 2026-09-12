@@ -23,20 +23,31 @@ void main() {
       expect(page.contains('google.maps.Map('), isTrue);
       expect(page.contains('loading=async'), isTrue);
     });
-    test('no in-document map surface remains (plugin / overlay / camera hacks)', () {
-      // Import/usage syntax, so the history note in the doc comment is not a hit.
-      expect(host.contains("import 'package:google_maps_flutter"), isFalse);
-      expect(host.contains('.moveCamera('), isFalse);
-      expect(host.contains('aon-web-directions-map-host'), isFalse); // old body overlay
-      // The camera fit happens INSIDE the iframe, never in Dart.
-      expect(host.contains('fitBounds('), isFalse);
-    });
+    test(
+      'no in-document map surface remains (plugin / overlay / camera hacks)',
+      () {
+        // Import/usage syntax, so the history note in the doc comment is not a hit.
+        expect(host.contains("import 'package:google_maps_flutter"), isFalse);
+        expect(host.contains('.moveCamera('), isFalse);
+        expect(
+          host.contains('aon-web-directions-map-host'),
+          isFalse,
+        ); // old body overlay
+        // The camera fit happens INSIDE the iframe, never in Dart.
+        expect(host.contains('fitBounds('), isFalse);
+      },
+    );
   });
 
   group('postMessage handshake gates route on map_ready', () {
     test('host waits for map_ready before sending geometry', () {
       expect(host.contains("case 'map_ready'"), isTrue);
-      expect(host.contains("'type': 'setRoute'"), isTrue);
+      expect(
+        File(
+          'lib/services/web_route_payload.dart',
+        ).readAsStringSync().contains("'type': 'setRoute'"),
+        isTrue,
+      );
       // _sendRoute is guarded so nothing is pushed before the map is ready.
       expect(host.contains('if (!_mapReady) return;'), isTrue);
     });

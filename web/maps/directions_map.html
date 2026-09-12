@@ -11,6 +11,7 @@
 </head>
 <body>
   <div id="map"></div>
+  <script src="route_geometry.js"></script>
   <script>
   // Isolated Google Maps runtime for the AON web Directions screen. It lives in
   // its OWN same-origin document (an <iframe>), so Flutter's platform-view
@@ -91,6 +92,22 @@
       if (!ready) { pending = d; return; }
       var o = d.origin, dst = d.destination, pts = d.polyline || [];
       log('route_received points=' + pts.length);
+      if (d.diagnostics) {
+        log('origin', o); log('destination', dst);
+        if (Array.isArray(pts)) pts.forEach(function (p, i) {
+          log('point[' + i + '] lat=' + (p && p.lat) + ' lng=' + (p && p.lng));
+          var reason = AonRouteGeometry.issue(p);
+          if (reason) log('INVALID_ROUTE_POINT index=' + i + ' reason=' + reason);
+        });
+        log('received_bounds', AonRouteGeometry.span(Array.isArray(pts) ? pts.filter(p => p && Number.isFinite(p.lat) && Number.isFinite(p.lng)) : []));
+      }
+      var geometry = AonRouteGeometry.prepare(o, dst, pts, log);
+      var validRoutePoints = geometry.points;
+      o = AonRouteGeometry.issue(o) ? null : o;
+      dst = AonRouteGeometry.issue(dst) ? null : dst;
+      if (!o && originMarker) { originMarker.setMap(null); originMarker = null; }
+      if (!dst && destMarker) { destMarker.setMap(null); destMarker = null; }
+      if (d.diagnostics) log('fitted_bounds', geometry.bounds);
 
       if (o) {
         if (!originMarker) originMarker = new google.maps.Marker({ map: map, title: 'Start' });
@@ -103,18 +120,21 @@
       log('markers_updated');
 
       if (polyline) { polyline.setMap(null); polyline = null; }
-      if (pts.length > 1) {
+      if (validRoutePoints.length > 1) {
         polyline = new google.maps.Polyline({
-          map: map, path: pts,
+          map: map, path: validRoutePoints,
           strokeColor: '#1A73E8', strokeOpacity: 1.0, strokeWeight: 6, zIndex: 1000
         });
-        log('polyline_updated points=' + pts.length);
+        log('polyline_updated points=' + validRoutePoints.length);
       }
 
       var b = new google.maps.LatLngBounds();
-      if (o) b.extend(o);
-      if (dst) b.extend(dst);
-      for (var i = 0; i < pts.length; i++) b.extend(pts[i]);
+      geometry.boundsPoints.forEach(function (p) { b.extend(p); });
+      if (!geometry.boundsPoints.length) {
+        lastBounds = null;
+        log('NO_VALID_BOUNDS camera_unchanged');
+        return;
+      }
       lastBounds = b;
       map.fitBounds(b, 48);
       log('fit_bounds');
@@ -122,7 +142,7 @@
       google.maps.event.addListenerOnce(map, 'idle', function () {
         if (map.getZoom() > 18) map.setZoom(18);
       });
-      send({ type: 'route_applied', points: pts.length });
+      send({ type: 'route_applied', points: validRoutePoints.length });
     }
 
     // Arm-then-announce: the listener above is registered before this runs, so an

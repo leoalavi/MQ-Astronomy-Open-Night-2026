@@ -7,6 +7,61 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-18 — Flyer carries three QR codes; A3 poster; print pack
+
+**Scope:** The printed "get the app" flyer, now that all three ways to get the
+app are real, and the print set sent to the events team for Saturday.
+
+- **Three QR codes instead of two placeholder store slots** — App Store, Android
+  and the web app. The App Store listing went live 2026-09-17 (`id6808865067`,
+  seller Leo Alavi, bundle `au.edu.mq.astronomy.aon2026`, verified through the
+  iTunes lookup API, not just by opening the page).
+- **The Android column is NOT Google Play.** The app is not published there, so
+  the flyer never says "Google Play", carries no Play badge and claims no Google
+  trademark; the column reads `ANDROID / Direct download (APK)` and a line under
+  the panel says Android will ask permission to install. The Google trademark
+  credit line went with it — claiming a mark we do not use is as wrong as using
+  a mark we may not. Putting an APK QR under a "GOOGLE PLAY" heading would have
+  been a false claim on a printed, undistributable-once-wrong artefact.
+- **The Android QR encodes a redirect, never a release asset URL.** A printed
+  flyer cannot be reissued when the APK tag moves. `info.syllabus-sync.app/astronomy-open-night/android`
+  now 307s to the current asset (info-site PR #25); a unit test there asserts it
+  targets `aonAndroidApkUrl` and stays temporary, because a 308 would be cached
+  against one build and strand every flyer in circulation. **On the next APK
+  build: publish the release, bump the constant, deploy — and do not reprint.**
+- **A3 added** (`AON2026-app-flyer-A3.pdf`). A3/A4/A5 are the same √2 shape, so
+  one layout scales to each with no reflow and the QR modules scale with it.
+- **The last placeholder is filled** — the App Store badge is Apple's own
+  artwork from their marketing-tools endpoint, taken as SVG and rasterised with
+  `rsvg-convert -h 600`; aspect preserved to four decimals (2.9917 vs 2.9916),
+  SVG kept beside the PNG so a re-render never has to trust the raster.
+- **`tools/marketing/verify_flyer_qr.py` is new** and is the gate on a print run:
+  renders every built PDF at 300 dpi, decodes each QR with zbar, requires the
+  decoded set to equal `flyer_links.json` exactly, then follows each URL and
+  reports where it lands — because a code that scans perfectly into a 404 is
+  still a broken flyer. It also warns under ~0.4 mm per module, the rough floor
+  for scanning in the dark, which is the condition this flyer is read in.
+- **Print pack sent to the events team** (`~/Desktop/AON2026-print-pack/`):
+  Printout-1 = the 9 passport station signs, A4 colour, one copy of each page;
+  Printout-2 = the A3 poster, 2 copies. All 12 QR codes were decoded out of
+  those exact files, and the 9 station codes match `stamp_stations_data.dart`
+  exactly in order A–I.
+
+**Verification:** `./scripts/check.sh` → `CHECK PASSED`, exit 0, 7/7 (twice —
+once for the three-QR change, once for A3). `verify_flyer_qr.py` → 3/3 codes at
+A3 (46.3/45.6/44.6 mm), A4 (32.7/32.2/31.6 mm) and A5 (23.2/22.8/22.4 mm), all
+three URLs resolve 200. Every render was opened and looked at, not just
+exit-code checked — the repo has a documented incident where both easy checks
+passed on a store icon that turned out to be the stock Flutter logo.
+**UNVERIFIED:** nobody has scanned a printed copy with a real phone. Decoding a
+300 dpi render is stricter than eyeballing but it is not ink on paper.
+
+**Follow-ups:** scan a printed proof before the full run. If the app is ever
+published to Google Play, that is the moment to restore the Play badge, the
+trademark credit and a fourth column — not before.
+
+---
+
 ## Raouf: 2026-09-18 — Android APK rebuilt (build 6) and published
 
 **Scope:** A fresh signed Android build from current `main`, published for direct

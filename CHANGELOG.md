@@ -7,6 +7,51 @@ follow-ups). Commit-level history lives in `git log`; the architecture is in
 
 ---
 
+## Raouf: 2026-09-18 — Android APK rebuilt (build 6) and published
+
+**Scope:** A fresh signed Android build from current `main`, published for direct
+download on the info site, replacing the 12 Sep build-5 APK.
+
+- **Built `1.0.0+6` from `main@e129d30`** — `au.edu.mq.astronomy.aon2026`,
+  138.4 MB, minSdk 24 / targetSdk 36. Built under **Java 23** (Adoptium); the
+  Android Studio JBR is on Java 25, which Gradle 9.1 rejects. Signed with the
+  upload key (`CN=Astronomy Open Night upload key, O=Leo Alavi`,
+  SHA-256 `3321f0…882a`), confirmed with `apksigner --print-certs`.
+- **Carries two changes that were not in build 5** — the web iframe directions
+  map adapter (`abfaa61`) and the web polyline decoding / route geometry fix
+  (`e129d30`).
+- **Published as GitHub release `aon-android-v1.0.0-build6`** on the public
+  info-site repo (`Raoof128/syllabus-sync-info-site`), the same route build 5
+  used: the file is far over Cloudflare Workers' per-asset limit, this repo is
+  private, and the deploy token has no R2 permission.
+- **Info-site link moved to it** (`aonAndroidApkUrl`, info-site PR #24, merged
+  and deployed). That repo's unit test had pinned the full release URL, so every
+  new build broke it; it now asserts the link equals the constant and that the
+  URL has the right shape, which is the property that matters.
+
+- **Closed a coverage hole the gate caught on `main`** — `web_map_view_stub.dart`
+  arrived with `abfaa61` at 0/2 lines, under the 80% per-file floor, so
+  `check.sh` was already red before this change touched anything. Covered it the
+  way its sibling `panorama_web_viewer_stub.dart` is covered — a test that calls
+  it and asserts it throws `UnsupportedError` off-web — rather than lowering the
+  floor or adding a platform exemption. The contract is worth holding: if a
+  refactor ever reaches it on mobile, throwing beats drawing a blank box where
+  the directions map should be.
+
+**Verification:** `./scripts/check.sh` → `CHECK PASSED`, exit 0, 7/7, coverage
+90.53% (6818/7531). `apksigner verify --print-certs` → upload key; `aapt2 dump
+badging` → versionCode 6, versionName 1.0.0. Download URL → HTTP 200,
+`application/vnd.android.package-archive`, 138,389,037 bytes (exact file size),
+`accept-ranges: bytes`. Live page `info.syllabus-sync.app/astronomy-open-night`
+→ 200, serving the build-6 URL. Info-site `npm run check` → exit 0.
+**UNVERIFIED:** the APK was not installed on a device this session.
+
+**Follow-ups:** `cf:deploy` still exits 1 on the `workers/routes` reconciliation
+(deploy token lacks Workers Routes: Edit) — benign, the worker uploads and the
+custom domain route already exists. Next build: new tag, bump the constant again.
+
+---
+
 ## Raouf: 2026-09-12 — Android APK published for direct download
 
 **Scope:** Build and public distribution of the Android app, per Pouya's request

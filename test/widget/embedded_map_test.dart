@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:aon2026/l10n/generated/app_localizations.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:aon2026/widgets/embedded_map.dart';
+import 'package:aon2026/widgets/web_map_view_stub.dart';
 
 class _FakeSurface implements EmbeddedMapSurface {
   GeoBounds? seenBounds;
@@ -41,6 +42,27 @@ void main() {
       // them to the surface — extremes come from the route points.
       expect(fake.seenBounds!.southwest.$1, closeTo(-33.82, 1e-9));
       expect(fake.seenBounds!.northeast.$2, closeTo(151.20, 1e-9));
+    },
+  );
+
+  test(
+    'the non-web stub refuses loudly rather than rendering a silent blank map',
+    () {
+      // GoogleEmbeddedMapSurface.build only reaches buildWebRouteMap under
+      // kIsWeb, so on mobile and in the VM test host this stub is unreachable;
+      // it exists so the conditional import in embedded_map.dart resolves
+      // everywhere. If a future refactor ever calls it off-web, throwing is the
+      // behaviour we want — a blank box where directions should be would ship
+      // as a map that simply looks broken on the night.
+      expect(
+        () => buildWebRouteMap(
+          bounds: const GeoBounds((-33.78, 151.11), (-33.77, 151.12)),
+          origin: const (-33.78, 151.11),
+          destination: const (-33.77, 151.12),
+          route: const [],
+        ),
+        throwsUnsupportedError,
+      );
     },
   );
 }

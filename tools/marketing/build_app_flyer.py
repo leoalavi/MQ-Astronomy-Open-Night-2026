@@ -57,7 +57,7 @@ from pathlib import Path
 import qrcode
 from PIL import Image, ImageDraw
 from qrcode.constants import ERROR_CORRECT_M
-from reportlab.lib.pagesizes import A4, A5
+from reportlab.lib.pagesizes import A3, A4, A5
 from reportlab.lib.units import mm
 from reportlab.pdfgen import canvas
 
@@ -363,7 +363,10 @@ def main() -> int:
     is_draft = not all(links.get(k) for k in ("app_store_url", "android_url", "web_url"))
 
     outputs = []
-    for label, size, scale in (("A4", A4, 1.0), ("A5", A5, A5[0] / A4[0])):
+    # A3, A4 and A5 are all the same √2 shape, so one layout scales to each
+    # exactly -- no reflow, and the QR module size scales with it. A3 is the
+    # poster; A5 is the handout.
+    for label, size, scale in (("A3", A3, A3[0] / A4[0]), ("A4", A4, 1.0), ("A5", A5, A5[0] / A4[0])):
         pdf = out / f"AON2026-app-flyer-{label}.pdf"
         c = canvas.Canvas(str(pdf), pagesize=size)
         c.setTitle(f"Astronomy Open Night 2026 — app flyer ({label})")

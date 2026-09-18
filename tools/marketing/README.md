@@ -19,7 +19,8 @@ is git-ignored — the script and `flyer_links.json` are the source of truth.
 
 | File | Use |
 |---|---|
-| `AON2026-app-flyer-A4.pdf` | Poster / noticeboard size |
+| `AON2026-app-flyer-A3.pdf` | Poster size — the big one for noticeboards and venue doors |
+| `AON2026-app-flyer-A4.pdf` | Noticeboard / desk size |
 | `AON2026-app-flyer-A5.pdf` | Handout size — the same layout scaled; all three QRs verified to decode at A5 |
 | `qr-app-store.png`, `qr-android.png`, `qr-web-app.png` | The bare QRs, once the links exist |
 | `app-icon-rounded.png` | The app icon with the Home-screen corner mask, for other collateral |

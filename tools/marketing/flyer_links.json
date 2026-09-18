@@ -1,8 +1,9 @@
 {
-  "_comment": "Store and web links for the app flyer. Leave a value null until the real link exists — the flyer then prints a labelled placeholder slot and a DRAFT watermark instead of a QR that goes nowhere. Fill in, re-run tools/marketing/build_app_flyer.py, re-print.",
-  "app_store_url": null,
-  "play_store_url": null,
-  "web_url": null,
-  "apple_badge_png": null,
-  "google_badge_png": null
+  "_comment": "Links for the app flyer. Leave a value null until the real link exists — the flyer then prints a labelled placeholder slot and a DRAFT watermark instead of a QR that goes nowhere. Fill in, re-run tools/marketing/build_app_flyer.py, re-print.",
+  "_android_note": "android_url MUST stay the short redirect path, never a release asset URL: the APK tag moves every build and the flyer is printed. The redirect lives in the info-site repo (next.config.ts) and is covered by a test there.",
+  "app_store_url": "https://apps.apple.com/au/app/astronomy-open-night-2026/id6808865067",
+  "android_url": "https://info.syllabus-sync.app/astronomy-open-night/android",
+  "web_url": "https://aon.syllabus-sync.app/",
+  "apple_badge_png": "tools/marketing/badges/app-store-badge-black-en-us.png",
+  "_badge_note": "Official Apple artwork, unmodified: fetched from toolbox.marketingtools.apple.com (black, en-us) as SVG and rasterised to PNG at 600 px high with rsvg-convert. Aspect preserved exactly (2.9917 vs 2.9916). Never recolour, angle or redraw it. The SVG source sits beside the PNG."
 }

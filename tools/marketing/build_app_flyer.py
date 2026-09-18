@@ -1,8 +1,17 @@
 #!/usr/bin/env python3
 """Build the "get the app" flyer for Astronomy Open Night 2026.
 
-Printed and handed out / pinned up once the app is on the App Store and Google
-Play. Same discipline as the station signs: nothing on it is typed in twice.
+Printed and handed out / pinned up. Same discipline as the station signs:
+nothing on it is typed in twice.
+
+Three ways to get the app, three QR codes: the App Store, a direct Android
+download, and the web app. The Android one is NOT Google Play -- the app is not
+published there -- so the column is labelled "ANDROID / Direct download" and
+carries no Play badge or Play wording. Calling it Google Play would be the exact
+dishonesty the DRAFT watermark below exists to prevent.
+
+The Android QR encodes a short, stable redirect path, never the release asset
+URL: the APK tag moves with every build and nobody reprints a flyer per build.
 
 * Copy comes from `docs/release/app-store-listing.md` — the name, subtitle,
   promotional text and the six feature headings with their first sentence.
@@ -13,21 +22,18 @@ Play. Same discipline as the station signs: nothing on it is typed in twice.
   prints a labelled placeholder slot where the QR will go and is watermarked
   DRAFT, exactly as the station signs are while a code is unconfirmed. Fill in
   the JSON, re-run, re-print — the QR appears and the watermark goes.
-* Store badges are NOT drawn here. Apple and Google both require their own
-  artwork, unmodified: "Use only the badge artwork provided in these
-  guidelines" (Apple); "Don't change the badge color" (Google). The flyer
-  reserves correctly sized, correctly spaced slots and takes the official PNGs
-  via `apple_badge_png` / `google_badge_png` in the JSON. Until then a dashed
-  outline marks the slot so a proof never goes out with a home-made badge.
+* The App Store badge is NOT drawn here. Apple requires its own artwork,
+  unmodified: "Use only the badge artwork provided in these guidelines". The
+  flyer reserves a correctly sized, correctly spaced slot and takes the official
+  PNG via `apple_badge_png` in the JSON. Until then a dashed outline marks the
+  slot so a proof never goes out with a home-made badge. There is no Google Play
+  badge because there is no Google Play listing.
 
 Badge rules encoded below, from the 2026 guideline pages (see README):
-  Apple  — min 10 mm high in print; clear space ¼ badge height; when shown
-           with other stores use the BLACK badge and place it FIRST; one App
-           Store badge per layout; never modify, angle or recolour.
-  Google — min 7.6 mm high in print; clear space ¼ badge height; must be the
-           same size or larger than other store badges; solid background.
-  Both   — the flyer meets all of these with 12 mm badges of equal height,
-           App Store first, on the white panel.
+  Apple  — min 10 mm high in print; clear space ¼ badge height; one App Store
+           badge per layout; never modify, angle or recolour. The flyer uses a
+           12 mm badge with ¼-height clear space on the white panel, and is the
+           only store badge present, so Apple's ordering rule does not bite.
 
 Naming rules (Apple): the app is "Astronomy Open Night for iPhone", never an
 "iOS app"; no "smartphone"/"tablet"; credit lines once, in the footer.
@@ -66,8 +72,10 @@ ICON = REPO / "assets" / "branding" / "app_icon_source.png"
 DEFAULT_LINKS = REPO / "tools" / "marketing" / "flyer_links.json"
 
 APPLE_CREDIT = "Apple and the Apple logo are trademarks of Apple Inc., registered in the U.S. and other countries. App Store is a service mark of Apple Inc."
-GOOGLE_CREDIT = "Google Play and the Google Play logo are trademarks of Google LLC."
-BADGE_H = 12 * mm  # ≥ Apple 10 mm, ≥ Google 7.6 mm; equal height satisfies Google's "same size or larger"
+# No Google Play credit line: the flyer names neither Google Play nor Android as
+# a Google product, because the app is not published on Play. Claiming the mark
+# we do not use would be as wrong as using a mark we may not.
+BADGE_H = 12 * mm  # ≥ Apple's 10 mm print minimum
 
 
 # --- sources ------------------------------------------------------------------
@@ -107,7 +115,13 @@ def arb_value(path: Path, key: str) -> str | None:
 
 def load_links(path: Path) -> dict:
     data = json.loads(path.read_text(encoding="utf-8"))
-    return {k: v for k, v in data.items() if not k.startswith("_")}
+    links = {k: v for k, v in data.items() if not k.startswith("_")}
+    # Badge paths are stored repo-relative so the flyer builds the same from any
+    # working directory; an absolute path in the JSON is left alone.
+    for k in ("apple_badge_png",):
+        if links.get(k) and not Path(links[k]).is_absolute():
+            links[k] = str(REPO / links[k])
+    return links
 
 
 # --- artwork ------------------------------------------------------------------
@@ -165,24 +179,36 @@ def placeholder_box(c: canvas.Canvas, x: float, y: float, w: float, h: float, la
     c.restoreState()
 
 
-def store_column(c: canvas.Canvas, *, x: float, w: float, top: float, title: str, url: str | None,
-                 badge_png: str | None, qr_png: Path | None, placeholder_label: str) -> None:
+# Vertical anchors inside the white panel, shared by all three columns so the
+# QRs, captions and the badge slot line up across them.
+QR_SIDE = 40 * mm      # 28.3 mm once scaled to A5; decoding is verified at both sizes
+CAPTION_Y = 49.5 * mm  # baseline
+BADGE_Y = 32 * mm      # bottom edge; ¼-badge-height clear space above and below
+
+
+def link_column(c: canvas.Canvas, *, x: float, w: float, top: float, title: str, caption: str,
+                url: str | None, qr_png: Path | None, placeholder_label: str,
+                badge_png: str | None = None, badge_slot: bool = False) -> None:
+    """One way to get the app: heading, QR, one-line caption, optional badge."""
     F = sign.FONTS
     sign.text(c, x + w / 2, top, title, F["heading"], 10.5, sign.INK, align="center", tracking=1.6)
-    qr_side = 46 * mm
-    qx, qy = x + (w - qr_side) / 2, top - 5 * mm - qr_side
+    qx, qy = x + (w - QR_SIDE) / 2, top - 5 * mm - QR_SIDE
     if url and qr_png:
-        c.drawImage(str(qr_png), qx, qy, qr_side, qr_side)
+        c.drawImage(str(qr_png), qx, qy, QR_SIDE, QR_SIDE)
     else:
-        placeholder_box(c, qx + 4 * mm, qy + 4 * mm, qr_side - 8 * mm, qr_side - 8 * mm, placeholder_label, "QR goes here when the link exists")
+        placeholder_box(c, qx + 3 * mm, qy + 3 * mm, QR_SIDE - 6 * mm, QR_SIDE - 6 * mm,
+                        placeholder_label, "QR goes here when the link exists")
+    sign.text(c, x + w / 2, CAPTION_Y, caption, F["body"], 8.2, sign.INK_SOFT, align="center")
+    if not badge_slot:
+        return
     # badge slot: official artwork only, 12 mm high, ¼-height clear space all round
     bh = BADGE_H
-    bw = bh * (120 / 40)  # both official badges are ~3:1
-    bx, by = x + (w - bw) / 2, qy - 4 * mm - bh - bh / 4
+    bw = bh * (120 / 40)  # the official badge is ~3:1
+    bx = x + (w - bw) / 2
     if badge_png and Path(badge_png).exists():
-        c.drawImage(badge_png, bx, by, bw, bh, mask="auto")
+        c.drawImage(badge_png, bx, BADGE_Y, bw, bh, mask="auto")
     else:
-        placeholder_box(c, bx, by, bw, bh, "OFFICIAL BADGE", "drop in artwork from the store")
+        placeholder_box(c, bx, BADGE_Y, bw, bh, "OFFICIAL BADGE", "drop in artwork from the store")
 
 
 def draw_flyer(c: canvas.Canvas, *, links: dict, name: str, subtitle: str, promo: str,
@@ -219,7 +245,7 @@ def draw_flyer(c: canvas.Canvas, *, links: dict, name: str, subtitle: str, promo
     c.setStrokeColor(sign.GOLD); c.setStrokeAlpha(0.55); c.setLineWidth(0.6)
     c.line(margin, y - 4 * mm, w - margin, y - 4 * mm); c.setStrokeAlpha(1)
     if is_draft:
-        sign.text(c, w / 2, y - 9.5 * mm, "DRAFT — STORE LINKS NOT YET LIVE, DO NOT PRINT FOR DISTRIBUTION",
+        sign.text(c, w / 2, y - 9.5 * mm, "DRAFT — A LINK IS NOT YET LIVE, DO NOT PRINT FOR DISTRIBUTION",
                   F["heading"], 8.5, sign.ALERT, align="center", tracking=0.8)
 
     # hero: icon + name
@@ -266,28 +292,45 @@ def draw_flyer(c: canvas.Canvas, *, links: dict, name: str, subtitle: str, promo
     c.setFillColor(sign.PANEL); c.setStrokeColor(sign.GOLD); c.setLineWidth(1.4)
     c.roundRect(panel_x, panel_bottom, panel_w, panel_top - panel_bottom, 5 * mm, stroke=1, fill=1)
     sign.text(c, w / 2, panel_top - 12 * mm, "GET THE APP", F["heading"], 17, sign.INK, align="center", tracking=1.6)
-    sign.text(c, w / 2, panel_top - 18 * mm, "Scan, or search for “Astronomy Open Night” in the App Store or on Google Play.",
+    sign.text(c, w / 2, panel_top - 18 * mm, "Three ways in. Scan any code — or search “Astronomy Open Night 2026” in the App Store.",
               F["body"], 9.6, sign.INK_SOFT, align="center")
 
     col_top = panel_top - 28 * mm
-    half = panel_w / 2
-    store_column(c, x=panel_x, w=half, top=col_top, title="APP STORE", url=links.get("app_store_url"),
-                 badge_png=links.get("apple_badge_png"), qr_png=qrs.get("app_store"), placeholder_label="APP STORE LINK — TBC")
-    store_column(c, x=panel_x + half, w=half, top=col_top, title="GOOGLE PLAY", url=links.get("play_store_url"),
-                 badge_png=links.get("google_badge_png"), qr_png=qrs.get("play_store"), placeholder_label="GOOGLE PLAY LINK — TBC")
+    third = panel_w / 3
+    # The App Store is the only store here, so it is the only column with a
+    # badge slot. Android is a direct download, not a Play listing, and the web
+    # app is not distributed by anyone.
+    link_column(c, x=panel_x, w=third, top=col_top, title="APP STORE",
+                caption="Free for iPhone and iPad", url=links.get("app_store_url"),
+                qr_png=qrs.get("app_store"), placeholder_label="APP STORE LINK — TBC",
+                badge_png=links.get("apple_badge_png"), badge_slot=True)
+    link_column(c, x=panel_x + third, w=third, top=col_top, title="ANDROID",
+                caption="Direct download (APK)", url=links.get("android_url"),
+                qr_png=qrs.get("android"), placeholder_label="ANDROID LINK — TBC")
+    link_column(c, x=panel_x + 2 * third, w=third, top=col_top, title="WEB APP",
+                caption="Opens in your browser", url=links.get("web_url"),
+                qr_png=qrs.get("web"), placeholder_label="WEB LINK — TBC")
     c.setStrokeColor(sign.HexColor("#D3DAE8")); c.setLineWidth(0.7)
-    c.line(w / 2, col_top - 70 * mm, w / 2, col_top + 3 * mm)
+    for i in (1, 2):
+        c.line(panel_x + i * third, col_top - 46 * mm, panel_x + i * third, col_top + 3 * mm)
 
-    web = links.get("web_url")
-    sign.text(c, w / 2, panel_bottom + 5 * mm,
-              (f"Or on the web:  {web}" if web else "Web link: TBC  —  set web_url in flyer_links.json"),
-              F["mono"] if web else F["body"], 9 if web else 8, sign.INK if web else sign.INK_SOFT, align="center")
+    # For anyone who cannot scan: the two addresses short enough to type. The
+    # App Store one is not here on purpose — searching the name is easier than
+    # typing an eleven-digit id.
+    web, android = links.get("web_url"), links.get("android_url")
+    typed = "   ·   ".join(u.replace("https://", "").rstrip("/") for u in (web, android) if u)
+    sign.text(c, w / 2, panel_bottom + 6.5 * mm,
+              typed or "Web and Android links: TBC — set them in flyer_links.json",
+              F["mono"] if typed else F["body"], 8.4 if typed else 8,
+              sign.INK if typed else sign.INK_SOFT, align="center")
+    sign.text(c, w / 2, panel_bottom + 2.8 * mm,
+              "Android asks you to allow installs from your browser the first time.",
+              F["body"], 7, sign.INK_SOFT, align="center")
 
     # footer: acknowledgement + the credit lines, once
     if ack:
         sign.text(c, margin, 15 * mm, ack, F["body"], 7.6, sign.MUTED)
-    sign.text(c, margin, 10.4 * mm, APPLE_CREDIT, F["body"], 5.6, sign.DIM)
-    sign.text(c, margin, 7.4 * mm, GOOGLE_CREDIT, F["body"], 5.6, sign.DIM)
+    sign.text(c, margin, 8.6 * mm, APPLE_CREDIT, F["body"], 5.6, sign.DIM)
     sign.text(c, w - margin, 7.4 * mm, "generated by tools/marketing/build_app_flyer.py", F["mono"], 5.4, sign.DIM, align="right")
     c.showPage()
 
@@ -311,9 +354,13 @@ def main() -> int:
     out.mkdir(parents=True, exist_ok=True)
     icon_png = rounded_icon(ICON, out / "app-icon-rounded.png")
     qrs: dict[str, Path | None] = {}
-    for key, fname in (("app_store_url", "qr-app-store.png"), ("play_store_url", "qr-google-play.png")):
+    for key, fname in (("app_store_url", "qr-app-store.png"),
+                       ("android_url", "qr-android.png"),
+                       ("web_url", "qr-web-app.png")):
         qrs[key.replace("_url", "")] = make_qr(links[key], out / fname) if links.get(key) else None
-    is_draft = not (links.get("app_store_url") and links.get("play_store_url"))
+    # All three have to be real: a flyer with one dead column is still a flyer
+    # someone hands to a visitor.
+    is_draft = not all(links.get(k) for k in ("app_store_url", "android_url", "web_url"))
 
     outputs = []
     for label, size, scale in (("A4", A4, 1.0), ("A5", A5, A5[0] / A4[0])):
@@ -331,7 +378,7 @@ def main() -> int:
     for p in outputs:
         print(f"  {sign.rel(p)}")
     print("  fonts   : " + ", ".join(f"{k}={v}" for k, v in sign.FONTS.items()))
-    for k in ("app_store_url", "play_store_url", "web_url", "apple_badge_png", "google_badge_png"):
+    for k in ("app_store_url", "android_url", "web_url", "apple_badge_png"):
         print(f"  {k:<17}: {links.get(k) or 'TBC (placeholder)'}")
     if args.preview:
         try:
@@ -342,7 +389,7 @@ def main() -> int:
         except ImportError:
             print("  preview : skipped (pip install pypdfium2)", file=sys.stderr)
     if is_draft:
-        print("\nWARNING: a store link is still null in flyer_links.json — the flyer is a\n"
+        print("\nWARNING: a link is still null in flyer_links.json — the flyer is a\n"
               "         DRAFT proof with placeholder QR slots. Do not print for distribution.", file=sys.stderr)
     return 0
 

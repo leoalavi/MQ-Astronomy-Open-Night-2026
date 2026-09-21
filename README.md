@@ -6,13 +6,19 @@
 
 <!-- Badges -->
 
-![Status](https://img.shields.io/badge/Status-Pre--Event-f59e0b?style=for-the-badge)
+![Status](https://img.shields.io/badge/Status-Live-22c55e?style=for-the-badge)
 ![Flutter](https://img.shields.io/badge/Flutter_3.44-02569B?style=for-the-badge&logo=flutter&logoColor=white)
 ![Dart](https://img.shields.io/badge/Dart_3.11-0175C2?style=for-the-badge&logo=dart&logoColor=white)
 ![Riverpod](https://img.shields.io/badge/Riverpod_3-6366F1?style=for-the-badge)
 ![Google Maps](https://img.shields.io/badge/Google_Maps-4285F4?style=for-the-badge&logo=googlemaps&logoColor=white)
 ![Tests](https://img.shields.io/badge/Tests-1663_passing-22c55e?style=for-the-badge)
 ![Backend](https://img.shields.io/badge/Backend-None-6b7280?style=for-the-badge)
+
+<!-- Get the app -->
+
+[![App Store](https://img.shields.io/badge/App_Store-Download-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://lnkd.in/gk4mjBdE)
+&nbsp;
+[![Web App](https://img.shields.io/badge/Web_App-Open-f59e0b?style=for-the-badge&logo=googlechrome&logoColor=white)](https://lnkd.in/ggizr7r7)
 
 </div>
 
@@ -26,9 +32,11 @@
 
 Astronomy Open Night helps a visitor answer two questions on the night: **"what's on right now?"** across 36 official programme items in 9 venues over 6 hours, and **"how do I get there in the dark?"** — the organisers specifically asked for clearer guidance between the car parks and the venues, because attendees get disoriented at night.
 
+It shipped for **Astronomy Open Night 2026** (Macquarie University, 19 September 2026) and was used by attendees on the night — co-developed by **Leo Alavi** and **Mohammad Raouf Abedini** and shown as part of the university's Scientist Spotlight program. It is now live on the App Store and as a web app.
+
 It is an independent student project, **not an official university product and not endorsed by any university** — see [Attribution](#-attribution--rights) for exactly what belongs to whom. Built on Flutter 3.44 and Riverpod 3, it ships as an iOS/Android/web app with **all event data compiled into the binary**: no developer-operated server, database or accounts. Android Maps and scanner SDKs report technical/usage data; see the [privacy audit](GOOGLE_PLAY_RELEASE_AUDIT.md).
 
-**[🏗️ Architecture](./ARCHITECTURE.md)** &nbsp;·&nbsp; **[📖 Docs](#-documentation-map)** &nbsp;·&nbsp; **[🤝 Contributing](./CONTRIBUTING.md)** &nbsp;·&nbsp; **[🔐 Data Sources](./docs/data-sources.md)**
+**[📲 App Store](https://lnkd.in/gk4mjBdE)** &nbsp;·&nbsp; **[🌐 Web App](https://lnkd.in/ggizr7r7)** &nbsp;·&nbsp; **[🏗️ Architecture](./ARCHITECTURE.md)** &nbsp;·&nbsp; **[📖 Docs](#-documentation-map)** &nbsp;·&nbsp; **[🤝 Contributing](./CONTRIBUTING.md)** &nbsp;·&nbsp; **[🔐 Data Sources](./docs/data-sources.md)**
 
 <br/>
 
@@ -57,13 +65,13 @@ Public university events usually hand visitors a printed A3 map and hope for the
 
 <div align="center">
 
-|                                     Home                                      |                                      Map                                      |                                    Program                                    |
+|                                     Home                                      |                                    Program                                    |                                   My Night                                    |
 | :----------------------------------------------------------------------------: | :----------------------------------------------------------------------------: | :----------------------------------------------------------------------------: |
-| <img width="260" alt="Home" src="./docs/release/screenshots/iphone-6.9/01-home.png"/> | <img width="260" alt="Map" src="./docs/release/screenshots/iphone-6.9/02-map.png"/> | <img width="260" alt="Program" src="./docs/release/screenshots/iphone-6.9/05-program.png"/> |
+| <img width="260" alt="Home" src="./docs/release/screenshots/iphone-6.9/01-home.png"/> | <img width="260" alt="Program" src="./docs/release/screenshots/iphone-6.9/02-program.png"/> | <img width="260" alt="My Night" src="./docs/release/screenshots/iphone-6.9/03-my-night.png"/> |
 
-|                                  360° Tour                                   |                                  Passport                                   |                                   Settings                                   |
+|                                     Map                                      |                                  360° Tour                                   |                                   Passport                                   |
 | :---------------------------------------------------------------------------: | :---------------------------------------------------------------------------: | :---------------------------------------------------------------------------: |
-| <img width="260" alt="Panorama" src="./docs/release/screenshots/iphone-6.9/06-panorama.png"/> | <img width="260" alt="Passport" src="./docs/release/screenshots/iphone-6.9/04-passport.png"/> | <img width="260" alt="Settings" src="./docs/release/screenshots/iphone-6.9/03-settings-preview.png"/> |
+| <img width="260" alt="Map" src="./docs/release/screenshots/iphone-6.9/04-map.png"/> | <img width="260" alt="Panorama" src="./docs/release/screenshots/iphone-6.9/05-panorama.png"/> | <img width="260" alt="Passport" src="./docs/release/screenshots/iphone-6.9/06-passport.png"/> |
 
 </div>
 
@@ -164,7 +172,7 @@ Tracked and visibly flagged in-app wherever they appear; full detail in [docs/da
 - **Some activities have no published finish time** — the app never fabricates one; it shows "finish time not published" rather than guessing.
 - **Walking route geometry is indicative, not surveyed** — hand-authored offline routes are straight-line estimates until someone walks them after dark with a GPS trace.
 - **No accessibility audit yet** — contrast ratios are documented but not formally asserted, and there has been no screen-reader pass.
-- **Not yet tested on a real phone, outdoors, at night** — the single most valuable outstanding test before the event.
+- **Field-tested at the event** — used by attendees on real phones, outdoors at night, at Astronomy Open Night 2026 (19 September 2026). Remaining follow-ups are the wayfinding traces noted above.
 
 ### Maintainers
 
@@ -310,6 +318,7 @@ No claim is made beyond what is stated above. Before publishing this repository 
 
 ## Acknowledgements
 
+- **Amin Beheshti, Charanya Ramakrishnan, Liz Hennebry** and the whole **Astronomy Open Night team** — for their support, guidance and encouragement throughout the project, and for the chance to contribute to such a great public STEM event as part of the Scientist Spotlight program.
 - **The Astronomy Open Night event organisers** — event content, programme data and the event campus map, used with permission.
 - [Flutter](https://flutter.dev/) & [Riverpod](https://riverpod.dev/) — the app framework and state management this is built on.
 - [Google Maps Platform](https://mapsplatform.google.com/) — walking directions, scoped to campus and walking mode only.
@@ -323,7 +332,7 @@ No claim is made beyond what is stated above. Before publishing this repository 
 ```text
 > Authors    : Leo Alavi — Lead Developer | Mohammad Raouf Abedini — Co-Developer
 > Location   : Sydney, NSW
-> Status     : [●] PRE-EVENT — Astronomy Open Night, 19 September 2026
+> Status     : [●] LIVE — showcased at Astronomy Open Night, 19 September 2026
 ```
 
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-6366f1?style=for-the-badge&logo=linkedin&logoColor=ffffff&labelColor=0f172a)](https://www.linkedin.com/in/leo-alavi/)

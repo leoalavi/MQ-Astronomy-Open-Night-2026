@@ -16,9 +16,11 @@
 
 <!-- Get the app -->
 
-[![App Store](https://img.shields.io/badge/App_Store-Download-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://lnkd.in/gk4mjBdE)
+[![App Store](https://img.shields.io/badge/App_Store-Download-0D96F6?style=for-the-badge&logo=apple&logoColor=white)](https://apps.apple.com/au/app/astronomy-open-night-2026/id6808865067)
 &nbsp;
-[![Web App](https://img.shields.io/badge/Web_App-Open-f59e0b?style=for-the-badge&logo=googlechrome&logoColor=white)](https://lnkd.in/ggizr7r7)
+[![Android](https://img.shields.io/badge/Android-Get_it-3DDC84?style=for-the-badge&logo=android&logoColor=white)](https://info.syllabus-sync.app/astronomy-open-night/android)
+&nbsp;
+[![Web App](https://img.shields.io/badge/Web_App-Open-f59e0b?style=for-the-badge&logo=googlechrome&logoColor=white)](https://aon.syllabus-sync.app/)
 
 </div>
 
@@ -36,7 +38,7 @@ It shipped for **Astronomy Open Night 2026** (Macquarie University, 19 September
 
 It is an independent student project, **not an official university product and not endorsed by any university** — see [Attribution](#-attribution--rights) for exactly what belongs to whom. Built on Flutter 3.44 and Riverpod 3, it ships as an iOS/Android/web app with **all event data compiled into the binary**: no developer-operated server, database or accounts. Android Maps and scanner SDKs report technical/usage data; see the [privacy audit](GOOGLE_PLAY_RELEASE_AUDIT.md).
 
-**[📲 App Store](https://lnkd.in/gk4mjBdE)** &nbsp;·&nbsp; **[🌐 Web App](https://lnkd.in/ggizr7r7)** &nbsp;·&nbsp; **[🏗️ Architecture](./ARCHITECTURE.md)** &nbsp;·&nbsp; **[📖 Docs](#-documentation-map)** &nbsp;·&nbsp; **[🤝 Contributing](./CONTRIBUTING.md)** &nbsp;·&nbsp; **[🔐 Data Sources](./docs/data-sources.md)**
+**[📲 App Store](https://apps.apple.com/au/app/astronomy-open-night-2026/id6808865067)** &nbsp;·&nbsp; **[🤖 Android](https://info.syllabus-sync.app/astronomy-open-night/android)** &nbsp;·&nbsp; **[🌐 Web App](https://aon.syllabus-sync.app/)** &nbsp;·&nbsp; **[🏗️ Architecture](./ARCHITECTURE.md)** &nbsp;·&nbsp; **[📖 Docs](#-documentation-map)** &nbsp;·&nbsp; **[🤝 Contributing](./CONTRIBUTING.md)** &nbsp;·&nbsp; **[🔐 Data Sources](./docs/data-sources.md)**
 
 <br/>
 

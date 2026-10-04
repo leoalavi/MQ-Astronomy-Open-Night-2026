@@ -12,7 +12,7 @@
 ![Riverpod](https://img.shields.io/badge/Riverpod_3-6366F1?style=for-the-badge)
 ![Google Maps](https://img.shields.io/badge/Google_Maps-4285F4?style=for-the-badge&logo=googlemaps&logoColor=white)
 ![Tests](https://img.shields.io/badge/Tests-1663_passing-22c55e?style=for-the-badge)
-![Backend](https://img.shields.io/badge/Backend-None-6b7280?style=for-the-badge)
+![No Backend](https://img.shields.io/badge/No_Backend-6b7280?style=for-the-badge)
 
 <!-- Get the app -->
 
@@ -30,7 +30,7 @@
 
 # Astronomy Open Night 2026
 
-> **A full-stack Flutter event guide and night-time campus wayfinding app, built for Astronomy Open Night — programme browsing, a campus map, 360° venue previews, and a QR passport rally, with zero backend and zero accounts.**
+> **A cross-platform Flutter event guide and night-time campus wayfinding app, built for Astronomy Open Night — programme browsing, a campus map, 360° venue previews, and a QR passport rally, with zero backend and zero accounts.**
 
 Astronomy Open Night helps a visitor answer two questions on the night: **"what's on right now?"** across 36 official programme items in 9 venues over 6 hours, and **"how do I get there in the dark?"** — the organisers specifically asked for clearer guidance between the car parks and the venues, because attendees get disoriented at night.
 
@@ -55,7 +55,7 @@ Public university events usually hand visitors a printed A3 map and hope for the
 - **360° Venue Previews:** Look inside a venue — the Observatory, the planetarium, the lecture theatres — before walking there in the dark.
 - **QR Passport Rally:** Scan or type a venue code to collect a stamp and reveal a short astronomy fact, with a torch-enabled scanner and offline manual entry as a fallback.
 - **Honesty as a Data Model:** Every fact carries a `DataConfidence` (`confirmed` / `derived` / `placeholder`); nothing the organisers didn't publish is ever invented or inferred — not a coordinate, not a finish time, not a fact.
-- **Zero-Trust Footprint:** No accounts, no backend, no analytics, no camera use beyond the QR scanner it's for. Everything a visitor saves lives on their device only.
+- **Minimal Data Footprint:** No accounts, no developer-operated backend and no developer-operated analytics. User preferences and saved event data remain on-device.
 
 <br/>
 
@@ -180,7 +180,7 @@ Tracked and visibly flagged in-app wherever they appear; full detail in [docs/da
 
 | Name | Role |
 | --- | --- |
-| Leo Alavi | Lead developer — architecture, Flutter/Riverpod, navigation |
+| Leo Alavi | Co-developer — architecture, Flutter/Riverpod, navigation |
 | Mohammad Raouf Abedini | Co-developer — passport/QR, 360° panorama subsystem |
 
 <br/>
@@ -332,7 +332,7 @@ No claim is made beyond what is stated above. Before publishing this repository 
 ### `> ping --authors`
 
 ```text
-> Authors    : Leo Alavi — Lead Developer | Mohammad Raouf Abedini — Co-Developer
+> Authors    : Leo Alavi — Co-Developer | Mohammad Raouf Abedini — Co-Developer
 > Location   : Sydney, NSW
 > Status     : [●] LIVE — showcased at Astronomy Open Night, 19 September 2026
 ```
